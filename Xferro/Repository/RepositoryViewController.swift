@@ -1,5 +1,5 @@
 //
-//  MainViewController.swift
+//  RepositoryViewController.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 1/8/25.
@@ -23,6 +23,8 @@ class RepositoryViewController: NSViewController {
         splitView = NSSplitView()
         splitView.isVertical = true
         splitView.dividerStyle = .thin
+        splitView.wantsLayer = true
+        splitView.layer?.backgroundColor = NSColor.white.cgColor
 
         let scrollView = NSScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false

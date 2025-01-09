@@ -17,7 +17,7 @@ class FileDetailViewController: NSViewController {
         fileDetailView.wantsLayer = true
         fileDetailView.layer?.backgroundColor = NSColor.blue.cgColor
         fileDetailView.translatesAutoresizingMaskIntoConstraints = false
-        fileDetailView.widthAnchor.constraint(greaterThanOrEqualToConstant: 300).isActive = true
+        fileDetailView.widthAnchor.constraint(greaterThanOrEqualToConstant: 700).isActive = true
         view = fileDetailView
     }
 }
