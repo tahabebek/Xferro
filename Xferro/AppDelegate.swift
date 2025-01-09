@@ -12,19 +12,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         super.init()
-        print("app delegate init")
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let contentVC = RepositoryViewController()
+        let contentVC = LandingViewController()
 
         // Create window
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1200, height: 600),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            contentRect: NSRect(x: 0, y: 0, width: Dimensions.appWidth, height: Dimensions.appHeight),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
+        window.setFrameAutosaveName("Xferro")
         window.titlebarAppearsTransparent = true
         window.contentViewController = contentVC
         window.center()
