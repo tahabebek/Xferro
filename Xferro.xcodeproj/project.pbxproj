@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7D38FD012D3024C0008BF288 /* GSS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D38FD002D3024C0008BF288 /* GSS.framework */; };
+		7D38FD032D3024CB008BF288 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D38FD022D3024CB008BF288 /* libz.tbd */; };
+		7D38FD052D3024F9008BF288 /* libSystem.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D38FD042D3024F9008BF288 /* libSystem.tbd */; };
+		7D38FD072D302508008BF288 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D38FD062D302508008BF288 /* libiconv.tbd */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		7D38FB372D2F9581008BF288 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +34,10 @@
 		7D38FB252D2F957F008BF288 /* Xferro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Xferro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D38FB362D2F9581008BF288 /* XferroTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XferroTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D38FB402D2F9581008BF288 /* XferroUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XferroUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7D38FD002D3024C0008BF288 /* GSS.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GSS.framework; path = System/Library/Frameworks/GSS.framework; sourceTree = SDKROOT; };
+		7D38FD022D3024CB008BF288 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		7D38FD042D3024F9008BF288 /* libSystem.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libSystem.tbd; path = usr/lib/libSystem.tbd; sourceTree = SDKROOT; };
+		7D38FD062D302508008BF288 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,6 +63,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7D38FD072D302508008BF288 /* libiconv.tbd in Frameworks */,
+				7D38FD052D3024F9008BF288 /* libSystem.tbd in Frameworks */,
+				7D38FD032D3024CB008BF288 /* libz.tbd in Frameworks */,
+				7D38FD012D3024C0008BF288 /* GSS.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +93,7 @@
 				7D38FB272D2F957F008BF288 /* Xferro */,
 				7D38FB392D2F9581008BF288 /* XferroTests */,
 				7D38FB432D2F9581008BF288 /* XferroUITests */,
+				7D38FCFF2D3024C0008BF288 /* Frameworks */,
 				7D38FB262D2F957F008BF288 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +106,17 @@
 				7D38FB402D2F9581008BF288 /* XferroUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		7D38FCFF2D3024C0008BF288 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				7D38FD062D302508008BF288 /* libiconv.tbd */,
+				7D38FD042D3024F9008BF288 /* libSystem.tbd */,
+				7D38FD022D3024CB008BF288 /* libz.tbd */,
+				7D38FD002D3024C0008BF288 /* GSS.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -175,6 +202,7 @@
 				TargetAttributes = {
 					7D38FB242D2F957F008BF288 = {
 						CreatedOnToolsVersion = 16.2;
+						LastSwiftMigration = 1620;
 					};
 					7D38FB352D2F9581008BF288 = {
 						CreatedOnToolsVersion = 16.2;
@@ -321,6 +349,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Xferro/Libraries/git2-headers",
+					"$(SRCROOT)/Xferro/Libraries/libssh2-headers",
+					"$(SRCROOT)/Xferro/Libraries/openssl-headers",
+				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -328,6 +361,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Xferro/Xferro-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -378,12 +412,18 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Xferro/Libraries/git2-headers",
+					"$(SRCROOT)/Xferro/Libraries/libssh2-headers",
+					"$(SRCROOT)/Xferro/Libraries/openssl-headers",
+				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OBJC_BRIDGING_HEADER = "Xferro/Xferro-Bridging-Header.h";
 			};
 			name = Release;
 		};
@@ -392,6 +432,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Xferro/Xferro.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -404,10 +445,15 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Xferro/Libraries",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.xferro.Xferro;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -417,6 +463,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Xferro/Xferro.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -428,6 +475,10 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Xferro/Libraries",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.xferro.Xferro;

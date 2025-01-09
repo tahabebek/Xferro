@@ -13,8 +13,6 @@ class LandingViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.title = "Xferro"
-
         userObservation = withObservationTracking {
             usersLoader.users
         } onChange: {
