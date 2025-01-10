@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import FirebaseCore
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
@@ -30,6 +31,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.center()
         window.makeKeyAndOrderFront(nil)
         window.isReleasedWhenClosed = false
+
+        FirebaseApp.configure()
     }
 }
 

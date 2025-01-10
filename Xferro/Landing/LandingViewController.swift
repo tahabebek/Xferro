@@ -23,7 +23,7 @@ class LandingViewController: NSViewController {
         }
 
         Task {
-            try? await usersLoader.loadUsers()
+            try? await usersLoader.loadUsersNil()
         }
     }
 

@@ -8,7 +8,7 @@
 import Foundation
 
 enum Dimensions {
-    static let commitsViewWidth: CGFloat = 300
+    static let commitsViewWidth: CGFloat = 400
     static let commitDetailsViewWidth: CGFloat = 400
     static let fileDetailsViewWidth: CGFloat = 600
     static let appWidth: CGFloat = Dimensions.commitsViewWidth + Dimensions.commitDetailsViewWidth + Dimensions.fileDetailsViewWidth

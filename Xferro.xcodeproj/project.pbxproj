@@ -11,6 +11,10 @@
 		7D38FD032D3024CB008BF288 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D38FD022D3024CB008BF288 /* libz.tbd */; };
 		7D38FD052D3024F9008BF288 /* libSystem.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D38FD042D3024F9008BF288 /* libSystem.tbd */; };
 		7D38FD072D302508008BF288 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D38FD062D302508008BF288 /* libiconv.tbd */; };
+		7D38FD552D30304A008BF288 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FD542D30304A008BF288 /* FirebaseAnalytics */; };
+		7D38FD572D30304A008BF288 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FD562D30304A008BF288 /* FirebaseAuth */; };
+		7D38FD592D30304A008BF288 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FD582D30304A008BF288 /* FirebaseCore */; };
+		7D38FD5B2D30304A008BF288 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FD5A2D30304A008BF288 /* FirebaseRemoteConfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,9 +68,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				7D38FD072D302508008BF288 /* libiconv.tbd in Frameworks */,
+				7D38FD592D30304A008BF288 /* FirebaseCore in Frameworks */,
 				7D38FD052D3024F9008BF288 /* libSystem.tbd in Frameworks */,
 				7D38FD032D3024CB008BF288 /* libz.tbd in Frameworks */,
 				7D38FD012D3024C0008BF288 /* GSS.framework in Frameworks */,
+				7D38FD552D30304A008BF288 /* FirebaseAnalytics in Frameworks */,
+				7D38FD572D30304A008BF288 /* FirebaseAuth in Frameworks */,
+				7D38FD5B2D30304A008BF288 /* FirebaseRemoteConfig in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,6 +147,10 @@
 			);
 			name = Xferro;
 			packageProductDependencies = (
+				7D38FD542D30304A008BF288 /* FirebaseAnalytics */,
+				7D38FD562D30304A008BF288 /* FirebaseAuth */,
+				7D38FD582D30304A008BF288 /* FirebaseCore */,
+				7D38FD5A2D30304A008BF288 /* FirebaseRemoteConfig */,
 			);
 			productName = Xferro;
 			productReference = 7D38FB252D2F957F008BF288 /* Xferro.app */;
@@ -223,6 +235,9 @@
 			);
 			mainGroup = 7D38FB1C2D2F957F008BF288;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7D38FD532D30304A008BF288 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7D38FB262D2F957F008BF288 /* Products */;
 			projectDirPath = "";
@@ -450,6 +465,7 @@
 					"$(PROJECT_DIR)/Xferro/Libraries",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.xferro.Xferro;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -481,6 +497,7 @@
 					"$(PROJECT_DIR)/Xferro/Libraries",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.xferro.Xferro;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -592,6 +609,40 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7D38FD532D30304A008BF288 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7D38FD542D30304A008BF288 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D38FD532D30304A008BF288 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		7D38FD562D30304A008BF288 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D38FD532D30304A008BF288 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		7D38FD582D30304A008BF288 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D38FD532D30304A008BF288 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		7D38FD5A2D30304A008BF288 /* FirebaseRemoteConfig */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D38FD532D30304A008BF288 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseRemoteConfig;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7D38FB1D2D2F957F008BF288 /* Project object */;
 }
