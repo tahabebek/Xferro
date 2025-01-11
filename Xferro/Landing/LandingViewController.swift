@@ -10,6 +10,7 @@ import AppKit
 class LandingViewController: NSViewController {
     private var usersLoader = UsersLoader()
     private var userObservation: Any?
+    private var loginViewController: LoginViewController?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -41,6 +42,11 @@ class LandingViewController: NSViewController {
     }
 
     private func showProjectsViewController(with user: User) {
+        if let loginViewController {
+            loginViewController.removeFromParent()
+            loginViewController.view.removeFromSuperview()
+        }
+        
         let projectsViewController = ProjectsViewController(user: user)
         addChild(projectsViewController)
         view.addSubview(projectsViewController.view)
@@ -53,13 +59,18 @@ class LandingViewController: NSViewController {
     }
 
     private func showLoginViewController(with users: Users?) {
-        let loginViewController = LoginViewController(users: users)
+        let loginViewController = LoginViewController(users: users) { [weak self] user in
+            guard let self else { return }
+            showProjectsViewController(with: user)
+        }
+
         addChild(loginViewController)
         view.addSubview(loginViewController.view)
 
         loginViewController.view.translatesAutoresizingMaskIntoConstraints = false
         loginViewController.view.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
         loginViewController.view.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
+        self.loginViewController = loginViewController
     }
 
     override func loadView() {
@@ -68,20 +79,6 @@ class LandingViewController: NSViewController {
         landingView.translatesAutoresizingMaskIntoConstraints = false
         landingView.widthAnchor.constraint(greaterThanOrEqualToConstant: Dimensions.appWidth).isActive = true
         landingView.heightAnchor.constraint(greaterThanOrEqualToConstant: Dimensions.appHeight).isActive = true
-//
-//        let label = NSTextField(labelWithString: "Landing")
-//        label.font = NSFont.systemFont(ofSize: 16)
-//        label.textColor = NSColor.white
-//
-//        label.isEditable = false
-//        label.isSelectable = false
-//        label.isBordered = false
-//        label.drawsBackground = false
-//        landingView.addSubview(label)
-//
-//        label.translatesAutoresizingMaskIntoConstraints = false
-//        label.centerXAnchor.constraint(equalTo: landingView.centerXAnchor).isActive = true
-//        label.centerYAnchor.constraint(equalTo: landingView.centerYAnchor).isActive = true
         view = landingView
     }
 }

@@ -7,22 +7,28 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="LoginViewController" customModule="Xferro" customModuleProvider="target">
             <connections>
+                <outlet property="checkYourEmailLabel" destination="d56-NZ-5Md" id="j73-hU-HGK"/>
                 <outlet property="divider1View" destination="xYW-G1-2gu" id="Kgh-ue-spN"/>
                 <outlet property="divider2View" destination="zio-xW-Htg" id="hoD-mO-Gwt"/>
-                <outlet property="divider3View" destination="sol-3c-Lgb" id="nst-3U-Fhq"/>
-                <outlet property="divider4View" destination="vaf-7L-e8d" id="J0F-RF-96l"/>
                 <outlet property="forgotPasswordButton" destination="dWZ-GY-85B" id="Fz2-gh-p7d"/>
                 <outlet property="forgotPasswordTitle" destination="dWZ-GY-85B" id="Ldg-um-RPV"/>
-                <outlet property="horizontalDividerTitle" destination="ToI-3z-3kL" id="f3V-IU-GB8"/>
+                <outlet property="identityEmailTextField" destination="f4u-Wn-XKy" id="hkF-Xp-lJq"/>
+                <outlet property="identityFinishButton" destination="sqW-TX-zzY" id="ksi-Yv-hti"/>
+                <outlet property="identityFinishTitle" destination="ccR-5Y-okW" id="MrH-wI-Xsy"/>
+                <outlet property="identityNameTextField" destination="BRb-16-77F" id="qh3-oV-wjY"/>
+                <outlet property="identityView" destination="pQ8-yY-vwV" id="2WQ-SW-P1J"/>
+                <outlet property="invalidEmailLabel" destination="Zd8-wY-FHt" id="ZK5-Xx-Gp7"/>
+                <outlet property="invalidPasswordLabel" destination="6OO-SC-UBV" id="gya-XX-uvN"/>
                 <outlet property="loginButton" destination="b9Q-S2-OVt" id="BpB-Rd-fJV"/>
                 <outlet property="loginEmailTextField" destination="M7A-EP-iAw" id="yA8-Jz-Ucd"/>
-                <outlet property="loginPasswordTextField" destination="4X1-Wv-59y" id="yzl-J8-qnN"/>
+                <outlet property="loginPasswordTextField" destination="vDx-Ye-YPt" id="LbR-Ti-xmF"/>
+                <outlet property="loginView" destination="yW9-xc-OZr" id="zeZ-3g-4Wr"/>
                 <outlet property="loginWithEmailTitle" destination="rdH-ch-u6O" id="ShE-5j-vvN"/>
-                <outlet property="loginWithGoggleButton" destination="KbG-ZH-8nK" id="4ZS-mL-soN"/>
-                <outlet property="loginWithGoogleTitle" destination="Hov-VK-ssv" id="bH6-nQ-yQq"/>
+                <outlet property="progressView" destination="3N6-kz-Qvw" id="A7o-aj-pUn"/>
                 <outlet property="signupButton" destination="Fvk-gK-rtK" id="2qR-Su-BA5"/>
                 <outlet property="signupEmailTextField" destination="UBX-xk-DzS" id="GEf-Me-Ct0"/>
-                <outlet property="signupPasswordTextField" destination="5AQ-rJ-gjO" id="5ur-Kh-nDR"/>
+                <outlet property="signupPasswordTextField" destination="3vw-WT-fLc" id="xtP-TR-F2b"/>
+                <outlet property="signupView" destination="ZMJ-fa-n6w" id="oKD-2z-Xgz"/>
                 <outlet property="signupWithEmailTitle" destination="dnR-ru-Eob" id="2Kv-Qq-2fg"/>
                 <outlet property="skipButton" destination="6E9-WW-04l" id="bIH-Zy-kuj"/>
                 <outlet property="skipTitle" destination="6E9-WW-04l" id="1OD-N7-rvQ"/>
@@ -38,12 +44,15 @@
             <rect key="frame" x="0.0" y="0.0" width="1400" height="800"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <customView wantsLayer="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WEa-Pm-6d6">
-                    <rect key="frame" x="20" y="570" width="810" height="210"/>
+                <progressIndicator hidden="YES" maxValue="100" indeterminate="YES" style="spinning" id="3N6-kz-Qvw">
+                    <rect key="frame" x="684" y="384" width="32" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </progressIndicator>
+                <customView wantsLayer="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WEa-Pm-6d6" userLabel="Header">
+                    <rect key="frame" x="151" y="487" width="810" height="210"/>
                     <subviews>
                         <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="97D-GY-50X">
-                            <rect key="frame" x="20" y="110" width="440" height="60"/>
+                            <rect key="frame" x="0.0" y="110" width="440" height="60"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" allowsUndo="NO" title="Welcome to Xferro" id="EgM-Kg-OFa">
                                 <font key="font" metaFont="system" size="56"/>
@@ -52,7 +61,7 @@
                             </textFieldCell>
                         </textField>
                         <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8nz-oz-eTL">
-                            <rect key="frame" x="20" y="40" width="790" height="30"/>
+                            <rect key="frame" x="2" y="72" width="790" height="30"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" title="A Git client that automatically saves your journey and lets you commit when ready." id="NX1-b4-uwy">
                                 <font key="font" metaFont="system" size="22"/>
@@ -61,9 +70,12 @@
                             </textFieldCell>
                         </textField>
                     </subviews>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="210" id="FPm-wl-Uq8"/>
+                    </constraints>
                 </customView>
                 <customView wantsLayer="YES" id="ZMJ-fa-n6w" userLabel="Signup">
-                    <rect key="frame" x="720" y="62" width="660" height="460"/>
+                    <rect key="frame" x="724" y="0.0" width="660" height="460"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <customView wantsLayer="YES" id="Fvk-gK-rtK" userLabel="SignupButton">
@@ -90,15 +102,36 @@
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <textField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" contentType="password" id="5AQ-rJ-gjO" userLabel="SignupPassword">
-                            <rect key="frame" x="130" y="300" width="400" height="40"/>
+                        <textField hidden="YES" wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" id="Zd8-wY-FHt">
+                            <rect key="frame" x="128" y="356" width="404" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="password" drawsBackground="YES" id="W6S-W7-5Q2">
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Invalid email" id="nl7-A8-fvX">
                                 <font key="font" usesAppearanceFont="YES"/>
-                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="textColor" name="systemRedColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
+                        <textField hidden="YES" wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" id="6OO-SC-UBV">
+                            <rect key="frame" x="128" y="276" width="404" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Invalid password" id="OZ9-Md-c3D">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="systemRedColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <secureTextField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3vw-WT-fLc">
+                            <rect key="frame" x="130" y="300" width="400" height="39"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <secureTextFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="password" drawsBackground="YES" usesSingleLineMode="YES" id="Jor-gW-eH2">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                <allowedInputSourceLocales>
+                                    <string>NSAllRomanInputSourcesLocaleIdentifier</string>
+                                </allowedInputSourceLocales>
+                            </secureTextFieldCell>
+                        </secureTextField>
                     </subviews>
                 </customView>
                 <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" id="9Ie-c0-E2i">
@@ -110,20 +143,77 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView wantsLayer="YES" id="xYW-G1-2gu" userLabel="Divider">
+                <customView wantsLayer="YES" id="xYW-G1-2gu" userLabel="Divider1">
                     <rect key="frame" x="700" y="320" width="1" height="162"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView wantsLayer="YES" id="zio-xW-Htg" userLabel="Divider">
+                <customView wantsLayer="YES" id="zio-xW-Htg" userLabel="Divider2">
                     <rect key="frame" x="699" y="100" width="1" height="162"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
+                <customView hidden="YES" wantsLayer="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pQ8-yY-vwV" userLabel="IdentityView">
+                    <rect key="frame" x="22" y="0.0" width="660" height="460"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <subviews>
+                        <customView wantsLayer="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sqW-TX-zzY" userLabel="Finish">
+                            <rect key="frame" x="130" y="200" width="400" height="40"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <subviews>
+                                <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" id="ccR-5Y-okW" userLabel="Finish">
+                                    <rect key="frame" x="181" y="12" width="40" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" lineBreakMode="clipping" title="Finish" id="mDF-XQ-Jy7">
+                                        <font key="font" usesAppearanceFont="YES"/>
+                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                            </subviews>
+                        </customView>
+                        <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bhh-2f-LCo">
+                            <rect key="frame" x="128" y="428" width="40" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Name" id="dLU-CN-Dx3">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="d61-SF-Jh1">
+                            <rect key="frame" x="128" y="347" width="37" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Email" id="Zix-8w-h7o">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" contentType="email" id="f4u-Wn-XKy" userLabel="IdentityEmail">
+                            <rect key="frame" x="130" y="299" width="400" height="40"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" id="uPZ-rI-aD6">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" contentType="email" id="BRb-16-77F" userLabel="IdentityName">
+                            <rect key="frame" x="130" y="380" width="400" height="40"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" id="Oti-CB-Vn0">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                    </subviews>
+                </customView>
                 <customView wantsLayer="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yW9-xc-OZr" userLabel="Login">
-                    <rect key="frame" x="22" y="62" width="660" height="460"/>
+                    <rect key="frame" x="22" y="0.0" width="660" height="460"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <customView wantsLayer="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="b9Q-S2-OVt" userLabel="LoginButton">
-                            <rect key="frame" x="130" y="40" width="400" height="40"/>
+                            <rect key="frame" x="130" y="200" width="400" height="40"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" id="rdH-ch-u6O">
@@ -137,75 +227,49 @@
                                 </textField>
                             </subviews>
                         </customView>
-                        <customView wantsLayer="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KbG-ZH-8nK" userLabel="LoginWithGoogleButton">
-                            <rect key="frame" x="130" y="380" width="400" height="40"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <subviews>
-                                <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" id="Hov-VK-ssv">
-                                    <rect key="frame" x="144" y="12" width="113" height="16"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                    <textFieldCell key="cell" lineBreakMode="clipping" title="Login with Google" id="275-LG-7OU">
-                                        <font key="font" usesAppearanceFont="YES"/>
-                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                    </textFieldCell>
-                                </textField>
-                            </subviews>
-                        </customView>
-                        <customView wantsLayer="YES" id="SnO-y3-eTb" userLabel="ForgotPasswordButton">
-                            <rect key="frame" x="330" y="100" width="200" height="40"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <subviews>
-                                <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dWZ-GY-85B">
-                                    <rect key="frame" x="89" y="12" width="113" height="16"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Forgot Password?" id="pXY-BL-yNK">
-                                        <font key="font" usesAppearanceFont="YES"/>
-                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                    </textFieldCell>
-                                </textField>
-                            </subviews>
-                        </customView>
-                        <customView wantsLayer="YES" id="sol-3c-Lgb" userLabel="Divider">
-                            <rect key="frame" x="130" y="340" width="180" height="1"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        </customView>
                         <textField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" contentType="email" id="M7A-EP-iAw" userLabel="SigninEmail">
-                            <rect key="frame" x="130" y="260" width="400" height="40"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="email" drawsBackground="YES" id="6qm-XJ-WKv">
+                            <rect key="frame" x="130" y="380" width="400" height="40"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" placeholderString="email" drawsBackground="YES" id="6qm-XJ-WKv">
                                 <font key="font" usesAppearanceFont="YES"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <textField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" contentType="password" id="4X1-Wv-59y" userLabel="SigninPassword">
-                            <rect key="frame" x="130" y="180" width="400" height="40"/>
+                        <secureTextField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vDx-Ye-YPt">
+                            <rect key="frame" x="130" y="300" width="400" height="39"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="password" drawsBackground="YES" id="WhH-c1-ZRD">
-                                <font key="font" usesAppearanceFont="YES"/>
+                            <secureTextFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="password" drawsBackground="YES" usesSingleLineMode="YES" id="Buu-dB-SVx">
+                                <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                        </textField>
-                        <customView wantsLayer="YES" id="vaf-7L-e8d" userLabel="Divider">
-                            <rect key="frame" x="350" y="340" width="180" height="1"/>
+                                <allowedInputSourceLocales>
+                                    <string>NSAllRomanInputSourcesLocaleIdentifier</string>
+                                </allowedInputSourceLocales>
+                            </secureTextFieldCell>
+                        </secureTextField>
+                        <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dWZ-GY-85B">
+                            <rect key="frame" x="419" y="276" width="113" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        </customView>
-                        <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" id="ToI-3z-3kL">
-                            <rect key="frame" x="318" y="334" width="23" height="16"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" lineBreakMode="clipping" title="OR" id="06O-8a-UHr">
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Forgot Password?" id="pXY-BL-yNK">
                                 <font key="font" usesAppearanceFont="YES"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField hidden="YES" wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" id="d56-NZ-5Md">
+                            <rect key="frame" x="125" y="146" width="407" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Check your email. We have sent you a link to reset your password. " id="k9G-e5-D1v">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="systemRedColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
                     </subviews>
                 </customView>
                 <customView wantsLayer="YES" id="Evd-Lf-D9K" userLabel="SkipButton">
-                    <rect key="frame" x="1160" y="740" width="200" height="40"/>
+                    <rect key="frame" x="1055" y="697" width="200" height="40"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField wantsLayer="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6E9-WW-04l">
@@ -220,6 +284,11 @@
                     </subviews>
                 </customView>
             </subviews>
+            <constraints>
+                <constraint firstItem="WEa-Pm-6d6" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="151" id="GBU-nL-mca"/>
+                <constraint firstAttribute="trailing" secondItem="WEa-Pm-6d6" secondAttribute="trailing" constant="439" id="RoV-Hx-pvw"/>
+                <constraint firstItem="WEa-Pm-6d6" firstAttribute="top" secondItem="Evd-Lf-D9K" secondAttribute="top" constant="40" id="Ufl-WU-GsF"/>
+            </constraints>
             <point key="canvasLocation" x="9" y="102"/>
         </customView>
     </objects>

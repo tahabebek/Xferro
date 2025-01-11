@@ -6,9 +6,7 @@
 //
 
 enum Login: Codable {
-    case apple
     case email
-    case github
-    case gmail
-    case guest
+    case anonymous
+    case failedToAuthGuest
 }
