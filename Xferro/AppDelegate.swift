@@ -7,6 +7,8 @@
 
 import Cocoa
 import FirebaseCore
+import Mixpanel
+import Sentry
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var users: Users?
@@ -14,6 +16,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         super.init()
+        SentrySDK.start { options in
+            options.dsn = "https://06fd8ebf14ce84b23c1252a0b78d790b@o4508498687033344.ingest.us.sentry.io/4508498688409600"
+            options.tracesSampleRate = 1.0
+            options.enableTimeToFullDisplayTracing = true
+        }
+        let mixpanel = Mixpanel.initialize(token: "92209304ee0ef56b6014dd75dd87ac5a")
+        mixpanel.track(event: "App launched")
+    }
+
+    func fail() throws {
+        throw GitError.cloneFailed("test failure")
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
@@ -34,6 +47,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         FirebaseApp.configure()
         createMenu()
+
+        do {
+            try fail()
+        } catch {
+            SentrySDK.capture(error: error)
+        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {

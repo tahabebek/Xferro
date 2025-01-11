@@ -15,6 +15,9 @@
 		7D38FD572D30304A008BF288 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FD562D30304A008BF288 /* FirebaseAuth */; };
 		7D38FD592D30304A008BF288 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FD582D30304A008BF288 /* FirebaseCore */; };
 		7D38FD5B2D30304A008BF288 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FD5A2D30304A008BF288 /* FirebaseRemoteConfig */; };
+		7D38FE952D32CF66008BF288 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE942D32CF66008BF288 /* Sentry */; };
+		7D38FE972D32CF66008BF288 /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE962D32CF66008BF288 /* SentrySwiftUI */; };
+		7D38FE9A2D32CF87008BF288 /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE992D32CF87008BF288 /* Mixpanel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +71,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7D38FD072D302508008BF288 /* libiconv.tbd in Frameworks */,
+				7D38FE972D32CF66008BF288 /* SentrySwiftUI in Frameworks */,
 				7D38FD592D30304A008BF288 /* FirebaseCore in Frameworks */,
 				7D38FD052D3024F9008BF288 /* libSystem.tbd in Frameworks */,
 				7D38FD032D3024CB008BF288 /* libz.tbd in Frameworks */,
@@ -75,6 +79,8 @@
 				7D38FD552D30304A008BF288 /* FirebaseAnalytics in Frameworks */,
 				7D38FD572D30304A008BF288 /* FirebaseAuth in Frameworks */,
 				7D38FD5B2D30304A008BF288 /* FirebaseRemoteConfig in Frameworks */,
+				7D38FE9A2D32CF87008BF288 /* Mixpanel in Frameworks */,
+				7D38FE952D32CF66008BF288 /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,6 +143,7 @@
 				7D38FB212D2F957F008BF288 /* Sources */,
 				7D38FB222D2F957F008BF288 /* Frameworks */,
 				7D38FB232D2F957F008BF288 /* Resources */,
+				7D38FE9B2D32D029008BF288 /* Sentry */,
 			);
 			buildRules = (
 			);
@@ -151,6 +158,9 @@
 				7D38FD562D30304A008BF288 /* FirebaseAuth */,
 				7D38FD582D30304A008BF288 /* FirebaseCore */,
 				7D38FD5A2D30304A008BF288 /* FirebaseRemoteConfig */,
+				7D38FE942D32CF66008BF288 /* Sentry */,
+				7D38FE962D32CF66008BF288 /* SentrySwiftUI */,
+				7D38FE992D32CF87008BF288 /* Mixpanel */,
 			);
 			productName = Xferro;
 			productReference = 7D38FB252D2F957F008BF288 /* Xferro.app */;
@@ -237,6 +247,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				7D38FD532D30304A008BF288 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				7D38FE932D32CF66008BF288 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+				7D38FE982D32CF87008BF288 /* XCRemoteSwiftPackageReference "mixpanel-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7D38FB262D2F957F008BF288 /* Products */;
@@ -273,6 +285,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		7D38FE9B2D32D029008BF288 /* Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = Sentry;
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [[ \"$(uname -m)\" == arm64 ]]; then\n    export PATH=\"/opt/homebrew/bin:$PATH\"\nfi\n\nif which sentry-cli >/dev/null; then\nexport SENTRY_ORG=undotree\nexport SENTRY_PROJECT=apple-macos\nexport SENTRY_AUTH_TOKEN=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\nERROR=$(sentry-cli debug-files upload \\\n\"$DWARF_DSYM_FOLDER_PATH\" \"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}\" --force-foreground --include-sources 2>&1 >/dev/null)\nif [ ! $? -eq 0 ]; then\necho \"error: sentry-cli - $ERROR\"\nfi\nelse\necho \"error: sentry-cli not installed, download from https://github.com/getsentry/sentry-cli/releases\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		7D38FB212D2F957F008BF288 /* Sources */ = {
@@ -625,6 +658,22 @@
 				minimumVersion = 11.6.0;
 			};
 		};
+		7D38FE932D32CF66008BF288 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.43.0;
+			};
+		};
+		7D38FE982D32CF87008BF288 /* XCRemoteSwiftPackageReference "mixpanel-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mixpanel/mixpanel-swift";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -647,6 +696,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7D38FD532D30304A008BF288 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseRemoteConfig;
+		};
+		7D38FE942D32CF66008BF288 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D38FE932D32CF66008BF288 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+		7D38FE962D32CF66008BF288 /* SentrySwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D38FE932D32CF66008BF288 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = SentrySwiftUI;
+		};
+		7D38FE992D32CF87008BF288 /* Mixpanel */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D38FE982D32CF87008BF288 /* XCRemoteSwiftPackageReference "mixpanel-swift" */;
+			productName = Mixpanel;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
