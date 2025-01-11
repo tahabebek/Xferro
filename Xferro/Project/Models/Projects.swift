@@ -7,5 +7,5 @@
 
 struct Projects: Codable {
     var currentProject: Project?
-    let projects: [Project]
+    let projects: Set<Project>
 }

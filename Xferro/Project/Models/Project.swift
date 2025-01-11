@@ -7,7 +7,15 @@
 
 import Foundation
 
-struct Project: Codable {
+struct Project: Codable, Hashable, Equatable {
+    static func == (lhs: Project, rhs: Project) -> Bool {
+        lhs.url == rhs.url
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(url)
+    }
+    
     let isGit: Bool
     let url: URL
     let commits: [Commit]
