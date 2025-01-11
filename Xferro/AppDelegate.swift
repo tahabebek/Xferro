@@ -25,10 +25,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         mixpanel.track(event: "App launched")
     }
 
-    func fail() throws {
-        throw GitError.cloneFailed("test failure")
-    }
-
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         let contentVC = LandingViewController()
 
@@ -47,12 +43,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         FirebaseApp.configure()
         createMenu()
-
-        do {
-            try fail()
-        } catch {
-            SentrySDK.capture(error: error)
-        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
