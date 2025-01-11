@@ -20,6 +20,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             options.dsn = "https://06fd8ebf14ce84b23c1252a0b78d790b@o4508498687033344.ingest.us.sentry.io/4508498688409600"
             options.tracesSampleRate = 1.0
             options.enableTimeToFullDisplayTracing = true
+#if DEBUG
+            options.environment = "development"
+#else
+            options.environment = "production"
+#endif
         }
         let mixpanel = Mixpanel.initialize(token: "92209304ee0ef56b6014dd75dd87ac5a")
         mixpanel.track(event: "App launched")
@@ -42,6 +47,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.isReleasedWhenClosed = false
 
         FirebaseApp.configure()
+        FirebaseConfiguration.shared.setLoggerLevel(.min)
+
         createMenu()
     }
 
