@@ -240,7 +240,7 @@ typedef int GIT_CALLBACK(git_filter_check_fn)(
  * @param from the output buffer
  * @param src the filter source
  * @return 0 on success or a negative value on error
- * @deprecated use git_filter_stream_fn
+ * deprecated use git_filter_stream_fn
  */
 typedef int GIT_CALLBACK(git_filter_apply_fn)(
 	git_filter              *self,

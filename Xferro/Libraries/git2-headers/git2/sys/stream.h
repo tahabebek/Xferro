@@ -133,7 +133,7 @@ GIT_EXTERN(int) git_stream_register(
 /**@{*/
 
 /**
- * @deprecated Provide a git_stream_registration to git_stream_register
+ * deprecated Provide a git_stream_registration to git_stream_register
  * @see git_stream_registration
  */
 typedef int GIT_CALLBACK(git_stream_cb)(git_stream **out, const char *host, const char *port);
@@ -146,7 +146,7 @@ typedef int GIT_CALLBACK(git_stream_cb)(git_stream **out, const char *host, cons
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated Provide a git_stream_registration to git_stream_register
+ * deprecated Provide a git_stream_registration to git_stream_register
  * @see git_stream_register
  */
 GIT_EXTERN(int) git_stream_register_tls(git_stream_cb ctor);

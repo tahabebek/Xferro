@@ -181,7 +181,7 @@ GIT_EXTERN(int) git_indexer_commit(git_indexer *idx, git_indexer_progress *stats
  * A packfile's name is derived from the sorted hashing of all object
  * names. This is only correct after the index has been finalized.
  *
- * @deprecated use git_indexer_name
+ * deprecated use git_indexer_name
  * @param idx the indexer instance
  * @return the packfile's hash
  */

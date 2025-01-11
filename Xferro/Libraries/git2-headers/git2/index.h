@@ -409,7 +409,7 @@ GIT_EXTERN(const char *) git_index_path(const git_index *index);
  * last 20 bytes which are the checksum itself). In cases where the
  * index does not exist on-disk, it will be zeroed out.
  *
- * @deprecated this function is deprecated with no replacement
+ * deprecated this function is deprecated with no replacement
  * @param index an existing index object
  * @return a pointer to the checksum of the index
  */

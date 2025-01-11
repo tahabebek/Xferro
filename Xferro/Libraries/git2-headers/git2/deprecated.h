@@ -69,23 +69,23 @@ GIT_BEGIN_DECL
  */
 /**@{*/
 
-/** @deprecated use GIT_ATTR_VALUE_UNSPECIFIED */
+/** deprecated use GIT_ATTR_VALUE_UNSPECIFIED */
 #define GIT_ATTR_UNSPECIFIED_T GIT_ATTR_VALUE_UNSPECIFIED
-/** @deprecated use GIT_ATTR_VALUE_TRUE */
+/** deprecated use GIT_ATTR_VALUE_TRUE */
 #define GIT_ATTR_TRUE_T GIT_ATTR_VALUE_TRUE
-/** @deprecated use GIT_ATTR_VALUE_FALSE */
+/** deprecated use GIT_ATTR_VALUE_FALSE */
 #define GIT_ATTR_FALSE_T GIT_ATTR_VALUE_FALSE
-/** @deprecated use GIT_ATTR_VALUE_STRING */
+/** deprecated use GIT_ATTR_VALUE_STRING */
 #define GIT_ATTR_VALUE_T GIT_ATTR_VALUE_STRING
 
-/** @deprecated use GIT_ATTR_IS_TRUE */
+/** deprecated use GIT_ATTR_IS_TRUE */
 #define GIT_ATTR_TRUE(attr) GIT_ATTR_IS_TRUE(attr)
-/** @deprecated use GIT_ATTR_IS_FALSE */
+/** deprecated use GIT_ATTR_IS_FALSE */
 #define GIT_ATTR_FALSE(attr) GIT_ATTR_IS_FALSE(attr)
-/** @deprecated use GIT_ATTR_IS_UNSPECIFIED */
+/** deprecated use GIT_ATTR_IS_UNSPECIFIED */
 #define GIT_ATTR_UNSPECIFIED(attr) GIT_ATTR_IS_UNSPECIFIED(attr)
 
-/** @deprecated use git_attr_value_t */
+/** deprecated use git_attr_value_t */
 typedef git_attr_value_t git_attr_t;
 
 /**@}*/
@@ -101,7 +101,7 @@ typedef git_attr_value_t git_attr_t;
  */
 /**@{*/
 
-/** @deprecated use GIT_BLOB_FILTER_ATTRIBUTES_FROM_HEAD */
+/** deprecated use GIT_BLOB_FILTER_ATTRIBUTES_FROM_HEAD */
 #define GIT_BLOB_FILTER_ATTTRIBUTES_FROM_HEAD GIT_BLOB_FILTER_ATTRIBUTES_FROM_HEAD
 
 GIT_EXTERN(int) git_blob_create_fromworkdir(git_oid *id, git_repository *repo, const char *relative_path);
@@ -118,7 +118,7 @@ GIT_EXTERN(int) git_blob_create_frombuffer(
 
 /** Deprecated in favor of `git_blob_filter`.
  *
- * @deprecated Use git_blob_filter
+ * deprecated Use git_blob_filter
  * @see git_blob_filter
  */
 GIT_EXTERN(int) git_blob_filtered_content(
@@ -142,7 +142,7 @@ GIT_EXTERN(int) git_blob_filtered_content(
 
 /** Deprecated in favor of `git_filter_list_stream_buffer`.
  *
- * @deprecated Use git_filter_list_stream_buffer
+ * deprecated Use git_filter_list_stream_buffer
  * @see Use git_filter_list_stream_buffer
  */
 GIT_EXTERN(int) git_filter_list_stream_data(
@@ -152,7 +152,7 @@ GIT_EXTERN(int) git_filter_list_stream_data(
 
 /** Deprecated in favor of `git_filter_list_apply_to_buffer`.
  *
- * @deprecated Use git_filter_list_apply_to_buffer
+ * deprecated Use git_filter_list_apply_to_buffer
  * @see Use git_filter_list_apply_to_buffer
  */
 GIT_EXTERN(int) git_filter_list_apply_to_data(
@@ -181,7 +181,7 @@ GIT_EXTERN(int) git_filter_list_apply_to_data(
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated Use git_treebuilder_write
+ * deprecated Use git_treebuilder_write
  * @see git_treebuilder_write
  */
 GIT_EXTERN(int) git_treebuilder_write_with_buffer(
@@ -262,7 +262,7 @@ GIT_EXTERN(int) git_buf_contains_nul(const git_buf *buf);
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated Use git_buf_dispose
+ * deprecated Use git_buf_dispose
  * @see git_buf_dispose
  */
 GIT_EXTERN(void) git_buf_free(git_buf *buffer);
@@ -280,7 +280,7 @@ GIT_EXTERN(void) git_buf_free(git_buf *buffer);
  * generates a commit buffer using `git_commit_create_buffer`, sign
  * that buffer and call `git_commit_create_with_signature`.
  *
- * @deprecated use a `git_commit_create_cb` instead
+ * deprecated use a `git_commit_create_cb` instead
  */
 typedef int (*git_commit_signing_cb)(
 	git_buf *signature,
@@ -294,16 +294,16 @@ typedef int (*git_commit_signing_cb)(
  */
 /**@{*/
 
-/** @deprecated use GIT_CONFIGMAP_FALSE */
+/** deprecated use GIT_CONFIGMAP_FALSE */
 #define GIT_CVAR_FALSE  GIT_CONFIGMAP_FALSE
-/** @deprecated use GIT_CONFIGMAP_TRUE */
+/** deprecated use GIT_CONFIGMAP_TRUE */
 #define GIT_CVAR_TRUE   GIT_CONFIGMAP_TRUE
-/** @deprecated use GIT_CONFIGMAP_INT32 */
+/** deprecated use GIT_CONFIGMAP_INT32 */
 #define GIT_CVAR_INT32  GIT_CONFIGMAP_INT32
-/** @deprecated use GIT_CONFIGMAP_STRING */
+/** deprecated use GIT_CONFIGMAP_STRING */
 #define GIT_CVAR_STRING GIT_CONFIGMAP_STRING
 
-/** @deprecated use git_cvar_map */
+/** deprecated use git_cvar_map */
 typedef git_configmap git_cvar_map;
 
 /**@}*/
@@ -333,7 +333,7 @@ typedef enum {
 /**
  * Options for controlling the formatting of the generated e-mail.
  *
- * @deprecated use `git_email_create_options`
+ * deprecated use `git_email_create_options`
  */
 typedef struct {
 	unsigned int version;
@@ -360,15 +360,15 @@ typedef struct {
 	const git_signature *author;
 } git_diff_format_email_options;
 
-/** @deprecated use `git_email_create_options` */
+/** deprecated use `git_email_create_options` */
 #define GIT_DIFF_FORMAT_EMAIL_OPTIONS_VERSION 1
-/** @deprecated use `git_email_create_options` */
+/** deprecated use `git_email_create_options` */
 #define GIT_DIFF_FORMAT_EMAIL_OPTIONS_INIT {GIT_DIFF_FORMAT_EMAIL_OPTIONS_VERSION, 0, 1, 1, NULL, NULL, NULL, NULL}
 
 /**
  * Create an e-mail ready patch from a diff.
  *
- * @deprecated git_email_create_from_diff
+ * deprecated git_email_create_from_diff
  * @see git_email_create_from_diff
  */
 GIT_EXTERN(int) git_diff_format_email(
@@ -379,7 +379,7 @@ GIT_EXTERN(int) git_diff_format_email(
 /**
  * Create an e-mail ready patch for a commit.
  *
- * @deprecated git_email_create_from_commit
+ * deprecated git_email_create_from_commit
  * @see git_email_create_from_commit
  */
 GIT_EXTERN(int) git_diff_commit_as_email(
@@ -418,75 +418,75 @@ GIT_EXTERN(int) git_diff_format_email_options_init(
  */
 /**@{*/
 
-/** @deprecated use `GIT_ERROR_NONE` */
+/** deprecated use `GIT_ERROR_NONE` */
 #define GITERR_NONE GIT_ERROR_NONE
-/** @deprecated use `GIT_ERROR_NOMEMORY` */
+/** deprecated use `GIT_ERROR_NOMEMORY` */
 #define GITERR_NOMEMORY GIT_ERROR_NOMEMORY
-/** @deprecated use `GIT_ERROR_OS` */
+/** deprecated use `GIT_ERROR_OS` */
 #define GITERR_OS GIT_ERROR_OS
-/** @deprecated use `GIT_ERROR_INVALID` */
+/** deprecated use `GIT_ERROR_INVALID` */
 #define GITERR_INVALID GIT_ERROR_INVALID
-/** @deprecated use `GIT_ERROR_REFERENCE` */
+/** deprecated use `GIT_ERROR_REFERENCE` */
 #define GITERR_REFERENCE GIT_ERROR_REFERENCE
-/** @deprecated use `GIT_ERROR_ZLIB` */
+/** deprecated use `GIT_ERROR_ZLIB` */
 #define GITERR_ZLIB GIT_ERROR_ZLIB
-/** @deprecated use `GIT_ERROR_REPOSITORY` */
+/** deprecated use `GIT_ERROR_REPOSITORY` */
 #define GITERR_REPOSITORY GIT_ERROR_REPOSITORY
-/** @deprecated use `GIT_ERROR_CONFIG` */
+/** deprecated use `GIT_ERROR_CONFIG` */
 #define GITERR_CONFIG GIT_ERROR_CONFIG
-/** @deprecated use `GIT_ERROR_REGEX` */
+/** deprecated use `GIT_ERROR_REGEX` */
 #define GITERR_REGEX GIT_ERROR_REGEX
-/** @deprecated use `GIT_ERROR_ODB` */
+/** deprecated use `GIT_ERROR_ODB` */
 #define GITERR_ODB GIT_ERROR_ODB
-/** @deprecated use `GIT_ERROR_INDEX` */
+/** deprecated use `GIT_ERROR_INDEX` */
 #define GITERR_INDEX GIT_ERROR_INDEX
-/** @deprecated use `GIT_ERROR_OBJECT` */
+/** deprecated use `GIT_ERROR_OBJECT` */
 #define GITERR_OBJECT GIT_ERROR_OBJECT
-/** @deprecated use `GIT_ERROR_NET` */
+/** deprecated use `GIT_ERROR_NET` */
 #define GITERR_NET GIT_ERROR_NET
-/** @deprecated use `GIT_ERROR_TAG` */
+/** deprecated use `GIT_ERROR_TAG` */
 #define GITERR_TAG GIT_ERROR_TAG
-/** @deprecated use `GIT_ERROR_TREE` */
+/** deprecated use `GIT_ERROR_TREE` */
 #define GITERR_TREE GIT_ERROR_TREE
-/** @deprecated use `GIT_ERROR_INDEXER` */
+/** deprecated use `GIT_ERROR_INDEXER` */
 #define GITERR_INDEXER GIT_ERROR_INDEXER
-/** @deprecated use `GIT_ERROR_SSL` */
+/** deprecated use `GIT_ERROR_SSL` */
 #define GITERR_SSL GIT_ERROR_SSL
-/** @deprecated use `GIT_ERROR_SUBMODULE` */
+/** deprecated use `GIT_ERROR_SUBMODULE` */
 #define GITERR_SUBMODULE GIT_ERROR_SUBMODULE
-/** @deprecated use `GIT_ERROR_THREAD` */
+/** deprecated use `GIT_ERROR_THREAD` */
 #define GITERR_THREAD GIT_ERROR_THREAD
-/** @deprecated use `GIT_ERROR_STASH` */
+/** deprecated use `GIT_ERROR_STASH` */
 #define GITERR_STASH GIT_ERROR_STASH
-/** @deprecated use `GIT_ERROR_CHECKOUT` */
+/** deprecated use `GIT_ERROR_CHECKOUT` */
 #define GITERR_CHECKOUT GIT_ERROR_CHECKOUT
-/** @deprecated use `GIT_ERROR_FETCHHEAD` */
+/** deprecated use `GIT_ERROR_FETCHHEAD` */
 #define GITERR_FETCHHEAD GIT_ERROR_FETCHHEAD
-/** @deprecated use `GIT_ERROR_MERGE` */
+/** deprecated use `GIT_ERROR_MERGE` */
 #define GITERR_MERGE GIT_ERROR_MERGE
-/** @deprecated use `GIT_ERROR_SSH` */
+/** deprecated use `GIT_ERROR_SSH` */
 #define GITERR_SSH GIT_ERROR_SSH
-/** @deprecated use `GIT_ERROR_FILTER` */
+/** deprecated use `GIT_ERROR_FILTER` */
 #define GITERR_FILTER GIT_ERROR_FILTER
-/** @deprecated use `GIT_ERROR_REVERT` */
+/** deprecated use `GIT_ERROR_REVERT` */
 #define GITERR_REVERT GIT_ERROR_REVERT
-/** @deprecated use `GIT_ERROR_CALLBACK` */
+/** deprecated use `GIT_ERROR_CALLBACK` */
 #define GITERR_CALLBACK GIT_ERROR_CALLBACK
-/** @deprecated use `GIT_ERROR_CHERRYPICK` */
+/** deprecated use `GIT_ERROR_CHERRYPICK` */
 #define GITERR_CHERRYPICK GIT_ERROR_CHERRYPICK
-/** @deprecated use `GIT_ERROR_DESCRIBE` */
+/** deprecated use `GIT_ERROR_DESCRIBE` */
 #define GITERR_DESCRIBE GIT_ERROR_DESCRIBE
-/** @deprecated use `GIT_ERROR_REBASE` */
+/** deprecated use `GIT_ERROR_REBASE` */
 #define GITERR_REBASE GIT_ERROR_REBASE
-/** @deprecated use `GIT_ERROR_FILESYSTEM` */
+/** deprecated use `GIT_ERROR_FILESYSTEM` */
 #define GITERR_FILESYSTEM GIT_ERROR_FILESYSTEM
-/** @deprecated use `GIT_ERROR_PATCH` */
+/** deprecated use `GIT_ERROR_PATCH` */
 #define GITERR_PATCH GIT_ERROR_PATCH
-/** @deprecated use `GIT_ERROR_WORKTREE` */
+/** deprecated use `GIT_ERROR_WORKTREE` */
 #define GITERR_WORKTREE GIT_ERROR_WORKTREE
-/** @deprecated use `GIT_ERROR_SHA1` */
+/** deprecated use `GIT_ERROR_SHA1` */
 #define GITERR_SHA1 GIT_ERROR_SHA1
-/** @deprecated use `GIT_ERROR_SHA` */
+/** deprecated use `GIT_ERROR_SHA` */
 #define GIT_ERROR_SHA1 GIT_ERROR_SHA
 
 /**
@@ -497,7 +497,7 @@ GIT_EXTERN(int) git_diff_format_email_options_init(
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated Use git_error_last
+ * deprecated Use git_error_last
  * @see git_error_last
  */
 GIT_EXTERN(const git_error *) giterr_last(void);
@@ -509,7 +509,7 @@ GIT_EXTERN(const git_error *) giterr_last(void);
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated Use git_error_clear
+ * deprecated Use git_error_clear
  * @see git_error_clear
  */
 GIT_EXTERN(void) giterr_clear(void);
@@ -521,7 +521,7 @@ GIT_EXTERN(void) giterr_clear(void);
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated Use git_error_set_str
+ * deprecated Use git_error_set_str
  * @see git_error_set_str
  */
 GIT_EXTERN(void) giterr_set_str(int error_class, const char *string);
@@ -533,7 +533,7 @@ GIT_EXTERN(void) giterr_set_str(int error_class, const char *string);
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated Use git_error_set_oom
+ * deprecated Use git_error_set_oom
  * @see git_error_set_oom
  */
 GIT_EXTERN(void) giterr_set_oom(void);
@@ -552,62 +552,62 @@ GIT_EXTERN(void) giterr_set_oom(void);
 /**@{*/
 
 /* The git_idxentry_extended_flag_t enum */
-/** @deprecated use `GIT_INDEX_ENTRY_NAMEMASK` */
+/** deprecated use `GIT_INDEX_ENTRY_NAMEMASK` */
 #define GIT_IDXENTRY_NAMEMASK          GIT_INDEX_ENTRY_NAMEMASK
-/** @deprecated use `GIT_INDEX_ENTRY_STAGEMASK` */
+/** deprecated use `GIT_INDEX_ENTRY_STAGEMASK` */
 #define GIT_IDXENTRY_STAGEMASK         GIT_INDEX_ENTRY_STAGEMASK
-/** @deprecated use `GIT_INDEX_ENTRY_STAGESHIFT` */
+/** deprecated use `GIT_INDEX_ENTRY_STAGESHIFT` */
 #define GIT_IDXENTRY_STAGESHIFT        GIT_INDEX_ENTRY_STAGESHIFT
 
 /* The git_indxentry_flag_t enum */
-/** @deprecated use `GIT_INDEX_ENTRY_EXTENDED` */
+/** deprecated use `GIT_INDEX_ENTRY_EXTENDED` */
 #define GIT_IDXENTRY_EXTENDED          GIT_INDEX_ENTRY_EXTENDED
-/** @deprecated use `GIT_INDEX_ENTRY_VALID` */
+/** deprecated use `GIT_INDEX_ENTRY_VALID` */
 #define GIT_IDXENTRY_VALID             GIT_INDEX_ENTRY_VALID
 
-/** @deprecated use `GIT_INDEX_ENTRY_STAGE` */
+/** deprecated use `GIT_INDEX_ENTRY_STAGE` */
 #define GIT_IDXENTRY_STAGE(E)          GIT_INDEX_ENTRY_STAGE(E)
-/** @deprecated use `GIT_INDEX_ENTRY_STAGE_SET` */
+/** deprecated use `GIT_INDEX_ENTRY_STAGE_SET` */
 #define GIT_IDXENTRY_STAGE_SET(E,S)    GIT_INDEX_ENTRY_STAGE_SET(E,S)
 
 /* The git_idxentry_extended_flag_t enum */
-/** @deprecated use `GIT_INDEX_ENTRY_INTENT_TO_ADD` */
+/** deprecated use `GIT_INDEX_ENTRY_INTENT_TO_ADD` */
 #define GIT_IDXENTRY_INTENT_TO_ADD     GIT_INDEX_ENTRY_INTENT_TO_ADD
-/** @deprecated use `GIT_INDEX_ENTRY_SKIP_WORKTREE` */
+/** deprecated use `GIT_INDEX_ENTRY_SKIP_WORKTREE` */
 #define GIT_IDXENTRY_SKIP_WORKTREE     GIT_INDEX_ENTRY_SKIP_WORKTREE
-/** @deprecated use `GIT_INDEX_ENTRY_INTENT_TO_ADD | GIT_INDEX_ENTRY_SKIP_WORKTREE` */
+/** deprecated use `GIT_INDEX_ENTRY_INTENT_TO_ADD | GIT_INDEX_ENTRY_SKIP_WORKTREE` */
 #define GIT_IDXENTRY_EXTENDED_FLAGS    (GIT_INDEX_ENTRY_INTENT_TO_ADD | GIT_INDEX_ENTRY_SKIP_WORKTREE)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_EXTENDED2         (1 << 15)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_UPDATE            (1 << 0)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_REMOVE            (1 << 1)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_UPTODATE          (1 << 2)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_ADDED             (1 << 3)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_HASHED            (1 << 4)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_UNHASHED          (1 << 5)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_WT_REMOVE         (1 << 6)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_CONFLICTED        (1 << 7)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_UNPACKED          (1 << 8)
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_IDXENTRY_NEW_SKIP_WORKTREE (1 << 9)
 
 /* The git_index_capability_t enum */
-/** @deprecated use `GIT_INDEX_CAPABILITY_IGNORE_CASE` */
+/** deprecated use `GIT_INDEX_CAPABILITY_IGNORE_CASE` */
 #define GIT_INDEXCAP_IGNORE_CASE       GIT_INDEX_CAPABILITY_IGNORE_CASE
-/** @deprecated use `GIT_INDEX_CAPABILITY_NO_FILEMODE` */
+/** deprecated use `GIT_INDEX_CAPABILITY_NO_FILEMODE` */
 #define GIT_INDEXCAP_NO_FILEMODE       GIT_INDEX_CAPABILITY_NO_FILEMODE
-/** @deprecated use `GIT_INDEX_CAPABILITY_NO_SYMLINKS` */
+/** deprecated use `GIT_INDEX_CAPABILITY_NO_SYMLINKS` */
 #define GIT_INDEXCAP_NO_SYMLINKS       GIT_INDEX_CAPABILITY_NO_SYMLINKS
-/** @deprecated use `GIT_INDEX_CAPABILITY_FROM_OWNER` */
+/** deprecated use `GIT_INDEX_CAPABILITY_FROM_OWNER` */
 #define GIT_INDEXCAP_FROM_OWNER        GIT_INDEX_CAPABILITY_FROM_OWNER
 
 GIT_EXTERN(int) git_index_add_frombuffer(
@@ -634,7 +634,7 @@ GIT_EXTERN(int) git_index_add_frombuffer(
 #define GIT_OBJ_ANY GIT_OBJECT_ANY
 /** @deprecate use `GIT_OBJECT_INVALID` */
 #define GIT_OBJ_BAD GIT_OBJECT_INVALID
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_OBJ__EXT1 0
 /** @deprecate use `GIT_OBJECT_COMMIT` */
 #define GIT_OBJ_COMMIT GIT_OBJECT_COMMIT
@@ -644,7 +644,7 @@ GIT_EXTERN(int) git_index_add_frombuffer(
 #define GIT_OBJ_BLOB GIT_OBJECT_BLOB
 /** @deprecate use `GIT_OBJECT_TAG` */
 #define GIT_OBJ_TAG GIT_OBJECT_TAG
-/** @deprecated this value is not public */
+/** deprecated this value is not public */
 #define GIT_OBJ__EXT2 5
 /** @deprecate use `GIT_OBJECT_OFS_DELTA` */
 #define GIT_OBJ_OFS_DELTA GIT_OBJECT_OFS_DELTA
@@ -668,7 +668,7 @@ GIT_EXTERN(size_t) git_object__size(git_object_t type);
 /**
  * Determine if the given git_object_t is a valid object type.
  *
- * @deprecated use `git_object_type_is_valid`
+ * deprecated use `git_object_type_is_valid`
  *
  * @param type object type to test.
  * @return 1 if the type represents a valid object type, 0 otherwise
@@ -690,7 +690,7 @@ GIT_EXTERN(int) git_object_typeisloose(git_object_t type);
 /**
  * Ensure the remote name is well-formed.
  *
- * @deprecated Use git_remote_name_is_valid
+ * deprecated Use git_remote_name_is_valid
  * @param remote_name name to be checked.
  * @return 1 if the reference name is acceptable; 0 if it isn't
  */
@@ -744,7 +744,7 @@ GIT_EXTERN(int) git_remote_is_valid_name(const char *remote_name);
  *    the characters '~', '^', ':', '\\', '?', '[', and '*', and the
  *    sequences ".." and "@{" which have special meaning to revparse.
  *
- * @deprecated Use git_reference_name_is_valid
+ * deprecated Use git_reference_name_is_valid
  * @param refname name to be checked.
  * @return 1 if the reference name is acceptable; 0 if it isn't
  */
@@ -764,7 +764,7 @@ GIT_EXTERN(int) git_tag_create_frombuffer(
  */
 
 /**
- * @deprecated This option is deprecated; it is now implied when
+ * deprecated This option is deprecated; it is now implied when
  * a separate working directory is specified to `git_repository_init`.
  */
 #define GIT_REPOSITORY_INIT_NO_DOTGIT_DIR 0
@@ -782,11 +782,11 @@ GIT_EXTERN(int) git_tag_create_frombuffer(
 
 typedef git_revspec_t git_revparse_mode_t;
 
-/** @deprecated use `GIT_REVSPEC_SINGLE` */
+/** deprecated use `GIT_REVSPEC_SINGLE` */
 #define GIT_REVPARSE_SINGLE GIT_REVSPEC_SINGLE
-/** @deprecated use `GIT_REVSPEC_RANGE` */
+/** deprecated use `GIT_REVSPEC_RANGE` */
 #define GIT_REVPARSE_RANGE GIT_REVSPEC_RANGE
-/** @deprecated use `GIT_REVSPEC_MERGE_BASE` */
+/** deprecated use `GIT_REVSPEC_MERGE_BASE` */
 #define GIT_REVPARSE_MERGE_BASE GIT_REVSPEC_MERGE_BASE
 
 /**@}*/
@@ -815,22 +815,22 @@ typedef git_credential_sign_cb git_cred_sign_cb;
 typedef git_credential_ssh_interactive_cb git_cred_ssh_interactive_callback;
 typedef git_credential_ssh_interactive_cb git_cred_ssh_interactive_cb;
 
-/** @deprecated use `git_credential_t` */
+/** deprecated use `git_credential_t` */
 #define git_credtype_t git_credential_t
 
-/** @deprecated use `GIT_CREDENTIAL_USERPASS_PLAINTEXT` */
+/** deprecated use `GIT_CREDENTIAL_USERPASS_PLAINTEXT` */
 #define GIT_CREDTYPE_USERPASS_PLAINTEXT GIT_CREDENTIAL_USERPASS_PLAINTEXT
-/** @deprecated use `GIT_CREDENTIAL_SSH_KEY` */
+/** deprecated use `GIT_CREDENTIAL_SSH_KEY` */
 #define GIT_CREDTYPE_SSH_KEY GIT_CREDENTIAL_SSH_KEY
-/** @deprecated use `GIT_CREDENTIAL_SSH_CUSTOM` */
+/** deprecated use `GIT_CREDENTIAL_SSH_CUSTOM` */
 #define GIT_CREDTYPE_SSH_CUSTOM GIT_CREDENTIAL_SSH_CUSTOM
-/** @deprecated use `GIT_CREDENTIAL_DEFAULT` */
+/** deprecated use `GIT_CREDENTIAL_DEFAULT` */
 #define GIT_CREDTYPE_DEFAULT GIT_CREDENTIAL_DEFAULT
-/** @deprecated use `GIT_CREDENTIAL_SSH_INTERACTIVE` */
+/** deprecated use `GIT_CREDENTIAL_SSH_INTERACTIVE` */
 #define GIT_CREDTYPE_SSH_INTERACTIVE GIT_CREDENTIAL_SSH_INTERACTIVE
-/** @deprecated use `GIT_CREDENTIAL_USERNAME` */
+/** deprecated use `GIT_CREDENTIAL_USERNAME` */
 #define GIT_CREDTYPE_USERNAME GIT_CREDENTIAL_USERNAME
-/** @deprecated use `GIT_CREDENTIAL_SSH_MEMORY` */
+/** deprecated use `GIT_CREDENTIAL_SSH_MEMORY` */
 #define GIT_CREDTYPE_SSH_MEMORY GIT_CREDENTIAL_SSH_MEMORY
 
 GIT_EXTERN(void) git_cred_free(git_credential *cred);
@@ -937,7 +937,7 @@ GIT_EXTERN(int) git_oid_iszero(const git_oid *id);
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated Use git_oidarray_dispose
+ * deprecated Use git_oidarray_dispose
  * @see git_oidarray_dispose
  */
 GIT_EXTERN(void) git_oidarray_free(git_oidarray *array);
@@ -1018,7 +1018,7 @@ GIT_EXTERN(int) git_strarray_copy(git_strarray *tgt, const git_strarray *src);
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated Use git_strarray_dispose
+ * deprecated Use git_strarray_dispose
  * @see git_strarray_dispose
  */
 GIT_EXTERN(void) git_strarray_free(git_strarray *array);

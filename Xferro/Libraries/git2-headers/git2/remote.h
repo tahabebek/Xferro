@@ -546,7 +546,7 @@ typedef int GIT_CALLBACK(git_push_update_reference_cb)(const char *refname, cons
  * @param direction GIT_DIRECTION_FETCH or GIT_DIRECTION_PUSH
  * @param payload Payload provided by the caller
  * @return 0 on success, GIT_PASSTHROUGH or an error
- * @deprecated Use `git_remote_set_instance_url`
+ * deprecated Use `git_remote_set_instance_url`
  */
 typedef int GIT_CALLBACK(git_url_resolve_cb)(git_buf *url_resolved, const char *url, int direction, void *payload);
 #endif
@@ -620,7 +620,7 @@ struct git_remote_callbacks {
 	 * `update_tips`, then only the `update_refs` function will
 	 * be called.
 	 *
-	 * @deprecated the `update_refs` callback in this structure
+	 * deprecated the `update_refs` callback in this structure
 	 * should be preferred
 	 */
 	int GIT_CALLBACK(update_tips)(const char *refname,

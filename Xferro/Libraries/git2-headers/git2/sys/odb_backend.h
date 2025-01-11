@@ -163,7 +163,7 @@ GIT_EXTERN(void) git_odb_backend_data_free(git_odb_backend *backend, void *data)
  * This function is deprecated, but there is no plan to remove this
  * function at this time.
  *
- * @deprecated git_odb_backend_data_alloc
+ * deprecated git_odb_backend_data_alloc
  * @see git_odb_backend_data_alloc
  */
 GIT_EXTERN(void *) git_odb_backend_malloc(git_odb_backend *backend, size_t len);
