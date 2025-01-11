@@ -22,10 +22,7 @@ class LandingViewController: NSViewController {
                 handleNewUsers(users: usersLoader.users)
             }
         }
-
-        Task {
-            try? await usersLoader.loadUsersNil()
-        }
+        usersLoader.loadUsers()
     }
 
     private func handleNewUsers(users: Users?) {
@@ -35,6 +32,7 @@ class LandingViewController: NSViewController {
         }
 
         if let currentUser = users.currentUser {
+            AppDelegate.users = users
             showProjectsViewController(with: currentUser)
         } else {
             showLoginViewController(with: users)
@@ -59,9 +57,12 @@ class LandingViewController: NSViewController {
     }
 
     private func showLoginViewController(with users: Users?) {
-        let loginViewController = LoginViewController(users: users) { [weak self] user in
+        let loginViewController = LoginViewController(users: users) { [weak self] newValue in
             guard let self else { return }
-            showProjectsViewController(with: user)
+            guard let currentUser = newValue.currentUser else {
+                fatalError("We should have a current user at this point")
+            }
+            showProjectsViewController(with: currentUser)
         }
 
         addChild(loginViewController)

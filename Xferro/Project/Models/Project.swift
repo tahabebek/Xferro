@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Project: Codable, Hashable, Equatable {
+class Project: Codable, Hashable, Equatable {
     static func == (lhs: Project, rhs: Project) -> Bool {
         lhs.url == rhs.url
     }
@@ -15,7 +15,13 @@ struct Project: Codable, Hashable, Equatable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(url)
     }
-    
+
+    init(isGit: Bool, url: URL, commits: [Commit]) {
+        self.isGit = isGit
+        self.url = url
+        self.commits = commits
+    }
+
     let isGit: Bool
     let url: URL
     let commits: [Commit]

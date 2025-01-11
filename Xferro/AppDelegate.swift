@@ -9,6 +9,7 @@ import Cocoa
 import FirebaseCore
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    static var users: Users?
     var window: NSWindow!
 
     override init() {
@@ -25,7 +26,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        window.setFrameAutosaveName("Xferro")
         window.titlebarAppearsTransparent = true
         window.contentViewController = contentVC
         window.center()
@@ -33,6 +33,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.isReleasedWhenClosed = false
 
         FirebaseApp.configure()
+        createMenu()
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        saveBeforeQuit()
+        return .terminateLater
+    }
+
+    private func createMenu() {
+        let mainMenu = NSMenu()
+        NSApp.mainMenu = mainMenu
+
+        // Create the application menu
+        let appMenuItem = NSMenuItem()
+        mainMenu.addItem(appMenuItem)
+
+        let appMenu = NSMenu()
+        appMenuItem.submenu = appMenu
+
+        // Add the Quit item
+        appMenu.addItem(NSMenuItem(title: "Quit",
+                                   action: #selector(NSApplication.terminate(_:)),
+                                   keyEquivalent: "q"))
+    }
+
+    private func saveBeforeQuit() {
+        if let users = Self.users {
+            DataManager.save(users, filename: Constants.usersFileName)
+        }
+        let app = NSApplication.shared
+        app.reply(toApplicationShouldTerminate: true)
     }
 }
 

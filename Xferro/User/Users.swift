@@ -7,7 +7,12 @@
 
 import Foundation
 
-struct Users: Codable {
+class Users: Codable {
     let currentUser: User?
-    let recentUsers: [User]
+    let recentUsers: Set<User>
+
+    init(currentUser: User?, recentUsers: Set<User>) {
+        self.currentUser = currentUser
+        self.recentUsers = recentUsers
+    }
 }

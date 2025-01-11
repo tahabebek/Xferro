@@ -9,7 +9,7 @@ import AppKit
 import FirebaseAuth
 
 class LoginViewController: NSViewController, NSTextFieldDelegate {
-    let users: Users?
+    private let users: Users?
     @IBOutlet weak var welcomeTitle: NSTextField!
     @IBOutlet weak var welcomeSubtitle: NSTextField!
     @IBOutlet weak var loginEmailTextField: NSTextField!
@@ -66,9 +66,9 @@ class LoginViewController: NSViewController, NSTextFieldDelegate {
     ]
     private var validateEmailLive = false
     private var validatePasswordLive = false
-    private let onSuccess: (User) -> Void
+    private let onSuccess: (Users) -> Void
 
-    init(users: Users?, onSuccess: @escaping (User) -> Void) {
+    init(users: Users?, onSuccess: @escaping (Users) -> Void) {
         // Note: we don't support recent users yet, so just showing the login screen without them.
         self.users = users
         self.onSuccess = onSuccess
@@ -302,7 +302,9 @@ class LoginViewController: NSViewController, NSTextFieldDelegate {
             commitIdentity: .init(name: name, email: email),
             projects: Projects(currentProject: nil, projects: [])
         )
-        onSuccess(user)
+        let newUsers = Users(currentUser: user, recentUsers: [])
+        AppDelegate.users = newUsers
+        onSuccess(newUsers)
     }
     func controlTextDidChange(_ obj: Notification) {
         guard let textField = obj.object as? NSTextField else { return }
