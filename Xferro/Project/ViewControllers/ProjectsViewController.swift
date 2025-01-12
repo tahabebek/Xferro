@@ -54,7 +54,6 @@ class ProjectsViewController: NSViewController {
                 guard let self else { return }
                 let isGit = isFolderGit(url: url)
                 let project = Project(isGit: isGit, url: url)
-                createInitialCommits(for: project)
                 user.projects.currentProject = project
                 user.projects.recentProjects.insert(project)
                 if let selectVC = self.selectProjectViewController {
@@ -94,19 +93,5 @@ class ProjectsViewController: NSViewController {
         }
     }
 
-    private func createInitialCommits(for project: Project) {
-        do {
-            let memoryRepo = try InMemoryGit()
-            var diskRepo: OnDiskGit
 
-            if project.isGit {
-                try memoryRepo.copyFromRepository(sourcePath: project.url.path)
-                
-            } else {
-            }
-        }
-        catch {
-            fatalError(error.localizedDescription)
-        }
-    }
 }

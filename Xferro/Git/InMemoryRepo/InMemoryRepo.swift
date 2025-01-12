@@ -1,5 +1,5 @@
 //
-//  InMemoryGit.swift
+//  InMemoryRepo.swift
 //  SwiftSpace
 //
 //  Created by Taha Bebek on 1/7/25.
@@ -7,13 +7,21 @@
 
 import Foundation
 
-class InMemoryGit {
-    private(set) var repo: OpaquePointer?
+class InMemoryRepo {
+    private(set) var repository: Repository
     private(set) var refdbBackend: OpaquePointer?
     private var backend: UnsafeMutablePointer<git_odb_backend>?
     private var odb: OpaquePointer?
+    private let sourcePath: String
 
-    init() throws {
+    init(
+        sourcePath: String,
+        shouldCopyFromSource: Bool = true,
+        identity: CommitIdentity = .init(name: "Author", email: "author@example.com")
+    ) throws {
+        print("inmemory repo init")
+        self.sourcePath = sourcePath
+
         git_libgit2_init()
 
         if git_mempack_new(&backend) != 0 {
@@ -27,10 +35,17 @@ class InMemoryGit {
             throw GitError.initializationFailed("Failed to add backend \(GitError.getLastErrorMessage())")
         }
 
+        var repo: OpaquePointer?
+
         if git_repository_wrap_odb(&repo, odb) != 0 {
             throw GitError.initializationFailed("Failed to create repository \(GitError.getLastErrorMessage())")
         }
 
+        guard let repo else {
+            fatalError("repo is nil")
+        }
+        self.repository = Repository(repo)
+        checkGitDirectoryPermissions(path: sourcePath)
         try setupRepositoryIndex()
 
         var refdb: OpaquePointer?
@@ -48,26 +63,71 @@ class InMemoryGit {
         }
 
         git_repository_set_refdb(repo, refdb)
-
-        try setupRepositoryIdentity()
+        try setupRepositoryIdentity(identity: identity)
+        if shouldCopyFromSource {
+            try copyFromRepository(sourcePath: sourcePath)
+        }
     }
 
-    private func setupRepositoryIdentity() throws {
-        var signature: UnsafeMutablePointer<git_signature>?
-        let defaultResult = git_signature_default(&signature, repo)
-
-        if defaultResult != 0 {
-            if git_signature_new(&signature,
-                                 "Memory Repo User",
-                                 "memory-repo@example.com",
-                                 Int64(Date().timeIntervalSince1970),
-                                 0) != 0 {
-                throw GitError.initializationFailed("Failed to create signature")
+    private func setupRepositoryIdentity(identity: CommitIdentity) throws {
+        let configPath = String(sourcePath.replacingOccurrences(of: "/", with: "-").appending("-config").dropFirst())
+        let addConfigResult = repository.addConfig(path: FileManager.default.temporaryDirectory.appendingPathComponent(configPath).path, level: .repository)
+        switch addConfigResult {
+        case .success:
+            let nameResult = repository.config.set(string: identity.name, for: "user.name")
+            if case .failure(let error) = nameResult {
+                fatalError(error.localizedDescription)
             }
+            let emailResult = repository.config.set(string: identity.email, for: "user.email")
+            if case .failure(let error) = emailResult {
+                fatalError(error.localizedDescription)
+            }
+        case .failure(let failure):
+            fatalError(failure.localizedDescription)
         }
 
-        if let sig = signature {
-            git_signature_free(sig)
+//        var signature: UnsafeMutablePointer<git_signature>?
+//        let defaultResult = git_signature_default(&signature, repository?.pointer)
+//
+//        if defaultResult != 0 {
+//            if git_signature_new(&signature,
+//                                 identity.name,
+//                                 identity.email,
+//                                 Int64(Date().timeIntervalSince1970),
+//                                 0) != 0 {
+//                throw GitError.initializationFailed("Failed to create signature")
+//            }
+//        }
+//
+//        if let sig = signature {
+//            git_signature_free(sig)
+//        }
+    }
+
+    func checkGitDirectoryPermissions(path: String) {
+        guard let bookmarkData = UserDefaults.standard.data(forKey: sourcePath) else {
+            return
+        }
+
+        do {
+            var isStale = false
+            let url = try URL(
+                resolvingBookmarkData: bookmarkData,
+                options: .withSecurityScope,
+                relativeTo: nil,
+                bookmarkDataIsStale: &isStale
+            )
+
+            guard url.startAccessingSecurityScopedResource() else {
+                print("Failed to access repository")
+                return
+            }
+            let fileManager = FileManager.default
+            if let attributes = try? fileManager.attributesOfItem(atPath: path) {
+                print("Directory permissions: \(attributes[.posixPermissions] ?? "unknown")")
+            }
+        } catch {
+            print("Failed to access repository")
         }
     }
 
@@ -77,17 +137,40 @@ class InMemoryGit {
             throw GitError.initializationFailed("Failed to create index \(GitError.getLastErrorMessage())")
         }
         git_index_set_caps(index, GIT_INDEX_CAPABILITY_FROM_OWNER.rawValue)
-        git_repository_set_index(repo, index)
+        git_repository_set_index(repository.pointer, index)
         git_index_free(index)
     }
 
     deinit {
         git_odb_free(odb)
-        git_repository_free(repo)
+        git_repository_free(repository.pointer)
         git_libgit2_shutdown()
     }
 
-    func copyFromRepository(sourcePath: String) throws {
+    private func copyFromRepository(sourcePath: String) throws {
+        print("-----------------------------------copy")
+        print("sourcePath: \(sourcePath)")
+        let stringsResult = repository.config.all()
+        switch stringsResult {
+        case .success(let strings):
+            print("strings: \(strings)")
+            for (key, string) in strings {
+                print("key: \(key), string: \(string)")
+            }
+        case .failure(let error):
+            print(error.localizedDescription)
+        }
+
+        let referencesResult = repository.references(withPrefix: "")
+        switch referencesResult {
+        case .success(let references):
+            for reference in references {
+                print("reference: \(reference)")
+            }
+        case .failure(let error):
+            print(error.localizedDescription)
+        }
+
         var sourceRepo: OpaquePointer?
         if git_repository_open(&sourceRepo, sourcePath) != 0 {
             throw GitError.initializationFailed("Failed to open source repository \(GitError.getLastErrorMessage())")
@@ -96,8 +179,25 @@ class InMemoryGit {
 
         // Get the HEAD reference to find the latest commit
         var head: OpaquePointer?
-        if git_repository_head(&head, sourceRepo) != 0 {
-            throw GitError.mempackError("Failed to get HEAD reference \(GitError.getLastErrorMessage())")
+        let result = git_repository_head(&head, sourceRepo)
+
+        switch result {
+        case 0:
+            // Success - HEAD was retrieved correctly
+            print("success")
+
+        case -9:
+            // Repository exists but HEAD doesn't point to a valid commit yet
+            throw GitError.mempackError("Repository HEAD is in an invalid state - no commits exist yet")
+
+        case -3:
+            // HEAD reference is missing
+            throw GitError.mempackError("HEAD reference not found - repository might be corrupt")
+
+        default:
+            // Other errors including permission issues
+            print(GitError.getLastErrorMessage())
+            throw GitError.mempackError("Failed to get HEAD reference: \(GitError.getLastErrorMessage())")
         }
         defer { git_reference_free(head) }
 
@@ -123,7 +223,7 @@ class InMemoryGit {
         var newRef: OpaquePointer?
 
         // Force create/update the branch reference
-        if git_reference_create(&newRef, repo, branchName, headOid, 1, nil) != 0 {
+        if git_reference_create(&newRef, repository.pointer, branchName, headOid, 1, nil) != 0 {
             throw GitError.mempackError("Failed to create branch \(GitError.getLastErrorMessage())")
         }
         git_reference_free(newRef)
@@ -132,12 +232,12 @@ class InMemoryGit {
             let fullBranchName = branchName.hasPrefix("refs/heads/") ? branchName : "refs/heads/\(branchName)"
 
             var branchRef: OpaquePointer?
-            if git_reference_lookup(&branchRef, repo, fullBranchName) != 0 {
+            if git_reference_lookup(&branchRef, repository.pointer, fullBranchName) != 0 {
                 throw GitError.mempackError("Branch \(fullBranchName) does not exist")
             }
             git_reference_free(branchRef)
 
-            if git_reference_symbolic_create(&newRef, repo, "HEAD", fullBranchName, 1, nil) != 0 {
+            if git_reference_symbolic_create(&newRef, repository.pointer, "HEAD", fullBranchName, 1, nil) != 0 {
                 throw GitError.mempackError("Failed to create HEAD reference \(GitError.getLastErrorMessage())")
             }
             git_reference_free(newRef)
@@ -211,7 +311,7 @@ class InMemoryGit {
             throw GitError.mempackError("Commit not found \(GitError.getLastErrorMessage())")
         }
         var reference: OpaquePointer?
-        if git_branch_create(&reference, repo, name, commit, 0) != 0 {
+        if git_branch_create(&reference, repository.pointer, name, commit, 0) != 0 {
             throw GitError.mempackError("Failed to create branch \(GitError.getLastErrorMessage())")
         }
         git_reference_free(reference)
@@ -224,7 +324,7 @@ class InMemoryGit {
         }
 
         var commit: OpaquePointer?
-        if git_commit_lookup(&commit, repo, &oid) != 0 {
+        if git_commit_lookup(&commit, repository.pointer, &oid) != 0 {
             throw GitError.mempackError("Commit not found \(GitError.getLastErrorMessage())")
         }
 
@@ -233,7 +333,7 @@ class InMemoryGit {
 
     func getLatestCommit(branch: String) throws -> OpaquePointer? {
         var reference: OpaquePointer?
-        if git_reference_lookup(&reference, repo, "refs/heads/\(branch)") != 0 {
+        if git_reference_lookup(&reference, repository.pointer, "refs/heads/\(branch)") != 0 {
             throw GitError.mempackError("Branch not found \(GitError.getLastErrorMessage())")
         }
         defer { git_reference_free(reference) }
@@ -241,7 +341,7 @@ class InMemoryGit {
         let oid = git_reference_target(reference)
 
         var commit: OpaquePointer?
-        if git_commit_lookup(&commit, repo, oid) != 0 {
+        if git_commit_lookup(&commit, repository.pointer, oid) != 0 {
             throw GitError.mempackError("Commit not found \(GitError.getLastErrorMessage())")
         }
 
@@ -250,7 +350,7 @@ class InMemoryGit {
 
     func createCommit(message: String, parentCommitSha: String? = nil) throws -> String {
         var index: OpaquePointer?
-        if git_repository_index(&index, repo) != 0 {
+        if git_repository_index(&index, repository.pointer) != 0 {
             throw GitError.mempackError("Failed to get index \(GitError.getLastErrorMessage())")
         }
         defer { git_index_free(index) }
@@ -261,7 +361,7 @@ class InMemoryGit {
         }
 
         var tree: OpaquePointer?
-        if git_tree_lookup(&tree, repo, &treeId) != 0 {
+        if git_tree_lookup(&tree, repository.pointer, &treeId) != 0 {
             throw GitError.mempackError("Failed to look up tree \(GitError.getLastErrorMessage())")
         }
         defer { git_tree_free(tree) }
@@ -285,7 +385,7 @@ class InMemoryGit {
 
         if git_commit_create(
             &commitId,
-            repo,
+            repository.pointer,
             "HEAD",
             signature,
             signature,
@@ -305,7 +405,7 @@ class InMemoryGit {
 
     func addFile(path: String, content: String) throws -> git_oid {
         var index: OpaquePointer?
-        if git_repository_index(&index, repo) != 0 {
+        if git_repository_index(&index, repository.pointer) != 0 {
             throw GitError.mempackError("Failed to get index \(GitError.getLastErrorMessage())")
         }
         defer { git_index_free(index) }
@@ -316,7 +416,7 @@ class InMemoryGit {
             throw GitError.mempackError("Failed to convert content to data")
         }
 
-        if git_blob_create_from_buffer(&blobId, repo, [UInt8](contentData), contentData.count) != 0 {
+        if git_blob_create_from_buffer(&blobId, repository.pointer, [UInt8](contentData), contentData.count) != 0 {
             throw GitError.mempackError("Failed to create blob \(GitError.getLastErrorMessage())")
         }
 

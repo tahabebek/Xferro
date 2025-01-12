@@ -10,6 +10,8 @@ import AppKit
 class ProjectViewController: NSViewController {
     private let user: User
     private var currentProject: Project
+    private var memoryRepo: InMemoryRepo
+    private var diskRepo: Repository
 
     private var commitsViewController: CommitsViewController!
     private var commitDetailViewController: CommitDetailViewController!
@@ -67,6 +69,29 @@ class ProjectViewController: NSViewController {
             fatalError("User's current project is nil")
         }
         self.currentProject = project
+        do {
+            let memoryRepo: InMemoryRepo
+            let diskRepoResult: Result<Repository, NSError>
+            let diskRepo: Repository
+            if project.isGit {
+                memoryRepo = try InMemoryRepo(sourcePath: project.url.path, shouldCopyFromSource: true, identity: user.commitIdentity)
+                diskRepoResult = Repository.at(project.url)
+            } else {
+                memoryRepo = try InMemoryRepo(sourcePath: project.url.path, shouldCopyFromSource: false, identity: user.commitIdentity)
+                diskRepoResult = Repository.create(at: project.url)
+            }
+            switch diskRepoResult {
+            case .success(let repository):
+                diskRepo = repository
+            case .failure(let error):
+                fatalError(error.localizedDescription)
+            }
+            self.memoryRepo = memoryRepo
+            self.diskRepo = diskRepo
+        }
+        catch {
+            fatalError(error.localizedDescription)
+        }
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -88,6 +113,9 @@ class ProjectViewController: NSViewController {
 
     override func loadView() {
         view = splitView
+    }
+
+    private func createRepos(for project: Project) {
     }
 }
 

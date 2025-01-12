@@ -19,10 +19,28 @@ struct FolderPickerView: View {
                 panel.canChooseFiles = false
                 panel.canChooseDirectories = true
                 panel.allowsMultipleSelection = false
+                panel.message = "Select a folder"
 
                 if panel.runModal() == .OK {
                     if let selectedFolder = panel.urls.first {
-                        onSelect(selectedFolder)
+                        guard selectedFolder.startAccessingSecurityScopedResource() else {
+                            print("Failed to access the selected folder")
+                            return
+                        }
+                        do {
+                            let bookmarkData = try selectedFolder.bookmarkData(
+                                options: .withSecurityScope,
+                                includingResourceValuesForKeys: nil,
+                                relativeTo: nil
+                            )
+
+                            UserDefaults.standard.set(bookmarkData, forKey: selectedFolder.path)
+                            onSelect(selectedFolder)
+                        } catch {
+                            print("Failed to create bookmark: \(error)")
+                        }
+
+                        selectedFolder.stopAccessingSecurityScopedResource()
                     }
                 }
 

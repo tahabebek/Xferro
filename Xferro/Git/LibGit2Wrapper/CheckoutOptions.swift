@@ -44,7 +44,7 @@ class CheckoutOptions {
             self.value = value
         }
 
-        internal init(_ strategy: git_checkout_strategy_t) {
+        init(_ strategy: git_checkout_strategy_t) {
             self.value = UInt(strategy.rawValue)
         }
 
@@ -58,7 +58,7 @@ class CheckoutOptions {
             return value
         }
 
-        internal var gitCheckoutStrategy: git_checkout_strategy_t {
+        var gitCheckoutStrategy: git_checkout_strategy_t {
             return git_checkout_strategy_t(UInt32(self.value))
         }
     }
@@ -73,7 +73,7 @@ class CheckoutOptions {
         self.progress = progress
     }
 
-    internal func toGit() -> git_checkout_options {
+     func toGit() -> git_checkout_options {
         // Do this because GIT_CHECKOUT_OPTIONS_INIT is unavailable in swift
         let pointer = UnsafeMutablePointer<git_checkout_options>.allocate(capacity: 1)
         git_checkout_options_init(pointer, UInt32(GIT_CHECKOUT_OPTIONS_VERSION))

@@ -44,7 +44,7 @@ final class InMemoryGitTests: XCTestCase {
     }
 
     func testInitialization() throws {
-        let repo = try InMemoryGit()
+        let repo = try InMemoryRepo()
         XCTAssertNotNil(repo.repo, "Repository should be initialized")
 
         // Try writing a blob to verify backend works
@@ -68,7 +68,7 @@ final class InMemoryGitTests: XCTestCase {
     }
 
     func testCopyFromRepository() throws {
-        let memoryRepo = try InMemoryGit()
+        let memoryRepo = try InMemoryRepo()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         var head: OpaquePointer?
@@ -107,7 +107,7 @@ final class InMemoryGitTests: XCTestCase {
     }
 
     func testCreateBranch() throws {
-        let memoryRepo = try InMemoryGit()
+        let memoryRepo = try InMemoryRepo()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         var head: OpaquePointer?
@@ -134,7 +134,7 @@ final class InMemoryGitTests: XCTestCase {
     }
 
     func testGetCommit() throws {
-        let memoryRepo = try InMemoryGit()
+        let memoryRepo = try InMemoryRepo()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         // Get HEAD commit SHA
@@ -158,7 +158,7 @@ final class InMemoryGitTests: XCTestCase {
     }
 
     func testAddFile() throws {
-        let memoryRepo = try InMemoryGit()
+        let memoryRepo = try InMemoryRepo()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         let testPath = "test-file.txt"
@@ -180,7 +180,7 @@ final class InMemoryGitTests: XCTestCase {
     }
 
     func testCreateCommit() throws {
-        let memoryRepo = try InMemoryGit()
+        let memoryRepo = try InMemoryRepo()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         // Get current HEAD commit
@@ -221,7 +221,7 @@ final class InMemoryGitTests: XCTestCase {
     }
 
     func testGetLatestCommitWithMultipleCommits() throws {
-        let memoryRepo = try InMemoryGit()
+        let memoryRepo = try InMemoryRepo()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         // Get initial HEAD commit SHA

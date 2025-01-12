@@ -96,7 +96,7 @@ extension ReferenceType {
 }
 
 /// Create a Reference, Branch, or TagReference from a libgit2 `git_reference`.
-internal func referenceWithLibGit2Reference(_ pointer: OpaquePointer) -> ReferenceType {
+ func referenceWithLibGit2Reference(_ pointer: OpaquePointer) -> ReferenceType {
     if git_reference_is_branch(pointer) != 0 || git_reference_is_remote(pointer) != 0 {
         return Branch(pointer)!
     } else if git_reference_is_tag(pointer) != 0 {

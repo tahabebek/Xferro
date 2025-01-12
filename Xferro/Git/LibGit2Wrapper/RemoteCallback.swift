@@ -234,7 +234,7 @@ class RemoteCallback {
         return Unmanaged.passRetained(self).toOpaque()
     }
 
-    internal func toGit() -> git_remote_callbacks {
+     func toGit() -> git_remote_callbacks {
         let pointer = UnsafeMutablePointer<git_remote_callbacks>.allocate(capacity: 1)
         git_remote_init_callbacks(pointer, UInt32(GIT_REMOTE_CALLBACKS_VERSION))
         var callback = pointer.pointee
@@ -259,10 +259,9 @@ class RemoteCallback {
         return callback
     }
 
-    // MARK: - Internal
-    internal var lastTime: CFAbsoluteTime? = nil
-    internal var lastTimeInterval: CFTimeInterval = 0
-    internal func updateLastTime(force: Bool) -> Bool {
+     var lastTime: CFAbsoluteTime? = nil
+     var lastTimeInterval: CFTimeInterval = 0
+     func updateLastTime(force: Bool) -> Bool {
         let current = CACurrentMediaTime()
         if let lastTime = self.lastTime {
             let timeDelta = current - lastTime
@@ -273,11 +272,11 @@ class RemoteCallback {
         return true
     }
 
-    internal var lastTransferBytes: size_t = 0
-    internal var lastTransferSpeed: String = "0 Byte/s"
-    internal var transferFinish: Bool = false
-    internal var indexFinish: Bool = false
-    internal func transferSpeed(_ bytes: size_t) -> String {
+     var lastTransferBytes: size_t = 0
+     var lastTransferSpeed: String = "0 Byte/s"
+     var transferFinish: Bool = false
+     var indexFinish: Bool = false
+     func transferSpeed(_ bytes: size_t) -> String {
         let speed: String
         let bytesDelta = bytes - lastTransferBytes
         if lastTimeInterval > 0 {
@@ -290,7 +289,7 @@ class RemoteCallback {
         return speed
     }
 
-    internal func fileSizeDescription(_ bytes: Float) -> String {
+     func fileSizeDescription(_ bytes: Float) -> String {
         if bytes > (1024 * 1024) {
             return String(format: "%.2f MiB", bytes / (1024*1024))
         } else if bytes > 1024 {

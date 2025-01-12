@@ -26,7 +26,7 @@ extension Repository {
         return references.aggregateResult()
     }
 
-    internal func reference<T>(longName: String, block: (OpaquePointer) -> Result<T, NSError>) -> Result<T, NSError> {
+     func reference<T>(longName: String, block: (OpaquePointer) -> Result<T, NSError>) -> Result<T, NSError> {
         var pointer: OpaquePointer? = nil
         let result = git_reference_lookup(&pointer, self.pointer, longName)
         guard result == GIT_OK.rawValue else {
@@ -37,7 +37,7 @@ extension Repository {
         return value
     }
 
-    internal func reference<T>(shortName: String, block: (OpaquePointer) -> Result<T, NSError>) -> Result<T, NSError> {
+     func reference<T>(shortName: String, block: (OpaquePointer) -> Result<T, NSError>) -> Result<T, NSError> {
         var pointer: OpaquePointer? = nil
         let result = git_reference_dwim(&pointer, self.pointer, shortName)
         guard result == GIT_OK.rawValue else {
@@ -48,7 +48,7 @@ extension Repository {
         return value
     }
 
-    internal func reference<T>(named name: String, block: (OpaquePointer) -> Result<T, NSError>) -> Result<T, NSError> {
+     func reference<T>(named name: String, block: (OpaquePointer) -> Result<T, NSError>) -> Result<T, NSError> {
         if name.isLongRef || name.isHEAD {
             return self.reference(longName: name) { pointer -> Result<T, NSError> in
                 return block(pointer)
