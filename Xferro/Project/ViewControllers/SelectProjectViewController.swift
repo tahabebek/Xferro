@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import SwiftUI
 
 class SelectProjectViewController: NSViewController {
     let user: User
@@ -21,25 +22,28 @@ class SelectProjectViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        let folderPickerView = FolderPickerView() { [weak self] url in
+            guard let self else { return }
+            print(url)
+        }
+
+        let hostingController = NSHostingController(rootView: folderPickerView)
+
+        addChild(hostingController)
+        view.addSubview(hostingController.view)
+
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
     }
 
     override func loadView() {
         let selectProjectView = NSView()
         selectProjectView.wantsLayer = true
-
-        let label = NSTextField(labelWithString: "Select Project")
-        label.font = NSFont.systemFont(ofSize: 16)
-        label.textColor = NSColor.white
-
-        label.isEditable = false
-        label.isSelectable = false
-        label.isBordered = false
-        label.drawsBackground = false
-        selectProjectView.addSubview(label)
-
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.centerXAnchor.constraint(equalTo: selectProjectView.centerXAnchor).isActive = true
-        label.centerYAnchor.constraint(equalTo: selectProjectView.centerYAnchor).isActive = true
         view = selectProjectView
     }
 }
