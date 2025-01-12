@@ -8,10 +8,7 @@
 import AppKit
 
 class CommitDetailViewController: NSViewController {
-    private let commit: Commit
-
-    init(commit: Commit) {
-        self.commit = commit
+    init() {
         super.init(nibName: nil, bundle: nil)
     }
 

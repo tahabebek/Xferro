@@ -10,7 +10,6 @@ import AppKit
 class ProjectViewController: NSViewController {
     private let user: User
     private var currentProject: Project
-    private var currentCommit: Commit
 
     private var commitsViewController: CommitsViewController!
     private var commitDetailViewController: CommitDetailViewController!
@@ -38,7 +37,7 @@ class ProjectViewController: NSViewController {
         commitsViewController.view.widthAnchor.constraint(greaterThanOrEqualToConstant: Dimensions.commitsViewWidth).isActive = true
         commitsViewController.view.heightAnchor.constraint(equalTo: splitView.heightAnchor).isActive = true
 
-        commitDetailViewController = CommitDetailViewController(commit: currentCommit)
+        commitDetailViewController = CommitDetailViewController()
         addChild(commitDetailViewController)
 
         splitView.addSubview(commitDetailViewController.view)
@@ -68,12 +67,6 @@ class ProjectViewController: NSViewController {
             fatalError("User's current project is nil")
         }
         self.currentProject = project
-
-        guard let lastCommit = currentProject.commits.last else {
-            fatalError("Project's commits are nil")
-        }
-        self.currentCommit = lastCommit
-
         super.init(nibName: nil, bundle: nil)
     }
 

@@ -53,7 +53,7 @@ class ProjectsViewController: NSViewController {
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 let isGit = isFolderGit(url: url)
-                let project = Project(isGit: isGit, url: url, commits: [])
+                let project = Project(isGit: isGit, url: url)
                 createInitialCommits(for: project)
                 user.projects.currentProject = project
                 user.projects.recentProjects.insert(project)

@@ -158,7 +158,7 @@ class Config {
 
     func strings(for keyPath: String) -> Result<[(value: String, depth: UInt32)]?, NSError> {
         return keyPath.withCString { name in
-            var iter: OpaquePointer? = nil
+            var iter: UnsafeMutablePointer<git_config_iterator>? = nil
             var result = git_config_multivar_iterator_new(&iter, self.snapshot, name, nil)
             guard result == GIT_OK.rawValue else {
                 return .failure(NSError(gitError: result, pointOfFailure: "git_config_multivar_iterator_new"))
@@ -236,7 +236,7 @@ class Config {
 
     func each(regex: String, block: (git_config_entry) -> Bool) -> Result<(), NSError> {
         return regex.withCString { regexp in
-            var iter: OpaquePointer? = nil
+            var iter: UnsafeMutablePointer<git_config_iterator>? = nil
             git_config_iterator_glob_new(&iter, self.snapshot, regexp)
             defer { git_config_iterator_free(iter!) }
 
@@ -261,7 +261,7 @@ class Config {
 
     func all() -> Result<[String: [Entry]], NSError> {
         var values = [String: [Entry]]()
-        var iter: OpaquePointer? = nil
+        var iter: UnsafeMutablePointer<git_config_iterator>? = nil
         git_config_iterator_new(&iter, self.snapshot)
         defer { git_config_iterator_free(iter!) }
 

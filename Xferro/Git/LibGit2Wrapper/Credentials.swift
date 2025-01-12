@@ -11,9 +11,6 @@ private class Wrapper<T> {
     init(_ value: T) {
         self.value = value
     }
-    deinit {
-
-    }
 }
 
 enum Credentials: Equatable {
@@ -65,7 +62,7 @@ enum Credentials: Equatable {
 /// Converts the result to the correct error code required by libgit2 (0 = success, 1 = rejected setting creds,
 /// -1 = error)
 func credentialsCallback(
-    cred: UnsafeMutablePointer<OpaquePointer?>?,
+    cred: UnsafeMutablePointer<UnsafeMutablePointer<git_cred>?>?,
     url: UnsafePointer<CChar>?,
     username: UnsafePointer<CChar>?,
     allowTypes: UInt32,

@@ -43,7 +43,7 @@ extension SSH2 {
 
         class func parse(_ filepath: String) -> ConfigFile? {
             let path = (filepath as NSString).expandingTildeInPath
-            guard let content = try? String(contentsOfFile: path) else { return nil }
+            guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { return nil }
             var items = [Any]()
             for line in content.split(separator: "\n") {
                 let line = line.trimmingCharacters(in: .whitespaces)
