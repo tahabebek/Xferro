@@ -8,7 +8,10 @@
 import AppKit
 
 class ProjectViewController: NSViewController {
-    private let project: Project
+    private let user: User
+    private var currentProject: Project
+    private var currentCommit: Commit
+
     private var commitsViewController: CommitsViewController!
     private var commitDetailViewController: CommitDetailViewController!
     private var fileDetailViewController: FileDetailViewController!
@@ -27,7 +30,7 @@ class ProjectViewController: NSViewController {
         splitView.wantsLayer = true
         splitView.layer?.backgroundColor = NSColor.white.cgColor
 
-        commitsViewController = CommitsViewController(project: project)
+        commitsViewController = CommitsViewController(project: currentProject)
         addChild(commitsViewController)
 
         splitView.addSubview(commitsViewController.view)
@@ -35,7 +38,7 @@ class ProjectViewController: NSViewController {
         commitsViewController.view.widthAnchor.constraint(greaterThanOrEqualToConstant: Dimensions.commitsViewWidth).isActive = true
         commitsViewController.view.heightAnchor.constraint(equalTo: splitView.heightAnchor).isActive = true
 
-        commitDetailViewController = CommitDetailViewController(commit: project.commits.first!)
+        commitDetailViewController = CommitDetailViewController(commit: currentCommit)
         addChild(commitDetailViewController)
 
         splitView.addSubview(commitDetailViewController.view)
@@ -43,7 +46,7 @@ class ProjectViewController: NSViewController {
         commitDetailViewController.view.widthAnchor.constraint(greaterThanOrEqualToConstant: Dimensions.commitDetailsViewWidth).isActive = true
         commitDetailViewController.view.heightAnchor.constraint(equalTo: splitView.heightAnchor).isActive = true
 
-        fileDetailViewController = FileDetailViewController(file: project.commits.first!.files.first!)
+        fileDetailViewController = FileDetailViewController()
         addChild(fileDetailViewController)
 
         splitView.addSubview(fileDetailViewController.view)
@@ -59,8 +62,18 @@ class ProjectViewController: NSViewController {
         return splitView
     }()
 
-    init(project: Project) {
-        self.project = project
+    init(user: User) {
+        self.user = user
+        guard let project = user.projects.currentProject else {
+            fatalError("User's current project is nil")
+        }
+        self.currentProject = project
+
+        guard let lastCommit = currentProject.commits.last else {
+            fatalError("Project's commits are nil")
+        }
+        self.currentCommit = lastCommit
+
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -76,7 +89,8 @@ class ProjectViewController: NSViewController {
         super.viewDidAppear()
         self.view.window?.toolbar = topBar
         self.view.window?.toolbarStyle = .automatic
-        view.window?.title = "Xferro"
+        view.window?.title = currentProject.url.lastPathComponent
+        print("project \(currentProject.url), isGit \(currentProject.isGit)")
     }
 
     override func loadView() {

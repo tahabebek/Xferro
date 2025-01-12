@@ -8,10 +8,8 @@
 import AppKit
 
 class FileDetailViewController: NSViewController {
-    private let file: File
 
-    init(file: File) {
-        self.file = file
+    init() {
         super.init(nibName: nil, bundle: nil)
     }
 

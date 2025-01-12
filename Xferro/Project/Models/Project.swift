@@ -16,13 +16,11 @@ class Project: Codable, Hashable, Equatable {
         hasher.combine(url)
     }
 
-    init(isGit: Bool, url: URL, commits: [Commit]) {
+    init(isGit: Bool, url: URL) {
         self.isGit = isGit
         self.url = url
-        self.commits = commits
     }
 
     let isGit: Bool
     let url: URL
-    let commits: [Commit]
 }

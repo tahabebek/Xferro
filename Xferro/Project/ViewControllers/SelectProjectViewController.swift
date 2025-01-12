@@ -10,9 +10,11 @@ import SwiftUI
 
 class SelectProjectViewController: NSViewController {
     let user: User
+    let onURLSelected: (URL) -> Void
 
-    init(user: User) {
+    init(user: User, onURLSelected: @escaping (URL) -> Void) {
         self.user = user
+        self.onURLSelected = onURLSelected
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -24,7 +26,7 @@ class SelectProjectViewController: NSViewController {
         super.viewDidLoad()
         let folderPickerView = FolderPickerView() { [weak self] url in
             guard let self else { return }
-            print(url)
+            onURLSelected(url)
         }
 
         let hostingController = NSHostingController(rootView: folderPickerView)

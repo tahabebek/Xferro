@@ -1,5 +1,5 @@
 //
-//  InMemoryGitRepositoryTests.swift
+//  InMemoryGitTests.swift
 //  SwiftSpaceTests
 //
 //  Created by Taha Bebek on 1/7/25.
@@ -8,7 +8,7 @@
 import XCTest
 @testable import Xferro
 
-final class InMemoryGitRepositoryTests: XCTestCase {
+final class InMemoryGitTests: XCTestCase {
     var testRepoPath: String!
     var sourceRepo: OpaquePointer?
 
@@ -20,7 +20,6 @@ final class InMemoryGitRepositoryTests: XCTestCase {
         testRepoPath = tempDir.path
 
         git_libgit2_init()
-        // Initialize a real Git repository that we'll use as our source
         var repo: OpaquePointer?
         guard git_repository_init(&repo, testRepoPath, 0) == 0 else {
             XCTFail("Failed to initialize test repository \(GitError.getLastErrorMessage())")
@@ -45,7 +44,7 @@ final class InMemoryGitRepositoryTests: XCTestCase {
     }
 
     func testInitialization() throws {
-        let repo = try InMemoryGitRepository()
+        let repo = try InMemoryGit()
         XCTAssertNotNil(repo.repo, "Repository should be initialized")
 
         // Try writing a blob to verify backend works
@@ -69,7 +68,7 @@ final class InMemoryGitRepositoryTests: XCTestCase {
     }
 
     func testCopyFromRepository() throws {
-        let memoryRepo = try InMemoryGitRepository()
+        let memoryRepo = try InMemoryGit()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         var head: OpaquePointer?
@@ -108,7 +107,7 @@ final class InMemoryGitRepositoryTests: XCTestCase {
     }
 
     func testCreateBranch() throws {
-        let memoryRepo = try InMemoryGitRepository()
+        let memoryRepo = try InMemoryGit()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         var head: OpaquePointer?
@@ -135,7 +134,7 @@ final class InMemoryGitRepositoryTests: XCTestCase {
     }
 
     func testGetCommit() throws {
-        let memoryRepo = try InMemoryGitRepository()
+        let memoryRepo = try InMemoryGit()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         // Get HEAD commit SHA
@@ -159,7 +158,7 @@ final class InMemoryGitRepositoryTests: XCTestCase {
     }
 
     func testAddFile() throws {
-        let memoryRepo = try InMemoryGitRepository()
+        let memoryRepo = try InMemoryGit()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         let testPath = "test-file.txt"
@@ -181,7 +180,7 @@ final class InMemoryGitRepositoryTests: XCTestCase {
     }
 
     func testCreateCommit() throws {
-        let memoryRepo = try InMemoryGitRepository()
+        let memoryRepo = try InMemoryGit()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         // Get current HEAD commit
@@ -222,7 +221,7 @@ final class InMemoryGitRepositoryTests: XCTestCase {
     }
 
     func testGetLatestCommitWithMultipleCommits() throws {
-        let memoryRepo = try InMemoryGitRepository()
+        let memoryRepo = try InMemoryGit()
         try memoryRepo.copyFromRepository(sourcePath: testRepoPath)
 
         // Get initial HEAD commit SHA

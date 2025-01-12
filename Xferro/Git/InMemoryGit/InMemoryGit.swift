@@ -1,5 +1,5 @@
 //
-//  InMemoryGitRepository.swift
+//  InMemoryGit.swift
 //  SwiftSpace
 //
 //  Created by Taha Bebek on 1/7/25.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-class InMemoryGitRepository {
+class InMemoryGit {
     private(set) var repo: OpaquePointer?
     private(set) var refdbBackend: OpaquePointer?
     private var backend: UnsafeMutablePointer<git_odb_backend>?
@@ -38,7 +38,7 @@ class InMemoryGitRepository {
             throw GitError.initializationFailed("Failed to create refdb \(GitError.getLastErrorMessage())")
         }
 
-        var backend: UnsafeMutablePointer<git_refdb_backend>?///
+        var backend: UnsafeMutablePointer<git_refdb_backend>?
         if create_memory_refdb(repo, &backend) != 0 {
             throw GitError.initializationFailed("Failed to create memory refdb backend \(GitError.getLastErrorMessage())")
         }

@@ -202,6 +202,7 @@ class LoginViewController: NSViewController, NSTextFieldDelegate {
         loginView.isHidden = flag
         signupView.isHidden = flag
         verticalDividerTitle.isHidden = flag
+        skipButton.isHidden = flag
         for divider in dividers {
             divider.isHidden = flag
         }
@@ -300,7 +301,7 @@ class LoginViewController: NSViewController, NSTextFieldDelegate {
             userID: firebaseUserBeforeIdentityCreation?.uid ?? UUID().uuidString,
             login: login,
             commitIdentity: .init(name: name, email: email),
-            projects: Projects(currentProject: nil, projects: [])
+            projects: Projects(currentProject: nil, recentProjects: [])
         )
         let newUsers = Users(currentUser: user, recentUsers: [])
         AppDelegate.users = newUsers

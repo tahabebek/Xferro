@@ -7,10 +7,10 @@
 
 class Projects: Codable {
     var currentProject: Project?
-    let projects: Set<Project>
+    var recentProjects: Set<Project>
 
-    init(currentProject: Project? = nil, projects: Set<Project>) {
+    init(currentProject: Project? = nil, recentProjects: Set<Project>) {
         self.currentProject = currentProject
-        self.projects = projects
+        self.recentProjects = recentProjects
     }
 }
