@@ -8,10 +8,16 @@
 import AppKit
 
 class ProjectViewController: NSViewController {
+    enum AutoCommitStrategy {
+        case memory
+        case disk
+    }
+
     private let user: User
     private var currentProject: Project
-    private var memoryRepo: InMemoryRepo
-    private var diskRepo: Repository
+    private var autocommitStrategy: AutoCommitStrategy
+    private var autoCommitRepo: Repository
+    private var sourceRepo: Repository
 
     private var commitsViewController: CommitsViewController!
     private var commitDetailViewController: CommitDetailViewController!
@@ -63,21 +69,22 @@ class ProjectViewController: NSViewController {
         return splitView
     }()
 
-    init(user: User) {
+    init(user: User, autoCommitStrategy: AutoCommitStrategy = .disk) {
         self.user = user
+        self.autocommitStrategy = autoCommitStrategy
         guard let project = user.projects.currentProject else {
             fatalError("User's current project is nil")
         }
         self.currentProject = project
         do {
-            let memoryRepo: InMemoryRepo
+            let memoryRepo: Repository
             let diskRepoResult: Result<Repository, NSError>
             let diskRepo: Repository
             if project.isGit {
-                memoryRepo = try InMemoryRepo(sourcePath: project.url.path, shouldCopyFromSource: true, identity: user.commitIdentity)
+                memoryRepo = try Repository(sourcePath: project.url.path, shouldCopyFromSource: true, identity: user.commitIdentity)
                 diskRepoResult = Repository.at(project.url)
             } else {
-                memoryRepo = try InMemoryRepo(sourcePath: project.url.path, shouldCopyFromSource: false, identity: user.commitIdentity)
+                memoryRepo = try Repository(sourcePath: project.url.path, shouldCopyFromSource: false, identity: user.commitIdentity)
                 diskRepoResult = Repository.create(at: project.url)
             }
             switch diskRepoResult {
@@ -86,8 +93,8 @@ class ProjectViewController: NSViewController {
             case .failure(let error):
                 fatalError(error.localizedDescription)
             }
-            self.memoryRepo = memoryRepo
-            self.diskRepo = diskRepo
+            self.autoCommitRepo = memoryRepo
+            self.sourceRepo = diskRepo
         }
         catch {
             fatalError(error.localizedDescription)
