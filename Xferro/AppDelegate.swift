@@ -33,14 +33,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         let contentVC = LandingViewController()
 
-        // Create window
+        // Create windo2aGsZCYA2fmgCTrqsMCCw
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: Dimensions.appWidth, height: Dimensions.appHeight),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            styleMask: [.closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
-        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.contentViewController = contentVC
         window.center()
         window.makeKeyAndOrderFront(nil)

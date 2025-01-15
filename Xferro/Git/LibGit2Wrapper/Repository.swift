@@ -271,6 +271,20 @@ final class Repository {
         }
     }
 
+    /*
+     * The tag name will be checked for validity. You must avoid
+     * the characters '~', '^', ':', '\\', '?', '[', and '*', and the
+     * sequences ".." and "@{" which have special meaning to revparse.
+     */
+    func checkValid(_ refname: String) -> Bool {
+        var status: Int32 = 0
+        let result = git_reference_name_is_valid(&status, refname)
+        guard result == GIT_OK.rawValue else {
+            return false
+        }
+        return status == 1
+    }
+
     static func isGitRepository(url: URL) -> Result<Bool, NSError> {
         var repo: OpaquePointer?
         git_libgit2_init();

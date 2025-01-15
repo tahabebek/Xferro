@@ -9,11 +9,12 @@ import Foundation
 
 extension Repository {
 
-    // MARK: - private functions
-    func commit(tree: OpaquePointer, // git_tree
-                         parentCommits: [OpaquePointer?], // [git_commit]
-                         message: String,
-                         signature: UnsafeMutablePointer<git_signature>? = nil) -> Result<git_oid, NSError> {
+    func commit(
+        tree: OpaquePointer, // git_tree
+        parentCommits: [OpaquePointer?], // [git_commit]
+        message: String,
+        signature: UnsafeMutablePointer<git_signature>? = nil
+    ) -> Result<git_oid, NSError> {
         var msgBuf = git_buf()
         git_message_prettify(&msgBuf, message, 0, /* ascii for # */ 35)
         defer { git_buf_dispose(&msgBuf) }
@@ -41,10 +42,12 @@ extension Repository {
         }
     }
 
-    func commit(oid: git_oid,
-                         parentCommits: [OpaquePointer?], // [git_commit]
-                         message: String,
-                         signature: UnsafeMutablePointer<git_signature>? = nil) -> Result<git_oid, NSError> {
+    func commit(
+        oid: git_oid,
+        parentCommits: [OpaquePointer?], // [git_commit]
+        message: String,
+        signature: UnsafeMutablePointer<git_signature>? = nil
+    ) -> Result<git_oid, NSError> {
         var tree: OpaquePointer? = nil
         var treeOIDCopy = oid
         let lookupResult = git_tree_lookup(&tree, self.pointer, &treeOIDCopy)
@@ -57,10 +60,12 @@ extension Repository {
         return commit(tree: tree!, parentCommits: parentCommits, message: message, signature: signature)
     }
 
-    func commit(index: OpaquePointer, // git_index
-                         parentCommits: [OpaquePointer?], // [git_commit]
-                         message: String,
-                         signature: UnsafeMutablePointer<git_signature>? = nil) -> Result<git_oid, NSError> {
+    func commit(
+        index: OpaquePointer, // git_index
+        parentCommits: [OpaquePointer?], // [git_commit]
+        message: String,
+        signature: UnsafeMutablePointer<git_signature>? = nil
+    ) -> Result<git_oid, NSError> {
         var treeOID = git_oid()
         let result = git_index_write_tree(&treeOID, index)
         guard result == GIT_OK.rawValue else {
@@ -70,10 +75,10 @@ extension Repository {
         return commit(oid: treeOID, parentCommits: parentCommits, message: message, signature: signature)
     }
 
-    func commit(message: String,
-                         signature: UnsafeMutablePointer<git_signature>? = nil
+    func commit(
+        message: String,
+        signature: UnsafeMutablePointer<git_signature>? = nil
     ) -> Result<git_oid, NSError> {
-
         let unborn: Bool
         let result = git_repository_head_unborn(self.pointer)
         if result == 1 {

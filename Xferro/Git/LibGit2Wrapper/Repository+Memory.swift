@@ -39,7 +39,9 @@ extension Repository {
             fatalError("repo is nil")
         }
         self.init(repo)
+        #if !TEST
         checkGitDirectoryPermissions(sourcePath: sourcePath)
+        #endif
         try setupRepositoryIndex()
 
         var refdb: OpaquePointer?

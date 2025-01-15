@@ -1,0 +1,20 @@
+//
+//  WindowInfoKey.swift
+//  Xferro
+//
+//  Created by Taha Bebek on 1/13/25.
+//
+
+
+import SwiftUI
+
+struct WindowInfoKey: EnvironmentKey {
+    static let defaultValue: CGSize = .zero
+}
+
+extension EnvironmentValues {
+    var windowInfo: CGSize {
+        get { self[WindowInfoKey.self] }
+        set { self[WindowInfoKey.self] = newValue }
+    }
+}

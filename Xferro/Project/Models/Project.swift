@@ -6,8 +6,21 @@
 //
 
 import Foundation
+import Observation
 
-class Project: Codable, Hashable, Equatable {
+final class Project {
+    let isGit: Bool
+    let url: URL
+
+    init(isGit: Bool, url: URL) {
+        self.isGit = isGit
+        self.url = url
+    }
+
+}
+
+extension Project: Identifiable, Hashable, Equatable, Codable {
+    var id: URL { url }
     static func == (lhs: Project, rhs: Project) -> Bool {
         lhs.url == rhs.url
     }
@@ -15,12 +28,4 @@ class Project: Codable, Hashable, Equatable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(url)
     }
-
-    init(isGit: Bool, url: URL) {
-        self.isGit = isGit
-        self.url = url
-    }
-
-    let isGit: Bool
-    let url: URL
 }

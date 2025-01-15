@@ -18,6 +18,7 @@
 		7D38FE952D32CF66008BF288 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE942D32CF66008BF288 /* Sentry */; };
 		7D38FE972D32CF66008BF288 /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE962D32CF66008BF288 /* SentrySwiftUI */; };
 		7D38FE9A2D32CF87008BF288 /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE992D32CF87008BF288 /* Mixpanel */; };
+		7DEE91EE2D372EB400BE8315 /* ZipArchive in Frameworks */ = {isa = PBXBuildFile; productRef = 7DEE91ED2D372EB400BE8315 /* ZipArchive */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -88,6 +89,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7DEE91EE2D372EB400BE8315 /* ZipArchive in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -184,6 +186,7 @@
 			);
 			name = XferroTests;
 			packageProductDependencies = (
+				7DEE91ED2D372EB400BE8315 /* ZipArchive */,
 			);
 			productName = XferroTests;
 			productReference = 7D38FB362D2F9581008BF288 /* XferroTests.xctest */;
@@ -249,6 +252,7 @@
 				7D38FD532D30304A008BF288 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				7D38FE932D32CF66008BF288 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 				7D38FE982D32CF87008BF288 /* XCRemoteSwiftPackageReference "mixpanel-swift" */,
+				7DEE91EC2D372EB400BE8315 /* XCRemoteSwiftPackageReference "ZipArchive" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7D38FB262D2F957F008BF288 /* Products */;
@@ -623,6 +627,150 @@
 			};
 			name = Release;
 		};
+		7DEE91BF2D37066600BE8315 /* Test */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				EXCLUDED_ARCHS = x86_64;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Xferro/Libraries/git2-headers",
+					"$(SRCROOT)/Xferro/Libraries/libssh2-headers",
+					"$(SRCROOT)/Xferro/Libraries/openssl-headers",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Xferro/Xferro-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Test;
+		};
+		7DEE91C02D37066600BE8315 /* Test */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Xferro/Xferro.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Xferro/Libraries",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "This app needs access to your Git repositories to perform Git operations.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Xferro/Libraries",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_BUNDLE_IDENTIFIER = com.xferro.Xferro;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited) TEST";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Test;
+		};
+		7DEE91C12D37066600BE8315 /* Test */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xferro.XferroTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Xferro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Xferro";
+			};
+			name = Test;
+		};
+		7DEE91C22D37066600BE8315 /* Test */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xferro.XferroUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Xferro;
+			};
+			name = Test;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -630,6 +778,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7D38FB482D2F9581008BF288 /* Debug */,
+				7DEE91BF2D37066600BE8315 /* Test */,
 				7D38FB492D2F9581008BF288 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -639,6 +788,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7D38FB4B2D2F9581008BF288 /* Debug */,
+				7DEE91C02D37066600BE8315 /* Test */,
 				7D38FB4C2D2F9581008BF288 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -648,6 +798,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7D38FB4E2D2F9581008BF288 /* Debug */,
+				7DEE91C12D37066600BE8315 /* Test */,
 				7D38FB4F2D2F9581008BF288 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -657,6 +808,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7D38FB512D2F9581008BF288 /* Debug */,
+				7DEE91C22D37066600BE8315 /* Test */,
 				7D38FB522D2F9581008BF288 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -687,6 +839,14 @@
 			requirement = {
 				branch = master;
 				kind = branch;
+			};
+		};
+		7DEE91EC2D372EB400BE8315 /* XCRemoteSwiftPackageReference "ZipArchive" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ZipArchive/ZipArchive";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -726,6 +886,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7D38FE982D32CF87008BF288 /* XCRemoteSwiftPackageReference "mixpanel-swift" */;
 			productName = Mixpanel;
+		};
+		7DEE91ED2D372EB400BE8315 /* ZipArchive */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7DEE91EC2D372EB400BE8315 /* XCRemoteSwiftPackageReference "ZipArchive" */;
+			productName = ZipArchive;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
