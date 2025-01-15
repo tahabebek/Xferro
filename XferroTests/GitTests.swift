@@ -66,6 +66,14 @@ final class GitTests: XCTestCase {
     }
 
     func testDumpRepo() throws {
-        RepoManager().dumpRepo(Fixtures.simpleRepository)
+        let repoManager = RepoManager()
+        let simpleRepo = Fixtures.simpleRepository
+        RepoManager().dumpRepo(Fixtures.repositoryOnAnotherBranch)
+    }
+
+    func testLocalBranchMap() throws {
+        let simpleRepo = Fixtures.simpleRepository
+        let localBranchMap = simpleRepo.localBranchGraph()
+        XCTAssertTrue(localBranchMap.isSuccess)
     }
 }

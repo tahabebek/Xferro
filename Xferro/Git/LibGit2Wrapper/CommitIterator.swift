@@ -30,20 +30,26 @@ class CommitIterator: IteratorProtocol, Sequence {
         }
     }
 
-    init(repo: Repository, root: git_oid) {
+    init(repo: Repository, root: git_oid, reversed: Bool = false) {
         self.repo = repo
-        setupRevisionWalker(root: root)
+        setupRevisionWalker(root: root, reversed: reversed)
     }
 
     deinit {
         git_revwalk_free(self.revisionWalker)
     }
 
-    private func setupRevisionWalker(root: git_oid) {
+    private func setupRevisionWalker(root: git_oid, reversed: Bool = false) {
         var oid = root
         git_revwalk_new(&revisionWalker, repo.pointer)
-        git_revwalk_sorting(revisionWalker, GIT_SORT_TOPOLOGICAL.rawValue)
-        git_revwalk_sorting(revisionWalker, GIT_SORT_TIME.rawValue)
+        if reversed {
+            git_revwalk_sorting(
+                revisionWalker,
+                GIT_SORT_TOPOLOGICAL.rawValue | GIT_SORT_TIME.rawValue | GIT_SORT_REVERSE.rawValue
+            )
+        } else {
+            git_revwalk_sorting(revisionWalker, GIT_SORT_TOPOLOGICAL.rawValue | GIT_SORT_TIME.rawValue)
+        }
         git_revwalk_push(revisionWalker, &oid)
     }
 

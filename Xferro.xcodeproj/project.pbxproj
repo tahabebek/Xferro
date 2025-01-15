@@ -59,11 +59,6 @@
 			path = XferroTests;
 			sourceTree = "<group>";
 		};
-		7D38FB432D2F9581008BF288 /* XferroUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = XferroUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,7 +103,6 @@
 			children = (
 				7D38FB272D2F957F008BF288 /* Xferro */,
 				7D38FB392D2F9581008BF288 /* XferroTests */,
-				7D38FB432D2F9581008BF288 /* XferroUITests */,
 				7D38FCFF2D3024C0008BF288 /* Frameworks */,
 				7D38FB262D2F957F008BF288 /* Products */,
 			);
@@ -204,9 +198,6 @@
 			);
 			dependencies = (
 				7D38FB422D2F9581008BF288 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				7D38FB432D2F9581008BF288 /* XferroUITests */,
 			);
 			name = XferroUITests;
 			packageProductDependencies = (

@@ -16,24 +16,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         super.init()
+        #if TEST
+        return
+        #endif
+
         SentrySDK.start { options in
             options.dsn = "https://06fd8ebf14ce84b23c1252a0b78d790b@o4508498687033344.ingest.us.sentry.io/4508498688409600"
             options.tracesSampleRate = 1.0
             options.enableTimeToFullDisplayTracing = true
-#if DEBUG
+            #if DEBUG
             options.environment = "development"
-#else
+            #else
             options.environment = "production"
-#endif
+            #endif
         }
         let mixpanel = Mixpanel.initialize(token: "92209304ee0ef56b6014dd75dd87ac5a")
         mixpanel.track(event: "App launched")
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let contentVC = LandingViewController()
+        git_libgit2_init()
 
-        // Create windo2aGsZCYA2fmgCTrqsMCCw
+        #if TEST
+        let contentVC = NSViewController()
+        #else
+        let contentVC = LandingViewController()
+        FirebaseApp.configure()
+        FirebaseConfiguration.shared.setLoggerLevel(.min)
+        createMenu()
+        #endif
+
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: Dimensions.appWidth, height: Dimensions.appHeight),
             styleMask: [.closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -45,14 +57,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.center()
         window.makeKeyAndOrderFront(nil)
         window.isReleasedWhenClosed = false
-
-        FirebaseApp.configure()
-        FirebaseConfiguration.shared.setLoggerLevel(.min)
-
-        createMenu()
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        #if TEST
+        return .terminateNow
+        #endif
         saveBeforeQuit()
         return .terminateLater
     }
@@ -78,6 +88,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let users = Self.users {
             DataManager.save(users, filename: Constants.usersFileName)
         }
+        git_libgit2_shutdown()
         let app = NSApplication.shared
         app.reply(toApplicationShouldTerminate: true)
     }

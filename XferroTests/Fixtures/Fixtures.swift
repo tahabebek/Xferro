@@ -32,12 +32,14 @@ final class Fixtures {
 
     func setUp() {
         try! FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+
         let bundleIdentifier = String(format: "com.xferro.XferroTests")
         let bundle = Bundle(identifier: bundleIdentifier)!
+
         let zipURLs = bundle.urls(forResourcesWithExtension: "zip", subdirectory: nil)!
 
-        for URL in zipURLs {
-            SSZipArchive.unzipFile(atPath: URL.path, toDestination: directoryURL.path)
+        for url in zipURLs {
+            SSZipArchive.unzipFile(atPath: url.path, toDestination: directoryURL.path)
         }
     }
 
@@ -60,6 +62,18 @@ final class Fixtures {
 
     class var simpleRepository: Repository {
         return Fixtures.sharedInstance.repository(named: "simple-repository")
+    }
+
+    class var repositoryWithModifiedAndAddedFiles: Repository {
+        return Fixtures.sharedInstance.repository(named: "repository-with-modified-and-added-files")
+    }
+
+    class var repositoryOnAnotherBranch: Repository {
+        return Fixtures.sharedInstance.repository(named: "repository-on-another-branch")
+    }
+
+    class var repositoryInDetachedState: Repository {
+        return Fixtures.sharedInstance.repository(named: "repository-in-detached-state")
     }
 
     class var mantleRepository: Repository {

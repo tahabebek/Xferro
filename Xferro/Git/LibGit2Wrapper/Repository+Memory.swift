@@ -16,8 +16,6 @@ extension Repository {
         var odb: OpaquePointer?
         var odbBackend: UnsafeMutablePointer<git_odb_backend>?
 
-        git_libgit2_init()
-
         if git_mempack_new(&odbBackend) != 0 {
             throw GitError.initializationFailed("Failed to create mempack \(GitError.getLastErrorMessage())")
         }
@@ -39,9 +37,6 @@ extension Repository {
             fatalError("repo is nil")
         }
         self.init(repo)
-        #if !TEST
-        checkGitDirectoryPermissions(sourcePath: sourcePath)
-        #endif
         try setupRepositoryIndex()
 
         var refdb: OpaquePointer?
@@ -83,27 +78,6 @@ extension Repository {
         }
     }
 
-    func checkGitDirectoryPermissions(sourcePath: String) {
-        guard let bookmarkData = UserDefaults.standard.data(forKey: sourcePath) else {
-            fatalError("Failed to access repository")
-        }
-
-        do {
-            var isStale = false
-            let url = try URL(
-                resolvingBookmarkData: bookmarkData,
-                options: .withSecurityScope,
-                relativeTo: nil,
-                bookmarkDataIsStale: &isStale
-            )
-
-            guard url.startAccessingSecurityScopedResource() else {
-                fatalError("Failed to access repository")
-            }
-        } catch {
-            fatalError("Failed to access repository")
-        }
-    }
 
     private func setupRepositoryIndex() throws {
         var index: OpaquePointer?

@@ -139,8 +139,13 @@ extension Repository {
     ///
     /// :param: branch The branch to get all commits from
     /// :returns: Returns a result with array of branches or the error that occurred
-    func commits(in branch: Branch) -> CommitIterator {
-        let iterator = CommitIterator(repo: self, root: branch.oid.oid)
+    func commits(in branch: Branch, reversed: Bool = false) -> CommitIterator {
+        let iterator = CommitIterator(repo: self, root: branch.oid.oid, reversed: reversed)
+        return iterator
+    }
+
+    func commits(in tag: TagReference) -> CommitIterator {
+        let iterator = CommitIterator(repo: self, root: tag.oid.oid)
         return iterator
     }
 

@@ -34,192 +34,197 @@ struct RepoManager {
             print(error)
         }
     }
-    
+
+    func printFolderTree(_ repository: Repository) {
+        guard let workDir = repository.workDir else {
+            return
+        }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/tree")
+        process.arguments = ["-a"]
+        process.currentDirectoryURL = URL(fileURLWithPath: workDir.path)
+
+        // To capture output if needed
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        try? process.run()
+
+        let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
+        if let output = String(data: outputData, encoding: .utf8) {
+            print(output)
+        }
+        
+        process.waitUntilExit()
+
+        // Check if successful
+        if process.terminationStatus != 0 {
+            let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+            let error = NSError(domain: "GitError",
+                                code: Int(process.terminationStatus),
+                                userInfo: [NSLocalizedDescriptionKey: "Tree failed: \(output)"])
+            print(error)
+        }
+    }
+
+    func git(_ repository: Repository, _ args: [String]) -> String {
+        guard let workDir = repository.workDir else {
+            fatalError("no work dir")
+        }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+
+        var environment = [String: String]()
+        environment["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin"
+        environment["HOME"] = NSHomeDirectory()
+        environment["GIT_CONFIG_NOSYSTEM"] = "1"
+        environment["GIT_TERMINAL_PROMPT"] = "0"
+        environment["GIT_EXEC_PATH"] = "/usr/libexec/git-core"
+        environment["GIT_TEMPLATE_DIR"] = "/usr/share/git-core/templates"
+        // Disable all external commands/helpers
+        environment["GIT_EXTERNAL_DIFF"] = "true"
+        environment["GIT_PAGER"] = "cat"
+        process.environment = environment
+
+        var fullArgs = [
+            "-c", "user.name=Temporary",
+            "-c", "user.email=temporary@example.com",
+            "-c", "core.autocrlf=false",
+            "-c", "core.editor=true",
+            "-c", "filter.lfs.clean=true",
+            "-c", "filter.lfs.smudge=true",
+            "-c", "filter.lfs.process=true",
+            "-c", "filter.lfs.required=false"
+        ]
+        fullArgs.append(contentsOf: args)
+        process.arguments = fullArgs
+        process.currentDirectoryURL = URL(fileURLWithPath: workDir.path)
+
+        // To capture output if needed
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+
+            if process.terminationStatus != 0 {
+                print("Git command failed with status \(process.terminationStatus)")
+                print("Command output: \(output)")
+                let error = NSError(domain: "GitError",
+                                    code: Int(process.terminationStatus),
+                                    userInfo: [NSLocalizedDescriptionKey: "Git failed: \(output)"])
+                print(error)
+            }
+            return output
+        } catch {
+            print("Failed to run git: \(error)")
+            return ""
+        }
+    }
+
+    func printBranchTree(repository: Repository) {
+        
+    }
+
     func dumpRepo(_ repository: Repository) {
-        let repo = repository.pointer
-        // Create revision walker
-        var walker: OpaquePointer? = nil
-        guard git_revwalk_new(&walker, repo) == GIT_OK.rawValue else {
-            git_repository_free(repo)
-            return
+        guard case .success(let branches) = repository.localBranches() else {
+            fatalError("Failed to get local branches")
         }
 
-        // Configure for topological sorting
-        git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL.rawValue)
-        git_revwalk_sorting(walker, GIT_SORT_TIME.rawValue)
-        // Get all refs
-        var iterator: UnsafeMutablePointer<git_reference_iterator>? = nil
-        guard git_reference_iterator_new(&iterator, repo) == GIT_OK.rawValue else {
-            git_revwalk_free(walker)
-            git_repository_free(repo)
-            return
+        guard case .success(let head) = repository.HEAD() else {
+            fatalError( "Failed to get head commit")
         }
-
-        // Push all refs to walker
-        while true {
-            var ref: OpaquePointer? = nil
-            let result = git_reference_next(&ref, iterator)
-            if result != GIT_OK.rawValue { break }
-
-            if git_reference_type(ref) == GIT_REFERENCE_DIRECT {
-                git_revwalk_push(walker, git_reference_target(ref))
+        print("----------------------------------------------")
+        if head.longName.isBranchRef {
+            print("Current branch: \(head.longName)")
+            printBranch(repository: repository, branch: head as! Branch)
+        } else if head.longName.isTagRef {
+            print("Current tag: \(head.longName)")
+            printTag(repository: repository, tag: head as! TagReference)
+        } else {
+            print("Current detached head commit: \(head.oid)")
+            guard case .success(let commit) = repository.commit(head.oid) else {
+                fatalError( "Failed to get head commit")
             }
-            git_reference_free(ref)
-        }
-        git_reference_iterator_free(iterator)
-
-        // Walk through commits
-        var oid = git_oid()
-        while git_revwalk_next(&oid, walker) == GIT_OK.rawValue {
-            dumpCommitAndTree(oid, repo: repo)
+            dumpCommitAndTree(commit: commit, repository: repository)
         }
 
+        for branch in branches {
+            if branch.longName == head.longName {
+                continue
+            }
+            print("----------------------------------------------")
+            print("Branch: \(branch.longName), commit: \(branch.commit.oid)")
+            printBranch(repository: repository, branch: branch)
+        }
         printIndexContents(repository)
-
-        git_revwalk_free(walker)
-        git_repository_free(repo)
     }
 
-    func addTreeObjects(_ tree: OpaquePointer?, repo: OpaquePointer?, to objects: inout Set<String>) {
-        let entryCount = git_tree_entrycount(tree)
-
-        for i in 0..<entryCount {
-            guard let entry = git_tree_entry_byindex(tree, i) else { continue }
-
-            if let oid = git_tree_entry_id(entry) {
-                objects.insert(String(describing: oid.pointee))
+    private func printBranch(repository: Repository, branch: Branch) {
+        let commitIterator = repository.commits(in: branch, reversed: true)
+        for commitResult in commitIterator {
+            guard case .success(let commit) = commitResult else {
+                fatalError("Failed to get commit")
             }
+            dumpCommitAndTree(commit: commit, repository: repository)
+        }
+    }
 
-            // If entry is a tree, recurse
-            if git_tree_entry_type(entry) == GIT_OBJECT_TREE {
-                var subTree: OpaquePointer? = nil
-                if git_tree_lookup(&subTree, repo, git_tree_entry_id(entry)) == GIT_OK.rawValue {
-                    addTreeObjects(subTree, repo: repo, to: &objects)
-                    git_tree_free(subTree)
+    private func printTag(repository: Repository, tag: TagReference) {
+        let commitIterator = repository.commits(in: tag)
+        for commitResult in commitIterator {
+            guard case .success(let commit) = commitResult else {
+                fatalError("Failed to get commit")
+            }
+            dumpCommitAndTree(commit: commit, repository: repository)
+        }
+    }
+
+    private func dumpCommitAndTree(commit: Commit, repository: Repository, level: Int = 0) {
+        let prefix = String(repeating: "\t", count: level)
+        print("\n", prefix, commit)
+        guard case .success(let tree) = repository.tree(commit.tree.oid) else {
+            fatalError("Could not get tree for commit \(commit.oid)")
+        }
+        dumpTree(tree, repository: repository, level: level + 1)
+    }
+
+    private func dumpTree(_ tree: Tree, repository: Repository, level: Int = 0) {
+        let prefix = String(repeating: "\t", count: level)
+        print(prefix, "Tree entries: \(tree.entries.count)")
+        for key in tree.entries.keys {
+            let entry = tree.entries[key]!
+            let type = entry.object.type
+            switch type {
+            case .any, .invalid, .offsetDelta, .refDelta:
+                fatalError("unexpected object type \(type)")
+            case .commit:
+                print(prefix, entry.object)
+            case .tree:
+                print(prefix, entry.object)
+                guard case .success(let tree) = repository.tree(entry.object.oid) else {
+                    fatalError("Could not get tree for oid \(entry.object.oid)")
                 }
+                dumpTree(tree, repository: repository, level: level + 1)
+            case .blob:
+                print(prefix, entry.object)
+            case .tag:
+                print(prefix, entry.object)
             }
-        }
-    }
-
-    func dumpCommitAndTree(_ oid: git_oid, repo: OpaquePointer?) {
-        var commit: OpaquePointer? = nil
-        var mutableOid = oid
-        guard git_commit_lookup(&commit, repo, &mutableOid) == GIT_OK.rawValue else { return }
-
-        print("\nCommit: \(mutableOid)")
-        print("Message: \(String(cString: git_commit_message(commit)))")
-
-        // Get parent info
-        let parentCount = git_commit_parentcount(commit)
-        for i in 0..<parentCount {
-            let parentOid = git_commit_parent_id(commit, i)
-            print("Parent \(i): \(parentOid?.pointee ?? git_oid())")
-        }
-
-        // Get and dump tree
-        var tree: OpaquePointer? = nil
-        if git_commit_tree(&tree, commit) == GIT_OK.rawValue {
-            print("\nTree:")
-            dumpTree(tree, repo: repo)
-            git_tree_free(tree)
-        }
-
-        git_commit_free(commit)
-    }
-
-    func dumpTree(_ tree: OpaquePointer?, repo: OpaquePointer?) {
-        let entryCount = git_tree_entrycount(tree)
-        print("Tree entries: \(entryCount)")
-
-        for i in 0..<entryCount {
-            guard let entry = git_tree_entry_byindex(tree, i) else { continue }
-            let name = String(cString: git_tree_entry_name(entry))
-            let type = git_tree_entry_type(entry)
-            let oid = git_tree_entry_id(entry)?.pointee
-            let filemode = git_tree_entry_filemode(entry)
-
-            print("  \(name) (\(typeToString(type))) mode=\(filemode.rawValue) -> \(String(describing: oid))")
-
-            // If it's a tree, recurse into it
-            if type == GIT_OBJECT_TREE {
-                var subtree: OpaquePointer? = nil
-                if git_tree_lookup(&subtree, repo, git_tree_entry_id(entry)) == GIT_OK.rawValue {
-                    print("    Contents:")
-                    dumpTree(subtree, repo: repo)
-                    git_tree_free(subtree)
-                }
-            }
-        }
-    }
-
-    func dumpObject(_ obj: OpaquePointer?, type: git_object_t, repo: OpaquePointer?) {
-        switch type {
-        case GIT_OBJECT_COMMIT:
-            dumpCommit(obj)
-        case GIT_OBJECT_TREE:
-            var tree: OpaquePointer? = nil
-            if git_tree_lookup(&tree, repo, git_odb_object_id(obj)) == GIT_OK.rawValue {
-                dumpTree(tree, repo: repo)
-                git_tree_free(tree)
-            }
-        case GIT_OBJECT_BLOB:
-            dumpBlob(obj)
-        case GIT_OBJECT_TAG:
-            dumpTag(obj)
-        default:
-            print("  Unknown object type")
-        }
-    }
-
-    func dumpCommit(_ obj: OpaquePointer?) {
-        guard let data = git_odb_object_data(obj) else { return }
-        let message = String(cString: data.assumingMemoryBound(to: CChar.self))
-        print("  Commit message: \(message)")
-    }
-
-    func dumpBlob(_ obj: OpaquePointer?) {
-        let size = git_odb_object_size(obj)
-        print("  Blob size: \(size) bytes")
-        // Optionally print first few bytes of content
-        if let data = git_odb_object_data(obj), size > 0 {
-            let preview = String(cString: data.assumingMemoryBound(to: CChar.self))
-            print("  Preview: \(preview.prefix(100))...")
-        }
-    }
-
-    func dumpTag(_ obj: OpaquePointer?) {
-        guard let data = git_odb_object_data(obj) else { return }
-        let message = String(cString: data.assumingMemoryBound(to: CChar.self))
-        print("  Tag message: \(message)")
-    }
-
-    func typeToString(_ type: git_object_t) -> String {
-        switch type {
-        case GIT_OBJECT_COMMIT: return "commit"
-        case GIT_OBJECT_TREE: return "tree"
-        case GIT_OBJECT_BLOB: return "blob"
-        case GIT_OBJECT_TAG: return "tag"
-        default: return "unknown"
         }
     }
 
     private func printIndexContents(_ repository: Repository) {
-        var index: OpaquePointer?
-        guard git_repository_index(&index, repository.pointer) == 0 else {
-            fatalError("Failed to get repository index")
+        print("----------------------------------------------")
+        guard case .success(let status) = repository.status(options: [.includeUntracked]) else {
+            fatalError("Could not get status")
         }
-        defer { git_index_free(index) }
-
-        let entryCount = git_index_entrycount(index)
-
-        for i in 0..<entryCount {
-            guard let entry = git_index_get_byindex(index, i) else {
-                continue
-            }
-
-            print("File path: \(String(cString: entry.pointee.path))")
-            print("File size: \(entry.pointee.file_size)")
-            print("Stage: \(git_index_entry_stage(entry))")
-        }
+        print(status)
     }
 }
