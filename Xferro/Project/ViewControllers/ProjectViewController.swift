@@ -57,5 +57,6 @@ class ProjectViewController: NSViewController {
     }
 
     private func createRepos(for project: Project) {
+        print("create repos")
     }
 }

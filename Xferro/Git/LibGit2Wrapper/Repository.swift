@@ -20,17 +20,9 @@ final class Repository {
     init(_ pointer: OpaquePointer, submodule: Submodule? = nil) {
         self.pointer = pointer
         self.submodule = submodule
-        #if !TEST
-        if let workDir {
-            checkGitDirectoryPermissions(sourcePath: workDir.path)
-        }
-        #endif
     }
 
     deinit {
-        #if !TEST
-        workDir?.stopAccessingSecurityScopedResource()
-        #endif
         git_repository_free(pointer)
     }
 
@@ -364,7 +356,7 @@ final class Repository {
         return Repository.at(URL(fileURLWithPath: root))
     }
 
-    private func checkGitDirectoryPermissions(sourcePath: String) {
+    class func checkGitDirectoryPermissions(sourcePath: String) {
         guard let bookmarkData = UserDefaults.standard.data(forKey: sourcePath) else {
             fatalError("Failed to access repository")
         }

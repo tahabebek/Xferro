@@ -1,0 +1,147 @@
+//
+//  LoginView.swift
+//  Xferro
+//
+//  Created by Taha Bebek on 1/16/25.
+//
+
+import SwiftUI
+
+import SwiftUI
+
+struct LoginView: View {
+    @State var viewModel: LoginViewModel
+    @State private var isSecured = true
+
+    var body: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                contents
+                    .sheet(item: $viewModel.forgotPasswordViewModel) { viewModel in
+                        ForgotPasswordView(viewModel: viewModel)
+                    }
+                    .alert(Text("Error"), isPresented: $viewModel.showError) {
+                        Button {
+                            viewModel.showError = false
+                            viewModel.errorMessage = nil
+                        } label: { Text("OK") }
+                    } message: {
+                        Text(viewModel.errorMessage ?? "Something went wrong.")
+                    }
+
+                Spacer()
+            }
+            Spacer()
+        }
+    }
+
+    @ViewBuilder var contents: some View {
+        VStack(spacing: 30) {
+            Text("Welcome to Xferro")
+                .font(.system(size: 36, weight: .semibold))
+            Text("A superior git client.")
+                .font(.title)
+            VStack(spacing: 15) {
+                Image(systemName: "lock.circle.fill")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 64, height: 64)
+                    .foregroundStyle(.blue)
+                Text("Sign in to your account")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                if viewModel.showCheckYourEmailMessage {
+                    Text("Check your email for a verification link.")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.purple)
+                }
+            }
+            .padding(.top, 20)
+
+            VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Email")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary)
+
+                    TextField("", text: $viewModel.email)
+                        .textFieldStyle(.plain)
+                        .frame(height: 38)
+                        .padding(.horizontal, 12)
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                        )
+
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Password")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary)
+
+                    HStack {
+                        if isSecured {
+                            SecureField("", text: $viewModel.password)
+                                .textFieldStyle(.plain)
+                        } else {
+                            TextField("", text: $viewModel.password)
+                                .textFieldStyle(.plain)
+                        }
+
+                        Button(action: { isSecured.toggle() }) {
+                            Image(systemName: isSecured ? "eye.slash" : "eye")
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .frame(height: 38)
+                    .padding(.horizontal, 12)
+                    .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    )
+                }
+            }
+            .frame(width: 300)
+
+            VStack(spacing: 16) {
+                Button {
+                    viewModel.loginButtonTapped()
+                } label: {
+                    Text("Sign In")
+                        .font(.system(size: 14, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 38)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                Button("Forgot Password?") {
+                    viewModel.forgotPasswordButtonTapped()
+                }
+                .font(.system(size: 13))
+                .buttonStyle(.plain)
+            }
+            .frame(width: 300)
+
+            HStack(spacing: 4) {
+                Text("Don't have an account?")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+
+                Button("Sign Up") {
+                    viewModel.signupButtonTapped()
+                }
+                .font(.system(size: 13))
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 8)
+        }
+        .frame(width: 400, height: 500)
+    }
+}

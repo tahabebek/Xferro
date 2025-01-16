@@ -36,27 +36,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         git_libgit2_init()
-
         #if TEST
         let contentVC = NSViewController()
         #else
-        let contentVC = LandingViewController()
-        FirebaseApp.configure()
-        FirebaseConfiguration.shared.setLoggerLevel(.min)
         createMenu()
         #endif
-
-        window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: Dimensions.appWidth, height: Dimensions.appHeight),
-            styleMask: [.closable, .miniaturizable, .resizable, .fullSizeContentView],
-            backing: .buffered,
-            defer: false
-        )
-        window.titleVisibility = .hidden
-        window.contentViewController = contentVC
-        window.center()
-        window.makeKeyAndOrderFront(nil)
-        window.isReleasedWhenClosed = false
+        FirebaseApp.configure()
+        FirebaseConfiguration.shared.setLoggerLevel(.min)
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
