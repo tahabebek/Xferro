@@ -36,9 +36,7 @@ struct RepoManager {
     }
 
     func printFolderTree(_ repository: Repository) {
-        guard let workDir = repository.workDir else {
-            return
-        }
+        let workDir = repository.workDir.get()
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/tree")
         process.arguments = ["-a"]
