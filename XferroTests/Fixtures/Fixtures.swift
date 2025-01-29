@@ -79,4 +79,8 @@ final class Fixtures {
     class var mantleRepository: Repository {
         return Fixtures.sharedInstance.repository(named: "Mantle")
     }
+
+    class var annoyRepository: Repository {
+        return Fixtures.sharedInstance.repository(named: "ANNOY")
+    }
 }

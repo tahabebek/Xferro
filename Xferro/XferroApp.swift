@@ -23,16 +23,16 @@ struct SwiftSpaceApp: App {
 struct SwiftSpaceApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var welcomeViewModel = WelcomeViewModel()
-    private let screenDimensions = NSScreen.main?.visibleFrame.size
     @State var users: Users? = DataManager.load(Users.self, filename: Constants.usersFileName)
+    private let screenDimensions = NSScreen.main?.visibleFrame.size
 
     var body: some Scene {
         WindowGroup {
             Group {
                 GeometryReader { geometry in
                     Group {
-                        if let users {
-                            Text("We have user \(users.currentUser!.commitIdentity.name)")
+                        if let users, let currentUser = users.currentUser {
+                            ProjectsView(viewModel: ProjectsViewModel(user: currentUser))
                         } else {
                             WelcomeView(viewModel: welcomeViewModel)
                                 .onChange(of: welcomeViewModel.users) { oldValue, newValue in
@@ -45,6 +45,9 @@ struct SwiftSpaceApp: App {
                 }
             }
             .frame(width: Dimensions.appWidth, height: Dimensions.appHeight)
+            .task {
+                AppDelegate.users = users
+            }
         }
     }
 }

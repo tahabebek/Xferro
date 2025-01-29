@@ -356,27 +356,7 @@ final class Repository {
         return Repository.at(URL(fileURLWithPath: root))
     }
 
-    class func checkGitDirectoryPermissions(sourcePath: String) {
-        guard let bookmarkData = UserDefaults.standard.data(forKey: sourcePath) else {
-            fatalError("Failed to access repository")
-        }
-
-        do {
-            var isStale = false
-            let url = try URL(
-                resolvingBookmarkData: bookmarkData,
-                options: .withSecurityScope,
-                relativeTo: nil,
-                bookmarkDataIsStale: &isStale
-            )
-
-            guard url.startAccessingSecurityScopedResource() else {
-                fatalError("Failed to access repository")
-            }
-        } catch {
-            fatalError("Failed to access repository")
-        }
-    }
+    
 
 }
 

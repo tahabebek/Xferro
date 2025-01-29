@@ -5,7 +5,9 @@
 //  Created by Taha Bebek on 1/8/25.
 //
 
-class Projects: Codable {
+import Observation
+
+@Observable final class Projects: Codable {
     var currentProject: Project?
     var recentProjects: Set<Project>
 

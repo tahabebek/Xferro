@@ -9,7 +9,6 @@ import Cocoa
 
 class ProjectsViewController: NSViewController {
     let user: User
-    var selectProjectViewController: SelectProjectViewController?
 
     init(user: User) {
         self.user = user
@@ -24,8 +23,6 @@ class ProjectsViewController: NSViewController {
         super.viewDidLoad()
         if let currentProject = user.projects.currentProject {
             showProjectView(project: currentProject)
-        } else {
-            showSelectProjectView(for: user)
         }
     }
 
@@ -46,52 +43,4 @@ class ProjectsViewController: NSViewController {
         projectViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         projectViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
     }
-
-    private func showSelectProjectView(for user: User) {
-        let selectProjectViewController = SelectProjectViewController(user: user) { [weak self] url in
-            guard let self else { return }
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                let isGit = isFolderGit(url: url)
-                let project = Project(isGit: isGit, url: url)
-                user.projects.currentProject = project
-                user.projects.recentProjects.insert(project)
-                if let selectVC = self.selectProjectViewController {
-                    selectVC.removeFromParent()
-                    selectVC.view.removeFromSuperview()
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                    guard let self else { return }
-                    showProjectView(project: project)
-                }
-            }
-        }
-
-        addChild(selectProjectViewController)
-        view.addSubview(selectProjectViewController.view)
-
-        selectProjectViewController.view.translatesAutoresizingMaskIntoConstraints = false
-        selectProjectViewController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-        selectProjectViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
-        selectProjectViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        selectProjectViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        self.selectProjectViewController = selectProjectViewController
-    }
-
-    private func isFolderGit(url: URL) -> Bool {
-        let result = Repository.isGitRepository(url: url)
-        switch result {
-        case .success(let isGit):
-            if isGit {
-                return true
-            } else {
-                return false
-            }
-        case .failure(let error):
-            print("Error checking if folder is git: \(error.localizedDescription)")
-            return false
-        }
-    }
-
-
 }

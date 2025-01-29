@@ -37,12 +37,11 @@ final class ProjectViewModel: ZoomAndPanViewModel {
     }
 
     deinit {
-        project.url.stopAccessingSecurityScopedResource()
     }
 
     private static func createRepos(user: User, project: Project) -> (autoCommitRepo: Repository, sourceRepo: Repository, initialCommit: AnyCommit) {
         do {
-            Repository.checkGitDirectoryPermissions(sourcePath: project.url.path)
+            RepoManager().reverseLog(project.url.path)
             let memoryRepo: Repository
             let diskRepoResult: Result<Repository, NSError>
             let diskRepo: Repository
@@ -65,7 +64,6 @@ final class ProjectViewModel: ZoomAndPanViewModel {
                 fatalError("Could not get head commit")
             }
             let initialCommit = AnyCommit(commit: head, kind: .manual, isMarked: false)
-            RepoManager().reverseLog(project.url.path)
             return (autoCommitRepo: memoryRepo, sourceRepo: diskRepo, initialCommit: initialCommit)
         } catch {
             fatalError(error.localizedDescription)

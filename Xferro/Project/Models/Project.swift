@@ -8,7 +8,7 @@
 import Foundation
 import Observation
 
-final class Project {
+@Observable final class Project {
     let isGit: Bool
     let url: URL
 

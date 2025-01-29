@@ -80,8 +80,6 @@ struct RepoManager {
             try process.run()
             process.waitUntilExit()
 
-            let txt = "tetxt"
-            try txt.write(toFile: path.appending("text.txt"), atomically: true, encoding: .utf8)
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             if let output = String(data: data, encoding: .utf8) {
                 if process.terminationStatus != 0 {
@@ -161,8 +159,38 @@ struct RepoManager {
         }
     }
 
-    func printBranchTree(repository: Repository) {
-        
+    func printCommitTree(_ repository: Repository) {
+        let branches = repository.localBranches().get()
+        let remoteBranches = repository.remoteBranches().get()
+        let head = repository.HEAD().get()
+
+        var allCommits: [OID: Commit] = [:]
+        var parents: [OID: Set<OID>] = [:]
+        var children: [OID: Set<OID>] = [:]
+
+        for branch in branches + remoteBranches {
+            let commitIterator = repository.commits(in: branch)
+            for commitResult in commitIterator {
+                guard case .success(let commit) = commitResult else {
+                    fatalError("Failed to get commit")
+                }
+                allCommits[commit.oid] = commit
+                parents[commit.oid] = Set(commit.parents.map(\.oid))
+                commit.parents.map(\.oid).forEach { oid in
+                    var existingChildren = children[oid] ?? []
+                    existingChildren.insert(commit.oid)
+                    children[oid] = existingChildren
+                }
+            }
+        }
+    }
+
+    func printCommit(oid: OID, indent: Int, commitHierarchy: [OID: (parents: Set<OID>, children: Set<OID>)] = [:]) {
+        print(String(repeating: "\t", count: indent), oid)
+        let children = commitHierarchy[oid]?.children ?? []
+        children.forEach {
+            printCommit(oid: $0, indent: indent + 1, commitHierarchy: commitHierarchy)
+        }
     }
 
     func dumpRepo(_ repository: Repository) {
@@ -174,6 +202,7 @@ struct RepoManager {
             fatalError( "Failed to get head commit")
         }
         print("----------------------------------------------")
+
         if head.longName.isBranchRef {
             print("Current branch: \(head.longName)")
             printBranch(repository: repository, branch: head as! Branch)

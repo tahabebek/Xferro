@@ -6,9 +6,14 @@
 //
 
 import Foundation
+import Observation
 
-class User: Codable, Hashable, Equatable {
+@Observable final class User: Codable, Hashable, Equatable {
     typealias UserID = String
+    let userID: UserID
+    let login: Login
+    let commitIdentity: CommitIdentity
+    let projects: Projects
 
     static func == (lhs: User, rhs: User) -> Bool {
         lhs.userID == rhs.userID
@@ -24,9 +29,4 @@ class User: Codable, Hashable, Equatable {
         self.commitIdentity = commitIdentity
         self.projects = projects
     }
-
-    let userID: UserID
-    let login: Login
-    let commitIdentity: CommitIdentity
-    let projects: Projects
 }

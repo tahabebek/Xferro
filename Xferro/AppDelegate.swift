@@ -16,10 +16,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         super.init()
-        #if TEST
-        return
-        #endif
-
         SentrySDK.start { options in
             options.dsn = "https://06fd8ebf14ce84b23c1252a0b78d790b@o4508498687033344.ingest.us.sentry.io/4508498688409600"
             options.tracesSampleRate = 1.0
@@ -36,19 +32,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         git_libgit2_init()
-        #if TEST
-        let contentVC = NSViewController()
-        #else
         createMenu()
-        #endif
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        #if TEST
-        return .terminateNow
-        #endif
         saveBeforeQuit()
         return .terminateLater
     }
