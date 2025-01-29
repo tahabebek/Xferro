@@ -16,16 +16,14 @@ class FetchOptions {
     var remoteCallback: RemoteCallback
 
     init(url: String,
-                tags: Bool = true,
-                prune: Bool = false,
-                credentials: Credentials = .default,
-                messageBlock: MessageBlock? = nil,
-                progressBlock: ProgressBlock? = nil) {
+         tags: Bool = true,
+         prune: Bool = false,
+         credentials: Credentials = .default,
+         messageBlock: MessageBlock? = nil,
+         progressBlock: ProgressBlock? = nil) {
         self.tags = tags
         self.prune = prune
-        self.remoteCallback = RemoteCallback(url: url,
-                                             messageBlock: messageBlock,
-                                             progressBlock: progressBlock)
+        self.remoteCallback = RemoteCallback(url: url, messageBlock: messageBlock, progressBlock: progressBlock)
     }
 
     func toGit() -> git_fetch_options {

@@ -8,30 +8,7 @@
 
 import Foundation
 
-class BranchGraph {
-    var rootBranches: [Branch] = []
-    var allBranches: Set<Branch> = []
-}
-
-class BranchGraphNode {
-    var branch: Branch
-    var children: [BranchGraphNode] = []
-    var parents: [BranchGraphNode] = []
-
-    init(branch: Branch) {
-        self.branch = branch
-    }
-}
-
 extension Repository {
-    /// Load root branches with their children recursively
-    func localBranchGraph() -> Result<BranchGraph, NSError> {
-        let branchGraph = BranchGraph()
-//        let result = RepoManager().git(self, ["log", "--all", "--graph", "--oneline", "--simplify-by-decoration"])
-        let result = RepoManager().git(self, ["log", "--oneline"])
-        print(result)
-        return .success(branchGraph)
-    }
     /// Load and return a list of all local branches.
     func localBranches() -> Result<[Branch], NSError> {
         return references(withPrefix: .branchPrefix).map { (refs: [ReferenceType]) in

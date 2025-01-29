@@ -36,7 +36,9 @@ struct RepoManager {
     }
 
     func printFolderTree(_ repository: Repository) {
-        let workDir = repository.workDir.get()
+        guard let workDir = repository.workDir else {
+            return
+        }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/tree")
         process.arguments = ["-a"]
@@ -154,32 +156,6 @@ struct RepoManager {
         } catch {
             print("Failed to run git: \(error)")
             return ""
-        }
-    }
-
-    func printCommitTree(_ repository: Repository) {
-        let branches = repository.localBranches().get()
-        let remoteBranches = repository.remoteBranches().get()
-        let head = repository.HEAD().get()
-
-        var allCommits: [OID: Commit] = [:]
-        var parents: [OID: Set<OID>] = [:]
-        var children: [OID: Set<OID>] = [:]
-
-        for branch in branches + remoteBranches {
-            let commitIterator = repository.commits(in: branch)
-            for commitResult in commitIterator {
-                guard case .success(let commit) = commitResult else {
-                    fatalError("Failed to get commit")
-                }
-                allCommits[commit.oid] = commit
-                parents[commit.oid] = Set(commit.parents.map(\.oid))
-                commit.parents.map(\.oid).forEach { oid in
-                    var existingChildren = children[oid] ?? []
-                    existingChildren.insert(commit.oid)
-                    children[oid] = existingChildren
-                }
-            }
         }
     }
 

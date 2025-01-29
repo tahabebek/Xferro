@@ -1,7 +1,7 @@
 import Swift
 
 extension Result {
-    public func get() -> Success {
+    public func mustSucceed() -> Success {
         switch self {
         case .success(let value):
             return value

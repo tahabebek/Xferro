@@ -7,28 +7,31 @@
 
 import Foundation
 
+enum Next {
+    case over
+    case okay
+    case error(NSError)
+
+    init(_ result: Int32, name: String) {
+        switch result {
+        case GIT_ITEROVER.rawValue:
+            self = .over
+        case GIT_OK.rawValue:
+            self = .okay
+        default:
+            self = .error(NSError(gitError: result, pointOfFailure: name))
+        }
+    }
+}
+
+
 class CommitIterator: IteratorProtocol, Sequence {
     typealias Iterator = CommitIterator
     typealias Element = Result<Commit, NSError>
     let repo: Repository
     private var revisionWalker: OpaquePointer?
 
-    private enum Next {
-        case over
-        case okay
-        case error(NSError)
 
-        init(_ result: Int32, name: String) {
-            switch result {
-            case GIT_ITEROVER.rawValue:
-                self = .over
-            case GIT_OK.rawValue:
-                self = .okay
-            default:
-                self = .error(NSError(gitError: result, pointOfFailure: name))
-            }
-        }
-    }
 
     init(repo: Repository, root: git_oid, reversed: Bool = false) {
         self.repo = repo

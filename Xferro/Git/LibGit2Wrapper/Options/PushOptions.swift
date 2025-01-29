@@ -15,12 +15,13 @@ class PushOptions: NSObject {
     var remoteCallback: RemoteCallback
 
     init(url: String,
-                messageBlock: MessageBlock? = nil,
-                progressBlock: ProgressBlock? = nil) {
-        self.remoteCallback = RemoteCallback(mode: .Push,
-                                             url: url,
-                                             messageBlock: messageBlock,
-                                             progressBlock: progressBlock)
+         messageBlock: MessageBlock? = nil,
+         progressBlock: ProgressBlock? = nil) {
+        self.remoteCallback = RemoteCallback(
+            mode: .Push,
+            url: url,
+            messageBlock: messageBlock,
+            progressBlock: progressBlock)
     }
 
     func toGit() -> git_push_options {
