@@ -19,17 +19,19 @@ struct ProjectView: View {
                 .frame(height: 40)
             GeometryReader { geometry in
                 HSplitView {
-                    TreeWrapperView(
-                        recentered: $recentered,
-                        currentOffset: $currentOffset,
-                        zoomScale: $zoomScale,
-                        onHandleStateChange: handleStateChange,
-                        onFocusOnCommit: focusOnCommit
-                    ) {
-                        AnyView(
-                            EmptyView()
-                        )
-                    }
+                    GitGraphView()
+                        .environment(projectViewModel.ggViewModel)
+//                    TreeWrapperView(
+//                        recentered: $recentered,
+//                        currentOffset: $currentOffset,
+//                        zoomScale: $zoomScale,
+//                        onHandleStateChange: handleStateChange,
+//                        onFocusOnCommit: focusOnCommit
+//                    ) {
+//                        AnyView(
+//                            EmptyView()
+//                        )
+//                    }
                     FileNavigatorView()
                     PeekView()
                 }

@@ -43,20 +43,13 @@ extension ObjectType {
     }
 }
 
-struct Signature {
-    /// The name of the person.
+struct Signature: Codable {
     let name: String
-
-    /// The email of the person.
     let email: String
-
     /// The time when the action happened.
     let time: Date
-
-    /// The time zone that `time` should be interpreted relative to.
     let timeZone: TimeZone
 
-    /// Create an instance with custom name, email, dates, etc.
     init(name: String, email: String, time: Date = Date(), timeZone: TimeZone = TimeZone.autoupdatingCurrent) {
         self.name = name
         self.email = email
@@ -64,7 +57,6 @@ struct Signature {
         self.timeZone = timeZone
     }
 
-    /// Create an instance with a libgit2 `git_signature`.
     init(_ signature: git_signature) {
         name = String(validatingUTF8: signature.name)!
         email = String(validatingUTF8: signature.email)!
@@ -112,7 +104,7 @@ extension Signature: Hashable {
 }
 
 /// A git commit.
-struct Commit: ObjectType, Hashable, CustomStringConvertible {
+struct Commit: ObjectType, Hashable, Codable, CustomStringConvertible {
     static let type = GitObjectType.commit
 
     /// The OID of the commit.
@@ -133,10 +125,14 @@ struct Commit: ObjectType, Hashable, CustomStringConvertible {
     /// The full message of the commit.
     let message: String
 
+    /// Summary
+    let summary: String
+
     /// Create an instance with a libgit2 `git_commit` object.
     init(_ pointer: OpaquePointer) {
         oid = OID(git_object_id(pointer).pointee)
         message = String(validatingUTF8: git_commit_message(pointer))!
+        summary = String(validatingUTF8: git_commit_summary(pointer))!
         author = Signature(git_commit_author(pointer).pointee)
         committer = Signature(git_commit_committer(pointer).pointee)
         tree = PointerTo(OID(git_commit_tree_id(pointer).pointee))

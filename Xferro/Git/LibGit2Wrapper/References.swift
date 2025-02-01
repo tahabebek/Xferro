@@ -166,6 +166,9 @@ struct Branch: ReferenceType, Hashable {
     /// Whether the branch is a unborn branch. If it is unborn, the oid will be invalid.
     var isUnborn: Bool = false
 
+    ///
+    var isSymbolic: Bool = false
+
     /// The remote repository name if this is a remote branch.
     var remoteName: String? {
         if isRemote {
@@ -190,6 +193,7 @@ struct Branch: ReferenceType, Hashable {
 
         var oid: OID
         if git_reference_type(pointer).rawValue == GIT_REFERENCE_SYMBOLIC.rawValue {
+            isSymbolic = true
             var resolved: OpaquePointer? = nil
             let success = git_reference_resolve(&resolved, pointer)
             guard success == GIT_OK.rawValue else {

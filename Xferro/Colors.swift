@@ -7,6 +7,7 @@
 
 import AppKit
 import Foundation
+import SwiftUI
 
 let currentTheme = Colors.indigoAndTeal
 
@@ -194,5 +195,11 @@ extension NSColor {
             (r, g, b, a) = (0, 0, 0, 255)
         }
         self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: CGFloat(a) / 255)
+    }
+}
+
+extension NSColor {
+    var suiColor: Color {
+        Color(nsColor: self)
     }
 }

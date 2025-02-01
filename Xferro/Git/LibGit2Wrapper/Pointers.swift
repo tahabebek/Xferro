@@ -90,7 +90,7 @@ extension Pointer: CustomStringConvertible {
     }
 }
 
-struct PointerTo<T: ObjectType>: PointerType {
+struct PointerTo<T: ObjectType>: PointerType, Codable {
     let oid: OID
 
     var type: GitObjectType {

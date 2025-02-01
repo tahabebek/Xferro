@@ -17,7 +17,7 @@ struct GGSettings {
     init(
         debug: Bool = false,
         includeRemote: Bool = true,
-        branchOrder: GGBranchOrder,
+        branchOrder: GGBranchOrder = .shortestFirst(isReverse: true),
         branches: GGBranchSettings,
         mergePatterns: GGMergePatterns
     ) {

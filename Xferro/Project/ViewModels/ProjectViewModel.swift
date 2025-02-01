@@ -11,34 +11,37 @@ import Observation
 @Observable
 final class ProjectViewModel: ZoomAndPanViewModel {
     var project: Project
-    var currentCommit: AnyCommit
+    var currentCommit: AnyCommit?
     var peekCommit: AnyCommit?
     var tree: CommitTree?
-
-    var idForDocument: String {
-        "\(project.url.path)-view"
-    }
 
     @ObservationIgnored var scrollWheelMonitor: Any?
     
     private var user: User
     private var commits: [AnyCommit] = []
-    private var autoCommitRepo: Repository
-    private var sourceRepo: Repository
+//    private var autoCommitRepo: Repository
+//    private var sourceRepo: Repository
     private var nodePositions: [String: CGPoint] = [:]
+    private let gitGraphViewModel: GGViewModel
 
     init(user: User, project: Project) {
         self.user = user
         self.project = project
-        let (autoCommitRepo, sourceRepo, initialCommit) = Self.createRepos(user: user, project: project)
-        self.autoCommitRepo = autoCommitRepo
-        self.sourceRepo = sourceRepo
-        self.currentCommit = initialCommit
+        let path = Bundle.main.path(forResource: "annoy_git_graph", ofType: "json")
+        let data = try! Data(contentsOf: URL(fileURLWithPath: path!))
+        let encoder = JSONDecoder()
+        let gitGraph = try! encoder.decode(GitGraph.self, from: data)
+        self.gitGraphViewModel = GGViewModel(gitGraph: gitGraph)
+//        let (autoCommitRepo, sourceRepo, initialCommit) = Self.createRepos(user: user, project: project)
+//        self.autoCommitRepo = autoCommitRepo
+//        self.sourceRepo = sourceRepo
+//        self.currentCommit = initialCommit
     }
 
-    deinit {
+    var ggViewModel: GGViewModel {
+        gitGraphViewModel
     }
-
+    
     private static func createRepos(user: User, project: Project) -> (autoCommitRepo: Repository, sourceRepo: Repository, initialCommit: AnyCommit) {
         do {
             RepoManager().reverseLog(project.url.path)

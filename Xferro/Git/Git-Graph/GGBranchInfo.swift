@@ -7,7 +7,21 @@
 
 import Foundation
 
-struct GGBranchInfo {
+struct GGBranchSpan: Codable, CustomDebugStringConvertible, Equatable {
+    var start: Int?
+    var end: Int?
+
+    init(_ start: Int? = nil, _ end: Int? = nil) {
+        self.start = start
+        self.end = end
+    }
+
+    var debugDescription: String {
+        "(\(start?.formatted() ?? "None"), \(end?.formatted() ?? "None"))"
+    }
+}
+
+struct GGBranchInfo: Codable, Equatable {
     let target: OID
     let mergeTarget: OID?
     var sourceBranch: Int?
@@ -18,11 +32,13 @@ struct GGBranchInfo {
     let isMerged: Bool
     let isTag: Bool
     var visual: GGBranchVis
-    var verticalSpan: (start: Int?, end: Int?)
+    var verticalSpan: GGBranchSpan
 
     init(
         target: OID,
         mergeTarget: OID? = nil,
+        sourceBranch: Int? = nil,
+        targetBranch: Int? = nil,
         name: String,
         persistence: UInt8,
         isRemote: Bool,
@@ -33,19 +49,45 @@ struct GGBranchInfo {
     ) {
         self.target = target
         self.mergeTarget = mergeTarget
-        self.targetBranch = nil
-        self.sourceBranch = nil
+        self.sourceBranch = sourceBranch
+        self.targetBranch = targetBranch
         self.name = name
         self.persistence = persistence
         self.isRemote = isRemote
         self.isMerged = isMerged
         self.isTag = isTag
         self.visual = visual
-        self.verticalSpan = (endIndex, nil)
+        self.verticalSpan = GGBranchSpan(endIndex, nil)
+    }
+
+    init(
+        target: OID,
+        mergeTarget: OID? = nil,
+        sourceBranch: Int? = nil,
+        targetBranch: Int? = nil,
+        name: String,
+        persistence: UInt8,
+        isRemote: Bool,
+        isMerged: Bool,
+        isTag: Bool,
+        visual: GGBranchVis,
+        verticalSpan: GGBranchSpan
+    ) {
+        self.target = target
+        self.mergeTarget = mergeTarget
+        self.sourceBranch = sourceBranch
+        self.targetBranch = targetBranch
+        self.name = name
+        self.persistence = persistence
+        self.isRemote = isRemote
+        self.isMerged = isMerged
+        self.isTag = isTag
+        self.visual = visual
+        self.verticalSpan = verticalSpan
     }
 }
 
-struct GGBranchVis {
+struct GGBranchVis: Codable, Equatable {
     /// The branch's column group (left to right)
     var orderGroup: Int
     /// The branch's merge target column group (left to right)
@@ -59,12 +101,19 @@ struct GGBranchVis {
     /// The column the branch is located in
     var column: Int?
 
-    init(orderGroup: Int, termColor: UInt8, svgColor: String) {
+    init(
+        orderGroup: Int,
+        targetOrderGroup: Int? = nil,
+        sourceOrderGroup: Int? = nil,
+        termColor: UInt8,
+        svgColor: String,
+        column: Int? = nil
+    ) {
         self.orderGroup = orderGroup
-        self.targetOrderGroup = nil
-        self.sourceOrderGroup = nil
+        self.targetOrderGroup = targetOrderGroup
+        self.sourceOrderGroup = sourceOrderGroup
         self.termColor = termColor
         self.svgColor = svgColor
-        self.column = nil
+        self.column = column
     }
 }

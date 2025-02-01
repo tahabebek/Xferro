@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct HeadInfo {
+struct GGHeadInfo: Codable {
     let oid: OID
     let name: String
     let isBranch: Bool

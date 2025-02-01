@@ -9,14 +9,15 @@ import Foundation
 
 extension GitGraph {
     /// Walks through the commits and adds each commit's Oid to the children of its parents.
-    static func assignChildren(commits: inout [GGCommitInfo], indices: [OID: Int]) {
+    static func assignChildren(commits: inout [GGCommitInfo], indicesOfCommits: [OID: Int]) {
         for idx in 0..<commits.count {
             let oid = commits[idx].oid
             let parents = commits[idx].parents
 
             for parentOid in parents {
-                if let parentIdx = indices[parentOid] {
+                if let parentIdx = indicesOfCommits[parentOid] {
                     commits[parentIdx].children.append(oid)
+                    commits[parentIdx].debugchildrenOIDs.append(oid.debugOID)
                 }
             }
         }
@@ -31,15 +32,15 @@ extension GitGraph {
     static func assignBranches(
         repository: Repository,
         commits: inout [GGCommitInfo],
-        indices: [OID: Int],
+        indicesOfCommits: [OID: Int],
         settings: GGSettings
     ) throws -> [GGBranchInfo] {
         var branchIdx = 0
-        var branches = try extractBranches(repository: repository, commits: commits, indices: indices, settings: settings)
+        var branches = try extractBranches(repository: repository, commits: commits, indicesOfCommits: indicesOfCommits, settings: settings)
 
         // Create index mapping
         var indexMap = Array(repeating: Optional<Int>.none, count: branches.count)
-        var commitCount = Array(repeating: 0, count: branches.count)
+        var commitCountPerBranch = Array(repeating: 0, count: branches.count)
 
         // First pass: trace branches and create initial mapping
         for oldIdx in 0..<branches.count {
@@ -48,7 +49,7 @@ extension GitGraph {
             let isTag = branch.isTag
             let isMerged = branch.isMerged
 
-            if let idx = indices[target] {
+            if let idx = indicesOfCommits[target] {
                 if isTag {
                     commits[idx].tags.append(oldIdx)
                 } else if !isMerged {
@@ -59,9 +60,9 @@ extension GitGraph {
                 let hasClaimedCommits = (try? traceBranch(
                     repository: repository,
                     commits: &commits,
-                    indices: indices,
+                    indicesOfCommits: indicesOfCommits,
                     branches: &branches,
-                    oid: oid,
+                    commitOID: oid,
                     branchIndex: oldIdx
                 )) ?? false
 
@@ -75,7 +76,7 @@ extension GitGraph {
         // Count commits per branch
         for info in commits {
             if let trace = info.branchTrace {
-                commitCount[trace] += 1
+                commitCountPerBranch[trace] += 1
             }
         }
 
@@ -83,7 +84,7 @@ extension GitGraph {
         var countSkipped = 0
         for idx in 0..<branches.count {
             if let mapped = indexMap[idx] {
-                if commitCount[idx] == 0 && branches[idx].isMerged && !branches[idx].isTag {
+                if commitCountPerBranch[idx] == 0 && branches[idx].isMerged && !branches[idx].isTag {
                     indexMap[idx] = nil
                     countSkipped += 1
                 } else {
@@ -117,23 +118,23 @@ extension GitGraph {
     static func extractBranches(
         repository: Repository,
         commits: [GGCommitInfo],
-        indices: [OID: Int],
+        indicesOfCommits: [OID: Int],
         settings: GGSettings
     ) throws -> [GGBranchInfo] {
+
         // Get actual branches from repository
-        let actualBranches = if settings.includeRemote {
-            repository.localBranches().mustSucceed() + repository.remoteBranches().mustSucceed()
-        } else { repository.localBranches().mustSucceed()
-        }
+        let type: BranchIterator.IteratorType = settings.includeRemote ? .all : .local
+        let branchIterator = BranchIterator(repo: repository, type: type)
+        var branchInfos = [GGBranchInfo]()
         var counter = 0
 
-        // Processactual branches
-        var branchInfos: [GGBranchInfo] = try actualBranches.compactMap { branch in
+        while let branch = try? branchIterator.next()?.get() {
+            if branch.isSymbolic { continue }
             let target = branch.oid
 
             counter += 1
             let name = branch.name
-            let endIndex = indices[target]
+            let endIndex = indicesOfCommits[target]
 
             let termColor = try toTerminalColor(
                 branchColor(
@@ -151,7 +152,7 @@ extension GitGraph {
                 counter: counter
             )
 
-            return GGBranchInfo(
+            let branchInfo = GGBranchInfo(
                 target: target,
                 mergeTarget: nil,
                 name: name,
@@ -166,19 +167,20 @@ extension GitGraph {
                 ),
                 endIndex: endIndex
             )
+            branchInfos.append(branchInfo)
         }
 
         // Process merge commits
         for (idx, info) in commits.enumerated() {
             guard info.isMerge,
-                  let commit = try? repository.commit(info.oid).get(),
-                  commit.parents.count > 1,
-                  let parentOid = commit.parents.last?.oid else {
+                  let parentOid = info.parents.last else {
                 continue
             }
 
             counter += 1
-            let branchName = parseMergeSummary(commit.message, patterns: settings.mergePatterns) ?? "unknown"
+            let branchName = parseMergeSummary(info.summary, patterns: settings.mergePatterns) ?? "unknown"
+
+            print("branchName: \(branchName)")
 
             let persistence = UInt8(branchOrder(name: branchName, patterns: settings.branches.persistence))
             let position = branchOrder(name: branchName, patterns: settings.branches.order)
@@ -221,32 +223,39 @@ extension GitGraph {
         // Sort branches by persistence and merge status
         branchInfos.sort { a, b in
             if a.persistence == b.persistence {
-                return !a.isMerged && b.isMerged
+                return a.isMerged && !b.isMerged
             }
             return a.persistence < b.persistence
         }
+
 
         // Process tags
         let tags = repository.allTags().mustSucceed()
 
         for tag in tags {
-            guard let targetIndex = indices[tag.oid] else {
+            guard let targetIndex = indicesOfCommits[tag.oid] else {
                 continue
+            }
+
+            let tagName = if tag.longName.hasPrefix("refs/") {
+                String(tag.longName.dropFirst(5))
+            } else {
+                tag.longName
             }
 
             counter += 1
             let termColor = try toTerminalColor(
                 branchColor(
-                    name: tag.longName,
+                    name: tagName,
                     colors: settings.branches.terminalColors,
                     unknownColors: settings.branches.terminalColorsUnknown,
                     counter: counter
                 )
             )
 
-            let position = branchOrder(name: tag.longName, patterns: settings.branches.order)
+            let position = branchOrder(name: tagName, patterns: settings.branches.order)
             let svgColor = branchColor(
-                name: tag.longName,
+                name: tagName,
                 colors: settings.branches.svgColors,
                 unknownColors: settings.branches.svgColorsUnknown,
                 counter: counter
@@ -255,7 +264,7 @@ extension GitGraph {
             let tagInfo = GGBranchInfo(
                 target: tag.oid,
                 mergeTarget: nil,
-                name: tag.longName,
+                name: tagName,
                 persistence: UInt8(settings.branches.persistence.count + 1),
                 isRemote: false,
                 isMerged: false,
@@ -271,6 +280,9 @@ extension GitGraph {
             branchInfos.append(tagInfo)
         }
 
+        for br in branchInfos {
+            print("branch: \(br.name), oid: \(br.target.debugOID), persistence: \(br.persistence.formatted()), isMerged: \(br.isMerged), orderGroup: \(br.visual.orderGroup), column: \(br.visual.column?.formatted() ?? "nil"), svgColor: \(br.visual.svgColor)" )
+        }
         return branchInfos
     }
 
@@ -279,20 +291,21 @@ extension GitGraph {
     static func traceBranch(
         repository: Repository,
         commits: inout [GGCommitInfo],
-        indices: [OID: Int],
+        indicesOfCommits: [OID: Int],
         branches: inout [GGBranchInfo],
-        oid: OID,
+        commitOID: OID,
         branchIndex: Int
     ) throws -> Bool {
-        var currentCommitId = oid
+        var currentCommitId = commitOID
         var lastSeenPosition: Int?
         var branchStartPosition: Int?
         var hasClaimedCommits = false
 
         // Keep walking back through history until we can't find any more commits
-        while let index = indices[currentCommitId] {
+        while let index = indicesOfCommits[currentCommitId] {
             // Have we hit a commit that's already claimed by another branch?
-            if let oldTrace = commits[index].branchTrace {
+            let info = commits[index]
+            if let oldTrace = info.branchTrace {
                 // Get properties of old branch
                 let oldBranch = branches[oldTrace]
                 let oldName = oldBranch.name
@@ -302,19 +315,19 @@ extension GitGraph {
 
                 // Get properties of new branch
                 let newName = branches[branchIndex].name
-                let oldEnd = oldRange.0 ?? 0
-                let newEnd = branches[branchIndex].verticalSpan.0 ?? 0
+                let oldEnd = oldRange.start ?? 0
+                let newEnd = branches[branchIndex].verticalSpan.start ?? 0
 
                 if newName == oldName && oldEnd >= newEnd {
                     // Update old branch range
-                    if let oldEndRange = oldRange.1 {
+                    if let oldEndRange = oldRange.end {
                         if index > oldEndRange {
-                            branches[oldTrace].verticalSpan = (nil, nil)
+                            branches[oldTrace].verticalSpan = .init()
                         } else {
-                            branches[oldTrace].verticalSpan = (index, oldRange.1)
+                            branches[oldTrace].verticalSpan = .init(index, oldRange.end)
                         }
                     } else {
-                        branches[oldTrace].verticalSpan = (index, oldRange.1)
+                        branches[oldTrace].verticalSpan = .init(index, oldRange.end)
                     }
                 } else {
                     // Handle origin branches
@@ -331,7 +344,7 @@ extension GitGraph {
                         if commits[prevIndex].isMerge {
                             var tempIndex = prevIndex
                             for siblingOid in commits[index].children where siblingOid != currentCommitId {
-                                if let siblingIndex = indices[siblingOid], siblingIndex > tempIndex {
+                                if let siblingIndex = indicesOfCommits[siblingOid], siblingIndex > tempIndex {
                                     tempIndex = siblingIndex
                                 }
                             }
@@ -360,20 +373,20 @@ extension GitGraph {
         }
 
         // Update branch range
-        if let end = branches[branchIndex].verticalSpan.0 {
+        if let end = branches[branchIndex].verticalSpan.start {
             if let start = branchStartPosition {
                 if start < end {
                     // TODO: find a better solution (bool field?) to identify non-deleted branches
                     // that were not assigned to any commits, and thus should not occupy a column.
-                    branches[branchIndex].verticalSpan = (nil, nil)
+                    branches[branchIndex].verticalSpan = .init()
                 } else {
-                    branches[branchIndex].verticalSpan = (branches[branchIndex].verticalSpan.0, start)
+                    branches[branchIndex].verticalSpan = .init(branches[branchIndex].verticalSpan.start, start)
                 }
             } else {
-                branches[branchIndex].verticalSpan = (branches[branchIndex].verticalSpan.0, nil)
+                branches[branchIndex].verticalSpan = .init(branches[branchIndex].verticalSpan.start, nil)
             }
         } else {
-            branches[branchIndex].verticalSpan = (branches[branchIndex].verticalSpan.0, branchStartPosition)
+            branches[branchIndex].verticalSpan = .init(branches[branchIndex].verticalSpan.start, branchStartPosition)
         }
 
         return hasClaimedCommits
@@ -419,6 +432,7 @@ extension GitGraph {
 
     /// Tries to extract the name of a merged-in branch from the merge commit summary
     static func parseMergeSummary(_ summary: String, patterns: GGMergePatterns) -> String? {
+        print("summary: \(summary)")
         for pattern in patterns.patterns {
             guard let match = pattern.firstMatch(in: summary, range: NSRange(summary.startIndex..., in: summary)),
                   match.numberOfRanges == 2 else {
@@ -437,14 +451,14 @@ extension GitGraph {
 
     static func correctForkMerges(
         commits: [GGCommitInfo],
-        indices: [OID: Int],
+        indicesOfCommits: [OID: Int],
         branches: inout [GGBranchInfo],
         settings: GGSettings
     ) throws {
         for idx in 0..<branches.count {
             // Chain of optional bindings to get merge target branch
             if let mergeTargetOid = branches[idx].mergeTarget,
-               let mergeTargetIndex = indices[mergeTargetOid],
+               let mergeTargetIndex = indicesOfCommits[mergeTargetOid],
                let commitInfo = commits[safe: mergeTargetIndex],
                let branchTrace = commitInfo.branchTrace,
                let mergeTarget = branches[safe: branchTrace],
@@ -483,13 +497,13 @@ extension GitGraph {
 
     static func assignSourcesTargets(
         commits: [GGCommitInfo],
-        indices: [OID: Int],
+        indicesOfCommits: [OID: Int],
         branches: inout [GGBranchInfo]
     ) {
         // Assign target branches
         for idx in 0..<branches.count {
             let targetBranchIdx = branches[idx].mergeTarget
-                .flatMap { oid in indices[oid] }
+                .flatMap { oid in indicesOfCommits[oid] }
                 .flatMap { idx in commits[safe: idx] }
                 .flatMap { info in info.branchTrace }
 
@@ -509,7 +523,7 @@ extension GitGraph {
 
             // Check each parent commit
             for parentOid in info.parents {
-                if let parentIdx = indices[parentOid],
+                if let parentIdx = indicesOfCommits[parentOid],
                    let parentInfo = commits[safe: parentIdx],
                    parentInfo.branchTrace != info.branchTrace {
 
@@ -551,7 +565,7 @@ extension GitGraph {
     /// visualized linearly and without overlaps. Uses Shortest-First scheduling.
     static func assignBranchColumns(
         commits: [GGCommitInfo],
-        indices: [OID: Int],
+        indicesOfCommits: [OID: Int],
         branches: inout [GGBranchInfo],
         branchSettings: GGBranchSettings,
         shortestFirst: Bool,
@@ -568,11 +582,11 @@ extension GitGraph {
 
         // Create sortable branch data
         var branchesSort = branches.enumerated()
-            .filter { _, br in br.verticalSpan.0 != nil || br.verticalSpan.1 != nil }
+            .filter { _, br in br.verticalSpan.start != nil || br.verticalSpan.end != nil }
             .map { idx, br in (
                 idx: idx,
-                start: br.verticalSpan.0 ?? 0,
-                end: br.verticalSpan.1 ?? (branches.count - 1),
+                start: br.verticalSpan.start ?? 0,
+                end: br.verticalSpan.end ?? (branches.count - 1),
                 sourceGroup: br.visual.sourceOrderGroup ?? branchSettings.order.count + 1,
                 targetGroup: br.visual.targetOrderGroup ?? branchSettings.order.count + 1
             )}
@@ -627,7 +641,7 @@ extension GitGraph {
                 // Check merge trace
                 if !occupied {
                     if let mergeTrace = branch.mergeTarget
-                        .flatMap({ indices[$0] })
+                        .flatMap({ indicesOfCommits[$0] })
                         .flatMap({ commits[$0].branchTrace }) {
 
                         let mergeBranch = branches[mergeTrace]

@@ -10,9 +10,7 @@ import Foundation
 let ORIGIN = "origin/"
 let FORK = "fork/"
 
-/// Represents a git history graph
-struct GitGraph {
-    let repository: Repository
+struct GitGraph: Codable {
     let commits: [GGCommitInfo]
     /// Mapping from commit id to index in `commits`
     let indices: [OID: Int]
@@ -23,7 +21,7 @@ struct GitGraph {
     /// Indices of all tags in `allBranches`
     let tags: [Int]
     /// The current HEAD
-    let head: HeadInfo
+    let head: GGHeadInfo
 
     init(
         repository: Repository,
@@ -51,21 +49,21 @@ struct GitGraph {
         let name: String
         let isBranch: Bool
         if let branchRef = headRef as? Branch {
-            name = branchRef.longName
+            name = branchRef.name
             isBranch = true
         } else if let tagRef = headRef as? TagReference {
-            name = tagRef.longName
+            name = tagRef.name
             isBranch = false
         } else if let reference = headRef as? Reference {
-            name = reference.longName
+            name = reference.shortName ?? reference.longName
             isBranch = false
         } else {
             fatalError()
         }
-        let head = HeadInfo(oid: headOid, name: name, isBranch: isBranch)
+        let head = GGHeadInfo(oid: headOid, name: name, isBranch: isBranch)
 
         var commits: [GGCommitInfo] = []
-        var indices: [OID: Int] = [:]
+        var indicesOfCommits: [OID: Int] = [:]
         var idx = 0
 
         while true {
@@ -84,31 +82,31 @@ struct GitGraph {
                 if !stashes.contains(oid),
                    let commit = try? repository.commit(oid).get() {
                     commits.append(GGCommitInfo(commit: commit))
-                    indices[oid] = idx
+                    indicesOfCommits[oid] = idx
                     idx += 1
                 }
             }
         }
 
-        Self.assignChildren(commits: &commits, indices: indices)
+        Self.assignChildren(commits: &commits, indicesOfCommits: indicesOfCommits)
 
         var allBranches = try Self.assignBranches(
             repository: repository,
             commits: &commits,
-            indices: indices,
+            indicesOfCommits: indicesOfCommits,
             settings: settings
         )
 
         try Self.correctForkMerges(
             commits: commits,
-            indices: indices,
+            indicesOfCommits: indicesOfCommits,
             branches: &allBranches,
             settings: settings
         )
 
         Self.assignSourcesTargets(
             commits: commits,
-            indices: indices,
+            indicesOfCommits: indicesOfCommits,
             branches: &allBranches
         )
 
@@ -123,7 +121,7 @@ struct GitGraph {
 
         Self.assignBranchColumns(
             commits: commits,
-            indices: indices,
+            indicesOfCommits: indicesOfCommits,
             branches: &allBranches,
             branchSettings: settings.branches,
             shortestFirst: shortestFirst,
@@ -140,7 +138,7 @@ struct GitGraph {
         )
 
         let indexMap = Dictionary(
-            indices.map { oid, index in
+            indicesOfCommits.map { oid, index in
                 (index, filteredIndices[oid])
             },
             uniquingKeysWith: { first, _ in first }
@@ -151,7 +149,7 @@ struct GitGraph {
             guard allBranches[safe: idx] != nil else {
                 continue
             }
-            if var startIdx = allBranches[idx].verticalSpan.0 {
+            if var startIdx = allBranches[idx].verticalSpan.start {
                 var idx0 = indexMap[startIdx]
 
                 while idx0 == nil {
@@ -159,10 +157,10 @@ struct GitGraph {
                     idx0 = indexMap[startIdx]
                 }
 
-                allBranches[idx].verticalSpan.0 = idx0.flatMap { $0 }
+                allBranches[idx].verticalSpan.start = idx0.flatMap { $0 }
             }
 
-            if var endIdx = allBranches[idx].verticalSpan.1 {
+            if var endIdx = allBranches[idx].verticalSpan.end {
                 var idx0 = indexMap[endIdx]
 
                 while idx0 == nil {
@@ -170,7 +168,7 @@ struct GitGraph {
                     idx0 = indexMap[endIdx]
                 }
 
-                allBranches[idx].verticalSpan.1 = idx0.flatMap { $0 }
+                allBranches[idx].verticalSpan.end = idx0.flatMap { $0 }
             }
         }
 
@@ -183,7 +181,6 @@ struct GitGraph {
             .compactMap { idx, br in
                 (!br.isMerged && br.isTag) ? idx : nil
             }
-        self.repository = repository
         self.commits = filteredCommits
         self.indices = filteredIndices
         self.allBranches = allBranches

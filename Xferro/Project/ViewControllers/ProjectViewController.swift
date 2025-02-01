@@ -55,8 +55,4 @@ class ProjectViewController: NSViewController {
         selectProjectView.wantsLayer = true
         view = selectProjectView
     }
-
-    private func createRepos(for project: Project) {
-        print("create repos")
-    }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct OID {
+struct OID: Equatable {
     // MARK: - Initializers
 
     /// Create an instance from a hex formatted string.
@@ -25,17 +25,20 @@ struct OID {
         }
 
         oid = pointer.pointee
+        self.debugOID = String(Self.desc(length: Int(GIT_OID_SHA1_HEXSIZE), oid: oid).prefix(7))
     }
 
     /// Create an instance from a libgit2 `git_oid`.
     init(_ oid: git_oid) {
         self.oid = oid
         self.length = size_t(GIT_OID_SHA1_HEXSIZE)
+        self.debugOID = String(Self.desc(length: Int(GIT_OID_SHA1_HEXSIZE), oid: oid).prefix(7))
     }
 
     // MARK: - Properties
 
     let oid: git_oid
+    let debugOID: String
     let length: size_t
 
     var isShort: Bool {
@@ -54,9 +57,13 @@ extension OID: CustomStringConvertible {
     }
 
     func desc(length: Int) -> String {
+        Self.desc(length: length, oid: oid)
+    }
+
+    static func desc(length: Int, oid: git_oid) -> String {
+        var oid = oid
         let string = UnsafeMutablePointer<Int8>.allocate(capacity: length)
         defer { string.deallocate() }
-        var oid = self.oid
         git_oid_nfmt(string, length, &oid)
         return String(bytes: string, count: length)!
     }
@@ -73,5 +80,26 @@ extension OID: Hashable {
         var left = lhs.oid
         var right = rhs.oid
         return git_oid_cmp(&left, &right) == 0
+    }
+}
+
+extension OID: Codable {
+    enum CodingKeys: String, CodingKey {
+        case oid
+    }
+
+    // Convert `git_oid` to a hex string for encoding
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        var mutableOid = oid
+        let oidHexString = String(cString: git_oid_tostr_s(&mutableOid))
+        try container.encode(oidHexString, forKey: .oid)
+    }
+
+    // Decode `git_oid` from a hex string
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let oidHexString = try container.decode(String.self, forKey: .oid)
+        self.init(string: oidHexString)!
     }
 }

@@ -8,7 +8,7 @@
 import Foundation
 import Observation
 
-@Observable final class User: Codable, Hashable, Equatable {
+final class User: Codable, Hashable, Equatable {
     typealias UserID = String
     let userID: UserID
     let login: Login
