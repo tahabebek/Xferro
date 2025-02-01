@@ -25,6 +25,7 @@ final class GitGraphTests: XCTestCase {
     func testGitGraph() throws {
         let repository = Fixtures.annoyRepository
         let settings = GGSettings(
+            includeRemote: true,
             branches: try GGBranchSettings.from(GGBranchSettingsDef.gitFlow()),
             mergePatterns: GGMergePatterns.default
         )

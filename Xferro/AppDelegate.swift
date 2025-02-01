@@ -32,6 +32,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         git_libgit2_init()
+        // TODO: git config --global rerere.enabled true
+        // https://git-scm.com/book/en/v2/Git-Tools-Rerere
+        // https://git-scm.com/docs/git-config#Documentation/git-config.txt-gcrerereResolved
+
+        // TODO: run git gc after every operation in autowip repo to pack up objects
+        // git gc --aggressive
+        // https://git-scm.com/book/en/v2/Git-Internals-Packfiles
+
+        // TODO: add git search
+        // The git grep command can help you find any string or regular expression in any of the files in your source code, even older versions of your project.
+        // https://git-scm.com/book/en/v2/Git-Tools-Searching#_git_grep
+
+        // TODO: use gitleaks to catch leaks
+        // https://github.com/gitleaks/gitleaks
+
+        // TODO: let users add their workflow model
+        // https://nvie.com/posts/a-successful-git-branching-model/
+
+        // TODO: create a clone with -depth 1, and only for the current branch, and then create worktrees for the autowips for each commit
+        // git clone *REMOTE-URL* --branch *BRANCH-NAME* --single-branch --depth 1 *FOLDER*
+
+
         createMenu()
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
