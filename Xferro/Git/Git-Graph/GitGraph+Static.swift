@@ -180,8 +180,6 @@ extension GitGraph {
             counter += 1
             let branchName = parseMergeSummary(info.summary, patterns: settings.mergePatterns) ?? "unknown"
 
-            print("branchName: \(branchName)")
-
             let persistence = UInt8(branchOrder(name: branchName, patterns: settings.branches.persistence))
             let position = branchOrder(name: branchName, patterns: settings.branches.order)
 
@@ -278,10 +276,6 @@ extension GitGraph {
             )
 
             branchInfos.append(tagInfo)
-        }
-
-        for br in branchInfos {
-            print("branch: \(br.name), oid: \(br.target.debugOID), persistence: \(br.persistence.formatted()), isMerged: \(br.isMerged), orderGroup: \(br.visual.orderGroup), column: \(br.visual.column?.formatted() ?? "nil"), svgColor: \(br.visual.svgColor)" )
         }
         return branchInfos
     }
@@ -432,7 +426,6 @@ extension GitGraph {
 
     /// Tries to extract the name of a merged-in branch from the merge commit summary
     static func parseMergeSummary(_ summary: String, patterns: GGMergePatterns) -> String? {
-        print("summary: \(summary)")
         for pattern in patterns.patterns {
             guard let match = pattern.firstMatch(in: summary, range: NSRange(summary.startIndex..., in: summary)),
                   match.numberOfRanges == 2 else {
@@ -572,7 +565,7 @@ extension GitGraph {
         forward: Bool
     ) {
         // Initialize occupied columns array
-        let occupied: [[[(start: Int, end: Int)]]] = Array(
+        var occupied: [[[(start: Int, end: Int)]]] = Array(
             repeating: [],
             count: branchSettings.order.count + 1
         )
@@ -612,7 +605,6 @@ extension GitGraph {
         for branchData in branchesSort {
             let branch = branches[branchData.idx]
             let group = branch.visual.orderGroup
-            var groupOcc = occupied[group]
 
             let alignRight = (branch.sourceBranch.map { src in
                 branches[src].visual.orderGroup > branch.visual.orderGroup
@@ -621,13 +613,13 @@ extension GitGraph {
                 branches[trg].visual.orderGroup > branch.visual.orderGroup
             } ?? false)
 
-            let len = groupOcc.count
+            let len = occupied[group].count
             var found = len
 
             // Find available column
             for i in 0..<len {
                 let index = alignRight ? len - i - 1 : i
-                let columnOcc = groupOcc[index]
+                let columnOcc = occupied[group][index]
                 var occupied = false
 
                 // Check if column is occupied
@@ -662,10 +654,10 @@ extension GitGraph {
             // Update branch column
             branches[branchData.idx].visual.column = found
 
-            if found == groupOcc.count {
-                groupOcc.append([])
+            if found == occupied[group].count {
+                occupied[group].append([])
             }
-            groupOcc[found].append((branchData.start, branchData.end))
+            occupied[group][found].append((branchData.start, branchData.end))
         }
 
         // Calculate group offsets

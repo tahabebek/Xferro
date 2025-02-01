@@ -70,7 +70,6 @@ final class GitGraphTests: XCTestCase {
         ]
 
         for (index, commit) in graph.commits.enumerated() {
-            print(commit.shortOID)
             XCTAssertEqual(commit.shortOID, expectedCommitData[index].shortOid)
             XCTAssertEqual(commit.isMerge, expectedCommitData[index].isMerged)
             XCTAssertEqual(commit.debugParentOIDs, expectedCommitData[index].parentOIDs)
@@ -114,7 +113,7 @@ final class GitGraphTests: XCTestCase {
             XCTAssertEqual(expectedBranch.visual.sourceOrderGroup, branch.visual.sourceOrderGroup)
             XCTAssertEqual(expectedBranch.visual.termColor, branch.visual.termColor)
             XCTAssertEqual(expectedBranch.visual.svgColor, branch.visual.svgColor)
-//            XCTAssertEqual(expectedBranch.visual.column, branch.visual.column)
+            XCTAssertEqual(expectedBranch.visual.column, branch.visual.column)
             XCTAssertEqual(expectedBranch.verticalSpan.start, branch.verticalSpan.start)
             XCTAssertEqual(expectedBranch.verticalSpan.end, branch.verticalSpan.end)
         }
