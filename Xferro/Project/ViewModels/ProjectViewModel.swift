@@ -22,25 +22,25 @@ final class ProjectViewModel: ZoomAndPanViewModel {
 //    private var autoCommitRepo: Repository
 //    private var sourceRepo: Repository
     private var nodePositions: [String: CGPoint] = [:]
-    private let gitGraphViewModel: GGViewModel
+//    private let gitGraphViewModel: GGViewModel
 
     init(user: User, project: Project) {
         self.user = user
         self.project = project
-        let path = Bundle.main.path(forResource: "annoy_graph", ofType: "json")
-        let data = try! Data(contentsOf: URL(fileURLWithPath: path!))
-        let encoder = JSONDecoder()
-        let gitGraph = try! encoder.decode(GitGraph.self, from: data)
-        self.gitGraphViewModel = GGViewModel(gitGraph: gitGraph)
+//        let path = Bundle.main.path(forResource: "annoy_graph", ofType: "json")
+//        let data = try! Data(contentsOf: URL(fileURLWithPath: path!))
+//        let encoder = JSONDecoder()
+//        let gitGraph = try! encoder.decode(GitGraph.self, from: data)
+//        self.gitGraphViewModel = GGViewModel(gitGraph: gitGraph)
 //        let (autoCommitRepo, sourceRepo, initialCommit) = Self.createRepos(user: user, project: project)
 //        self.autoCommitRepo = autoCommitRepo
 //        self.sourceRepo = sourceRepo
 //        self.currentCommit = initialCommit
     }
 
-    var ggViewModel: GGViewModel {
-        gitGraphViewModel
-    }
+//    var ggViewModel: GGViewModel {
+//        gitGraphViewModel
+//    }
     
     private static func createRepos(user: User, project: Project) -> (autoCommitRepo: Repository, sourceRepo: Repository, initialCommit: AnyCommit) {
         do {

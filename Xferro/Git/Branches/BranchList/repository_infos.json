@@ -1,0 +1,84 @@
+[
+  {
+    "branches" : [
+      {
+        "commit" : {
+          "oid" : {
+            "oid" : "4021a8f960476cebf51f5daf31483fd9d6f0452a"
+          }
+        },
+        "isSymbolic" : false,
+        "isUnborn" : false,
+        "longName" : "refs\/heads\/git-graph-tests",
+        "name" : "git-graph-tests"
+      },
+      {
+        "commit" : {
+          "oid" : {
+            "oid" : "4021a8f960476cebf51f5daf31483fd9d6f0452a"
+          }
+        },
+        "isSymbolic" : false,
+        "isUnborn" : false,
+        "longName" : "refs\/heads\/main",
+        "name" : "main"
+      },
+      {
+        "commit" : {
+          "oid" : {
+            "oid" : "4756baee52785b96211a1383c62c788280d3e8c5"
+          }
+        },
+        "isSymbolic" : false,
+        "isUnborn" : false,
+        "longName" : "refs\/heads\/master",
+        "name" : "master"
+      },
+      {
+        "commit" : {
+          "oid" : {
+            "oid" : "1f53a76a4a782588fa9495bc5b3dea8034c1ff86"
+          }
+        },
+        "isSymbolic" : false,
+        "isUnborn" : false,
+        "longName" : "refs\/heads\/pre-commit-hook-for-leaks",
+        "name" : "pre-commit-hook-for-leaks"
+      }
+    ],
+    "head" : {
+      "branch" : {
+        "_0" : {
+          "commit" : {
+            "oid" : {
+              "oid" : "4021a8f960476cebf51f5daf31483fd9d6f0452a"
+            }
+          },
+          "isSymbolic" : false,
+          "isUnborn" : false,
+          "longName" : "refs\/heads\/git-graph-tests",
+          "name" : "git-graph-tests"
+        }
+      }
+    },
+    "stashes" : [
+      {
+        "id" : 0,
+        "message" : "WIP on main: 4021a8f Update package",
+        "oid" : {
+          "oid" : "ba3c84db1f02e6573d9a55cf98c5220d0231b3b8"
+        }
+      }
+    ],
+    "tags" : [
+      {
+        "name" : "refs\/tags\/list",
+        "oid" : {
+          "oid" : "4021a8f960476cebf51f5daf31483fd9d6f0452a"
+        },
+        "type" : "lightweight"
+      }
+    ],
+    "url" : "file:\/\/\/private\/var\/folders\/t6\/0jf1tskd49n4qnpkcqzmbbm80000gn\/T\/com.xferro.Xferro\/F8C6B223-9449-4444-BF89-23C81E7F3EC7-9996-0000001E929AFE3E\/ANNOY\/.git\/"
+  }
+]

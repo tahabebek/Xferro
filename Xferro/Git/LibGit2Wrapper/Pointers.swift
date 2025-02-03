@@ -26,7 +26,7 @@ extension PointerType {
 }
 
 /// A pointer to a git object.
-enum Pointer: PointerType {
+enum Pointer: PointerType, Codable {
     case commit(OID)
     case tree(OID)
     case blob(OID)

@@ -20,12 +20,12 @@ struct ProjectView: View {
             GeometryReader { geometry in
                 HSplitView {
                     GeometryReader { graphViewGeometry in
-                        GitGraphView()
-                            .environment(projectViewModel.ggViewModel)
-                            .environment(\.graphWindowInfo, graphViewGeometry.size)
-                            .onAppear {
-                                print("graph geometry size : \(graphViewGeometry.size)")
-                            }
+//                        GitGraphView()
+//                            .environment(projectViewModel.ggViewModel)
+//                            .environment(\.graphWindowInfo, graphViewGeometry.size)
+//                            .onAppear {
+//                                print("graph geometry size : \(graphViewGeometry.size)")
+//                            }
                     }
 //                    TreeWrapperView(
 //                        recentered: $recentered,
