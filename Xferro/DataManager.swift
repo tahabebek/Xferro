@@ -8,15 +8,20 @@
 import Foundation
 
 struct DataManager {
-    static let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    static let appDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("com.xferro.Xferro")
 
     static func save<T: Encodable>(_ object: T, filename: String) {
+        try? FileManager.default.createDirectory(
+            at: appDir,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
         do {
             let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
             let data = try encoder.encode(object)
-            let fileURL = documentsPath.appendingPathComponent(filename)
+            let fileURL = appDir.appendingPathComponent(filename)
 
             try data.write(to: fileURL)
             print("Data saved successfully to: \(fileURL)")
@@ -26,7 +31,7 @@ struct DataManager {
     }
 
     static func load<T: Decodable>(_ type: T.Type, filename: String) -> T? {
-        let fileURL = documentsPath.appendingPathComponent(filename)
+        let fileURL = appDir.appendingPathComponent(filename)
 
         do {
             let data = try Data(contentsOf: fileURL)
@@ -39,7 +44,7 @@ struct DataManager {
     }
 
     static func delete(filename: String) {
-        let fileURL = documentsPath.appendingPathComponent(filename)
+        let fileURL = appDir.appendingPathComponent(filename)
 
         do {
             if FileManager.default.fileExists(atPath: fileURL.path) {

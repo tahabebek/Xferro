@@ -25,7 +25,7 @@ final class GitGraphTests: XCTestCase {
     func testGitGraph() throws {
         let repository = Fixtures.annoyRepository
         let settings = GGSettings(
-            includeRemote: true,
+            includeRemote: false,
             branches: try GGBranchSettings.from(GGBranchSettingsDef.gitFlow()),
             mergePatterns: GGMergePatterns.default
         )
@@ -35,6 +35,8 @@ final class GitGraphTests: XCTestCase {
             settings: settings,
             maxCount: 20
         )
+
+        DataManager.save(graph, filename: "annoy_graph.json")
 
         XCTAssertEqual(graph.commits.count, 19)
         XCTAssertEqual(graph.allBranches.count, 9)
@@ -88,7 +90,7 @@ final class GitGraphTests: XCTestCase {
 
         let expectedBranches: [GGBranchInfo] = [
             .init(target: OID(string: "4021a8f960476cebf51f5daf31483fd9d6f0452a")!, mergeTarget: nil, sourceBranch: 2, targetBranch: nil, name: "main", persistence: 0, isRemote: false, isMerged: false, isTag: false, visual: GGBranchVis(orderGroup: 0, targetOrderGroup: nil, sourceOrderGroup: 3, termColor: 12, svgColor: "blue", column: 0), verticalSpan: GGBranchSpan(0,nil)),
-            .init(target: OID(string: "1f990563cffcea707608a3a6687deb6487c2a753")!, mergeTarget: OID(string: "68b739db2492c1cd63a8b98e3d6caa70d435758c")!, sourceBranch: 0, targetBranch: 6, name: "ENG-1846", persistence: 6, isRemote: false, isMerged: true, isTag: false, visual: GGBranchVis(orderGroup: 3, targetOrderGroup: 3, sourceOrderGroup: 0, termColor: 7, svgColor: "gray", column: 1), verticalSpan: GGBranchSpan(6,nil)),
+            .init(target: OID(string: "1f990563cffcea707608a3a6687deb6487c2a753")!, mergeTarget: OID(string: "68b739db2492c1cd63a8b98e3d6caa70d435758c")!, sourceBranch: 0, targetBranch: 6, name: "ENG-1846", persistence: 6, isRemote: false, isMerged: true, isTag: false, visual: GGBranchVis(orderGroup: 3, targetOrderGroup: 3, sourceOrderGroup: 0, termColor: 7, svgColor: "gray", column: 3), verticalSpan: GGBranchSpan(6,nil)),
             .init(target: OID(string: "354ab4ae660f90ac3bbbd38b2c3ab3f241191c6a")!, mergeTarget: OID(string: "44eedb215739af7bed10e72dd8265a64b8793f1d")!, sourceBranch: 0, targetBranch: 0, name: "aksh1t/ENG-1898", persistence: 6, isRemote: false, isMerged: true, isTag: false, visual: GGBranchVis(orderGroup: 3, targetOrderGroup: 0, sourceOrderGroup: 0, termColor: 7, svgColor: "gray", column: 1), verticalSpan: GGBranchSpan(9,17)),
             .init(target: OID(string: "114db0bd655f650447ad7841aabe89d9aa2229a7")!, mergeTarget: OID(string: "68d193a9433c912cf98fd84628a7670a64a3f000")!, sourceBranch: 1, targetBranch: 1, name: "fork/ENG-1846", persistence: 6, isRemote: false, isMerged: true, isTag: false, visual: GGBranchVis(orderGroup: 3, targetOrderGroup: 3, sourceOrderGroup: 3, termColor: 14, svgColor: "turquoise", column: 2), verticalSpan: GGBranchSpan(13,15)),
             .init(target: OID(string: "4021a8f960476cebf51f5daf31483fd9d6f0452a")!, mergeTarget: nil, sourceBranch: nil, targetBranch: nil, name: "git-graph-tests", persistence: 6, isRemote: false, isMerged: false, isTag: false, visual: GGBranchVis(orderGroup: 3, targetOrderGroup: nil, sourceOrderGroup: nil, termColor: 7, svgColor: "gray", column: nil), verticalSpan: GGBranchSpan(nil,nil)),

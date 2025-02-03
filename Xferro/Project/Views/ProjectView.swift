@@ -19,8 +19,14 @@ struct ProjectView: View {
                 .frame(height: 40)
             GeometryReader { geometry in
                 HSplitView {
-                    GitGraphView()
-                        .environment(projectViewModel.ggViewModel)
+                    GeometryReader { graphViewGeometry in
+                        GitGraphView()
+                            .environment(projectViewModel.ggViewModel)
+                            .environment(\.graphWindowInfo, graphViewGeometry.size)
+                            .onAppear {
+                                print("graph geometry size : \(graphViewGeometry.size)")
+                            }
+                    }
 //                    TreeWrapperView(
 //                        recentered: $recentered,
 //                        currentOffset: $currentOffset,
@@ -35,7 +41,6 @@ struct ProjectView: View {
                     FileNavigatorView()
                     PeekView()
                 }
-                .environment(\.windowInfo, geometry.size)
             }
         }
         .environment(projectViewModel)

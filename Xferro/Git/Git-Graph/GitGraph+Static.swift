@@ -564,7 +564,7 @@ extension GitGraph {
         shortestFirst: Bool,
         forward: Bool
     ) {
-        // Initialize occupied columns array
+        // Initialize column tracking for each order group
         var occupied: [[[(start: Int, end: Int)]]] = Array(
             repeating: [],
             count: branchSettings.order.count + 1
@@ -573,19 +573,82 @@ extension GitGraph {
         let lengthSortFactor = shortestFirst ? 1 : -1
         let startSortFactor = forward ? 1 : -1
 
+        // First pass: Build merge relationships map
+        // This helps us track which commits are merged into other commits
+        var mergeRelationships: [OID: OID] = [:]
+        for commit in commits {
+            if commit.isMerge && commit.parents.count > 1 {
+                // For merge commits, we store the relationship between the second parent
+                // and the merge commit itself
+                mergeRelationships[commit.parents[1]] = commit.oid
+            }
+        }
+
+        // Second pass: Build parent trace map considering both direct parentage
+        // and merge relationships
+        var parentTraceMap: [OID: Int] = [:]
+        for commit in commits {
+            // First check if this commit is merged into another commit
+            if let mergeCommitId = mergeRelationships[commit.oid],
+               let mergeIdx = indicesOfCommits[mergeCommitId],
+               let mergeTrace = commits[mergeIdx].branchTrace {
+                // If it is merged, use the merge commit's trace as the parent trace
+                parentTraceMap[commit.oid] = mergeTrace
+                continue
+            }
+
+            // If not merged, handle regular parent relationship
+            // We use the first parent as the main line of history
+            if !commit.parents.isEmpty,
+               let parentIdx = indicesOfCommits[commit.parents[0]],
+               let parentTrace = commits[parentIdx].branchTrace {
+                parentTraceMap[commit.oid] = parentTrace
+            }
+        }
+
         // Create sortable branch data
         var branchesSort = branches.enumerated()
-            .filter { _, br in br.verticalSpan.start != nil || br.verticalSpan.end != nil }
+            .filter { _, br in
+                br.verticalSpan.start != nil || br.verticalSpan.end != nil
+            }
             .map { idx, br in (
                 idx: idx,
                 start: br.verticalSpan.start ?? 0,
                 end: br.verticalSpan.end ?? (branches.count - 1),
                 sourceGroup: br.visual.sourceOrderGroup ?? branchSettings.order.count + 1,
-                targetGroup: br.visual.targetOrderGroup ?? branchSettings.order.count + 1
+                targetGroup: br.visual.targetOrderGroup ?? branchSettings.order.count + 1,
+                branch: br
             )}
 
-        // Sort branches
+        // Sort branches with enhanced criteria to handle traces and merges properly
         branchesSort.sort { a, b in
+            // Get trace information for comparison
+            let currentTraceA = indicesOfCommits[a.branch.target]
+                .flatMap { commits[$0].branchTrace } ?? 999
+            let parentTraceA = parentTraceMap[a.branch.target] ?? 999
+
+            let currentTraceB = indicesOfCommits[b.branch.target]
+                .flatMap { commits[$0].branchTrace } ?? 999
+            let parentTraceB = parentTraceMap[b.branch.target] ?? 999
+
+            // Primary sorting: main branch (trace 0) comes first
+            if (currentTraceA == 0) != (currentTraceB == 0) {
+                return currentTraceA == 0
+            }
+
+            // Secondary sorting: group by parent trace
+            if parentTraceA != parentTraceB {
+                return parentTraceA < parentTraceB
+            }
+
+            // Tertiary sorting: handle branch splits
+            let isSplitA = currentTraceA != parentTraceA
+            let isSplitB = currentTraceB != parentTraceB
+            if isSplitA != isSplitB {
+                return !isSplitA
+            }
+
+            // Final sorting criteria for equal cases
             let maxGroupA = max(a.sourceGroup, a.targetGroup)
             let maxGroupB = max(b.sourceGroup, b.targetGroup)
             if maxGroupA != maxGroupB {
@@ -601,71 +664,67 @@ extension GitGraph {
             return a.start * startSortFactor < b.start * startSortFactor
         }
 
-        // Assign columns
+        // Track column assignments for each trace
+        var traceColumns: [Int: Int] = [:]
+
+        // Assign columns to branches
         for branchData in branchesSort {
             let branch = branches[branchData.idx]
             let group = branch.visual.orderGroup
 
-            let alignRight = (branch.sourceBranch.map { src in
-                branches[src].visual.orderGroup > branch.visual.orderGroup
-            } ?? false) ||
-            (branch.targetBranch.map { trg in
-                branches[trg].visual.orderGroup > branch.visual.orderGroup
-            } ?? false)
+            let currentTrace = indicesOfCommits[branch.target]
+                .flatMap { commits[$0].branchTrace }
+            let parentTrace = parentTraceMap[branch.target]
+
+            // Determine if this branch splits from its parent
+            let isBranchSplit = currentTrace != nil && parentTrace != nil &&
+            currentTrace! != parentTrace!
 
             let len = occupied[group].count
             var found = len
 
-            // Find available column
-            for i in 0..<len {
-                let index = alignRight ? len - i - 1 : i
-                let columnOcc = occupied[group][index]
-                var occupied = false
+            // Only search for existing columns if this isn't a branch split
+            if !isBranchSplit {
+                for i in 0..<len {
+                    let columnOcc = occupied[group][i]
+                    var isOccupied = false
 
-                // Check if column is occupied
-                for (start, end) in columnOcc {
-                    if branchData.start <= end && branchData.end >= start {
-                        occupied = true
-                        break
-                    }
-                }
-
-                // Check merge trace
-                if !occupied {
-                    if let mergeTrace = branch.mergeTarget
-                        .flatMap({ indicesOfCommits[$0] })
-                        .flatMap({ commits[$0].branchTrace }) {
-
-                        let mergeBranch = branches[mergeTrace]
-                        if mergeBranch.visual.orderGroup == branch.visual.orderGroup,
-                           let mergeColumn = mergeBranch.visual.column,
-                           mergeColumn == index {
-                            occupied = true
+                    // Check for range conflicts
+                    for (start, end) in columnOcc {
+                        if branchData.start <= end && branchData.end >= start {
+                            isOccupied = true
+                            break
                         }
                     }
-                }
 
-                if !occupied {
-                    found = index
-                    break
+                    if !isOccupied {
+                        found = i
+                        break
+                    }
                 }
             }
 
             // Update branch column
             branches[branchData.idx].visual.column = found
 
+            // Track trace column assignments
+            if let trace = currentTrace {
+                traceColumns[trace] = found
+            }
+
+            // Create new column if needed
             if found == occupied[group].count {
                 occupied[group].append([])
             }
             occupied[group][found].append((branchData.start, branchData.end))
         }
 
-        // Calculate group offsets
+        // Calculate final group offsets
         let groupOffset = occupied.reduce(into: [Int]()) { result, group in
             result.append((result.last ?? 0) + group.count)
         }
 
-        // Apply offsets to columns
+        // Apply offsets to get final column positions
         for i in branches.indices {
             if let column = branches[i].visual.column {
                 let offset = branches[i].visual.orderGroup == 0 ? 0 :

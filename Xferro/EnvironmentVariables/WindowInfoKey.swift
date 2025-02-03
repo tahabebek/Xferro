@@ -18,3 +18,14 @@ extension EnvironmentValues {
         set { self[WindowInfoKey.self] = newValue }
     }
 }
+
+struct GraphWindowInfoKey: EnvironmentKey {
+    static let defaultValue: CGSize = .zero
+}
+
+extension EnvironmentValues {
+    var graphWindowInfo: CGSize {
+        get { self[GraphWindowInfoKey.self] }
+        set { self[GraphWindowInfoKey.self] = newValue }
+    }
+}

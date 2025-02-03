@@ -21,7 +21,10 @@ struct GGBranchSpan: Codable, CustomDebugStringConvertible, Equatable {
     }
 }
 
-struct GGBranchInfo: Codable, Equatable {
+struct GGBranchInfo: Codable, Equatable, Identifiable {
+    var id: String {
+        name + target.description
+    }
     let target: OID
     let mergeTarget: OID?
     var sourceBranch: Int?
