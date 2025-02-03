@@ -16,6 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         super.init()
+        git_libgit2_init()
         SentrySDK.start { options in
             options.dsn = "https://06fd8ebf14ce84b23c1252a0b78d790b@o4508498687033344.ingest.us.sentry.io/4508498688409600"
             options.tracesSampleRate = 1.0
@@ -31,7 +32,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        git_libgit2_init()
         // TODO: git config --global rerere.enabled true
         // https://git-scm.com/book/en/v2/Git-Tools-Rerere
         // https://git-scm.com/docs/git-config#Documentation/git-config.txt-gcrerereResolved

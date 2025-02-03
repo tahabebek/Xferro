@@ -8,18 +8,17 @@
 import SwiftUI
 
 struct ProjectView: View {
-    @State var projectViewModel: ProjectViewModel
+    @State var branchListViewModel: BranchListViewModel
     @State var recentered: Bool = true
     @State var currentOffset: CGPoint = .zero
     @State var zoomScale: CGFloat = 1.0
 
     var body: some View {
         VStack(spacing: 0) {
-            MenuView()
-                .frame(height: 40)
             GeometryReader { geometry in
                 HSplitView {
                     GeometryReader { graphViewGeometry in
+                        BranchListView(viewModel: branchListViewModel)
 //                        GitGraphView()
 //                            .environment(projectViewModel.ggViewModel)
 //                            .environment(\.graphWindowInfo, graphViewGeometry.size)
@@ -43,7 +42,6 @@ struct ProjectView: View {
                 }
             }
         }
-        .environment(projectViewModel)
     }
 
     func handleStateChange() {
@@ -69,14 +67,14 @@ struct ProjectView: View {
 }
 
 struct FileNavigatorView: View {
-    @Environment(ProjectViewModel.self) var projectViewModel
+//    @Environment(ProjectViewModel.self) var projectViewModel
     var body: some View {
         Color.yellow.ignoresSafeArea()
     }
 }
 
 struct PeekView: View {
-    @Environment(ProjectViewModel.self) var projectViewModel
+//    @Environment(ProjectViewModel.self) var projectViewModel
     var body: some View {
         Color.blue.ignoresSafeArea()
     }

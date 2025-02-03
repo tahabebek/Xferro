@@ -13,7 +13,7 @@ final class User: Codable, Hashable, Equatable {
     let userID: UserID
     let login: Login
     let commitIdentity: CommitIdentity
-    let projects: Projects
+    var projects: [Project]
 
     static func == (lhs: User, rhs: User) -> Bool {
         lhs.userID == rhs.userID
@@ -23,7 +23,7 @@ final class User: Codable, Hashable, Equatable {
         hasher.combine(userID)
     }
 
-    init(userID: UserID, login: Login, commitIdentity: CommitIdentity, projects: Projects) {
+    init(userID: UserID, login: Login, commitIdentity: CommitIdentity, projects: [Project] = []) {
         self.userID = userID
         self.login = login
         self.commitIdentity = commitIdentity

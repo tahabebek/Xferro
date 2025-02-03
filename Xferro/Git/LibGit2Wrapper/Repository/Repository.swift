@@ -7,19 +7,17 @@
 
 import Foundation
 
-final class Repository {
+final class Repository: Identifiable {
     /// The underlying libgit2 `git_repository` object.
     let pointer: OpaquePointer
-    var submodule: Submodule?
 
     // MARK: - Initializers
 
     /// Create an instance with a libgit2 `git_repository` object.
     ///
     /// The Repository assumes ownership of the `git_repository` object.
-    init(_ pointer: OpaquePointer, submodule: Submodule? = nil) {
+    init(_ pointer: OpaquePointer) {
         self.pointer = pointer
-        self.submodule = submodule
     }
 
     deinit {
@@ -308,6 +306,7 @@ final class Repository {
             return .failure(NSError(gitError: result, pointOfFailure: "git_repository_open"))
         }
     }
+
 
     class func at(_ url: URL) -> Result<Repository, NSError> {
         var pointer: OpaquePointer? = nil

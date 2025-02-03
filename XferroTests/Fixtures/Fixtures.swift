@@ -56,6 +56,10 @@ final class Fixtures {
 
     // MARK: - The Fixtures
 
+    class var repositoryWithStatus: Repository {
+        return Fixtures.sharedInstance.repository(named: "repository-with-status")
+    }
+
     class var detachedHeadRepository: Repository {
         return Fixtures.sharedInstance.repository(named: "detached-head")
     }

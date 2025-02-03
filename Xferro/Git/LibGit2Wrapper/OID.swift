@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct OID: Equatable {
+struct OID: Equatable, Identifiable {
+    var id: String { description }
     // MARK: - Initializers
 
     /// Create an instance from a hex formatted string.

@@ -44,7 +44,8 @@ struct SwiftSpaceApp: App {
                     .environment(\.windowInfo, geometry.size)
                 }
             }
-            .frame(width: Dimensions.appWidth, height: Dimensions.appHeight)
+            .border(.gray, width: 1)
+            .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
             .task {
                 AppDelegate.users = users
             }

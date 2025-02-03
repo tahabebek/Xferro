@@ -6,7 +6,8 @@
 //
 
 /// A git branch.
-struct Branch: ReferenceType, Hashable, Codable {
+struct Branch: Identifiable, ReferenceType, Hashable, Codable {
+    var id: String { longName }
     /// The full name of the reference (e.g., `refs/heads/master`).
     let longName: String
 

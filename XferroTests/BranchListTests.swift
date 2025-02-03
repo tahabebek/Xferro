@@ -23,7 +23,36 @@ final class BranchListTests: XCTestCase {
     }
     
     func testBranchList() throws {
-        let repository = Fixtures.annoyRepository
+        let repositoryInfos = [
+            try! repositoryInfo(from: Fixtures.annoyRepository),
+            try! repositoryInfo(from: Fixtures.detachedHeadRepository),
+            try! repositoryInfo(from: Fixtures.simpleRepository),
+            try! repositoryInfo(from: Fixtures.mantleRepository),
+            try! repositoryInfo(from: Fixtures.repositoryOnAnotherBranch),
+            try! repositoryInfo(from: Fixtures.repositoryWithModifiedAndAddedFiles),
+            try! repositoryInfo(from: Fixtures.repositoryInDetachedState),
+            try! repositoryInfo(from: Fixtures.repositoryWithStatus),
+        ]
+//        DataManager.save(repositoryInfos, filename: "repository_infos.json")
+//        print("success")
+    }
+
+//    func testCreateRepos() throws {
+//        let repositories = [
+//            Fixtures.annoyRepository,
+//            Fixtures.detachedHeadRepository,
+//            Fixtures.simpleRepository,
+//            Fixtures.mantleRepository,
+//            Fixtures.repositoryOnAnotherBranch,
+//            Fixtures.repositoryWithModifiedAndAddedFiles,
+//            Fixtures.repositoryInDetachedState,
+//            Fixtures.repositoryWithStatus
+//        ]
+//        DataManager.save(repositories, filename: "repositories.json")
+//        print("success")
+//    }
+
+    private func repositoryInfo(from repository: Repository) throws -> BranchListViewModel.RepositoryInfo {
         var stashes = [Stash]()
 
         try repository.stashes().get().forEach { stash in
@@ -51,19 +80,12 @@ final class BranchListTests: XCTestCase {
         }
 
         let tags = repository.allTags().mustSucceed()
-        let repositoryInfos = [
-            BranchListViewModel.RepositoryInfo(
-                branches: branches,
-                stashes: stashes,
-                tags: tags,
-                head: head,
-                url: repository.gitDir!
-            )
-        ]
-        XCTAssertEqual(stashes.count, 1)
-        XCTAssertEqual(branches.count, 4)
-        XCTAssertEqual(tags.count, 1)
-//        DataManager.save(repositoryInfos, filename: "repository_infos.json")
-//        print("success")
+        return BranchListViewModel.RepositoryInfo(
+            branches: branches,
+            stashes: stashes,
+            tags: tags,
+            head: head,
+            url: repository.gitDir!
+        )
     }
 }

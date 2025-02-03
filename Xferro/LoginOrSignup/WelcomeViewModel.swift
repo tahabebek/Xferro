@@ -106,8 +106,7 @@ import Observation
         let user = User(
             userID: fireBaseUser?.uid ?? UUID().uuidString,
             login: login,
-            commitIdentity: identity,
-            projects: Projects(currentProject: nil, recentProjects: [])
+            commitIdentity: identity
         )
         users = Users(currentUser: user, recentUsers: [])
     }

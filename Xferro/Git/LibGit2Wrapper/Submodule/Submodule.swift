@@ -27,7 +27,7 @@ class Submodule {
         if git_submodule_open(&repo, git_submodule) != 0 {
             return nil
         }
-        return Repository(repo!, submodule: self)
+        return Repository(repo!)
     }
 
     lazy var owner: Repository = {

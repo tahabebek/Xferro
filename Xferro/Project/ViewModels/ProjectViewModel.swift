@@ -22,7 +22,7 @@ final class ProjectViewModel: ZoomAndPanViewModel {
 //    private var autoCommitRepo: Repository
 //    private var sourceRepo: Repository
     private var nodePositions: [String: CGPoint] = [:]
-//    private let gitGraphViewModel: GGViewModel
+//    private let _branchListViewModel: BranchListViewModel
 
     init(user: User, project: Project) {
         self.user = user
@@ -38,8 +38,8 @@ final class ProjectViewModel: ZoomAndPanViewModel {
 //        self.currentCommit = initialCommit
     }
 
-//    var ggViewModel: GGViewModel {
-//        gitGraphViewModel
+//    var branchListViewModel: BranchListViewModel {
+//        _branchListViewModel
 //    }
     
     private static func createRepos(user: User, project: Project) -> (autoCommitRepo: Repository, sourceRepo: Repository, initialCommit: AnyCommit) {
