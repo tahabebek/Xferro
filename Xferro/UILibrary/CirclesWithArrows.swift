@@ -15,7 +15,7 @@ struct CirclesWithArrows<CircleContent: View>: View {
     let verticalOffset: CGFloat
 
     private var arrowY: CGFloat { circleSize / 2  + verticalOffset }
-    private var arrowHeadSize: CGFloat { circleSize / 8 }
+    private var arrowHeadSize: CGFloat { circleSize / 10 }
     private let lineWidth: CGFloat = 1
 
     init(

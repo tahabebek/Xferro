@@ -29,10 +29,13 @@ struct BranchView: View {
                         )
                 }
                 CirclesWithArrows(numberOfCircles: commits.count) { index in
-                    FlaredCircle(backgroundColor: isCurrentBranch && index == 0 ? .red.opacity(0.3) : Color(hex: 0x232834).opacity(0.8)) {
-                        Text(commits[index].oid.debugOID.prefix(4))
-                            .foregroundColor(Color.fabulaFore1)
-                            .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                    FlaredRounded(backgroundColor: isCurrentBranch && index == 0 ? .red.opacity(0.3) : Color(hex: 0x232834).opacity(0.8)) {
+                        ZStack {
+                            Text(commits[index].oid.debugOID.prefix(4))
+                                .font(.caption)
+                                .foregroundColor(Color.fabulaFore1)
+                                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                        }
                     }
                 }
             }

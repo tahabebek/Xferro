@@ -6,7 +6,8 @@
 //
 
 /// A git tag reference, which can be either a lightweight tag or a Tag object.
-enum TagReference: ReferenceType, Hashable {
+enum TagReference: ReferenceType, Hashable, Identifiable {
+    var id: String { longName }
     /// A lightweight tag, which is just a name and an OID.
     case lightweight(String, OID)
 

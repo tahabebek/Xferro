@@ -10,9 +10,16 @@ import Observation
 import SwiftUI
 
 struct RepositoryView: View {
+    enum Selection {
+        static let branches: Int   = 0
+        static let tags: Int       = 1
+        static let stashes: Int    = 2
+        static let history: Int    = 3
+    }
+
     @State var viewModel: CommitsViewModel
     @State private var isCollapsed = false
-    @State private var selection: Int = 0
+    @State private var selection: Int = Selection.tags
     @State private var normalValue: BranchSectionNormalValue = .init()
 
     let repository: Repository
@@ -116,10 +123,16 @@ struct RepositoryView: View {
 
     @ViewBuilder private var contentView: some View {
         switch selection {
-        case 0:
+        case Selection.branches:
             branchesView
+        case Selection.tags:
+            tagsView
+        case Selection.stashes:
+            stashesView
+        case Selection.history:
+            historyView
         default:
-            EmptyView()
+            fatalError()
         }
     }
 
@@ -133,6 +146,38 @@ struct RepositoryView: View {
                 )
             }
         }
+    }
+
+    private var tagsView: some View {
+        ScrollView(.horizontal) {
+            LazyHStack(alignment: .top) {
+                ForEach(viewModel.tagReferences(for: repository)) { tagReference in
+                    FlaredRounded {
+                        VStack {
+                            Text("\(tagReference.name)")
+                                .font(.largeTitle)
+                                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                            Text("\(tagReference.oid.debugOID.prefix(4))")
+                                .font(.footnote)
+                                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                        }
+                    }
+                    .frame(width: 80, height: 80)
+                }
+            }
+            .fixedSize()
+            .padding(.bottom, 10)
+        }
+        .flipsForRightToLeftLayoutDirection(true)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var stashesView: some View {
+        Text("Stashes")
+    }
+
+    private var historyView: some View {
+        Text("History")
     }
 }
 

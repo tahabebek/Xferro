@@ -60,7 +60,9 @@ import Observation
     func tagReferences(for repository: Repository) -> [TagReference] {
         var tags: [TagReference] = []
         
-        try? repository.allTags().get().forEach { tag in
+        try? repository.allTags().get()
+            .sorted { $0.name < $1.name }
+            .forEach { tag in
             tags.append(tag)
         }
         return tags
@@ -95,7 +97,7 @@ import Observation
         return false
     }
 
-    func commitsForBranch(_ branch: Branch, in repository: Repository, count: Int = 100) -> [Commit] {
+    func commitsForBranch(_ branch: Branch, in repository: Repository, count: Int = 10) -> [Commit] {
         var commits: [Commit] = []
         
         let commitIterator = CommitIterator(repo: repository, root: branch.oid.oid)
