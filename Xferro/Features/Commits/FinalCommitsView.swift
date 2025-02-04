@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-struct CommitsView: View {
-    @State var viewModel: BranchListViewModel
+struct FinalCommitsView: View {
+    @State var viewModel: CommitsViewModel
     let width: CGFloat
 
     var body: some View {
         PinnedScrollableView(title: "Final Commits") {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(viewModel.repositories) { repository in
-                    BranchSectionView(viewModel: viewModel, repository: repository)
+                    RepositoryView(viewModel: viewModel, repository: repository)
                         .frame(width: width)
                 }
                 AddRepositoryButton(viewModel: viewModel)

@@ -52,7 +52,7 @@ final class BranchListTests: XCTestCase {
 //        print("success")
 //    }
 
-    private func repositoryInfo(from repository: Repository) throws -> BranchListViewModel.RepositoryInfo {
+    private func repositoryInfo(from repository: Repository) throws -> CommitsViewModel.RepositoryInfo {
         var stashes = [Stash]()
 
         try repository.stashes().get().forEach { stash in
@@ -68,7 +68,7 @@ final class BranchListTests: XCTestCase {
 
         let headRef = try repository.HEAD().get()
 
-        let head: BranchListViewModel.RepositoryInfo.Head = if let branchRef = headRef as? Branch {
+        let head: CommitsViewModel.RepositoryInfo.Head = if let branchRef = headRef as? Branch {
             .branch(branchRef)
 
         } else if let tagRef = headRef as? TagReference {
@@ -80,7 +80,7 @@ final class BranchListTests: XCTestCase {
         }
 
         let tags = repository.allTags().mustSucceed()
-        return BranchListViewModel.RepositoryInfo(
+        return CommitsViewModel.RepositoryInfo(
             branches: branches,
             stashes: stashes,
             tags: tags,

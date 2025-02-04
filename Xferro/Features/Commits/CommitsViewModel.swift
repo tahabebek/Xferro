@@ -1,5 +1,5 @@
 //
-//  BranchListViewModel.swift
+//  CommitsViewModel.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/3/25.
@@ -8,7 +8,7 @@
 import Foundation
 import Observation
 
-@Observable class BranchListViewModel {
+@Observable class CommitsViewModel {
     struct RepositoryInfo: Identifiable, Codable {
         enum Head: Codable {
             case branch(Branch)
@@ -69,7 +69,7 @@ import Observation
     func head(for repository: Repository) -> RepositoryInfo.Head {
         let headRef = try? repository.HEAD().get()
 
-        let head: BranchListViewModel.RepositoryInfo.Head =
+        let head: CommitsViewModel.RepositoryInfo.Head =
         if let branchRef = headRef as? Branch {
             .branch(branchRef)
         } else if let tagRef = headRef as? TagReference {
@@ -109,7 +109,7 @@ import Observation
 }
 
 extension Repository {
-    var repositoryInfo: BranchListViewModel.RepositoryInfo {
+    var repositoryInfo: CommitsViewModel.RepositoryInfo {
         var stashes = [Stash]()
 
         try? self.stashes().get().forEach { stash in
@@ -125,7 +125,7 @@ extension Repository {
 
         let headRef = try? self.HEAD().get()
 
-        let head: BranchListViewModel.RepositoryInfo.Head =
+        let head: CommitsViewModel.RepositoryInfo.Head =
         if let branchRef = headRef as? Branch {
             .branch(branchRef)
         } else if let tagRef = headRef as? TagReference {
@@ -137,7 +137,7 @@ extension Repository {
         }
 
         let tags = self.allTags().mustSucceed()
-        return BranchListViewModel.RepositoryInfo(
+        return CommitsViewModel.RepositoryInfo(
             branches: branches,
             stashes: stashes,
             tags: tags,

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ProjectView: View {
-    @State var branchListViewModel: BranchListViewModel
+    @State var commitsViewModel: CommitsViewModel
     @State var recentered: Bool = true
     @State var currentOffset: CGPoint = .zero
     @State var zoomScale: CGFloat = 1.0
@@ -18,7 +18,7 @@ struct ProjectView: View {
 //            GeometryReader { geometry in
                 HSplitView {
 //                    GeometryReader { graphViewGeometry in
-                        BranchListView(viewModel: branchListViewModel)
+                        CommitsView(viewModel: commitsViewModel)
                             .padding(.trailing, 6)
 //                        GitGraphView()
 //                            .environment(projectViewModel.ggViewModel)

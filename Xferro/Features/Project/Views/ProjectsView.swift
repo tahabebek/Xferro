@@ -16,8 +16,8 @@ struct ProjectsView: View {
             Spacer()
             HStack {
                 Spacer()
-                if let branchListViewModel = viewModel.branchListViewModel {
-                    ProjectView(branchListViewModel: branchListViewModel)
+                if let commitsViewModel = viewModel.commitsViewModel {
+                    ProjectView(commitsViewModel: commitsViewModel)
                 } else {
                     FolderPickerView(viewModel: folderPickerViewModel)
                         .onChange(of: folderPickerViewModel.selectedFolderURL) { oldValue, newValue in

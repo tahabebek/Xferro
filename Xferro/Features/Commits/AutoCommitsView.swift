@@ -1,5 +1,5 @@
 //
-//  AutoCommitsView.swift
+//  WIPCommitsView.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/4/25.
@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct AutoCommitsView: View {
-    @State var viewModel: BranchListViewModel
+struct WIPCommitsView: View {
+    @State var viewModel: CommitsViewModel
     let width: CGFloat
     var body: some View {
         PinnedScrollableView(title: "WIP Commits") {

@@ -1,5 +1,5 @@
 //
-//  BranchSectionView.swift
+//  RepositoryView.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/4/25.
@@ -9,8 +9,8 @@ import AxisSegmentedView
 import Observation
 import SwiftUI
 
-struct BranchSectionView: View {
-    @State var viewModel: BranchListViewModel
+struct RepositoryView: View {
+    @State var viewModel: CommitsViewModel
     @State private var isCollapsed = false
     @State private var selection: Int = 0
     @State private var normalValue: BranchSectionNormalValue = .init()

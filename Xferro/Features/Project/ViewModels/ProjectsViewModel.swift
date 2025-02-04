@@ -10,7 +10,7 @@ import Observation
 
 @Observable final class ProjectsViewModel {
     @ObservationIgnored var user: User
-    var branchListViewModel: BranchListViewModel?
+    var commitsViewModel: CommitsViewModel?
 
     init(user: User) {
         self.user = user
@@ -36,7 +36,7 @@ import Observation
             }
         }
         guard repositories.isNotEmpty else { return }
-        branchListViewModel = BranchListViewModel(repositories: repositories)
+        commitsViewModel = CommitsViewModel(repositories: repositories)
     }
 
     private func isFolderGit(url: URL) -> Bool {

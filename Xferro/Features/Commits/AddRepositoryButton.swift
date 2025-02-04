@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AddRepositoryButton: View {
-    @State var viewModel: BranchListViewModel
+    @State var viewModel: CommitsViewModel
     var body: some View {
         HStack {
             Spacer()
