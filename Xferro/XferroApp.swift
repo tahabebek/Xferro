@@ -44,11 +44,11 @@ struct SwiftSpaceApp: App {
                     .environment(\.windowInfo, geometry.size)
                 }
             }
-            .border(.gray, width: 1)
             .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
             .task {
                 AppDelegate.users = users
             }
+            .background(Color.fabulaBack2)
         }
     }
 }

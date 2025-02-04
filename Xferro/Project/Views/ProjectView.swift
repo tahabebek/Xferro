@@ -15,17 +15,18 @@ struct ProjectView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GeometryReader { geometry in
+//            GeometryReader { geometry in
                 HSplitView {
-                    GeometryReader { graphViewGeometry in
+//                    GeometryReader { graphViewGeometry in
                         BranchListView(viewModel: branchListViewModel)
+                            .padding(.trailing, 6)
 //                        GitGraphView()
 //                            .environment(projectViewModel.ggViewModel)
 //                            .environment(\.graphWindowInfo, graphViewGeometry.size)
 //                            .onAppear {
 //                                print("graph geometry size : \(graphViewGeometry.size)")
 //                            }
-                    }
+//                    }
 //                    TreeWrapperView(
 //                        recentered: $recentered,
 //                        currentOffset: $currentOffset,
@@ -40,7 +41,7 @@ struct ProjectView: View {
                     FileNavigatorView()
                     PeekView()
                 }
-            }
+//            }
         }
     }
 
