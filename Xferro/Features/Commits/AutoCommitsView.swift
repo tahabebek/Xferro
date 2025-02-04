@@ -8,12 +8,15 @@
 import SwiftUI
 
 struct WIPCommitsView: View {
-    @State var viewModel: CommitsViewModel
+    @Environment(CommitsViewModel.self) var viewModel
     let width: CGFloat
+    
     var body: some View {
-        PinnedScrollableView(title: "WIP Commits") {
+        PinnedScrollableView(title: "AutoWIP Commits", showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
+                Spacer()
                 Text("Auto Commits View")
+                Spacer()
             }
             .fixedSize()
             .frame(width: width)

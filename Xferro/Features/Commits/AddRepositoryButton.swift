@@ -8,18 +8,23 @@
 import SwiftUI
 
 struct AddRepositoryButton: View {
-    @State var viewModel: CommitsViewModel
+    @Environment(CommitsViewModel.self) var viewModel
+    @State private var showFolderSelector: Bool = false
     var body: some View {
         HStack {
             Spacer()
             Button {
-                viewModel.addRepositoryButtonTapped()
+                showFolderSelector = true
             } label: {
                 Text("Add repository")
             }
             .buttonStyle(.bordered)
             .padding()
             Spacer()
+        }
+        .fileImporter(isPresented: $showFolderSelector, allowedContentTypes: [.directory], allowsMultipleSelection: false) { result in
+            guard let directory = try? result.get().first else { return }
+            viewModel.usedDidSelectFolder(directory)
         }
     }
 }

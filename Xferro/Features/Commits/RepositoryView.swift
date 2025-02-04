@@ -5,24 +5,16 @@
 //  Created by Taha Bebek on 2/4/25.
 //
 
-import AxisSegmentedView
 import Observation
 import SwiftUI
 
 struct RepositoryView: View {
-    enum Selection {
-        static let branches: Int   = 0
-        static let tags: Int       = 1
-        static let stashes: Int    = 2
-        static let history: Int    = 3
-    }
-
-    @State var viewModel: CommitsViewModel
+    @Environment(CommitsViewModel.self) var viewModel
     @State private var isCollapsed = false
-    @State private var selection: Int = Selection.tags
-    @State private var normalValue: BranchSectionNormalValue = .init()
+    @State private var selection: Int = 0
 
     let repository: Repository
+
     var body: some View {
         Group {
             VStack(spacing: 0) {
@@ -48,6 +40,7 @@ struct RepositoryView: View {
                     segmentedView
                         .frame(height: 32)
                     contentView
+                        .padding(.bottom, 8)
                 }
                 .opacity(!isCollapsed ? 1 : 0)
                 .frame(maxHeight: !isCollapsed ? .infinity : 0)
@@ -61,75 +54,42 @@ struct RepositoryView: View {
     }
 
     private var segmentedView: some View {
-        AxisSegmentedView(selection: $selection, constant: normalValue.constant, {
+        Picker(selection: $selection) {
             Group {
                 Text("Branches")
-                    .font(.callout)
-                    .foregroundColor(Color.white.opacity(0.5))
-                    .itemTag(0, selectArea: normalValue.selectArea0) {
-                        HStack {
-                            Text("Branches")
-                        }
-                        .font(.callout)
-                        .foregroundColor(Color.white)
-                    }
+                    .tag(0)
+                    .foregroundColor(selection == 0 ? .white : Color.white.opacity(0.5))
                 Text("Tags")
-                    .font(.callout)
-                    .foregroundColor(Color.white.opacity(0.5))
-                    .itemTag(1, selectArea: normalValue.selectArea1) {
-                        HStack {
-                            Text("Tags")
-                        }
-                        .font(.callout)
-                        .foregroundColor(Color.white)
-                    }
+                    .tag(1)
+                    .foregroundColor(selection == 1 ? .white : Color.white.opacity(0.5))
                 Text("Stashes")
-                    .font(.callout)
-                    .foregroundColor(Color.white.opacity(0.5))
-                    .itemTag(2, selectArea: normalValue.selectArea2) {
-                        HStack {
-                            Text("Stashes")
-                        }
-                        .font(.callout)
-                        .foregroundColor(Color.white)
-                    }
+                    .tag(2)
+                    .foregroundColor(selection == 2 ? .white : Color.white.opacity(0.5))
                 Text("History")
-                    .font(.callout)
-                    .foregroundColor(Color.white.opacity(0.5))
-                    .itemTag(3, selectArea: normalValue.selectArea3) {
-                        HStack {
-                            Text("History")
-                        }
-                        .font(.callout)
-                        .foregroundColor(Color.white)
-                    }
+                    .tag(3)
+                    .foregroundColor(selection == 3 ? .white : Color.white.opacity(0.5))
             }
-        }, style: {
-            ASNormalStyle { _ in
-                RoundedRectangle(cornerRadius: 5)
-                    .fill(Color(hex: 0x191919))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 5)
-                            .stroke()
-                            .fill(Color(hex: 0x282828))
-                    )
-                    .padding(3.5)
-            }
-            .background(Color(hex: 0x0B0C10))
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-        })
-        .font(.system(size: 20))
+            .font(.callout)
+        } label: {
+            Text("Hidden Label")
+        }
+        .labelsHidden()
+        .padding(.trailing, 2)
+        .background(Color(hex: 0x0B0C10))
+        .clipShape(RoundedRectangle(cornerRadius: 5))
+        .pickerStyle(SegmentedPickerStyle())
+        .animation(.default, value: selection)
     }
 
     @ViewBuilder private var contentView: some View {
         switch selection {
-        case Selection.branches:
+        case 0:
             branchesView
-        case Selection.tags:
+        case 1:
             tagsView
-        case Selection.stashes:
+        case 2:
             stashesView
-        case Selection.history:
+        case 3:
             historyView
         default:
             fatalError()
@@ -138,11 +98,12 @@ struct RepositoryView: View {
 
     private var branchesView: some View {
         VStack(spacing: 16) {
+            let head = try? viewModel.HEAD(for: repository)
             ForEach(viewModel.branches(for: repository)) { branch in
                 BranchView(
                     branch: branch,
                     commits: viewModel.commitsForBranch(branch, in: repository),
-                    isCurrentBranch: viewModel.isCurrentBranch(branch, in: repository)
+                    isCurrentBranch: (head != nil) ? viewModel.isCurrentBranch(branch, head: head!, in: repository) : false
                 )
             }
         }
@@ -166,25 +127,32 @@ struct RepositoryView: View {
                 }
             }
             .fixedSize()
-            .padding(.bottom, 10)
         }
         .flipsForRightToLeftLayoutDirection(true)
         .environment(\.layoutDirection, .rightToLeft)
     }
 
     private var stashesView: some View {
-        Text("Stashes")
+        ScrollView(.horizontal) {
+            LazyHStack(alignment: .top) {
+                ForEach(viewModel.stashes(for: repository)) { stash in
+                    FlaredRounded {
+                        VStack {
+                            Text("\(stash.oid.debugOID.prefix(4))")
+                                .font(.largeTitle)
+                                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                        }
+                    }
+                    .frame(width: 80, height: 80)
+                }
+            }
+            .fixedSize()
+        }
+        .flipsForRightToLeftLayoutDirection(true)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private var historyView: some View {
         Text("History")
     }
-}
-
-@Observable class BranchSectionNormalValue {
-    var constant = ASConstant(divideLine: .init(color: Color(hex: 0x444444), scale: 0))
-    var selectArea0: CGFloat = 0
-    var selectArea1: CGFloat = 0
-    var selectArea2: CGFloat = 0
-    var selectArea3: CGFloat = 0
 }

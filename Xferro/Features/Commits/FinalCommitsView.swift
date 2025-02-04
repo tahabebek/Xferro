@@ -8,17 +8,17 @@
 import SwiftUI
 
 struct FinalCommitsView: View {
-    @State var viewModel: CommitsViewModel
+    @Environment(CommitsViewModel.self) var viewModel
     let width: CGFloat
 
     var body: some View {
-        PinnedScrollableView(title: "Final Commits") {
-            VStack(alignment: .leading, spacing: 0) {
+        PinnedScrollableView(title: "Final Commits", showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 16) {
                 ForEach(viewModel.repositories) { repository in
-                    RepositoryView(viewModel: viewModel, repository: repository)
+                    RepositoryView(repository: repository)
                         .frame(width: width)
                 }
-                AddRepositoryButton(viewModel: viewModel)
+                AddRepositoryButton()
                 Spacer()
             }
             .fixedSize()

@@ -24,6 +24,5 @@ struct VerticalHeader: View {
 
     var body: some View {
         titleView
-            .background(Color.red.opacity(0.3))
     }
 }

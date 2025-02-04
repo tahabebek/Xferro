@@ -9,12 +9,10 @@ import Foundation
 import Observation
 
 @Observable final class ProjectsViewModel {
-    @ObservationIgnored var user: User
-    var commitsViewModel: CommitsViewModel?
+    var user: User
 
     init(user: User) {
         self.user = user
-        self.reloadBranches()
     }
 
     func userDidSelectFolder(_ url: URL) {
@@ -23,20 +21,23 @@ import Observation
             let isGit = isFolderGit(url: url)
             let project = Project(isGit: isGit, url: url)
             user.projects.append(project)
-            self.reloadBranches()
         }
     }
 
-    private func reloadBranches() {
-        guard user.projects.isNotEmpty else { return }
+    func commitsViewModel() -> CommitsViewModel? {
+        guard user.projects.isNotEmpty else { return nil }
         var repositories: [Repository] = []
         for project in user.projects {
             if let repository = try? Repository.at(project.url).get() {
                 repositories.append(repository)
             }
         }
-        guard repositories.isNotEmpty else { return }
-        commitsViewModel = CommitsViewModel(repositories: repositories)
+        guard repositories.isNotEmpty else { return nil }
+        let commitsViewModel = CommitsViewModel(repositories: repositories) { [weak self] url in
+            guard let self else { return }
+            userDidSelectFolder(url)
+        }
+        return commitsViewModel
     }
 
     private func isFolderGit(url: URL) -> Bool {

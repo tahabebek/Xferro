@@ -8,14 +8,16 @@
 import SwiftUI
 
 struct CommitsView: View {
-    @State var viewModel: CommitsViewModel
+    @Environment(CommitsViewModel.self) var viewModel
 
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
-                FinalCommitsView(viewModel: viewModel, width: geometry.size.width)
+                FinalCommitsView(width: geometry.size.width)
                     .frame(width: geometry.size.width, height: geometry.size.height * 0.67)
-                WIPCommitsView(viewModel: viewModel, width: geometry.size.width)
+                Divider()
+                    .padding(.bottom, 8)
+                WIPCommitsView(width: geometry.size.width)
                     .frame(width: geometry.size.width, height: geometry.size.height * 0.33)
                 Spacer()
             }

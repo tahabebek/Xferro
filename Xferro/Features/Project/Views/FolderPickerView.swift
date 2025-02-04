@@ -13,7 +13,7 @@ struct FolderPickerView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Text("Open a folder.")
+            Text("Select a repository.")
                 .font(.title2)
             Button {
                 showFolderSelector = true

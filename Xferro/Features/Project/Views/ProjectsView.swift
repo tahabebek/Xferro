@@ -16,8 +16,9 @@ struct ProjectsView: View {
             Spacer()
             HStack {
                 Spacer()
-                if let commitsViewModel = viewModel.commitsViewModel {
-                    ProjectView(commitsViewModel: commitsViewModel)
+                if let commitsViewModel = viewModel.commitsViewModel() {
+                    ProjectView()
+                        .environment(commitsViewModel)
                 } else {
                     FolderPickerView(viewModel: folderPickerViewModel)
                         .onChange(of: folderPickerViewModel.selectedFolderURL) { oldValue, newValue in
