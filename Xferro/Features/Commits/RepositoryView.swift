@@ -9,9 +9,16 @@ import Observation
 import SwiftUI
 
 struct RepositoryView: View {
+    enum Section: Int {
+        case branches = 0
+        case tags = 1
+        case stashes = 2
+        case history = 3
+    }
+
     @Environment(CommitsViewModel.self) var viewModel
     @State private var isCollapsed = false
-    @State private var selection: Int = 0
+    @State private var selection: Section = .branches
     @Namespace private var animation
 
     let repository: Repository
@@ -37,37 +44,16 @@ struct RepositoryView: View {
                 }
                 .frame(height: 36)
                 .padding(.bottom, !isCollapsed ? 16 : 0)
-                VStack(spacing: 16) {
-                    Picker(selection: $selection) {
-                        Group {
-                            Text("Branches")
-                                .tag(0)
-                                .foregroundColor(selection == 0 ? .white : Color.white.opacity(0.5))
-                            Text("Tags")
-                                .tag(1)
-                                .foregroundColor(selection == 1 ? .white : Color.white.opacity(0.5))
-                            Text("Stashes")
-                                .tag(2)
-                                .foregroundColor(selection == 2 ? .white : Color.white.opacity(0.5))
-                            Text("History")
-                                .tag(3)
-                                .foregroundColor(selection == 3 ? .white : Color.white.opacity(0.5))
-                        }
-                        .font(.callout)
-                    } label: {
-                        Text("Hidden Label")
+                if !isCollapsed {
+                    VStack(spacing: 16) {
+                        picker
+                            .frame(height: 32)
+                        contentView
+                            .padding(.bottom, 8)
                     }
-                    .labelsHidden()
-                    .padding(.trailing, 2)
-                    .background(Color(hex: 0x0B0C10))
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
-                    .pickerStyle(SegmentedPickerStyle())
-                    .frame(height: 32)
-                    contentView
-                        .padding(.bottom, 8)
+                    .animation(.default, value: selection)
+                    .frame(maxHeight: !isCollapsed ? .infinity : 0)
                 }
-                .animation(.default, value: selection)
-                .frame(maxHeight: !isCollapsed ? .infinity : 0)
             }
             .padding()
         }
@@ -77,22 +63,43 @@ struct RepositoryView: View {
         )
     }
 
+    @ViewBuilder private var picker: some View {
+        Picker(selection: $selection) {
+            Group {
+                Text("Branches")
+                    .tag(Section.branches)
+                Text("Tags")
+                    .tag(Section.tags)
+                Text("Stashes")
+                    .tag(Section.stashes)
+                Text("History")
+                    .tag(Section.history)
+            }
+            .font(.callout)
+        } label: {
+            Text("Hidden Label")
+        }
+        .labelsHidden()
+        .padding(.trailing, 2)
+        .background(Color(hex: 0x0B0C10))
+        .clipShape(RoundedRectangle(cornerRadius: 5))
+        .pickerStyle(SegmentedPickerStyle())
+    }
+
     @ViewBuilder private var contentView: some View {
         switch selection {
-        case 0:
+        case .branches:
             branchesView
-                .matchedGeometryEffect(id: "container", in: animation)
-        case 1:
+                .matchedGeometryEffect(id: "contentView", in: animation)
+        case .tags:
             tagsView
-                .matchedGeometryEffect(id: "container", in: animation)
-        case 2:
+                .matchedGeometryEffect(id: "contentView", in: animation)
+        case .stashes:
             stashesView
-                .matchedGeometryEffect(id: "container", in: animation)
-        case 3:
+                .matchedGeometryEffect(id: "contentView", in: animation)
+        case .history:
             historyView
-                .matchedGeometryEffect(id: "container", in: animation)
-        default:
-            fatalError()
+                .matchedGeometryEffect(id: "contentView", in: animation)
         }
     }
 
@@ -110,13 +117,16 @@ struct RepositoryView: View {
     }
 
     private var tagsView: some View {
-        ScrollView(.horizontal) {
+        ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top) {
                 ForEach(viewModel.tagReferences(for: repository)) { tagReference in
                     FlaredRounded {
                         VStack {
                             Text("\(tagReference.name)")
-                                .font(.largeTitle)
+                                .font(.title)
+                                .minimumScaleFactor(0.5)
+                                .lineLimit(1)
+                                .frame(maxWidth: 70)
                                 .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                             Text("\(tagReference.oid.debugOID.prefix(4))")
                                 .font(.footnote)
@@ -124,6 +134,7 @@ struct RepositoryView: View {
                         }
                     }
                     .frame(width: 80, height: 80)
+                    .fixedSize()
                 }
             }
             .fixedSize()
@@ -133,13 +144,13 @@ struct RepositoryView: View {
     }
 
     private var stashesView: some View {
-        ScrollView(.horizontal) {
+        ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top) {
                 ForEach(viewModel.stashes(for: repository)) { stash in
                     FlaredRounded {
                         VStack {
                             Text("\(stash.oid.debugOID.prefix(4))")
-                                .font(.largeTitle)
+                                .font(.title)
                                 .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                         }
                     }
