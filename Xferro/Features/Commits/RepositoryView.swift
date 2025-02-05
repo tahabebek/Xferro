@@ -12,6 +12,7 @@ struct RepositoryView: View {
     @Environment(CommitsViewModel.self) var viewModel
     @State private var isCollapsed = false
     @State private var selection: Int = 0
+    @Namespace private var animation
 
     let repository: Repository
 
@@ -37,12 +38,35 @@ struct RepositoryView: View {
                 .frame(height: 36)
                 .padding(.bottom, !isCollapsed ? 16 : 0)
                 VStack(spacing: 16) {
-                    segmentedView
-                        .frame(height: 32)
+                    Picker(selection: $selection) {
+                        Group {
+                            Text("Branches")
+                                .tag(0)
+                                .foregroundColor(selection == 0 ? .white : Color.white.opacity(0.5))
+                            Text("Tags")
+                                .tag(1)
+                                .foregroundColor(selection == 1 ? .white : Color.white.opacity(0.5))
+                            Text("Stashes")
+                                .tag(2)
+                                .foregroundColor(selection == 2 ? .white : Color.white.opacity(0.5))
+                            Text("History")
+                                .tag(3)
+                                .foregroundColor(selection == 3 ? .white : Color.white.opacity(0.5))
+                        }
+                        .font(.callout)
+                    } label: {
+                        Text("Hidden Label")
+                    }
+                    .labelsHidden()
+                    .padding(.trailing, 2)
+                    .background(Color(hex: 0x0B0C10))
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .pickerStyle(SegmentedPickerStyle())
+                    .frame(height: 32)
                     contentView
                         .padding(.bottom, 8)
                 }
-                .opacity(!isCollapsed ? 1 : 0)
+                .animation(.default, value: selection)
                 .frame(maxHeight: !isCollapsed ? .infinity : 0)
             }
             .padding()
@@ -53,44 +77,20 @@ struct RepositoryView: View {
         )
     }
 
-    private var segmentedView: some View {
-        Picker(selection: $selection) {
-            Group {
-                Text("Branches")
-                    .tag(0)
-                    .foregroundColor(selection == 0 ? .white : Color.white.opacity(0.5))
-                Text("Tags")
-                    .tag(1)
-                    .foregroundColor(selection == 1 ? .white : Color.white.opacity(0.5))
-                Text("Stashes")
-                    .tag(2)
-                    .foregroundColor(selection == 2 ? .white : Color.white.opacity(0.5))
-                Text("History")
-                    .tag(3)
-                    .foregroundColor(selection == 3 ? .white : Color.white.opacity(0.5))
-            }
-            .font(.callout)
-        } label: {
-            Text("Hidden Label")
-        }
-        .labelsHidden()
-        .padding(.trailing, 2)
-        .background(Color(hex: 0x0B0C10))
-        .clipShape(RoundedRectangle(cornerRadius: 5))
-        .pickerStyle(SegmentedPickerStyle())
-        .animation(.default, value: selection)
-    }
-
     @ViewBuilder private var contentView: some View {
         switch selection {
         case 0:
             branchesView
+                .matchedGeometryEffect(id: "container", in: animation)
         case 1:
             tagsView
+                .matchedGeometryEffect(id: "container", in: animation)
         case 2:
             stashesView
+                .matchedGeometryEffect(id: "container", in: animation)
         case 3:
             historyView
+                .matchedGeometryEffect(id: "container", in: animation)
         default:
             fatalError()
         }
@@ -153,6 +153,15 @@ struct RepositoryView: View {
     }
 
     private var historyView: some View {
-        Text("History")
+        HStack {
+            Spacer()
+            VStack {
+                Spacer()
+                Text("Empty")
+                Spacer()
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
