@@ -89,7 +89,9 @@ protocol SelectableItem: Equatable, Identifiable {}
                 case .tag(let tagReference):
                     self.currentSelectedItem = .tag(SelectableTag(repository: firstRepo, tag: tagReference))
                 case .reference(let reference):
-                    self.currentSelectedItem = .
+                    if let commit = try? firstRepo.commit(reference.oid).get() {
+                        self.currentSelectedItem = .detachedCommit(SelectableDetachedCommit(repository: firstRepo, commit: commit))
+                    }
                 }
             }
         }
@@ -203,6 +205,14 @@ protocol SelectableItem: Equatable, Identifiable {}
             }
         }
         return branches
+    }
+
+    func detachedTag(of repository: Repository) -> SelectableTag {
+        fatalError()
+    }
+
+    func detachedCommit(of repository: Repository) -> SelectableCommit {
+        fatalError()
     }
 
     func tags(of repository: Repository) -> [SelectableTag] {
