@@ -13,33 +13,25 @@ struct WIPCommitsView: View {
         GridItem(.adaptive(minimum: 16, maximum: 16))
     ]
     let width: CGFloat
-    
+
     var body: some View {
         PinnedScrollableView(showsIndicators: false) {
             AutoCommitHeaderView()
         } content: {
             Group {
-                VStack(spacing: 0) {
+                VStack(spacing: 8) {
                     HStack {
-                        Label("For commit", systemImage: "dot.square")
+                        Label(viewModel.wipCommitTitle, systemImage: "dot.square")
                         Spacer()
                     }
                     .frame(height: 36)
                     LazyVGrid(columns: columns) {
-                        ForEach(0..<1000) { index in
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.blue)
-                                .frame(width: 16, height: 16)
-                                .overlay(
-                                    Text("\(index)")
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 8))
-                                )
+                        ForEach(viewModel.wipCommits) { selectableWipCommit in
+                            wipRectangle(item: selectableWipCommit)
                         }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
+                .padding()
             }
             .background(
                 Color(hex: 0x15151A)
@@ -48,19 +40,22 @@ struct WIPCommitsView: View {
         }
     }
 
-//        PinnedScrollableView(title: "AutoWIP Commits", showsIndicators: false) {
-//            LazyHGrid(rows: rows, alignment: .top, spacing: 1) {
-//                ForEach((0...79), id: \.self) { _ in
-//                    FlaredRounded {
-//                        EmptyView()
-//                    }
-//                    .frame(width: 8, height: 8)
-//                }
-//                .padding(.vertical, 1)
-//            }
-//            .padding(.horizontal, 1)
-//            .frame(width: width)
-//            .fixedSize()
-//        }
-//    }
+    func wipRectangle(item: CommitsViewModel.SelectableWipCommit) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.blue)
+                .frame(width: 16, height: 16)
+                .overlay(
+                    Text("\(item.commit.oid.debugOID.prefix(2))")
+                        .foregroundColor(.white)
+                        .font(.system(size: 8))
+                )
+                .onTapGesture {
+                    viewModel.userTapped(item: item)
+                }
+            if viewModel.isSelected(item: item) {
+                SelectedItemOverlay(width: 16, height: 16, cornerRadius: 1)
+            }
+        }
+    }
 }
