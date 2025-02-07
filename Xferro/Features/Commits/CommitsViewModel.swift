@@ -22,6 +22,7 @@ protocol SelectableItem: Equatable, Identifiable {}
         case commit(SelectableCommit)
         case wipCommit(SelectableWipCommit)
         case historyCommit(SelectableHistoryCommit)
+        case detachedCommit(SelectableDetachedCommit)
         case tag(SelectableTag)
         case stash(SelectableStash)
     }
@@ -44,6 +45,12 @@ protocol SelectableItem: Equatable, Identifiable {}
         let repository: Repository
         let branch: Branch
         let wip: Commit
+    }
+
+    struct SelectableDetachedCommit: SelectableItem, Identifiable {
+        var id: String { repository.id.hashValue.formatted() + commit.id }
+        let repository: Repository
+        let commit: Commit
     }
 
     struct SelectableHistoryCommit: SelectableItem, Identifiable {
@@ -75,8 +82,15 @@ protocol SelectableItem: Equatable, Identifiable {}
         self.userDidSelectFolder = userDidSelectFolder
 
         if let firstRepo = repositories.first {
-            if let currentBranch = branches(of: firstRepo).first {
-                self.currentSelectedItem = .status(SelectableStatus(repository: firstRepo, branch: currentBranch))
+            if let head = try? HEAD(for: firstRepo) {
+                switch head {
+                case .branch(let branch):
+                    self.currentSelectedItem = .status(SelectableStatus(repository: firstRepo, branch: branch))
+                case .tag(let tagReference):
+                    self.currentSelectedItem = .tag(SelectableTag(repository: firstRepo, tag: tagReference))
+                case .reference(let reference):
+                    self.currentSelectedItem = .
+                }
             }
         }
     }
