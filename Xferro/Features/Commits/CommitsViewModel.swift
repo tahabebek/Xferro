@@ -28,6 +28,9 @@ import Observation
     init(repositories: [Repository]) {
         self.repositories = repositories
     }
+    
+    func userTapped(repoIndex: UInt, branchIndex: UInt, commitIndex: UInt, wipCommiIndex: UInt?, fileIndex: UInt)
+    func userTappedCurrentWork(repoIndex: UInt, branchIndex: UInt, fileIndex: UInt?)
 
     func addRepositoryButtonTapped() {
 
