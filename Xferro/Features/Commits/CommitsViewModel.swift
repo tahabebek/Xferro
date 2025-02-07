@@ -66,7 +66,8 @@ protocol SelectableItem: Equatable, Identifiable {}
     }
 
     var currentSelectedItem: SelectedItem?
-    private(set) var repositories: [Repository] = []
+    var repositories: [Repository] = []
+    
     private let userDidSelectFolder: (URL) -> Void
 
     init(repositories: [Repository], userDidSelectFolder: @escaping (URL) -> Void) {
@@ -247,5 +248,21 @@ protocol SelectableItem: Equatable, Identifiable {}
             break
         }
         return false
+    }
+
+    private func setupWipRepository(for repository: Repository, commit: Commit) {
+        let url = wipURL(for: repository, commit: commit)
+        print(url)
+    }
+
+    private func wipURL(for repository: Repository, commit: Commit) -> URL {
+        let appDir = DataManager.appDir
+        try? FileManager.default.createDirectory(
+            at: appDir,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+        print(appDir)
+        return URL(fileURLWithPath: appDir.path()).appendingPathComponent("wip\(repository.gitDir!.deletingLastPathComponent().path)/\(commit.oid.description)")
     }
 }
