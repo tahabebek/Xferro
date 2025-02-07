@@ -106,12 +106,27 @@ struct RepositoryView: View {
     private var commitsView: some View {
         VStack(spacing: 16) {
             let head = try? viewModel.HEAD(for: repository)
+            if let detachedTag = viewModel.detachedTag(of: repository) {
+                BranchView(
+                    name: detachedTag.tag.name,
+                    selectableCommits: viewModel.detachedCommits(of: detachedTag.tag.oid, in: repository),
+                    selectableStatus: .init(repository: repository, type: .tag(detachedTag.tag)),
+                    isCurrent: true
+                )
+            } else if let detachedCommit = viewModel.detachedCommit(of: repository) {
+                BranchView(
+                    name: "Detached Commit",
+                    selectableCommits: viewModel.detachedCommits(of: detachedCommit.commit.oid, in: repository),
+                    selectableStatus: .init(repository: repository, type: .detached(detachedCommit.commit)),
+                    isCurrent: true
+                )
+            }
             ForEach(viewModel.branches(of: repository)) { branch in
                 BranchView(
-                    branch: branch,
+                    name: branch.name,
                     selectableCommits: viewModel.commits(of: branch, in: repository),
-                    selectableStatus: .init(repository: repository, branch: branch),
-                    isCurrentBranch: (head != nil) ? viewModel.isCurrentBranch(branch, head: head!, in: repository) : false
+                    selectableStatus: .init(repository: repository, type: .branch(branch)),
+                    isCurrent: (head != nil) ? viewModel.isCurrentBranch(branch, head: head!, in: repository) : false
                 )
             }
         }

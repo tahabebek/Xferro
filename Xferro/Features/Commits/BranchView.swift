@@ -7,21 +7,25 @@
 
 import SwiftUI
 
+protocol BranchItem: SelectableItem {
+    var commit: Commit { get }
+}
+
 struct BranchView: View {
     @Environment(CommitsViewModel.self) var viewModel
-    let branch: Branch
-    let selectableCommits: [CommitsViewModel.SelectableCommit]
+    let name: String
+    let selectableCommits: [any BranchItem]
     let selectableStatus: CommitsViewModel.SelectableStatus
-    let isCurrentBranch : Bool
+    let isCurrent : Bool
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .verticalAlignment) {
                 VStack(spacing: 0) {
-                    Text(branch.name)
+                    Text(name)
                         .padding(.vertical, 2)
                         .padding(.horizontal, 4)
-                        .background(isCurrentBranch ? Color.red.opacity(0.3) : Color.gray.opacity(0.3))
+                        .background(isCurrent ? Color.red.opacity(0.3) : Color.gray.opacity(0.3))
                         .cornerRadius(4)
                         .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                         .frame(maxWidth: 160)
@@ -30,9 +34,9 @@ struct BranchView: View {
                             d[VerticalAlignment.center] }
                         )
                 }
-                CirclesWithArrows(numberOfCircles: isCurrentBranch ? selectableCommits.count + 1 : selectableCommits.count) { index in
+                CirclesWithArrows(numberOfCircles: isCurrent ? selectableCommits.count + 1 : selectableCommits.count) { index in
                     ZStack {
-                        if isCurrentBranch && index == 0 {
+                        if isCurrent && index == 0 {
                             Rectangle()
                                 .fill(Color.green.opacity(0.3))
                                 .cornerRadius(12)
@@ -48,9 +52,9 @@ struct BranchView: View {
                                 SelectedItemOverlay()
                             }
                         } else {
-                            let offset = isCurrentBranch ? 1 : 0
+                            let offset = isCurrent ? 1 : 0
                             let item = self.selectableCommits[index - offset]
-                            FlaredRounded(backgroundColor: isCurrentBranch && index - offset == 0 ? .red.opacity(0.3) : Color(hex: 0x232834).opacity(0.8)) {
+                            FlaredRounded(backgroundColor: isCurrent && index - offset == 0 ? .red.opacity(0.3) : Color(hex: 0x232834).opacity(0.8)) {
                                 ZStack {
                                     Text(selectableCommits[index - offset].commit.oid.debugOID.prefix(4))
                                         .font(.caption)
