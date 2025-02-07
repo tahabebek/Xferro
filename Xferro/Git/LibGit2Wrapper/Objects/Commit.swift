@@ -9,7 +9,7 @@ import Foundation
 
 /// A git commit.
 struct Commit: ObjectType, Hashable, Codable, CustomStringConvertible, Identifiable {
-    var id: OID { oid }
+    var id: String { oid.description }
     static let type = GitObjectType.commit
 
     /// The OID of the commit.

@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct Stash: Codable, Identifiable {
+struct Stash: Codable, Identifiable, Equatable {
     var id: Int
     var message: String
     var oid: OID

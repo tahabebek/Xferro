@@ -11,6 +11,8 @@ import Observation
 @Observable final class ProjectsViewModel {
     var user: User
 
+    private var _commitsViewModel: CommitsViewModel?
+
     init(user: User) {
         self.user = user
     }
@@ -25,6 +27,9 @@ import Observation
     }
 
     func commitsViewModel() -> CommitsViewModel? {
+        if let _commitsViewModel {
+            return _commitsViewModel
+        }
         guard user.projects.isNotEmpty else { return nil }
         var repositories: [Repository] = []
         for project in user.projects {
@@ -37,6 +42,7 @@ import Observation
             guard let self else { return }
             userDidSelectFolder(url)
         }
+        _commitsViewModel = commitsViewModel
         return commitsViewModel
     }
 

@@ -8,8 +8,10 @@
 import SwiftUI
 
 struct BranchView: View {
+    @Environment(CommitsViewModel.self) var viewModel
     let branch: Branch
-    let commits: [Commit]
+    let selectableCommits: [CommitsViewModel.SelectableCommit]
+    let selectableStatus: CommitsViewModel.SelectableStatus
     let isCurrentBranch : Bool
 
     var body: some View {
@@ -28,33 +30,44 @@ struct BranchView: View {
                             d[VerticalAlignment.center] }
                         )
                 }
-                CirclesWithArrows(numberOfCircles: isCurrentBranch ? commits.count + 1 : commits.count) { index in
-                    Group {
+                CirclesWithArrows(numberOfCircles: isCurrentBranch ? selectableCommits.count + 1 : selectableCommits.count) { index in
+                    ZStack {
                         if isCurrentBranch && index == 0 {
                             Rectangle()
-                                .fill(Color.green.opacity(0.8))
+                                .fill(Color.green.opacity(0.3))
                                 .cornerRadius(12)
                                 .overlay {
                                     Text("Status")
                                         .font(.caption)
                                         .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                                 }
+                                .onTapGesture {
+                                    viewModel.userTapped(item: selectableStatus)
+                                }
+                            if viewModel.isSelected(item: selectableStatus) {
+                                SelectedItemOverlay()
+                            }
                         } else {
-                            let offSet = isCurrentBranch ? 1 : 0
-                            FlaredRounded(backgroundColor: isCurrentBranch && index - offSet == 0 ? .red.opacity(0.3) : Color(hex: 0x232834).opacity(0.8)) {
+                            let offset = isCurrentBranch ? 1 : 0
+                            let item = self.selectableCommits[index - offset]
+                            FlaredRounded(backgroundColor: isCurrentBranch && index - offset == 0 ? .red.opacity(0.3) : Color(hex: 0x232834).opacity(0.8)) {
                                 ZStack {
-                                    Text(commits[index - offSet].oid.debugOID.prefix(4))
+                                    Text(selectableCommits[index - offset].commit.oid.debugOID.prefix(4))
                                         .font(.caption)
                                         .foregroundColor(Color.fabulaFore1)
                                         .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                                 }
                             }
+                            .onTapGesture {
+                                viewModel.userTapped(item: item)
+                            }
+                            if viewModel.isSelected(item: item) {
+                                SelectedItemOverlay()
+                            }
                         }
                     }
                     .overlay {
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.yellow, lineWidth: 2)
-                            .frame(width: 34, height: 34)
+                        
                     }
                 }
             }

@@ -7,7 +7,10 @@
 
 import Foundation
 
-final class Repository: Identifiable {
+final class Repository: Identifiable, Equatable {
+    static func == (lhs: Repository, rhs: Repository) -> Bool {
+        lhs.pointer == rhs.pointer
+    }
     /// The underlying libgit2 `git_repository` object.
     let pointer: OpaquePointer
 

@@ -43,7 +43,6 @@ struct RepositoryView: View {
 
                 }
                 .frame(height: 36)
-//                .padding(.bottom, !isCollapsed ? 8 : 0)
                 if !isCollapsed {
                     VStack(spacing: 16) {
                         picker
@@ -56,6 +55,7 @@ struct RepositoryView: View {
                 }
             }
             .padding(.horizontal)
+            .padding(.bottom, !isCollapsed ? 8 : 0)
         }
         .background(
             Color(hex: 0x15151A)
@@ -106,10 +106,11 @@ struct RepositoryView: View {
     private var commitsView: some View {
         VStack(spacing: 16) {
             let head = try? viewModel.HEAD(for: repository)
-            ForEach(viewModel.branches(for: repository)) { branch in
+            ForEach(viewModel.branches(of: repository)) { branch in
                 BranchView(
                     branch: branch,
-                    commits: viewModel.commitsForBranch(branch, in: repository),
+                    selectableCommits: viewModel.commits(of: branch, in: repository),
+                    selectableStatus: .init(repository: repository, branch: branch),
                     isCurrentBranch: (head != nil) ? viewModel.isCurrentBranch(branch, head: head!, in: repository) : false
                 )
             }
@@ -117,24 +118,42 @@ struct RepositoryView: View {
     }
 
     private var tagsView: some View {
+        let tags = viewModel.tags(of: repository)
+        return Group {
+            if tags.isEmpty {
+                emptyView
+            } else {
+                actualTagsView(tags: tags)
+            }
+        }
+    }
+
+    private func actualTagsView(tags: [CommitsViewModel.SelectableTag]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top) {
-                ForEach(viewModel.tagReferences(for: repository)) { tagReference in
-                    FlaredRounded {
-                        VStack {
-                            Text("\(tagReference.name)")
-                                .font(.title)
-                                .minimumScaleFactor(0.5)
-                                .lineLimit(1)
-                                .frame(maxWidth: 70)
-                                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                            Text("\(tagReference.oid.debugOID.prefix(4))")
-                                .font(.footnote)
-                                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                ForEach(tags) { selectableTag in
+                    ZStack {
+                        FlaredRounded {
+                            VStack {
+                                Text("\(selectableTag.tag.name)")
+                                    .font(.title)
+                                    .minimumScaleFactor(0.5)
+                                    .lineLimit(1)
+                                    .frame(maxWidth: 70)
+                                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                                Text("\(selectableTag.tag.oid.debugOID.prefix(4))")
+                                    .font(.footnote)
+                                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                            }
+                        }
+                        .frame(width: 80, height: 80)
+                        .onTapGesture {
+                            viewModel.userTapped(item: selectableTag)
+                        }
+                        if viewModel.isSelected(item: selectableTag) {
+                            SelectedItemOverlay(width: 80, height: 80)
                         }
                     }
-                    .frame(width: 80, height: 80)
-                    .fixedSize()
                 }
             }
             .fixedSize()
@@ -142,19 +161,38 @@ struct RepositoryView: View {
         .flipsForRightToLeftLayoutDirection(true)
         .environment(\.layoutDirection, .rightToLeft)
     }
-
+    
     private var stashesView: some View {
+        let stashes = viewModel.stashes(of: repository)
+        return Group {
+            if stashes.isEmpty {
+                emptyView
+            } else {
+                actualStashesView(stashes: stashes)
+            }
+        }
+    }
+
+    private func actualStashesView(stashes: [CommitsViewModel.SelectableStash]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top) {
-                ForEach(viewModel.stashes(for: repository)) { stash in
-                    FlaredRounded {
-                        VStack {
-                            Text("\(stash.oid.debugOID.prefix(4))")
-                                .font(.title)
-                                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                ForEach(stashes) { selectableStash in
+                    ZStack {
+                        FlaredRounded {
+                            VStack {
+                                Text("\(selectableStash.stash.oid.debugOID.prefix(4))")
+                                    .font(.title)
+                                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                            }
+                        }
+                        .frame(width: 80, height: 80)
+                        .onTapGesture {
+                            viewModel.userTapped(item: selectableStash)
+                        }
+                        if viewModel.isSelected(item: selectableStash) {
+                            SelectedItemOverlay(width: 80, height: 80)
                         }
                     }
-                    .frame(width: 80, height: 80)
                 }
             }
             .fixedSize()
@@ -163,7 +201,7 @@ struct RepositoryView: View {
         .environment(\.layoutDirection, .rightToLeft)
     }
 
-    private var historyView: some View {
+    private var emptyView: some View {
         HStack {
             Spacer()
             VStack {
@@ -174,5 +212,9 @@ struct RepositoryView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var historyView: some View {
+        emptyView
     }
 }

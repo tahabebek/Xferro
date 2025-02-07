@@ -8,32 +8,138 @@
 import Foundation
 import Observation
 
+protocol SelectableItem: Equatable, Identifiable {}
+
 @Observable class CommitsViewModel {
-    struct RepositoryInfo: Identifiable, Codable {
-        enum Head: Codable {
-            case branch(Branch)
-            case tag(TagReference)
-            case reference(Reference)
-        }
-        var id: String { url.absoluteString }
-        var branches: [Branch] = []
-        var stashes: [Stash] = []
-        var tags: [TagReference] = []
-        var head: Head
-        var url: URL
+    enum Head: Codable {
+        case branch(Branch)
+        case tag(TagReference)
+        case reference(Reference)
     }
 
+    enum SelectedItem {
+        case status(SelectableStatus)
+        case commit(SelectableCommit)
+        case wipCommit(SelectableWipCommit)
+        case historyCommit(SelectableHistoryCommit)
+        case tag(SelectableTag)
+        case stash(SelectableStash)
+    }
+
+    struct SelectableStatus: SelectableItem, Identifiable {
+        var id: String { repository.id.hashValue.formatted() + branch.id }
+        let repository: Repository
+        let branch: Branch
+    }
+
+    struct SelectableCommit: SelectableItem, Identifiable {
+        var id: String { repository.id.hashValue.formatted() + branch.id + commit.id }
+        let repository: Repository
+        let branch: Branch
+        let commit: Commit
+    }
+
+    struct SelectableWipCommit: SelectableItem, Identifiable {
+        var id: String { repository.id.hashValue.formatted() + branch.id + wip.id }
+        let repository: Repository
+        let branch: Branch
+        let wip: Commit
+    }
+
+    struct SelectableHistoryCommit: SelectableItem, Identifiable {
+        var id: String { repository.id.hashValue.formatted() + branch.id + commit.id }
+        let repository: Repository
+        let branch: Branch
+        let commit: Commit
+    }
+
+    struct SelectableTag: SelectableItem, Identifiable {
+        var id: String { repository.id.hashValue.formatted() + tag.id }
+        let repository: Repository
+        let tag: TagReference
+    }
+
+    struct SelectableStash: SelectableItem, Identifiable {
+        var id: String { repository.id.hashValue.formatted() + stash.id.formatted() }
+        let repository: Repository
+        let stash: Stash
+    }
+
+    var currentSelectedItem: SelectedItem?
     private(set) var repositories: [Repository] = []
-    let userDidSelectFolder: (URL) -> Void
+    private let userDidSelectFolder: (URL) -> Void
 
     init(repositories: [Repository], userDidSelectFolder: @escaping (URL) -> Void) {
         self.repositories = repositories
         self.userDidSelectFolder = userDidSelectFolder
+
+        if let firstRepo = repositories.first {
+            if let currentBranch = branches(of: firstRepo).first {
+                self.currentSelectedItem = .status(SelectableStatus(repository: firstRepo, branch: currentBranch))
+            }
+        }
     }
 
-    func userTapped(repoIndex: UInt, branchIndex: UInt, commitIndex: UInt, wipCommiIndex: UInt?, fileIndex: UInt) {
+    func userTapped(item: any SelectableItem) {
+        switch item {
+        case let status as SelectableStatus:
+            currentSelectedItem = .status(status)
+        case let commit as SelectableCommit:
+            currentSelectedItem = .commit(commit)
+        case let wipCommit as SelectableWipCommit:
+            currentSelectedItem = .wipCommit(wipCommit)
+        case let historyCommit as SelectableHistoryCommit:
+            currentSelectedItem = .historyCommit(historyCommit)
+        case let tag as SelectableTag:
+            currentSelectedItem = .tag(tag)
+        case let stash as SelectableStash:
+            currentSelectedItem = .stash(stash)
+        default:
+            fatalError()
+        }
     }
-    func userTappedCurrentWork(repoIndex: UInt, branchIndex: UInt, wipCommitIndex: UInt?, fileIndex: UInt?) {
+
+    func isSelected(item: any SelectableItem) -> Bool {
+        switch item {
+        case let status as SelectableStatus:
+            if case .status(let currentStatus) = currentSelectedItem {
+                return status == currentStatus
+            } else {
+                return false
+            }
+        case let commit as SelectableCommit:
+            if case .commit(let currentCommit) = currentSelectedItem {
+                return commit == currentCommit
+            } else {
+                return false
+            }
+        case let wipCommit as SelectableWipCommit:
+            if case .wipCommit(let currentWipCommit) = currentSelectedItem {
+                return wipCommit == currentWipCommit
+            } else {
+                return false
+            }
+        case let historyCommit as SelectableHistoryCommit:
+            if case .historyCommit(let currentHistoryCommit) = currentSelectedItem {
+                return historyCommit == currentHistoryCommit
+            } else {
+                return false
+            }
+        case let tag as SelectableTag:
+            if case .tag(let currentTag) = currentSelectedItem {
+                return tag == currentTag
+            } else {
+                return false
+            }
+        case let stash as SelectableStash:
+            if case .stash(let currentStash) = currentSelectedItem {
+                return stash == currentStash
+            } else {
+                return false
+            }
+        default:
+            fatalError()
+        }
     }
 
     func usedDidSelectFolder(_ folder: URL) {
@@ -59,16 +165,16 @@ import Observation
 
     }
 
-    func stashes(for repository: Repository) -> [Stash] {
-        var stashes = [Stash]()
+    func stashes(of repository: Repository) -> [SelectableStash] {
+        var stashes = [SelectableStash]()
 
         try? repository.stashes().get().forEach { stash in
-            stashes.append(stash)
+            stashes.append(SelectableStash(repository: repository, stash: stash))
         }
         return stashes
     }
 
-    func branches(for repository: Repository) -> [Branch] {
+    func branches(of repository: Repository) -> [Branch] {
         var branches: [Branch] = []
         let head = try? HEAD(for: repository)
 
@@ -84,21 +190,41 @@ import Observation
         return branches
     }
 
-    func tagReferences(for repository: Repository) -> [TagReference] {
-        var tags: [TagReference] = []
-        
+    func tags(of repository: Repository) -> [SelectableTag] {
+        var tags: [SelectableTag] = []
+
         try? repository.allTags().get()
             .sorted { $0.name > $1.name }
             .forEach { tag in
-            tags.append(tag)
+                tags.append(SelectableTag(repository: repository, tag: tag))
         }
         return tags
     }
 
-    func HEAD(for repository: Repository) throws -> RepositoryInfo.Head {
+    func commits(of branch: Branch, in repository: Repository, count: Int = 10) -> [SelectableCommit] {
+        var commits: [SelectableCommit] = []
+
+        let commitIterator = CommitIterator(repo: repository, root: branch.oid.oid)
+        var counter = 0
+        while counter < count, let commit = try? commitIterator.next()?.get() {
+            commits.append(SelectableCommit(repository: repository, branch: branch, commit: commit))
+            counter += 1
+        }
+        return commits
+    }
+
+    func wipCommits(of branch: Branch, in repository: Repository) -> [SelectableWipCommit] {
+        fatalError()
+    }
+
+    func historyCommits(of repository: Repository) -> [SelectableHistoryCommit] {
+        fatalError()
+    }
+
+    func HEAD(for repository: Repository) throws -> CommitsViewModel.Head {
         let headRef = try repository.HEAD().get()
 
-        let head: CommitsViewModel.RepositoryInfo.Head =
+        let head: CommitsViewModel.Head =
         if let branchRef = headRef as? Branch {
             .branch(branchRef)
         } else if let tagRef = headRef as? TagReference {
@@ -111,7 +237,7 @@ import Observation
         return head
     }
 
-    func isCurrentBranch(_ branch: Branch, head: RepositoryInfo.Head, in repository: Repository) -> Bool {
+    func isCurrentBranch(_ branch: Branch, head: CommitsViewModel.Head, in repository: Repository) -> Bool {
         switch head {
         case .branch(let headBranch):
             if branch == headBranch {
@@ -121,56 +247,5 @@ import Observation
             break
         }
         return false
-    }
-
-    func commitsForBranch(_ branch: Branch, in repository: Repository, count: Int = 10) -> [Commit] {
-        var commits: [Commit] = []
-        
-        let commitIterator = CommitIterator(repo: repository, root: branch.oid.oid)
-        var counter = 0
-        while counter < count, let commit = try? commitIterator.next()?.get() {
-            commits.append(commit)
-            counter += 1
-        }
-        return commits
-    }
-}
-
-extension Repository {
-    var repositoryInfo: CommitsViewModel.RepositoryInfo {
-        var stashes = [Stash]()
-
-        try? self.stashes().get().forEach { stash in
-            stashes.append(stash)
-        }
-
-        let branchIterator = BranchIterator(repo: self, type: .local)
-
-        var branches = [Branch]()
-        while let branch = try? branchIterator.next()?.get() {
-            branches.append(branch)
-        }
-
-        let headRef = try? self.HEAD().get()
-
-        let head: CommitsViewModel.RepositoryInfo.Head =
-        if let branchRef = headRef as? Branch {
-            .branch(branchRef)
-        } else if let tagRef = headRef as? TagReference {
-            .tag(tagRef)
-        } else if let reference = headRef as? Reference {
-            .reference(reference)
-        } else {
-            fatalError()
-        }
-
-        let tags = self.allTags().mustSucceed()
-        return CommitsViewModel.RepositoryInfo(
-            branches: branches,
-            stashes: stashes,
-            tags: tags,
-            head: head,
-            url: self.gitDir!
-        )
     }
 }
