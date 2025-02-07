@@ -30,7 +30,7 @@ import Observation
     }
     
     func userTapped(repoIndex: UInt, branchIndex: UInt, commitIndex: UInt, wipCommiIndex: UInt?, fileIndex: UInt)
-    func userTappedCurrentWork(repoIndex: UInt, branchIndex: UInt, fileIndex: UInt?)
+    func userTappedCurrentWork(repoIndex: UInt, branchIndex: UInt, wipCommitIndex: UInt?, fileIndex: UInt?)
 
     func addRepositoryButtonTapped() {
 
