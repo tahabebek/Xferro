@@ -30,9 +30,11 @@ import Observation
         self.repositories = repositories
         self.userDidSelectFolder = userDidSelectFolder
     }
-    
-    func userTapped(repoIndex: UInt, branchIndex: UInt, commitIndex: UInt, wipCommiIndex: UInt?, fileIndex: UInt)
-    func userTappedCurrentWork(repoIndex: UInt, branchIndex: UInt, wipCommitIndex: UInt?, fileIndex: UInt?)
+
+    func userTapped(repoIndex: UInt, branchIndex: UInt, commitIndex: UInt, wipCommiIndex: UInt?, fileIndex: UInt) {
+    }
+    func userTappedCurrentWork(repoIndex: UInt, branchIndex: UInt, wipCommitIndex: UInt?, fileIndex: UInt?) {
+    }
 
     func usedDidSelectFolder(_ folder: URL) {
         let gotAccess = folder.startAccessingSecurityScopedResource()

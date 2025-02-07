@@ -14,12 +14,11 @@ struct VerticalHeader: View {
 
     var titleView: some View {
         HStack {
-            Spacer()
             Text("\(title)")
-                .font(.title)
+                .font(.title2)
             Spacer()
         }
-        .frame(height: 36)
+        .frame(height: 22)
     }
 
     var body: some View {

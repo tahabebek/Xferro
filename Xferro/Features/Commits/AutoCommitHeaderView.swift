@@ -11,9 +11,7 @@ struct AutoCommitHeaderView: View {
     @State var autoCommitEnabled = false
     var body: some View {
         HStack {
-            Text("WIP Commits")
-                .font(.headline)
-            Spacer()
+            VerticalHeader(title: "Wip Commits")
             Toggle("Auto", isOn: $autoCommitEnabled)
         }
     }

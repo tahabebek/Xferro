@@ -10,7 +10,7 @@ import SwiftUI
 
 struct RepositoryView: View {
     enum Section: Int {
-        case branches = 0
+        case commits = 0
         case tags = 1
         case stashes = 2
         case history = 3
@@ -18,7 +18,7 @@ struct RepositoryView: View {
 
     @Environment(CommitsViewModel.self) var viewModel
     @State private var isCollapsed = false
-    @State private var selection: Section = .branches
+    @State private var selection: Section = .commits
     @Namespace private var animation
 
     let repository: Repository
@@ -43,7 +43,7 @@ struct RepositoryView: View {
 
                 }
                 .frame(height: 36)
-                .padding(.bottom, !isCollapsed ? 16 : 0)
+//                .padding(.bottom, !isCollapsed ? 8 : 0)
                 if !isCollapsed {
                     VStack(spacing: 16) {
                         picker
@@ -55,7 +55,7 @@ struct RepositoryView: View {
                     .frame(maxHeight: !isCollapsed ? .infinity : 0)
                 }
             }
-            .padding()
+            .padding(.horizontal)
         }
         .background(
             Color(hex: 0x15151A)
@@ -66,8 +66,8 @@ struct RepositoryView: View {
     @ViewBuilder private var picker: some View {
         Picker(selection: $selection) {
             Group {
-                Text("Branches")
-                    .tag(Section.branches)
+                Text("Commits")
+                    .tag(Section.commits)
                 Text("Tags")
                     .tag(Section.tags)
                 Text("Stashes")
@@ -88,8 +88,8 @@ struct RepositoryView: View {
 
     @ViewBuilder private var contentView: some View {
         switch selection {
-        case .branches:
-            branchesView
+        case .commits:
+            commitsView
                 .matchedGeometryEffect(id: "contentView", in: animation)
         case .tags:
             tagsView
@@ -103,7 +103,7 @@ struct RepositoryView: View {
         }
     }
 
-    private var branchesView: some View {
+    private var commitsView: some View {
         VStack(spacing: 16) {
             let head = try? viewModel.HEAD(for: repository)
             ForEach(viewModel.branches(for: repository)) { branch in

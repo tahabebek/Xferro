@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-struct PinnedScrollableView<Content: View>: View {
-    let title: String
+struct PinnedScrollableView<Header: View, Content: View>: View {
     let showsIndicators: Bool
+    let header: () -> Header
     let content: () -> Content
 
     var body: some View {
         ScrollView(showsIndicators: showsIndicators) {
             LazyVStack {
-                Section(header: VerticalHeader(title: title)) {
+                Section(header: header()) {
                     content()
                 }
             }

@@ -14,11 +14,11 @@ struct CommitsView: View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
                 FinalCommitsView(width: geometry.size.width)
-                    .frame(width: geometry.size.width, height: geometry.size.height * 0.67)
+                    .frame(width: geometry.size.width, height: geometry.size.height * 0.7)
                 Divider()
                     .padding(.bottom, 8)
                 WIPCommitsView(width: geometry.size.width)
-                    .frame(width: geometry.size.width, height: geometry.size.height * 0.33)
+                    .frame(width: geometry.size.width, height: geometry.size.height * 0.3)
                 Spacer()
             }
         }

@@ -21,7 +21,7 @@ struct CirclesWithArrows<CircleContent: View>: View {
     init(
         numberOfCircles: Int,
         circleSize: CGFloat = 36,
-        spacing: CGFloat = 72,
+        spacing: CGFloat = 48,
         verticalOffset: CGFloat = 0,
         @ViewBuilder circleContent: @escaping (Int) -> CircleContent
     ) {
