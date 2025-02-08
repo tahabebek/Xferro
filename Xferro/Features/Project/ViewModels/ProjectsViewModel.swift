@@ -23,7 +23,7 @@ import Observation
             let isGit = isFolderGit(url: url)
             let project = Project(isGit: isGit, url: url)
             if let repository = try? Repository.at(project.url).get() {
-                _commitsViewModel?.repositories.append(repository)
+                _commitsViewModel?.addRepository(repository)
             }
             user.projects.append(project)
         }

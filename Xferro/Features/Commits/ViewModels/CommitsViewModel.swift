@@ -36,14 +36,69 @@ import Observation
     }
 
     var currentWipCommits: CurrentWipCommits = CurrentWipCommits(commits: [], title: "")
-    var repositories: [Repository] = []
-    
+    private(set) var repositories: [Repository] = []
+
+    private var oldRepositories: [Repository] = []
+    private var gitFolderWatchers: [String: FolderWatcher] = [:]
+
     private let userDidSelectFolder: (URL) -> Void
 
     init(repositories: [Repository], userDidSelectFolder: @escaping (URL) -> Void) {
-        self.repositories = repositories
         self.userDidSelectFolder = userDidSelectFolder
+        for repository in repositories {
+            self.addRepository(repository)
+        }
+        setupInitialCurrentSelectedItem()
+    }
 
+    func reloadData() {
+        oldRepositories = repositories
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            repositories = []
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let self else { return }
+            repositories = oldRepositories
+            setupInitialCurrentSelectedItem()
+            oldRepositories = []
+        }
+    }
+
+    func addRepository(_ repository: Repository) {
+        guard let gitDir = repository.gitDir else { fatalError() }
+        repositories.append(repository)
+        if gitFolderWatchers[gitDir.path] == nil {
+            gitFolderWatchers[gitDir.path] = FolderWatcher(
+                folder: gitDir,
+                includingPaths: [
+                    "\(gitDir.path)",
+                    "\(gitDir.path)/config",
+                    "\(gitDir.path)/HEAD",
+                    "\(gitDir.path)/ORIG_HEAD",
+                    "\(gitDir.path)/FETCH_HEAD",
+                    "\(gitDir.path)/refs",
+                    "\(gitDir.path)/refs/heads",
+                    "\(gitDir.path)/refs/tags",
+                    "\(gitDir.path)/refs/remotes",
+                    "\(gitDir.path)/refs/notes",
+                    "\(gitDir.path)/logs",
+                    "\(gitDir.path)/logs/HEAD",
+                    "\(gitDir.path)/logs/refs",
+                    "\(gitDir.path)/logs/refs/heads",
+                    "\(gitDir.path)/logs/refs/tags",
+                    "\(gitDir.path)/logs/refs/remotes",
+                    "\(gitDir.path)/logs/refs/notes",
+                    "\(gitDir.path)/index"
+                ]
+                ) { [weak self] in
+                    self?.reloadData()
+            }
+        }
+    }
+
+    private func setupInitialCurrentSelectedItem() {
         if let firstRepo = repositories.first {
             if let head = try? HEAD(for: firstRepo) {
                 switch head {
@@ -64,25 +119,28 @@ import Observation
     }
 
     func userTapped(item: any SelectableItem) {
-        switch item {
-        case let status as SelectableStatus:
-            currentSelectedItem = .init(selectedItemType: .regular(.status(status)))
-        case let commit as SelectableCommit:
-            currentSelectedItem = .init(selectedItemType: .regular(.commit(commit)))
-        case let wipCommit as SelectableWipCommit:
-            currentSelectedItem = .init(selectedItemType: .wip(.wipCommit(wipCommit)))
-        case let historyCommit as SelectableHistoryCommit:
-            currentSelectedItem = .init(selectedItemType: .regular(.historyCommit(historyCommit)))
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            switch item {
+            case let status as SelectableStatus:
+                currentSelectedItem = .init(selectedItemType: .regular(.status(status)))
+            case let commit as SelectableCommit:
+                currentSelectedItem = .init(selectedItemType: .regular(.commit(commit)))
+            case let wipCommit as SelectableWipCommit:
+                currentSelectedItem = .init(selectedItemType: .wip(.wipCommit(wipCommit)))
+            case let historyCommit as SelectableHistoryCommit:
+                currentSelectedItem = .init(selectedItemType: .regular(.historyCommit(historyCommit)))
             case let detachedCommit as SelectableDetachedCommit:
-            currentSelectedItem = .init(selectedItemType: .regular(.detachedCommit(detachedCommit)))
-        case let detachedTag as SelectableDetachedTag:
-            currentSelectedItem = .init(selectedItemType: .regular(.detachedTag(detachedTag)))
-        case let tag as SelectableTag:
-            currentSelectedItem = .init(selectedItemType: .regular(.tag(tag)))
-        case let stash as SelectableStash:
-            currentSelectedItem = .init(selectedItemType: .regular(.stash(stash)))
-        default:
-            fatalError()
+                currentSelectedItem = .init(selectedItemType: .regular(.detachedCommit(detachedCommit)))
+            case let detachedTag as SelectableDetachedTag:
+                currentSelectedItem = .init(selectedItemType: .regular(.detachedTag(detachedTag)))
+            case let tag as SelectableTag:
+                currentSelectedItem = .init(selectedItemType: .regular(.tag(tag)))
+            case let stash as SelectableStash:
+                currentSelectedItem = .init(selectedItemType: .regular(.stash(stash)))
+            default:
+                fatalError()
+            }
         }
     }
 
@@ -398,7 +456,7 @@ import Observation
             } else {
                 return getWorktreeIfExists(branchName)
             }
-        case let wipCommit as SelectableWipCommit:
+        case _ as SelectableWipCommit:
             return nil
         default:
             fatalError()
