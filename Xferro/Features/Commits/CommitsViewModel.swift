@@ -458,31 +458,7 @@ protocol SelectableItem: Equatable, Identifiable {
     func detachedCommits(of tag: SelectableTag, in repository: Repository, count: Int = 10) -> [SelectableDetachedCommit] {
         detachedCommits(of: tag.tag.oid, in: repository, count: count)
     }
-
-    private func wipCommits(of item: any SelectableItem) -> [SelectableWipCommit] {
-        let wipRepository = wipRepository(for: item)
-        var head = try? HEAD(for: wipRepository)
-        if head == nil {
-            do {
-                _ = wipRepository.createBranch("master", force: true)
-                _ = wipRepository.add(path: ".")
-                let signiture: Signature? = nil
-                let _ = wipRepository.commit(message: "Initial commit", signature: signiture)
-                head = try HEAD(for: wipRepository)
-            } catch {
-                print(error.localizedDescription)
-            }
-        }
-
-        var commits: [SelectableWipCommit] = []
-
-        let commitIterator = CommitIterator(repo: wipRepository, root: head!.oid.oid)
-        while let commit = try? commitIterator.next()?.get() {
-            commits.append(SelectableWipCommit(repository: wipRepository, commit: commit))
-        }
-        return commits
-    }
-
+    
     func historyCommits(of repository: Repository) -> [SelectableHistoryCommit] {
         fatalError()
     }
@@ -513,6 +489,30 @@ protocol SelectableItem: Equatable, Identifiable {
             break
         }
         return false
+    }
+    
+    private func wipCommits(of item: any SelectableItem) -> [SelectableWipCommit] {
+        let wipRepository = wipRepository(for: item)
+        var head = try? HEAD(for: wipRepository)
+        if head == nil {
+            do {
+                _ = wipRepository.createBranch("master", force: true)
+                _ = wipRepository.add(path: ".")
+                let signiture: Signature? = nil
+                let _ = wipRepository.commit(message: "Initial commit", signature: signiture)
+                head = try HEAD(for: wipRepository)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+
+        var commits: [SelectableWipCommit] = []
+
+        let commitIterator = CommitIterator(repo: wipRepository, root: head!.oid.oid)
+        while let commit = try? commitIterator.next()?.get() {
+            commits.append(SelectableWipCommit(repository: wipRepository, commit: commit))
+        }
+        return commits
     }
 
     private func wipRepository(for item: any SelectableItem) -> Repository {
