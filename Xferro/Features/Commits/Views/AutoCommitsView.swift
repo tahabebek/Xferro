@@ -27,7 +27,7 @@ struct WIPCommitsView: View {
                     .frame(height: 36)
                     if viewModel.currentWipCommits.commits.isEmpty {
                         HStack {
-                            Text("No WIP Commits")
+                            Text("Empty")
                             Spacer()
                         }
                     } else {
