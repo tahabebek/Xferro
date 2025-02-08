@@ -165,6 +165,7 @@ class FolderWatcher {
                         print("   Previous mod time: \(String(describing: lastModified))")
                         print("   New mod time: \(modificationDate)")
                         lastModifiedTimes[url] = modificationDate
+                        onChange()
                     }
                 }
             }
