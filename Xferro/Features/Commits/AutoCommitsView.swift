@@ -21,12 +21,12 @@ struct WIPCommitsView: View {
             Group {
                 VStack(spacing: 8) {
                     HStack {
-                        Label(viewModel.wipCommitTitle, systemImage: "dot.square")
+                        Label(viewModel.currentWipCommits.title, systemImage: "dot.square")
                         Spacer()
                     }
                     .frame(height: 36)
                     LazyVGrid(columns: columns) {
-                        ForEach(viewModel.wipCommits) { selectableWipCommit in
+                        ForEach(viewModel.currentWipCommits.commits) { selectableWipCommit in
                             wipRectangle(item: selectableWipCommit)
                         }
                     }

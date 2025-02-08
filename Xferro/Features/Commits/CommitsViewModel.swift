@@ -221,13 +221,19 @@ protocol SelectableItem: Equatable, Identifiable {
         var name: String { "stash '\(stash.oid.description)'" }
     }
 
+    struct CurrentWipCommits {
+        let commits: [SelectableWipCommit]
+        let title: String
+    }
+
     var currentSelectedItem: SelectedItem? {
         didSet {
             if currentSelectedItem != nil {
                 switch currentSelectedItem!.selectedItemType {
                 case .regular:
-                    wipCommits = wipCommits(of: currentSelectedItem!.selectableItem)
-                    wipCommitTitle = "WIP commits of \(currentSelectedItem!.selectableItem.name)"
+                    let wipCommits = wipCommits(of: currentSelectedItem!.selectableItem)
+                    let wipCommitTitle = "WIP commits of \(currentSelectedItem!.selectableItem.name)"
+                    currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
                 case .wip:
                     break
                 }
@@ -235,8 +241,7 @@ protocol SelectableItem: Equatable, Identifiable {
         }
     }
 
-    var wipCommits: [SelectableWipCommit] = []
-    var wipCommitTitle: String = ""
+    var currentWipCommits: CurrentWipCommits = CurrentWipCommits(commits: [], title: "")
     var repositories: [Repository] = []
     
     private let userDidSelectFolder: (URL) -> Void
