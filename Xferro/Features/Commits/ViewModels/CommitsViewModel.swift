@@ -9,6 +9,7 @@ import Foundation
 import Observation
 
 @Observable class CommitsViewModel {
+    static let wipBranchPrefix = "_xferro_wip_commits_for_"
     struct CurrentWipCommits {
         let commits: [SelectableWipCommit]
         let title: String
@@ -174,6 +175,7 @@ import Observation
         let branchIterator = BranchIterator(repo: repository, type: .local)
         
         while let branch = try? branchIterator.next()?.get() {
+            if branch.name.hasPrefix(Self.wipBranchPrefix) { continue }
             if let head, isCurrentBranch(branch, head: head, in: repository) {
                 branches.insert(branch, at: 0)
             } else {
@@ -286,31 +288,36 @@ import Observation
     
     private func wipCommits(of item: any SelectableItem) -> [SelectableWipCommit] {
         guard let wipRepository = wipWorktree(for: item) else { return [] }
-        var head = try? HEAD(for: wipRepository)
+        let head = try? HEAD(for: wipRepository)
         var commits: [SelectableWipCommit] = []
 
         let commitIterator = CommitIterator(repo: wipRepository, root: head!.oid.oid)
         while let commit = try? commitIterator.next()?.get() {
             commits.append(SelectableWipCommit(repository: wipRepository, commit: commit))
+            if commit.oid == item.oid {
+                break
+            }
         }
         return commits
     }
 
     private func wipWorktree(for item: any SelectableItem) -> Repository? {
-        let appDir = DataManager.appDir
+        guard let repoPath = item.repository.gitDir?.deletingLastPathComponent().path() else {
+            return nil
+        }
+        let url = DataManager.appDir.appendingPathComponent("wip_worktrees").appendingPathComponent(repoPath)
         try? FileManager.default.createDirectory(
-            at: appDir,
+            at: url.deletingLastPathComponent(),
             withIntermediateDirectories: true,
             attributes: nil
         )
 
         let repository = item.repository
-        let url = URL(fileURLWithPath: appDir.path()).appendingPathComponent("xferro_wip")
 
         let getWorktreeIfExists: (String) -> Repository? = { branchName in
             if Repository.isGitRepository(url: url).mustSucceed() {
                 let wipWorkTree = Repository.at(url).mustSucceed()
-                if let branch = try? wipWorkTree.branch(named: branchName).get() {
+                if let _ = try? wipWorkTree.branch(named: branchName).get() {
                     return wipWorkTree
                 }
                 return nil
@@ -319,10 +326,13 @@ import Observation
         }
         let createWorktreeIfNeeded: (String) -> Void = { branchName in
             if !Repository.isGitRepository(url: url).mustSucceed() {
-                repository.addWorkTree(name: branchName, path: url.path()).mustSucceed()
+                repository.addWorkTree(
+                    name: branchName,
+                    path: url.path(percentEncoded: false))
+                .mustSucceed()
             }
         }
-        let checkout: (String, OID?) -> Repository = { name, oidToCreate in
+        let checkout: (String, OID?) -> Repository? = { name, oidToCreate in
             let wipWorkTree = Repository.at(url).mustSucceed()
             if let branch = try? repository.branch(named: name).get() {
                 wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
@@ -330,19 +340,20 @@ import Observation
             } else if let oidToCreate {
                 let branch = wipWorkTree.createBranch(name, oid: oidToCreate, force: true).mustSucceed()
                 wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
+                return wipWorkTree
             }
+            return nil
         }
 
         let head = try! HEAD(for: item.repository)
-        let prefix = "_xferro_wip_commits_for_"
 
         switch item {
-        case let status as SelectableStatus:
-            let branchName = prefix + head.oid.description
+        case _ as SelectableStatus:
+            let branchName = Self.wipBranchPrefix + head.oid.description
             createWorktreeIfNeeded(branchName)
             return checkout(branchName, head.oid)
         case let commit as SelectableCommit:
-            let branchName = prefix + commit.oid.description
+            let branchName = Self.wipBranchPrefix + commit.oid.description
             if commit.oid == head.oid {
                 createWorktreeIfNeeded(branchName)
                 return checkout(branchName, commit.oid)
@@ -350,7 +361,7 @@ import Observation
                 return getWorktreeIfExists(branchName)
             }
         case let detachedCommit as SelectableDetachedCommit:
-            let branchName = prefix + detachedCommit.oid.description
+            let branchName = Self.wipBranchPrefix + detachedCommit.oid.description
             if detachedCommit.oid == head.oid {
                 createWorktreeIfNeeded(branchName)
                 return checkout(branchName, detachedCommit.oid)
@@ -358,7 +369,7 @@ import Observation
                 return getWorktreeIfExists(branchName)
             }
         case let detachedTag as SelectableDetachedTag:
-            let branchName = prefix + detachedTag.oid.description
+            let branchName = Self.wipBranchPrefix + detachedTag.oid.description
             if detachedTag.oid == head.oid {
                 createWorktreeIfNeeded(branchName)
                 return checkout(branchName, detachedTag.oid)
