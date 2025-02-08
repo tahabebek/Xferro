@@ -19,10 +19,15 @@ import Observation
         didSet {
             if currentSelectedItem != nil {
                 switch currentSelectedItem!.selectedItemType {
-                case .regular:
-                    let wipCommits = wipCommits(of: currentSelectedItem!.selectableItem)
-                    let wipCommitTitle = "WIP commits of \(currentSelectedItem!.selectableItem.name)"
-                    currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
+                case .regular(let type):
+                    switch type {
+                    case .stash:
+                        currentWipCommits = CurrentWipCommits(commits: [], title: "Stashes don't have wip commits")
+                    default:
+                        let wipCommits = wipCommits(of: currentSelectedItem!.selectableItem)
+                        let wipCommitTitle = "Wip commits of \(currentSelectedItem!.selectableItem.name)"
+                        currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
+                    }
                 case .wip:
                     break
                 }

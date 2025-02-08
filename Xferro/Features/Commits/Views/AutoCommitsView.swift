@@ -21,13 +21,20 @@ struct WIPCommitsView: View {
             Group {
                 VStack(spacing: 8) {
                     HStack {
-                        Label(viewModel.currentWipCommits.title, systemImage: "dot.square")
+                        Label(viewModel.currentWipCommits.title, systemImage: "square")
                         Spacer()
                     }
                     .frame(height: 36)
-                    LazyVGrid(columns: columns) {
-                        ForEach(viewModel.currentWipCommits.commits) { selectableWipCommit in
-                            wipRectangle(item: selectableWipCommit)
+                    if viewModel.currentWipCommits.commits.isEmpty {
+                        HStack {
+                            Text("No WIP Commits")
+                            Spacer()
+                        }
+                    } else {
+                        LazyVGrid(columns: columns) {
+                            ForEach(viewModel.currentWipCommits.commits) { selectableWipCommit in
+                                wipRectangle(item: selectableWipCommit)
+                            }
                         }
                     }
                 }
