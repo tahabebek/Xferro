@@ -39,10 +39,7 @@ import Observation
     var currentWipCommits: CurrentWipCommits = CurrentWipCommits(commits: [], title: "")
     var forceRefresh = UUID().uuidString
     private(set) var repositories: [Repository] = []
-
-    private var oldRepositories: [Repository] = []
     private var gitFolderWatchers: [String: FolderWatcher] = [:]
-
     private let userDidSelectFolder: (URL) -> Void
     private var onGitFolderChangeObservers: Set<AnyCancellable> = []
 
@@ -55,12 +52,6 @@ import Observation
     }
 
     func reloadData() {
-//        oldRepositories = repositories
-//        DispatchQueue.main.async { [weak self] in
-//            guard let self else { return }
-//            repositories = []
-//        }
-
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             setupInitialCurrentSelectedItem()
