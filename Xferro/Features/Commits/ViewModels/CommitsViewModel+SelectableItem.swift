@@ -53,11 +53,11 @@ extension CommitsViewModel {
         var name: String {
             switch type {
             case .branch(let branch):
-                return "the current status of branch '\(branch.name)' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
+                return "'\(branch.commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
             case .tag(let tag):
-                return "the current status of tag '\(tag.name)' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
+                return "'\(tag.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
             case .detached(let commit):
-                return "the current status of detached commit '\(commit.oid.description)' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
+                return "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
             }
         }
 
@@ -81,7 +81,7 @@ extension CommitsViewModel {
         let repository: Repository
         let branch: Branch
         let commit: Commit
-        var name: String { "commit '\(commit.oid.description)'" }
+        var name: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
         var oid: OID { commit.oid }
     }
 
@@ -89,7 +89,7 @@ extension CommitsViewModel {
         var id: String { CommitsViewModel.idOfRepo(repository) + commit.id }
         let repository: Repository
         let commit: Commit
-        var name: String { "commit '\(commit.oid.description)'" }
+        var name: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
         var oid: OID { commit.oid }
     }
 
@@ -97,7 +97,7 @@ extension CommitsViewModel {
         var id: String { CommitsViewModel.idOfRepo(repository) + commit.id }
         let repository: Repository
         let commit: Commit
-        var name: String { "commit '\(commit.oid.description)'" }
+        var name: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
         var oid: OID { commit.oid }
     }
 
@@ -105,7 +105,7 @@ extension CommitsViewModel {
         var id: String { CommitsViewModel.idOfRepo(repository) + tag.id }
         let repository: Repository
         let tag: TagReference
-        var name: String { "tag '\(tag.name)'" }
+        var name: String { "'\(tag.name)' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
         var oid: OID { tag.oid }
     }
 
@@ -114,7 +114,7 @@ extension CommitsViewModel {
         let repository: Repository
         let branch: Branch
         let commit: Commit
-        var name: String { "commit '\(commit.oid.description)'" }
+        var name: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
         var oid: OID { commit.oid }
     }
 
@@ -122,7 +122,7 @@ extension CommitsViewModel {
         var id: String { CommitsViewModel.idOfRepo(repository) + tag.id }
         let repository: Repository
         let tag: TagReference
-        var name: String { "tag '\(tag.name)'" }
+        var name: String { "'\(tag.name)' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
         var oid: OID { tag.oid }
     }
 
@@ -130,7 +130,7 @@ extension CommitsViewModel {
         var id: String { CommitsViewModel.idOfRepo(repository) + stash.id.formatted() }
         let repository: Repository
         let stash: Stash
-        var name: String { "stash '\(stash.oid.description)'" }
+        var name: String { "'\(stash.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
         var oid: OID { stash.oid }
     }
 

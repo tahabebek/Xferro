@@ -382,8 +382,26 @@ import Observation
             } else {
                 return getWorktreeIfExists(branchName)
             }
-        default:
+        case let tag as SelectableTag:
+            let branchName = Self.wipBranchPrefix + tag.oid.description
+            if tag.oid == head.oid {
+                createWorktreeIfNeeded(branchName)
+                return checkout(branchName, tag.oid)
+            } else {
+                return getWorktreeIfExists(branchName)
+            }
+        case let historyCommit as SelectableHistoryCommit:
+            let branchName = Self.wipBranchPrefix + historyCommit.oid.description
+            if historyCommit.oid == head.oid {
+                createWorktreeIfNeeded(branchName)
+                return checkout(branchName, historyCommit.oid)
+            } else {
+                return getWorktreeIfExists(branchName)
+            }
+        case let wipCommit as SelectableWipCommit:
             return nil
+        default:
+            fatalError()
         }
     }
 }
