@@ -21,7 +21,7 @@ struct WIPCommitsView: View {
             Group {
                 VStack(spacing: 8) {
                     HStack {
-                        Label(viewModel.currentWipCommits.title, systemImage: "square")
+                        Label(viewModel.currentWipCommits.title, systemImage: "w.square")
                         Spacer()
                     }
                     .frame(height: 36)

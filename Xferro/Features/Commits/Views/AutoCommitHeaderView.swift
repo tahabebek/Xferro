@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct AutoCommitHeaderView: View {
-    @State var autoCommitEnabled = false
+    @AppStorage("autoCommitEnabled") var autoCommitEnabled: Bool = true
+    
     var body: some View {
         HStack {
             VerticalHeader(title: "Wip Commits")
