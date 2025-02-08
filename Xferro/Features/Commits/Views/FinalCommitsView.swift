@@ -26,5 +26,6 @@ struct FinalCommitsView: View {
             .frame(width: width)
             .fixedSize()
         }
+        .id(viewModel.forceRefresh)
     }
 }

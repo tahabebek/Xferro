@@ -1,12 +1,9 @@
 import Foundation
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#endif
+import Combine
 
 class FolderWatcher {
-    let onChange: () -> Void
+    let onChangeObserver: PassthroughSubject<Void, Never>
 
     private var lastModifiedTimes: [URL: Date] = [:]
     private var folderMonitors: [URL: DispatchSourceFileSystemObject] = [:]
@@ -14,7 +11,7 @@ class FolderWatcher {
     private let excludingPaths: Set<String>
     private let gitIgnore: GitIgnore
 
-    init(folder: URL, includingPaths: Set<String>, excludingPaths: Set<String> = [], onChange: @escaping () -> Void) {
+    init(folder: URL, includingPaths: Set<String>, excludingPaths: Set<String> = [], onChangeObserver: PassthroughSubject<Void, Never>) {
         print("🚀 Initializing FolderWatcher for folder: \(folder.path)")
         print("📋 Watching folders including: \(includingPaths.isEmpty ? "all" : includingPaths.joined(separator: ", "))")
         print("📋 Watching folders excluding: \(excludingPaths.isEmpty ? "none" : excludingPaths.joined(separator: ", "))")
@@ -22,7 +19,7 @@ class FolderWatcher {
         self.includingPaths = includingPaths
         self.excludingPaths = excludingPaths
         self.gitIgnore = GitIgnore(rootPath: folder.path)
-        self.onChange = onChange
+        self.onChangeObserver = onChangeObserver
 
         do {
             try setupRecursiveWatching(for: folder)
@@ -81,8 +78,10 @@ class FolderWatcher {
         )
 
         folderMonitor.setEventHandler { [weak self] in
+            guard let self else { return }
             print("🔔 Directory event received for: \(folderURL.lastPathComponent)")
-            self?.checkForChanges(in: folderURL)
+            onChangeObserver.send()
+            checkForChanges(in: folderURL)
         }
 
         folderMonitor.setCancelHandler {
@@ -165,7 +164,6 @@ class FolderWatcher {
                         print("   Previous mod time: \(String(describing: lastModified))")
                         print("   New mod time: \(modificationDate)")
                         lastModifiedTimes[url] = modificationDate
-                        onChange()
                     }
                 }
             }

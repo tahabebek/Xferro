@@ -5,6 +5,7 @@
 //  Created by Taha Bebek on 2/3/25.
 //
 
+import Combine
 import Foundation
 import Observation
 
@@ -36,12 +37,14 @@ import Observation
     }
 
     var currentWipCommits: CurrentWipCommits = CurrentWipCommits(commits: [], title: "")
+    var forceRefresh = UUID().uuidString
     private(set) var repositories: [Repository] = []
 
     private var oldRepositories: [Repository] = []
     private var gitFolderWatchers: [String: FolderWatcher] = [:]
 
     private let userDidSelectFolder: (URL) -> Void
+    private var onGitFolderChangeObservers: Set<AnyCancellable> = []
 
     init(repositories: [Repository], userDidSelectFolder: @escaping (URL) -> Void) {
         self.userDidSelectFolder = userDidSelectFolder
@@ -61,6 +64,7 @@ import Observation
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             setupInitialCurrentSelectedItem()
+            forceRefresh = UUID().uuidString
         }
     }
 
@@ -68,6 +72,17 @@ import Observation
         guard let gitDir = repository.gitDir else { fatalError() }
         repositories.append(repository)
         if gitFolderWatchers[gitDir.path] == nil {
+            let changeObserver = PassthroughSubject<Void, Never>()
+            changeObserver
+                .debounce(for: 1, scheduler: RunLoop.main)
+                .sink { [weak self] in
+                    guard let self else { return }
+                    print("refresh")
+                    self.setupInitialCurrentSelectedItem()
+                    self.forceRefresh = UUID().uuidString
+                }
+                .store(in: &onGitFolderChangeObservers)
+
             gitFolderWatchers[gitDir.path] = FolderWatcher(
                 folder: gitDir,
                 includingPaths: [
@@ -89,10 +104,9 @@ import Observation
                     "\(gitDir.path)/logs/refs/remotes",
                     "\(gitDir.path)/logs/refs/notes",
                     "\(gitDir.path)/index"
-                ]
-                ) { [weak self] in
-                    self?.reloadData()
-            }
+                ],
+                onChangeObserver: changeObserver
+            )
         }
     }
 
