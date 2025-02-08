@@ -13,8 +13,8 @@ class FolderWatcher {
 
     init(folder: URL, includingPaths: Set<String>, excludingPaths: Set<String> = [], onChangeObserver: PassthroughSubject<Void, Never>) {
         print("🚀 Initializing FolderWatcher for folder: \(folder.path)")
-        print("📋 Watching folders including: \(includingPaths.isEmpty ? "all" : includingPaths.joined(separator: ", "))")
-        print("📋 Watching folders excluding: \(excludingPaths.isEmpty ? "none" : excludingPaths.joined(separator: ", "))")
+//        print("📋 Watching folders including: \(includingPaths.isEmpty ? "all" : includingPaths.joined(separator: ", "))")
+//        print("📋 Watching folders excluding: \(excludingPaths.isEmpty ? "none" : excludingPaths.joined(separator: ", "))")
 
         self.includingPaths = includingPaths
         self.excludingPaths = excludingPaths
@@ -50,7 +50,7 @@ class FolderWatcher {
     private func setupRecursiveWatching(for folderURL: URL) throws {
         guard shouldWatch(url: folderURL) else { return }
 
-        print("📂 Setting up recursive watching for: \(folderURL)")
+//        print("📂 Setting up recursive watching for: \(folderURL)")
         try setupFolderMonitoring(for: folderURL)
         try watchExistingFilesAndFolders(in: folderURL)
     }
@@ -79,7 +79,7 @@ class FolderWatcher {
 
         folderMonitor.setEventHandler { [weak self] in
             guard let self else { return }
-            print("🔔 Directory event received for: \(folderURL.lastPathComponent)")
+//            print("🔔 Directory event received for: \(folderURL.lastPathComponent)")
             onChangeObserver.send()
             checkForChanges(in: folderURL)
         }
@@ -91,7 +91,7 @@ class FolderWatcher {
 
         folderMonitor.resume()
         folderMonitors[folderURL] = folderMonitor
-        print("✅ Monitor successfully set up for: \(folderURL)")
+//        print("✅ Monitor successfully set up for: \(folderURL)")
     }
 
     private func watchExistingFilesAndFolders(in folderURL: URL) throws {
@@ -122,7 +122,7 @@ class FolderWatcher {
             } else if resourceValues.isRegularFile ?? false {
                 if let modificationDate = resourceValues.contentModificationDate {
                     lastModifiedTimes[url] = modificationDate
-                    print("📄 Caching modification time for file: \(url.lastPathComponent)")
+//                    print("📄 Caching modification time for file: \(url.lastPathComponent)")
                 }
             }
         }
@@ -153,16 +153,16 @@ class FolderWatcher {
 
             if resourceValues.isDirectory ?? false {
                 if folderMonitors[url] == nil {
-                    print("📁 Found new directory: \(url.lastPathComponent)")
+//                    print("📁 Found new directory: \(url.lastPathComponent)")
                     try? setupRecursiveWatching(for: url)
                 }
             } else if resourceValues.isRegularFile ?? false {
                 if let modificationDate = resourceValues.contentModificationDate {
                     let lastModified = lastModifiedTimes[url]
                     if lastModified != modificationDate {
-                        print("📝 File modified: \(url.lastPathComponent)")
-                        print("   Previous mod time: \(String(describing: lastModified))")
-                        print("   New mod time: \(modificationDate)")
+//                        print("📝 File modified: \(url.lastPathComponent)")
+//                        print("   Previous mod time: \(String(describing: lastModified))")
+//                        print("   New mod time: \(modificationDate)")
                         lastModifiedTimes[url] = modificationDate
                     }
                 }
@@ -180,7 +180,7 @@ class FolderWatcher {
         let removedURLs = watchedPathsInCurrentDir.subtracting(contents)
 
         for url in removedURLs {
-            print("🗑️ Removing tracking for deleted file: \(url.lastPathComponent)")
+//            print("🗑️ Removing tracking for deleted file: \(url.lastPathComponent)")
             lastModifiedTimes.removeValue(forKey: url)
         }
     }
