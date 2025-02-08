@@ -285,20 +285,8 @@ import Observation
     }
     
     private func wipCommits(of item: any SelectableItem) -> [SelectableWipCommit] {
-        let wipRepository = wipWorktree(for: item)
+        guard let wipRepository = wipWorktree(for: item) else { return [] }
         var head = try? HEAD(for: wipRepository)
-        if head == nil {
-            do {
-                _ = wipRepository.createBranch("master", force: true)
-                _ = wipRepository.add(path: ".")
-                let signiture: Signature? = nil
-                let _ = wipRepository.commit(message: "Initial commit", signature: signiture)
-                head = try HEAD(for: wipRepository)
-            } catch {
-                print(error.localizedDescription)
-            }
-        }
-
         var commits: [SelectableWipCommit] = []
 
         let commitIterator = CommitIterator(repo: wipRepository, root: head!.oid.oid)
@@ -308,7 +296,7 @@ import Observation
         return commits
     }
 
-    private func wipWorktree(for item: any SelectableItem) -> Repository {
+    private func wipWorktree(for item: any SelectableItem) -> Repository? {
         let appDir = DataManager.appDir
         try? FileManager.default.createDirectory(
             at: appDir,
@@ -317,16 +305,68 @@ import Observation
         )
 
         let repository = item.repository
-
         let url = URL(fileURLWithPath: appDir.path()).appendingPathComponent("xferro_wip")
 
-        if !Repository.isGitRepository(url: url).mustSucceed() {
-            repository.addWorkTree(name: item.id, path: url.path()).mustSucceed()
-            let wipWorktree = Repository.at(url).mustSucceed()
-            return wipWorktree
-        } else {
+        let getWorktreeIfExists: (String) -> Repository? = { branchName in
+            if Repository.isGitRepository(url: url).mustSucceed() {
+                let wipWorkTree = Repository.at(url).mustSucceed()
+                if let branch = try? wipWorkTree.branch(named: branchName).get() {
+                    return wipWorkTree
+                }
+                return nil
+            }
+            return nil
+        }
+        let createWorktreeIfNeeded: (String) -> Void = { branchName in
+            if !Repository.isGitRepository(url: url).mustSucceed() {
+                repository.addWorkTree(name: branchName, path: url.path()).mustSucceed()
+            }
+        }
+        let checkout: (String, OID?) -> Repository = { name, oidToCreate in
             let wipWorkTree = Repository.at(url).mustSucceed()
-            
+            if let branch = try? repository.branch(named: name).get() {
+                wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
+                return wipWorkTree
+            } else if let oidToCreate {
+                let branch = wipWorkTree.createBranch(name, oid: oidToCreate, force: true).mustSucceed()
+                wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
+            }
+        }
+
+        let head = try! HEAD(for: item.repository)
+        let prefix = "_xferro_wip_commits_for_"
+
+        switch item {
+        case let status as SelectableStatus:
+            let branchName = prefix + head.oid.description
+            createWorktreeIfNeeded(branchName)
+            return checkout(branchName, head.oid)
+        case let commit as SelectableCommit:
+            let branchName = prefix + commit.oid.description
+            if commit.oid == head.oid {
+                createWorktreeIfNeeded(branchName)
+                return checkout(branchName, commit.oid)
+            } else {
+                return getWorktreeIfExists(branchName)
+            }
+        case let detachedCommit as SelectableDetachedCommit:
+            let branchName = prefix + detachedCommit.oid.description
+            if detachedCommit.oid == head.oid {
+                createWorktreeIfNeeded(branchName)
+                return checkout(branchName, detachedCommit.oid)
+            } else {
+                return getWorktreeIfExists(branchName)
+            }
+        case let detachedTag as SelectableDetachedTag:
+            let branchName = prefix + detachedTag.oid.description
+            if detachedTag.oid == head.oid {
+                createWorktreeIfNeeded(branchName)
+                return checkout(branchName, detachedTag.oid)
+            } else {
+                return getWorktreeIfExists(branchName)
+            }
+        default:
+            return nil
         }
     }
 }

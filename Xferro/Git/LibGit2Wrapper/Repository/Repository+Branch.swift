@@ -57,7 +57,7 @@ extension Repository {
         return remoteBranch(named: name)
     }
 
-    private func createBranch(_ name: String, oid: OID, force: Bool = false) -> Result<Branch, NSError> {
+    func createBranch(_ name: String, oid: OID, force: Bool = false) -> Result<Branch, NSError> {
         return self.longOID(for: oid).flatMap { oid -> Result<Branch, NSError> in
             var oid = oid.oid
             var commit: OpaquePointer? = nil

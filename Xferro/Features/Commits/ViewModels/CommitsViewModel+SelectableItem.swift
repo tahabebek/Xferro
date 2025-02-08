@@ -11,6 +11,7 @@ protocol SelectableItem: Equatable, Identifiable {
     var id: String { get }
     var name: String { get }
     var repository: Repository { get }
+    var oid: OID { get }
 }
 
 extension CommitsViewModel {
@@ -59,6 +60,18 @@ extension CommitsViewModel {
                 return "the current status of detached commit '\(commit.oid.description)' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
             }
         }
+
+        var oid: OID {
+            switch type {
+            case .branch(let branch):
+                return branch.commit.oid
+            case .tag(let tag):
+                return tag.oid
+            case .detached(let commit):
+                return commit.oid
+            }
+        }
+
         let repository: Repository
         let type: StatusType
     }
@@ -69,6 +82,7 @@ extension CommitsViewModel {
         let branch: Branch
         let commit: Commit
         var name: String { "commit '\(commit.oid.description)'" }
+        var oid: OID { commit.oid }
     }
 
     struct SelectableWipCommit: SelectableItem, Identifiable {
@@ -76,6 +90,7 @@ extension CommitsViewModel {
         let repository: Repository
         let commit: Commit
         var name: String { "commit '\(commit.oid.description)'" }
+        var oid: OID { commit.oid }
     }
 
     struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
@@ -83,6 +98,7 @@ extension CommitsViewModel {
         let repository: Repository
         let commit: Commit
         var name: String { "commit '\(commit.oid.description)'" }
+        var oid: OID { commit.oid }
     }
 
     struct SelectableDetachedTag: SelectableItem, Identifiable {
@@ -90,6 +106,7 @@ extension CommitsViewModel {
         let repository: Repository
         let tag: TagReference
         var name: String { "tag '\(tag.name)'" }
+        var oid: OID { tag.oid }
     }
 
     struct SelectableHistoryCommit: SelectableItem, Identifiable {
@@ -98,6 +115,7 @@ extension CommitsViewModel {
         let branch: Branch
         let commit: Commit
         var name: String { "commit '\(commit.oid.description)'" }
+        var oid: OID { commit.oid }
     }
 
     struct SelectableTag: SelectableItem, Identifiable {
@@ -105,6 +123,7 @@ extension CommitsViewModel {
         let repository: Repository
         let tag: TagReference
         var name: String { "tag '\(tag.name)'" }
+        var oid: OID { tag.oid }
     }
 
     struct SelectableStash: SelectableItem, Identifiable {
@@ -112,6 +131,7 @@ extension CommitsViewModel {
         let repository: Repository
         let stash: Stash
         var name: String { "stash '\(stash.oid.description)'" }
+        var oid: OID { stash.oid }
     }
 
     private static func idOfRepo(_ repository: Repository) -> String {
