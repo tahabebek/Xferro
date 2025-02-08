@@ -118,7 +118,6 @@ extension Repository {
     }
 
     func addWorkTree(name: String, path: String, head: String? = nil, checkout: Bool = true) -> Result<(), NSError> {
-
         let checkoutOptions  = UnsafeMutablePointer<git_checkout_options>.allocate(capacity: 1)
         defer { checkoutOptions.deallocate() }
         var result = git_checkout_options_init(checkoutOptions, UInt32(GIT_CHECKOUT_OPTIONS_VERSION))
@@ -146,7 +145,7 @@ extension Repository {
                 git_reference_free(reference)
             }
         }
-        if let head = head {
+        if let head {
             if head.isLongRef || head.isHEAD {
                 let result = git_reference_lookup(&reference, self.pointer, head)
                 guard result == GIT_OK.rawValue else {
@@ -166,8 +165,8 @@ extension Repository {
                 return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_head"))
             }
             let oid = git_reference_target(ref)
-            let tmpBranch = "refs/heads/SwiftGit2-TMP-\(UUID().uuidString.prefix(6))"
-            result = git_reference_create(&reference, self.pointer, tmpBranch, oid, 0, "SwiftGit2 TMP Branch")
+            let branch = "refs/heads/\(name)"
+            result = git_reference_create(&reference, self.pointer, branch, oid, 0, "Xferro Wip Branch \(name)")
             guard result == GIT_OK.rawValue else {
                 return Result.failure(NSError(gitError: result, pointOfFailure: "git_reference_create"))
             }

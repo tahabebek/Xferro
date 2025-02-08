@@ -8,219 +8,7 @@
 import Foundation
 import Observation
 
-protocol SelectableItem: Equatable, Identifiable {
-    var name: String { get }
-}
-
 @Observable class CommitsViewModel {
-    enum Head: Codable {
-        case branch(Branch)
-        case tag(TagReference)
-        case reference(Reference)
-
-        var oid: OID {
-            switch self {
-            case .branch(let branch):
-                return branch.oid
-            case .tag(let tagReference):
-                return tagReference.oid
-            case .reference(let reference):
-                return reference.oid
-            }
-        }
-    }
-
-    struct SelectedItem: Equatable {
-        let selectedItemType: SelectedItemType
-
-        var repository: Repository {
-            switch selectedItemType {
-            case .regular(let regularSelectedItem):
-                regularSelectedItem.repository
-            case .wip(let wipSelectedItem):
-                wipSelectedItem.repository
-            }
-        }
-
-        var selectableItem: any SelectableItem {
-            switch selectedItemType {
-            case .regular(let regularSelectedItem):
-                regularSelectedItem.selectableItem
-            case .wip(let wipSelectedItem):
-                wipSelectedItem.selectableItem
-            }
-        }
-
-        enum SelectedItemType: Equatable {
-            case regular(RegularSelectedItem)
-            case wip(WipSelectedItem)
-        }
-
-        enum WipSelectedItem: Equatable {
-            case wipCommit(SelectableWipCommit)
-
-            var repository: Repository {
-                switch self {
-                case .wipCommit(let selectableWipCommit):
-                    selectableWipCommit.repository
-                }
-            }
-            var selectableItem: any SelectableItem {
-                switch self {
-                case .wipCommit(let selectableWipCommit):
-                    selectableWipCommit
-                }
-            }
-        }
-        enum RegularSelectedItem: Equatable {
-            case status(SelectableStatus)
-            case commit(SelectableCommit)
-            case historyCommit(SelectableHistoryCommit)
-            case detachedCommit(SelectableDetachedCommit)
-            case detachedTag(SelectableDetachedTag)
-            case tag(SelectableTag)
-            case stash(SelectableStash)
-
-            var repository: Repository {
-                switch self {
-                case .status(let selectableStatus):
-                    selectableStatus.repository
-                case .commit(let selectableCommit):
-                    selectableCommit.repository
-                case .historyCommit(let selectableHistoryCommit):
-                    selectableHistoryCommit.repository
-                case .detachedCommit(let selectableDetachedCommit):
-                    selectableDetachedCommit.repository
-                case .detachedTag(let selectableDetachedTag):
-                    selectableDetachedTag.repository
-                case .tag(let selectableTag):
-                    selectableTag.repository
-                case .stash(let selectableStash):
-                    selectableStash.repository
-                }
-            }
-
-            var selectableItem: any SelectableItem {
-                switch self {
-                case .status(let selectableStatus):
-                    selectableStatus
-                case .commit(let selectableCommit):
-                    selectableCommit
-                case .historyCommit(let selectableHistoryCommit):
-                    selectableHistoryCommit
-                case .detachedCommit(let selectableDetachedCommit):
-                    selectableDetachedCommit
-                case .detachedTag(let selectableDetachedTag):
-                    selectableDetachedTag
-                case .tag(let selectableTag):
-                    selectableTag
-                case .stash(let selectableStash):
-                    selectableStash
-                }
-            }
-        }
-    }
-
-    struct SelectableStatus: SelectableItem, Identifiable {
-        enum StatusType: Identifiable, Equatable {
-            case branch(Branch)
-            case tag(TagReference)
-            case detached(Commit)
-
-            var id: String {
-                switch self {
-                case .branch(let branch):
-                    return branch.id
-                case .tag(let tag):
-                    return tag.id
-                case .detached(let commit):
-                    return commit.id
-                }
-            }
-
-            static func == (lhs: StatusType, rhs: StatusType) -> Bool {
-                switch (lhs, rhs) {
-                case (.branch(let lhs), .branch(let rhs)):
-                    return lhs == rhs
-                case (.tag(let lhs), .tag(let rhs)):
-                    return lhs == rhs
-                case (.detached(let lhs), .detached(let rhs)):
-                    return lhs == rhs
-                default:
-                    return false
-                }
-            }
-        }
-
-        var id: String {
-            CommitsViewModel.idOfRepo(repository) + type.id
-        }
-
-        var name: String {
-            switch type {
-            case .branch(let branch):
-                return "the current status of branch '\(branch.name)' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
-            case .tag(let tag):
-                return "the current status of tag '\(tag.name)' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
-            case .detached(let commit):
-                return "the current status of detached commit '\(commit.oid.description)' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
-            }
-        }
-        let repository: Repository
-        let type: StatusType
-    }
-
-    struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
-        var id: String { CommitsViewModel.idOfRepo(repository) + branch.id + commit.id }
-        let repository: Repository
-        let branch: Branch
-        let commit: Commit
-        var name: String { "commit '\(commit.oid.description)'" }
-    }
-
-    struct SelectableWipCommit: SelectableItem, Identifiable {
-        var id: String { CommitsViewModel.idOfRepo(repository) + commit.id }
-        let repository: Repository
-        let commit: Commit
-        var name: String { "commit '\(commit.oid.description)'" }
-    }
-
-    struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
-        var id: String { CommitsViewModel.idOfRepo(repository) + commit.id }
-        let repository: Repository
-        let commit: Commit
-        var name: String { "commit '\(commit.oid.description)'" }
-    }
-
-    struct SelectableDetachedTag: SelectableItem, Identifiable {
-        var id: String { CommitsViewModel.idOfRepo(repository) + tag.id }
-        let repository: Repository
-        let tag: TagReference
-        var name: String { "tag '\(tag.name)'" }
-    }
-
-    struct SelectableHistoryCommit: SelectableItem, Identifiable {
-        var id: String { CommitsViewModel.idOfRepo(repository) + branch.id + commit.id }
-        let repository: Repository
-        let branch: Branch
-        let commit: Commit
-        var name: String { "commit '\(commit.oid.description)'" }
-    }
-
-    struct SelectableTag: SelectableItem, Identifiable {
-        var id: String { CommitsViewModel.idOfRepo(repository) + tag.id }
-        let repository: Repository
-        let tag: TagReference
-        var name: String { "tag '\(tag.name)'" }
-    }
-
-    struct SelectableStash: SelectableItem, Identifiable {
-        var id: String { CommitsViewModel.idOfRepo(repository) + stash.id.formatted() }
-        let repository: Repository
-        let stash: Stash
-        var name: String { "stash '\(stash.oid.description)'" }
-    }
-
     struct CurrentWipCommits {
         let commits: [SelectableWipCommit]
         let title: String
@@ -497,7 +285,7 @@ protocol SelectableItem: Equatable, Identifiable {
     }
     
     private func wipCommits(of item: any SelectableItem) -> [SelectableWipCommit] {
-        let wipRepository = wipRepository(for: item)
+        let wipRepository = wipWorktree(for: item)
         var head = try? HEAD(for: wipRepository)
         if head == nil {
             do {
@@ -520,30 +308,25 @@ protocol SelectableItem: Equatable, Identifiable {
         return commits
     }
 
-    private func wipRepository(for item: any SelectableItem) -> Repository {
+    private func wipWorktree(for item: any SelectableItem) -> Repository {
         let appDir = DataManager.appDir
         try? FileManager.default.createDirectory(
             at: appDir,
             withIntermediateDirectories: true,
             attributes: nil
         )
-        let url = URL(fileURLWithPath: appDir.path()).appendingPathComponent("wip\(item.id)")
-        try? FileManager.default.createDirectory(
-            at: url,
-            withIntermediateDirectories: true,
-            attributes: nil
-        )
-        if !Repository.isGitRepository(url: url).mustSucceed() {
-            let wipRepository = Repository.create(at: url).mustSucceed()
-            return wipRepository
-        }
-        return Repository.at(url).mustSucceed()
-    }
 
-    private static func idOfRepo(_ repository: Repository) -> String {
-        repository.gitDir?.deletingLastPathComponent().path ?? ""
-    }
-    private static func nameOfRepo(_ repository: Repository) -> String {
-        repository.gitDir?.deletingLastPathComponent().lastPathComponent ?? ""
+        let repository = item.repository
+
+        let url = URL(fileURLWithPath: appDir.path()).appendingPathComponent("xferro_wip")
+
+        if !Repository.isGitRepository(url: url).mustSucceed() {
+            repository.addWorkTree(name: item.id, path: url.path()).mustSucceed()
+            let wipWorktree = Repository.at(url).mustSucceed()
+            return wipWorktree
+        } else {
+            let wipWorkTree = Repository.at(url).mustSucceed()
+            
+        }
     }
 }
