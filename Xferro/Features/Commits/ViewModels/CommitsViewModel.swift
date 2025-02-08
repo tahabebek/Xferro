@@ -287,13 +287,14 @@ import Observation
     }
     
     private func wipCommits(of item: any SelectableItem) -> [SelectableWipCommit] {
-        guard let wipRepository = wipWorktree(for: item) else { return [] }
-        let head = try? HEAD(for: wipRepository)
+        guard let wipWorktree = wipWorktree(for: item) else { return [] }
+        let repository = wipWorktree.0
+        let branch = wipWorktree.1
         var commits: [SelectableWipCommit] = []
 
-        let commitIterator = CommitIterator(repo: wipRepository, root: head!.oid.oid)
+        let commitIterator = CommitIterator(repo: repository, root: branch.oid.oid)
         while let commit = try? commitIterator.next()?.get() {
-            commits.append(SelectableWipCommit(repository: wipRepository, commit: commit))
+            commits.append(SelectableWipCommit(repository: repository, commit: commit))
             if commit.oid == item.oid {
                 break
             }
@@ -301,7 +302,7 @@ import Observation
         return commits
     }
 
-    private func wipWorktree(for item: any SelectableItem) -> Repository? {
+    private func wipWorktree(for item: any SelectableItem) -> (Repository, Branch)? {
         guard let repoPath = item.repository.gitDir?.deletingLastPathComponent().path() else {
             return nil
         }
@@ -314,11 +315,11 @@ import Observation
 
         let repository = item.repository
 
-        let getWorktreeIfExists: (String) -> Repository? = { branchName in
+        let getWorktreeIfExists: (String) -> (Repository, Branch)? = { branchName in
             if Repository.isGitRepository(url: url).mustSucceed() {
                 let wipWorkTree = Repository.at(url).mustSucceed()
-                if let _ = try? wipWorkTree.branch(named: branchName).get() {
-                    return wipWorkTree
+                if let branch = try? wipWorkTree.branch(named: branchName).get() {
+                    return (wipWorkTree, branch)
                 }
                 return nil
             }
@@ -332,15 +333,15 @@ import Observation
                 .mustSucceed()
             }
         }
-        let checkout: (String, OID?) -> Repository? = { name, oidToCreate in
+        let checkout: (String, OID?) -> (Repository, Branch)? = { name, oidToCreate in
             let wipWorkTree = Repository.at(url).mustSucceed()
             if let branch = try? repository.branch(named: name).get() {
                 wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
-                return wipWorkTree
+                return (wipWorkTree, branch)
             } else if let oidToCreate {
                 let branch = wipWorkTree.createBranch(name, oid: oidToCreate, force: true).mustSucceed()
                 wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
-                return wipWorkTree
+                return (wipWorkTree, branch)
             }
             return nil
         }
