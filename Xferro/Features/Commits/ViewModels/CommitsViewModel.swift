@@ -52,17 +52,15 @@ import Observation
     }
 
     func reloadData() {
-        oldRepositories = repositories
+//        oldRepositories = repositories
+//        DispatchQueue.main.async { [weak self] in
+//            guard let self else { return }
+//            repositories = []
+//        }
+
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            repositories = []
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            guard let self else { return }
-            repositories = oldRepositories
             setupInitialCurrentSelectedItem()
-            oldRepositories = []
         }
     }
 
