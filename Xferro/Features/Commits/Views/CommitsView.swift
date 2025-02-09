@@ -13,7 +13,7 @@ struct CommitsView: View {
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
-                FinalCommitsView(width: geometry.size.width)
+                NormalCommitsView(width: geometry.size.width)
                     .frame(width: geometry.size.width, height: geometry.size.height * 0.7)
                 Divider()
                     .padding(.bottom, 8)

@@ -11,6 +11,8 @@ import Observation
 
 @Observable class CommitsViewModel {
     static let wipBranchPrefix = "_xferro_wip_commits_for_"
+    static let wipWorktreeFolder = "wip_worktrees"
+
     struct CurrentWipCommits {
         let commits: [SelectableWipCommit]
         let title: String
@@ -40,6 +42,7 @@ import Observation
     var forceRefresh = UUID().uuidString
     private(set) var repositories: [Repository] = []
     private var gitFolderWatchers: [String: FolderWatcher] = [:]
+    private var repsositoryFolderWatchers: [String: FolderWatcher] = [:]
     private let userDidSelectFolder: (URL) -> Void
     private var onGitFolderChangeObservers: Set<AnyCancellable> = []
 
@@ -51,14 +54,6 @@ import Observation
         setupInitialCurrentSelectedItem()
     }
 
-    func reloadData() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            setupInitialCurrentSelectedItem()
-            forceRefresh = UUID().uuidString
-        }
-    }
-
     func addRepository(_ repository: Repository) {
         guard let gitDir = repository.gitDir else { fatalError() }
         repositories.append(repository)
@@ -68,9 +63,8 @@ import Observation
                 .debounce(for: 1, scheduler: RunLoop.main)
                 .sink { [weak self] in
                     guard let self else { return }
-                    print("refresh")
-                    self.setupInitialCurrentSelectedItem()
-                    self.forceRefresh = UUID().uuidString
+                    setupInitialCurrentSelectedItem()
+                    forceRefresh = UUID().uuidString
                 }
                 .store(in: &onGitFolderChangeObservers)
 
@@ -99,6 +93,99 @@ import Observation
                 onChangeObserver: changeObserver
             )
         }
+
+        let repositoryPath = gitDir.deletingLastPathComponent().path
+        if repsositoryFolderWatchers[repositoryPath] == nil {
+            let changeObserver = PassthroughSubject<Void, Never>()
+            changeObserver
+                .debounce(for: 1, scheduler: RunLoop.main)
+                .sink { [weak self] in
+                    guard let self else { return }
+                    let statusEntries = repository.status().mustSucceed()
+                    let url = DataManager.appDir.appendingPathComponent(Self.wipWorktreeFolder).appendingPathComponent(repositoryPath)
+                    let head = try! HEAD(for: repository)
+                    let branchName = Self.wipBranchPrefix + head.oid.description
+                    guard let wipWorktree = getWorktreeIfExists(branchName, url: url) else { return }
+                    let wipRepository = wipWorktree.0
+
+                    var wipHead: OpaquePointer?
+                    var commit: OpaquePointer?
+                    git_repository_head(&wipHead, wipRepository.pointer)
+                    let peelResult = withUnsafeMutablePointer(to: &commit) { commitPtr in
+                        git_reference_peel(commitPtr, wipHead, GIT_OBJECT_COMMIT)
+                    }
+                    guard peelResult == GIT_OK.rawValue else {
+                        fatalError()
+                    }
+
+                    for statusEntry in statusEntries {
+                        let originalRepoPath = repositoryPath
+                        let wipWorktreePath = DataManager.appDirPath + "/\(Self.wipWorktreeFolder)/" + repositoryPath
+
+                        for (oldPath, newPath) in getPaths(from: statusEntry) {
+                            let status = statusEntry.status
+                            if status.contains(.indexNew) || status.contains(.workTreeNew) {
+                                let content = try! Data(contentsOf: URL(filePath: originalRepoPath + "/" + newPath!))
+                                try! FileManager.default.createDirectory(atPath: wipWorktreePath + "/" + URL(filePath: newPath!).deletingLastPathComponent().path, withIntermediateDirectories: true)
+                                try! content.write(to: URL(fileURLWithPath: wipWorktreePath + "/" + newPath!))
+                            } else if status.contains(.indexDeleted) || status.contains(.workTreeDeleted) {
+                                if FileManager.default.fileExists(atPath: wipWorktreePath + "/" + oldPath!) {
+                                    try! FileManager.default.removeItem(atPath: wipWorktreePath + "/" + oldPath!)
+                                }
+                            } else if status.contains(.indexRenamed) || status.contains(.workTreeRenamed) {
+                                if FileManager.default.fileExists(atPath: wipWorktreePath + "/" + oldPath!) {
+                                    try! FileManager.default.moveItem(atPath: oldPath!, toPath: newPath!)
+                                } else {
+                                    let content = try! Data(contentsOf: URL(filePath: originalRepoPath + "/" + newPath!))
+                                    try! FileManager.default.createDirectory(atPath: wipWorktreePath + "/" + URL(filePath: newPath!).deletingLastPathComponent().path, withIntermediateDirectories: true)
+                                    try! content.write(to: URL(fileURLWithPath: wipWorktreePath + "/" + newPath!))
+                                }
+                            } else if status.contains(.indexModified) || status.contains(.workTreeModified) {
+                                let path = newPath ?? oldPath!
+                                let content = try! Data(contentsOf: URL(filePath: originalRepoPath + "/" + path))
+                                try! content.write(to: URL(fileURLWithPath: wipWorktreePath + "/" + path))
+                            } else if status.contains(.indexTypeChange) || status.contains(.workTreeTypeChange) {
+                                if FileManager.default.fileExists(atPath: wipWorktreePath + "/" + newPath!) {
+                                    try! FileManager.default.removeItem(atPath: wipWorktreePath + "/" + newPath!)
+                                }
+                                let content = try! Data(contentsOf: URL(filePath: originalRepoPath + "/" + newPath!))
+                                try! content.write(to: URL(fileURLWithPath: wipWorktreePath + "/" + newPath!))
+                            }
+                            wipRepository.add(path: newPath!).mustSucceed()
+                        }
+                    }
+
+                    let signiture = Signature.default(wipRepository).mustSucceed().makeUnsafeSignature().mustSucceed()
+                    defer { git_signature_free(signiture) }
+                    let index = wipRepository.unsafeIndex().mustSucceed()
+                    defer { git_index_free(index) }
+                    let _ = wipRepository.commit(
+                        index: index,
+                        parentCommits: [commit],
+                        message: "Wip commit",
+                        signature: signiture
+                    ).mustSucceed()
+                    forceRefresh = UUID().uuidString
+                }
+                .store(in: &onGitFolderChangeObservers)
+
+            repsositoryFolderWatchers[repositoryPath] = FolderWatcher(
+                folder: gitDir.deletingLastPathComponent(),
+                excludingPaths: [gitDir.path],
+                onChangeObserver: changeObserver)
+        }
+    }
+
+    private func getPaths(from entry: StatusEntry) -> [(old: String?, new: String?)] {
+        var paths: [(old: String?, new: String?)] = []
+
+        if let staged = entry.stagedChanges {
+            paths.append((staged.oldFile?.path, staged.newFile?.path))
+        }
+        if let unstaged = entry.unstagedChanges {
+            paths.append((unstaged.oldFile?.path, unstaged.newFile?.path))
+        }
+        return paths
     }
 
     private func setupInitialCurrentSelectedItem() {
@@ -120,7 +207,6 @@ import Observation
             }
         }
     }
-
     func userTapped(item: any SelectableItem) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
@@ -146,7 +232,6 @@ import Observation
             }
         }
     }
-
     func isSelected(item: any SelectableItem) -> Bool {
         switch item {
         case let status as SelectableStatus:
@@ -201,7 +286,6 @@ import Observation
             fatalError()
         }
     }
-
     func usedDidSelectFolder(_ folder: URL) {
         let gotAccess = folder.startAccessingSecurityScopedResource()
         if !gotAccess { return }
@@ -220,11 +304,9 @@ import Observation
         folder.stopAccessingSecurityScopedResource()
         userDidSelectFolder(folder)
     }
-
     func deleteRepositoryButtonTapped(_ repository: Repository) {
 
     }
-
     func stashes(of repository: Repository) -> [SelectableStash] {
         var stashes = [SelectableStash]()
 
@@ -233,7 +315,6 @@ import Observation
         }
         return stashes
     }
-
     func branches(of repository: Repository) -> [Branch] {
         var branches: [Branch] = []
         let head = try? HEAD(for: repository)
@@ -250,7 +331,6 @@ import Observation
         }
         return branches
     }
-
     func detachedTag(of repository: Repository) -> SelectableDetachedTag? {
         if let head = try? HEAD(for: repository) {
             switch head {
@@ -266,7 +346,6 @@ import Observation
         }
         return nil
     }
-
     func detachedCommit(of repository: Repository) -> SelectableDetachedCommit? {
         if let head = try? HEAD(for: repository) {
             switch head {
@@ -280,7 +359,6 @@ import Observation
         }
         return nil
     }
-
     func tags(of repository: Repository) -> [SelectableTag] {
         var tags: [SelectableTag] = []
 
@@ -291,7 +369,6 @@ import Observation
         }
         return tags
     }
-
     func commits(of branch: Branch, in repository: Repository, count: Int = 10) -> [SelectableCommit] {
         var commits: [SelectableCommit] = []
 
@@ -303,7 +380,6 @@ import Observation
         }
         return commits
     }
-
     func detachedCommits(of commitOID: OID, in repository: Repository, count: Int = 10) -> [SelectableDetachedCommit] {
         var commits: [SelectableDetachedCommit] = []
 
@@ -315,15 +391,12 @@ import Observation
         }
         return commits
     }
-
     func detachedCommits(of tag: SelectableTag, in repository: Repository, count: Int = 10) -> [SelectableDetachedCommit] {
         detachedCommits(of: tag.tag.oid, in: repository, count: count)
     }
-    
     func historyCommits(of repository: Repository) -> [SelectableHistoryCommit] {
         fatalError()
     }
-
     func HEAD(for repository: Repository) throws -> CommitsViewModel.Head {
         let headRef = try repository.HEAD().get()
 
@@ -339,7 +412,6 @@ import Observation
         }
         return head
     }
-
     func isCurrentBranch(_ branch: Branch, head: CommitsViewModel.Head, in repository: Repository) -> Bool {
         switch head {
         case .branch(let headBranch):
@@ -351,7 +423,6 @@ import Observation
         }
         return false
     }
-    
     private func wipCommits(of item: any SelectableItem) -> [SelectableWipCommit] {
         guard let wipWorktree = wipWorktree(for: item) else { return [] }
         let repository = wipWorktree.0
@@ -368,8 +439,41 @@ import Observation
         return commits
     }
 
+    private func getWorktreeIfExists(_ branchName: String, url: URL) -> (Repository, Branch)? {
+        if Repository.isGitRepository(url: url).mustSucceed() {
+            let wipWorkTree = Repository.at(url).mustSucceed()
+            if let branch = try? wipWorkTree.branch(named: branchName).get() {
+                return (wipWorkTree, branch)
+            }
+            return nil
+        }
+        return nil
+    }
+
+    private func createWorktreeIfNeeded(repository: Repository, branchName: String, url: URL) {
+        if !Repository.isGitRepository(url: url).mustSucceed() {
+            repository.addWorkTree(
+                name: branchName,
+                path: url.path(percentEncoded: false))
+            .mustSucceed()
+        }
+    }
+
+    private func checkoutAndCreateIfNeeded(repository: Repository, branchName: String, oid: OID?, url: URL) -> (Repository, Branch)? {
+        let wipWorkTree = Repository.at(url).mustSucceed()
+        if let branch = try? repository.branch(named: branchName).get() {
+            wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
+            return (wipWorkTree, branch)
+        } else if let oid {
+            let branch = wipWorkTree.createBranch(branchName, oid: oid, force: true).mustSucceed()
+            wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
+            return (wipWorkTree, branch)
+        }
+        return nil
+    }
     private func wipWorktree(for item: any SelectableItem) -> (Repository, Branch)? {
-        guard let repoPath = item.repository.gitDir?.deletingLastPathComponent().path() else {
+        let repository = item.repository
+        guard let repoPath = repository.gitDir?.deletingLastPathComponent().path() else {
             return nil
         }
         let url = DataManager.appDir.appendingPathComponent("wip_worktrees").appendingPathComponent(repoPath)
@@ -379,85 +483,52 @@ import Observation
             attributes: nil
         )
 
-        let repository = item.repository
-
-        let getWorktreeIfExists: (String) -> (Repository, Branch)? = { branchName in
-            if Repository.isGitRepository(url: url).mustSucceed() {
-                let wipWorkTree = Repository.at(url).mustSucceed()
-                if let branch = try? wipWorkTree.branch(named: branchName).get() {
-                    return (wipWorkTree, branch)
-                }
-                return nil
-            }
-            return nil
-        }
-        let createWorktreeIfNeeded: (String) -> Void = { branchName in
-            if !Repository.isGitRepository(url: url).mustSucceed() {
-                repository.addWorkTree(
-                    name: branchName,
-                    path: url.path(percentEncoded: false))
-                .mustSucceed()
-            }
-        }
-        let checkout: (String, OID?) -> (Repository, Branch)? = { name, oidToCreate in
-            let wipWorkTree = Repository.at(url).mustSucceed()
-            if let branch = try? repository.branch(named: name).get() {
-                wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
-                return (wipWorkTree, branch)
-            } else if let oidToCreate {
-                let branch = wipWorkTree.createBranch(name, oid: oidToCreate, force: true).mustSucceed()
-                wipWorkTree.checkout(branch.longName, .init(strategy: .Force)).mustSucceed()
-                return (wipWorkTree, branch)
-            }
-            return nil
-        }
-
-        let head = try! HEAD(for: item.repository)
+        let head = try! HEAD(for: repository)
 
         switch item {
         case _ as SelectableStatus:
             let branchName = Self.wipBranchPrefix + head.oid.description
-            createWorktreeIfNeeded(branchName)
-            return checkout(branchName, head.oid)
+            createWorktreeIfNeeded(repository: repository, branchName: branchName, url: url)
+            return checkoutAndCreateIfNeeded(repository: repository, branchName: branchName, oid: head.oid, url: url)
         case let commit as SelectableCommit:
             let branchName = Self.wipBranchPrefix + commit.oid.description
             if commit.oid == head.oid {
-                createWorktreeIfNeeded(branchName)
-                return checkout(branchName, commit.oid)
+                createWorktreeIfNeeded(repository: repository, branchName: branchName, url: url)
+                return checkoutAndCreateIfNeeded(repository: repository, branchName: branchName, oid: commit.oid, url: url)
             } else {
-                return getWorktreeIfExists(branchName)
+                return getWorktreeIfExists(branchName, url: url)
             }
         case let detachedCommit as SelectableDetachedCommit:
             let branchName = Self.wipBranchPrefix + detachedCommit.oid.description
             if detachedCommit.oid == head.oid {
-                createWorktreeIfNeeded(branchName)
-                return checkout(branchName, detachedCommit.oid)
+                createWorktreeIfNeeded(repository: repository, branchName: branchName, url: url)
+                return checkoutAndCreateIfNeeded(repository: repository, branchName: branchName, oid: detachedCommit.oid, url: url)
             } else {
-                return getWorktreeIfExists(branchName)
+                return getWorktreeIfExists(branchName, url: url)
             }
         case let detachedTag as SelectableDetachedTag:
             let branchName = Self.wipBranchPrefix + detachedTag.oid.description
             if detachedTag.oid == head.oid {
-                createWorktreeIfNeeded(branchName)
-                return checkout(branchName, detachedTag.oid)
+                createWorktreeIfNeeded(repository: repository, branchName: branchName, url: url)
+                return checkoutAndCreateIfNeeded(repository: repository, branchName: branchName, oid: detachedTag.oid, url: url)
             } else {
-                return getWorktreeIfExists(branchName)
+                return getWorktreeIfExists(branchName, url: url)
             }
         case let tag as SelectableTag:
             let branchName = Self.wipBranchPrefix + tag.oid.description
             if tag.oid == head.oid {
-                createWorktreeIfNeeded(branchName)
-                return checkout(branchName, tag.oid)
+                createWorktreeIfNeeded(repository: repository, branchName: branchName, url: url)
+                return checkoutAndCreateIfNeeded(repository: repository, branchName: branchName, oid: tag.oid, url: url)
             } else {
-                return getWorktreeIfExists(branchName)
+                return getWorktreeIfExists(branchName, url: url)
             }
         case let historyCommit as SelectableHistoryCommit:
             let branchName = Self.wipBranchPrefix + historyCommit.oid.description
             if historyCommit.oid == head.oid {
-                createWorktreeIfNeeded(branchName)
-                return checkout(branchName, historyCommit.oid)
+                createWorktreeIfNeeded(repository: repository, branchName: branchName, url: url)
+                return checkoutAndCreateIfNeeded(repository: repository, branchName: branchName, oid: historyCommit.oid, url: url)
             } else {
-                return getWorktreeIfExists(branchName)
+                return getWorktreeIfExists(branchName, url: url)
             }
         case _ as SelectableWipCommit:
             return nil

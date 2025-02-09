@@ -86,7 +86,7 @@ extension Repository {
     }
 
     /// Memory safe
-    private func diff(from oldCommitOid: OID?, to newCommitOid: OID?) -> Result<Diff, NSError> {
+    func diff(from oldCommitOid: OID?, to newCommitOid: OID?) -> Result<Diff, NSError> {
         assert(oldCommitOid != nil || newCommitOid != nil, "It is an error to pass nil for both the oldOid and newOid")
 
         var oldTree: Tree? = nil

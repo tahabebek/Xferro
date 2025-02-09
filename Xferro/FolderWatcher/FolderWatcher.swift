@@ -11,7 +11,7 @@ class FolderWatcher {
     private let excludingPaths: Set<String>
     private let gitIgnore: GitIgnore
 
-    init(folder: URL, includingPaths: Set<String>, excludingPaths: Set<String> = [], onChangeObserver: PassthroughSubject<Void, Never>) {
+    init(folder: URL, includingPaths: Set<String> = [], excludingPaths: Set<String> = [], onChangeObserver: PassthroughSubject<Void, Never>) {
         print("🚀 Initializing FolderWatcher for folder: \(folder.path)")
 //        print("📋 Watching folders including: \(includingPaths.isEmpty ? "all" : includingPaths.joined(separator: ", "))")
 //        print("📋 Watching folders excluding: \(excludingPaths.isEmpty ? "none" : excludingPaths.joined(separator: ", "))")

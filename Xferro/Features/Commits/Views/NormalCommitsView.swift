@@ -1,5 +1,5 @@
 //
-//  CommitsView.swift
+//  NormalCommitsView.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/4/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct FinalCommitsView: View {
+struct NormalCommitsView: View {
     @Environment(CommitsViewModel.self) var viewModel
     let width: CGFloat
 

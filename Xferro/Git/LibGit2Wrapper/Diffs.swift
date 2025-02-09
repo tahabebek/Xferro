@@ -5,21 +5,28 @@
 //  Created by Taha Bebek on 1/12/25.
 //
 
-struct StatusEntry {
+struct StatusEntry: CustomDebugStringConvertible {
     var status: Diff.Status
-    var headToIndex: Diff.Delta?
-    var indexToWorkDir: Diff.Delta?
+    var stagedChanges: Diff.Delta?
+    var unstagedChanges: Diff.Delta?
 
     init(from statusEntry: git_status_entry) {
         self.status = Diff.Status(rawValue: statusEntry.status.rawValue)
 
         if let htoi = statusEntry.head_to_index {
-            self.headToIndex = Diff.Delta(htoi.pointee)
+            self.stagedChanges = Diff.Delta(htoi.pointee)
         }
 
         if let itow = statusEntry.index_to_workdir {
-            self.indexToWorkDir = Diff.Delta(itow.pointee)
+            self.unstagedChanges = Diff.Delta(itow.pointee)
         }
+    }
+
+    var debugDescription: String {
+        var desc = "StatusEntry(status: \(status)"
+        if let stagedChanges { desc += ", stagedChanges: \(stagedChanges)" }
+        if let unstagedChanges { desc += ", unstagedChanges: \(unstagedChanges))" }
+        return desc
     }
 }
 
@@ -28,8 +35,8 @@ struct Diff {
     /// The set of deltas.
     var deltas = [Delta]()
 
-    struct Delta {
-        enum Status: UInt32 {
+    struct Delta: CustomDebugStringConvertible {
+        enum Status: UInt32, CustomDebugStringConvertible {
             case unmodified     = 0     /**< no changes */
             case added          = 1     /**< entry does not exist in old version */
             case deleted        = 2     /**< entry does not exist in new version */
@@ -41,6 +48,22 @@ struct Diff {
             case typeChange     = 8     /**< type of entry changed between old and new */
             case unreadable     = 9     /**< entry is unreadable */
             case conflicted     = 10    /**< entry in the index is conflicted */
+
+            var debugDescription: String {
+                switch self {
+                case .unmodified: return "unmodified"
+                case .added: return "added"
+                case .deleted: return "deleted"
+                case .modified: return "modified"
+                case .renamed: return "renamed"
+                case .copied: return "copied"
+                case .ignored: return "ignored"
+                case .untracked: return "untracked"
+                case .typeChange: return "typeChange"
+                case .unreadable: return "unreadable"
+                case .conflicted: return "conflicted"
+                }
+            }
         }
 
         var status: Status
@@ -56,9 +79,17 @@ struct Diff {
             self.oldFile = File(delta.old_file)
             self.newFile = File(delta.new_file)
         }
+
+        var debugDescription: String {
+            var desc = "Delta(status: \(status)"
+            if let oldFile { desc += ", oldFile: \(oldFile)" }
+            if let newFile { desc += ", newFile: \(newFile)" }
+            desc += ", flags: \(flags))"
+            return desc
+        }
     }
 
-    struct File {
+    struct File: CustomDebugStringConvertible {
         var oid: OID
         var path: String
         var size: UInt64
@@ -73,9 +104,20 @@ struct Diff {
             self.flags = Flags(rawValue: diffFile.flags)
             self.mode = UInt32(diffFile.mode)
         }
+
+        var debugDescription: String {
+            let modeDesc = switch mode {
+            case 0o100000: "regular file"
+            case 0o040000: "directory"
+            case 0o120000: "symbolic link"
+            case 0o160000: "gitlink (submodule)"
+            default: "unknown"
+            }
+            return "File(path: \(path), mode: \(String(format:"0%o", mode)) (\(modeDesc)), size: \(size), flags: \(flags), oid: \(oid))"
+        }
     }
 
-    struct Status: OptionSet {
+    struct Status: OptionSet, CustomDebugStringConvertible {
         // This appears to be necessary due to bug in Swift
         // https://bugs.swift.org/browse/SR-3003
         init(rawValue: UInt32) {
@@ -97,9 +139,28 @@ struct Diff {
         static let workTreeUnreadable     = Status(rawValue: GIT_STATUS_WT_UNREADABLE.rawValue)
         static let ignored                = Status(rawValue: GIT_STATUS_IGNORED.rawValue)
         static let conflicted             = Status(rawValue: GIT_STATUS_CONFLICTED.rawValue)
+
+        var debugDescription: String {
+            var components: [String] = []
+            if self == .current { return "current" }
+            if contains(.indexNew) { components.append("indexNew") }
+            if contains(.indexModified) { components.append("stagedModified") }
+            if contains(.indexDeleted) { components.append("stagedDeleted") }
+            if contains(.indexRenamed) { components.append("stagedRenamed") }
+            if contains(.indexTypeChange) { components.append("stagedTypeChange") }
+            if contains(.workTreeNew) { components.append("unstagedNew") }
+            if contains(.workTreeModified) { components.append("unstagedModified") }
+            if contains(.workTreeDeleted) { components.append("unstagedDeleted") }
+            if contains(.workTreeTypeChange) { components.append("unstagedTypeChange") }
+            if contains(.workTreeRenamed) { components.append("unstagedRenamed") }
+            if contains(.workTreeUnreadable) { components.append("unstagedUnreadable") }
+            if contains(.ignored) { components.append("ignored") }
+            if contains(.conflicted) { components.append("conflicted") }
+            return components.joined(separator: ", ")
+        }
     }
 
-    struct Flags: OptionSet {
+    struct Flags: OptionSet, CustomDebugStringConvertible {
         // This appears to be necessary due to bug in Swift
         // https://bugs.swift.org/browse/SR-3003
         init(rawValue: UInt32) {
@@ -111,6 +172,15 @@ struct Diff {
         static let notBinary  = Flags(rawValue: 1 << 1)
         static let validId    = Flags(rawValue: 1 << 2)
         static let exists     = Flags(rawValue: 1 << 3)
+
+        var debugDescription: String {
+            var components: [String] = []
+            if contains(.binary) { components.append("binary") }
+            if contains(.notBinary) { components.append("notBinary") }
+            if contains(.validId) { components.append("validId") }
+            if contains(.exists) { components.append("exists") }
+            return components.isEmpty ? "[]" : components.joined(separator: ", ")
+        }
     }
 
     /// Create an instance with a libgit2 `git_diff`.

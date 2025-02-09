@@ -29,7 +29,7 @@ class Index {
         }
     }
 
-    private var git_index: OpaquePointer
+    var git_index: OpaquePointer
 
     init(git_index: OpaquePointer) {
         self.git_index = git_index

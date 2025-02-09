@@ -18,7 +18,7 @@ extension Repository {
                     return true
                 }
                 return false
-            }).compactMap { $0.indexToWorkDir?.newFile?.path }
+            }).compactMap { $0.unstagedChanges?.newFile?.path }
             if !options.contains(.dryRun) {
                 for path in s {
                     if let block = shouldRemove, !block(path) {
