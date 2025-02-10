@@ -47,7 +47,7 @@ struct WIPCommitsView: View {
         }
     }
 
-    func wipRectangle(item: CommitsViewModel.SelectableWipCommit) -> some View {
+    func wipRectangle(item: SelectableWipCommit) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 2)
                 .fill(Color.blue)

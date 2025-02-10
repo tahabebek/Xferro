@@ -6,7 +6,67 @@
 //
 
 extension String {
-    public var isNotEmptyOrWhitespace: Bool {
+    var isNotEmptyOrWhitespace: Bool {
         trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+    }
+
+    func delimited(by character: Character) -> String {
+        "\(character)\(self)\(character)"
+    }
+
+    static func concatenate(
+        separator: String,
+        @_SpecializedArrayBuilder<String> _ strings: () throws -> [String]
+    ) rethrows -> Self {
+        try strings().joined(separator: separator)
+    }
+
+    var firstCharacterCapitalized: String {
+        prefix(1).capitalized + dropFirst()
+    }
+
+    func hasPrefix(_ prefix: String, caseInsensitive: Bool) -> Bool {
+        if caseInsensitive {
+            return range(of: prefix, options: [.anchored, .caseInsensitive]) != nil
+        } else {
+            return hasPrefix(prefix)
+        }
+    }
+
+    func numberOfOccurences(of character: Character) -> Int {
+        lazy.filter({ $0 == character }).count
+    }
+
+    func capitalizingFirstLetter() -> String {
+        prefix(1).uppercased() + String(dropFirst())
+    }
+
+    mutating func capitalizeFirstLetter() {
+        self = self.capitalizingFirstLetter()
+    }
+
+    mutating func replaceSubstring(
+        _ substring: Substring,
+        with replacement: String
+    ) {
+        replaceSubrange(substring.bounds, with: replacement)
+    }
+
+    mutating func replace<String: StringProtocol>(
+        occurencesOf target: String,
+        with string: String
+    ) {
+        self = replacingOccurrences(of: target, with: string, options: .literal, range: nil)
+    }
+
+    mutating func replace<String: StringProtocol>(
+        firstOccurenceOf target: String,
+        with string: String
+    ) {
+        guard let range = range(of: target, options: .literal) else {
+            return
+        }
+
+        replaceSubrange(range, with: string)
     }
 }

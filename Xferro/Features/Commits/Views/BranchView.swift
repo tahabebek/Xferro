@@ -15,7 +15,7 @@ struct BranchView: View {
     @Environment(CommitsViewModel.self) var viewModel
     let name: String
     let selectableCommits: [any BranchItem]
-    let selectableStatus: CommitsViewModel.SelectableStatus
+    let selectableStatus: SelectableStatus
     let isCurrent : Bool
 
     var body: some View {
@@ -69,9 +69,6 @@ struct BranchView: View {
                                 SelectedItemOverlay()
                             }
                         }
-                    }
-                    .overlay {
-                        
                     }
                 }
             }

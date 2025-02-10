@@ -16,19 +16,17 @@ struct RepositoryView: View {
         case history = 3
     }
 
-    @Environment(CommitsViewModel.self) var viewModel
+    @Environment(CommitsViewModel.self) var commitsViewModel
+    @Environment(RepositoryViewModel.self) var repositoryViewModel
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
     @Namespace private var animation
-
-    let repository: Repository
-
 
     var body: some View {
         Group {
             VStack(spacing: 0) {
                 HStack {
-                    Label(repository.gitDir?.deletingLastPathComponent().lastPathComponent ?? "Unkown", systemImage: "folder")
+                    Label(repositoryViewModel.repositoryInfo.repository.gitDir?.deletingLastPathComponent().lastPathComponent ?? "Unkown", systemImage: "folder")
                     Spacer()
                     Button {
                         withAnimation(.easeInOut) {
@@ -106,35 +104,46 @@ struct RepositoryView: View {
 
     private var commitsView: some View {
         VStack(spacing: 16) {
-            let head = try? viewModel.HEAD(for: repository)
-            if let detachedTag = viewModel.detachedTag(of: repository) {
+            let repositoryInfo = repositoryViewModel.repositoryInfo
+            let repository = repositoryInfo.repository
+            let status = SelectableStatus(repository: repository)
+            if let head = CommitsViewModel.HEAD(for: repository) {
+                if let detachedTag = repositoryInfo.detachedTag {
+                    BranchView(
+                        name: detachedTag.tag.name,
+                        selectableCommits: commitsViewModel.detachedCommits(of: detachedTag, in: repository),
+                        selectableStatus: status,
+                        isCurrent: true
+                    )
+                } else if let detachedCommit = repositoryInfo.detachedCommit {
+                    BranchView(
+                        name: "Detached Commit",
+                        selectableCommits: commitsViewModel.detachedAncestorCommitsOf(oid: detachedCommit.commit.oid, in: repository),
+                        selectableStatus: status,
+                        isCurrent: true
+                    )
+                }
+                ForEach(repositoryInfo.branchInfos) { branchInfo in
+                    BranchView(
+                        name: branchInfo.branch.name,
+                        selectableCommits: branchInfo.commits,
+                        selectableStatus: status,
+                        isCurrent: commitsViewModel.isCurrentBranch(branchInfo.branch, head: head, in: repository)
+                    )
+                }
+            } else {
                 BranchView(
-                    name: detachedTag.tag.name,
-                    selectableCommits: viewModel.detachedCommits(of: detachedTag.tag.oid, in: repository),
-                    selectableStatus: .init(repository: repository, type: .tag(detachedTag.tag)),
+                    name: "No branch yet.",
+                    selectableCommits: [],
+                    selectableStatus: status,
                     isCurrent: true
-                )
-            } else if let detachedCommit = viewModel.detachedCommit(of: repository) {
-                BranchView(
-                    name: "Detached Commit",
-                    selectableCommits: viewModel.detachedCommits(of: detachedCommit.commit.oid, in: repository),
-                    selectableStatus: .init(repository: repository, type: .detached(detachedCommit.commit)),
-                    isCurrent: true
-                )
-            }
-            ForEach(viewModel.branches(of: repository)) { branch in
-                BranchView(
-                    name: branch.name,
-                    selectableCommits: viewModel.commits(of: branch, in: repository),
-                    selectableStatus: .init(repository: repository, type: .branch(branch)),
-                    isCurrent: (head != nil) ? viewModel.isCurrentBranch(branch, head: head!, in: repository) : false
                 )
             }
         }
     }
 
     private var tagsView: some View {
-        let tags = viewModel.tags(of: repository)
+        let tags = repositoryViewModel.repositoryInfo.tags
         return Group {
             if tags.isEmpty {
                 emptyView
@@ -144,7 +153,7 @@ struct RepositoryView: View {
         }
     }
 
-    private func actualTagsView(tags: [CommitsViewModel.SelectableTag]) -> some View {
+    private func actualTagsView(tags: [SelectableTag]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top) {
                 ForEach(tags) { selectableTag in
@@ -164,9 +173,9 @@ struct RepositoryView: View {
                         }
                         .frame(width: 80, height: 80)
                         .onTapGesture {
-                            viewModel.userTapped(item: selectableTag)
+                            commitsViewModel.userTapped(item: selectableTag)
                         }
-                        if viewModel.isSelected(item: selectableTag) {
+                        if commitsViewModel.isSelected(item: selectableTag) {
                             SelectedItemOverlay(width: 80, height: 80)
                         }
                     }
@@ -177,9 +186,9 @@ struct RepositoryView: View {
         .flipsForRightToLeftLayoutDirection(true)
         .environment(\.layoutDirection, .rightToLeft)
     }
-    
+
     private var stashesView: some View {
-        let stashes = viewModel.stashes(of: repository)
+        let stashes = repositoryViewModel.repositoryInfo.stashes
         return Group {
             if stashes.isEmpty {
                 emptyView
@@ -189,7 +198,7 @@ struct RepositoryView: View {
         }
     }
 
-    private func actualStashesView(stashes: [CommitsViewModel.SelectableStash]) -> some View {
+    private func actualStashesView(stashes: [SelectableStash]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top) {
                 ForEach(stashes) { selectableStash in
@@ -203,9 +212,9 @@ struct RepositoryView: View {
                         }
                         .frame(width: 80, height: 80)
                         .onTapGesture {
-                            viewModel.userTapped(item: selectableStash)
+                            commitsViewModel.userTapped(item: selectableStash)
                         }
-                        if viewModel.isSelected(item: selectableStash) {
+                        if commitsViewModel.isSelected(item: selectableStash) {
                             SelectedItemOverlay(width: 80, height: 80)
                         }
                     }

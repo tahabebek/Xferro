@@ -24,5 +24,4 @@ struct UnbornBranch: BaseReferenceType {
         longName = String(validatingUTF8: git_reference_symbolic_target(pointer))!
         name = longName.split(separator: "/")[2...].joined(separator: "/")
     }
-
 }

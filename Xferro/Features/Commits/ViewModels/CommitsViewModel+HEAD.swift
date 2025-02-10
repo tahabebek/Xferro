@@ -24,4 +24,23 @@ extension CommitsViewModel {
             }
         }
     }
+
+    static func HEAD(for repository: Repository) -> CommitsViewModel.Head? {
+        let getHead: (ReferenceType) -> CommitsViewModel.Head = { headRef in
+            let head: CommitsViewModel.Head =
+            if let branchRef = headRef as? Branch {
+                .branch(branchRef)
+            } else if let tagRef = headRef as? TagReference {
+                .tag(tagRef)
+            } else if let reference = headRef as? Reference {
+                .reference(reference)
+            } else {
+                fatalError(.impossible)
+            }
+            return head
+
+        }
+        guard let headRef = try? repository.HEAD().get() else { return nil }
+        return getHead(headRef)
+    }
 }

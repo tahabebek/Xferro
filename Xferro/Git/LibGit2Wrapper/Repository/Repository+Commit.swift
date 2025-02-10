@@ -8,6 +8,9 @@
 import Foundation
 
 extension Repository {
+    func createEmptyCommit() -> Commit {
+        commit(message: "Empty commit").mustSucceed()
+    }
 
     func commit(
         tree: OpaquePointer, // git_tree

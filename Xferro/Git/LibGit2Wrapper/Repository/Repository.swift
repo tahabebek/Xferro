@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class Repository: Identifiable, Equatable {
+actor Repository: Identifiable, Equatable {
     static func == (lhs: Repository, rhs: Repository) -> Bool {
         lhs.pointer == rhs.pointer
     }
@@ -311,7 +311,7 @@ final class Repository: Identifiable, Equatable {
     }
 
 
-    class func at(_ url: URL) -> Result<Repository, NSError> {
+    static func at(_ url: URL) -> Result<Repository, NSError> {
         var pointer: OpaquePointer? = nil
         let result = url.withUnsafeFileSystemRepresentation {
             git_repository_open(&pointer, $0)
@@ -327,7 +327,7 @@ final class Repository: Identifiable, Equatable {
         return Result.success(repository)
     }
 
-    class func create(at url: URL) -> Result<Repository, NSError> {
+    static func create(at url: URL) -> Result<Repository, NSError> {
         var pointer: OpaquePointer? = nil
         let result = url.withUnsafeFileSystemRepresentation {
             git_repository_init(&pointer, $0, 0)
@@ -341,7 +341,7 @@ final class Repository: Identifiable, Equatable {
         return Result.success(repository)
     }
 
-    class func discover(_ path: String, acrossFS: Bool = false, ceiling: [String] = []) -> Result<Repository, NSError> {
+    static func discover(_ path: String, acrossFS: Bool = false, ceiling: [String] = []) -> Result<Repository, NSError> {
         var buf = git_buf(ptr: nil, reserved: 0, size: 0)
         defer {
             git_buf_dispose(&buf)

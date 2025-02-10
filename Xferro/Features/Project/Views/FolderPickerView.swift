@@ -16,7 +16,9 @@ struct FolderPickerView: View {
             Text("Select a repository.")
                 .font(.title2)
             Button {
-                showFolderSelector = true
+                DispatchQueue.main.async {
+                    showFolderSelector = true
+                }
             } label: {
                 Image(systemName: "folder.badge.plus")
                     .padding()

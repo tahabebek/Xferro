@@ -15,6 +15,7 @@
 		7D38FE972D32CF66008BF288 /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE962D32CF66008BF288 /* SentrySwiftUI */; };
 		7D38FE9A2D32CF87008BF288 /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE992D32CF87008BF288 /* Mixpanel */; };
 		7D3B96252D4BC98B00F726D9 /* ZipArchive in Frameworks */ = {isa = PBXBuildFile; productRef = 7D3B96242D4BC98B00F726D9 /* ZipArchive */; };
+		7D53244F2D5A55E3009D60BC /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 7D53244E2D5A55E3009D60BC /* OrderedCollections */; };
 		7D96603B2D4BBE4D00007D2A /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7D96603A2D4BBE4D00007D2A /* FirebaseAuth */; };
 /* End PBXBuildFile section */
 
@@ -79,6 +80,7 @@
 				7D38FD072D302508008BF288 /* libiconv.tbd in Frameworks */,
 				7D38FE972D32CF66008BF288 /* SentrySwiftUI in Frameworks */,
 				7D38FD052D3024F9008BF288 /* libSystem.tbd in Frameworks */,
+				7D53244F2D5A55E3009D60BC /* OrderedCollections in Frameworks */,
 				7D38FD032D3024CB008BF288 /* libz.tbd in Frameworks */,
 				7D38FD012D3024C0008BF288 /* GSS.framework in Frameworks */,
 				7D38FE9A2D32CF87008BF288 /* Mixpanel in Frameworks */,
@@ -161,6 +163,7 @@
 				7D38FE962D32CF66008BF288 /* SentrySwiftUI */,
 				7D38FE992D32CF87008BF288 /* Mixpanel */,
 				7D96603A2D4BBE4D00007D2A /* FirebaseAuth */,
+				7D53244E2D5A55E3009D60BC /* OrderedCollections */,
 			);
 			productName = Xferro;
 			productReference = 7D38FB252D2F957F008BF288 /* Xferro.app */;
@@ -248,6 +251,7 @@
 				7D38FE982D32CF87008BF288 /* XCRemoteSwiftPackageReference "mixpanel-swift" */,
 				7D9660392D4BBE4D00007D2A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				7D3B96232D4BC98B00F726D9 /* XCRemoteSwiftPackageReference "ZipArchive" */,
+				7D53244D2D5A55E3009D60BC /* XCRemoteSwiftPackageReference "swift-collections" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7D38FB262D2F957F008BF288 /* Products */;
@@ -842,6 +846,14 @@
 				minimumVersion = 2.6.0;
 			};
 		};
+		7D53244D2D5A55E3009D60BC /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.4;
+			};
+		};
 		7D9660392D4BBE4D00007D2A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -872,6 +884,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7D3B96232D4BC98B00F726D9 /* XCRemoteSwiftPackageReference "ZipArchive" */;
 			productName = ZipArchive;
+		};
+		7D53244E2D5A55E3009D60BC /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D53244D2D5A55E3009D60BC /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
 		};
 		7D96603A2D4BBE4D00007D2A /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;

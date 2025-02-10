@@ -16,9 +16,10 @@ struct NormalCommitsView: View {
             VerticalHeader(title: "Repositories")
         } content: {
             VStack(alignment: .leading, spacing: 16) {
-                ForEach(viewModel.repositories) { repository in
-                    RepositoryView(repository: repository)
+                ForEach(viewModel.currentRepositoryInfos.values.elements) { repositoryInfo in
+                    RepositoryView()
                         .frame(width: width)
+                        .environment(viewModel.repositoryViewModel(for: repositoryInfo.repository))
                 }
                 AddRepositoryButton()
                 Spacer()
@@ -26,6 +27,5 @@ struct NormalCommitsView: View {
             .frame(width: width)
             .fixedSize()
         }
-        .id(viewModel.forceRefresh)
     }
 }
