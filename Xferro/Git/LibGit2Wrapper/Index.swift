@@ -30,9 +30,11 @@ class Index {
     }
 
     var git_index: OpaquePointer
+    private var lock: NSRecursiveLock
 
-    init(git_index: OpaquePointer) {
+    init(git_index: OpaquePointer, lock: NSRecursiveLock) {
         self.git_index = git_index
+        self.lock = lock
     }
 
     deinit {
@@ -40,6 +42,8 @@ class Index {
     }
 
     func add(entry: Entry) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var git_entry = entry.git_entry
         let result = git_index_add(self.git_index, &git_entry)
         if result == GIT_OK.rawValue {
@@ -49,6 +53,8 @@ class Index {
     }
 
     func save() -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let result = git_index_write(self.git_index)
         if result == GIT_OK.rawValue {
             return .success(())
@@ -56,10 +62,14 @@ class Index {
         return .failure(NSError(gitError: result, pointOfFailure: "git_index_write"))
     }
 
-    func entry(by path: String,
-                      stage: Bool,
-                      block: (inout Entry) -> Result<Bool, NSError> )
-        -> Result<(), NSError> {
+    func entry(
+        by path: String,
+        stage: Bool,
+        block: (inout Entry) -> Result<Bool, NSError>
+    )
+    -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         guard let result = path.withCString({
             git_index_get_bypath(self.git_index, $0, stage ? 1 : 0)
         }) else {
@@ -77,11 +87,13 @@ class Index {
 
 extension Repository {
     func index() -> Result<Index, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var git_index: OpaquePointer?
         let result = git_repository_index(&git_index, self.pointer)
         guard result == GIT_OK.rawValue else {
             return .failure(NSError(gitError: result, pointOfFailure: "git_repository_index"))
         }
-        return .success(Index(git_index: git_index!))
+        return .success(Index(git_index: git_index!, lock: lock))
     }
 }

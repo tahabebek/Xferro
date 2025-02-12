@@ -5,6 +5,8 @@
 //  Created by Taha Bebek on 2/3/25.
 //
 
+import Foundation
+
 /// A git branch.
 struct Branch: Identifiable, ReferenceType, Hashable, Codable {
     var id: String { longName }
@@ -61,7 +63,9 @@ struct Branch: Identifiable, ReferenceType, Hashable, Codable {
     /// Create an instance with a libgit2 `git_reference` object.
     ///
     /// Returns `nil` if the pointer isn't a branch.
-    init?(_ pointer: OpaquePointer) {
+    init?(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
+        lock.lock()
+        defer { lock.unlock() }
         longName = String(validatingCString: git_reference_name(pointer))!
 
         var namePointer: UnsafePointer<Int8>? = nil

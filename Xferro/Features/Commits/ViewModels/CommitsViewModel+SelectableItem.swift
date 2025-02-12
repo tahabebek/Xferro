@@ -119,7 +119,7 @@ struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
     let repository: Repository
     let branch: Branch
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo))'" }
+    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { commit.oid }
 }
 

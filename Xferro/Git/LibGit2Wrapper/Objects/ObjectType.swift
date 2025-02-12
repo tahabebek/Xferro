@@ -30,7 +30,7 @@ protocol ObjectType {
     var oid: OID { get }
 
     /// Create an instance with the underlying libgit2 type.
-    init(_ pointer: OpaquePointer)
+    init(_ pointer: OpaquePointer, lock: NSRecursiveLock)
 }
 
 extension ObjectType {

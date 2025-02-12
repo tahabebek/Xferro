@@ -34,7 +34,9 @@ struct Commit: ObjectType, Hashable, Codable, CustomStringConvertible, Identifia
     let summary: String
 
     /// Create an instance with a libgit2 `git_commit` object.
-    init(_ pointer: OpaquePointer) {
+    init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
+        lock.lock()
+        defer { lock.unlock() }
         oid = OID(git_object_id(pointer).pointee)
         message = String(validatingCString: git_commit_message(pointer))!
         summary = String(validatingCString: git_commit_summary(pointer))!

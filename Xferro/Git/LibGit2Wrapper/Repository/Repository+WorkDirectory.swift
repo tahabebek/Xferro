@@ -9,6 +9,8 @@ import Foundation
 
 extension Repository {
     func hasConflicts() -> Result<Bool, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var index: OpaquePointer? = nil
         defer { git_index_free(index) }
         let result = git_repository_index(&index, self.pointer)
@@ -20,6 +22,8 @@ extension Repository {
     }
 
     func isEmpty() -> Result<Bool, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let result = git_repository_is_empty(self.pointer)
         if result == 1 { return .success(true) }
         if result == 0 { return .success(false) }
@@ -27,6 +31,8 @@ extension Repository {
     }
 
     func headIsUnborn() -> Result<Bool, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let result = git_repository_head_unborn(self.pointer)
         if result == 1 { return .success(true) }
         if result == 0 { return .success(false) }
@@ -34,26 +40,30 @@ extension Repository {
     }
 
     func unbornHEAD() -> Result<UnbornBranch, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var pointer: OpaquePointer? = nil
         defer { git_reference_free(pointer) }
         let result = git_reference_lookup(&pointer, self.pointer, "HEAD")
         guard result == GIT_OK.rawValue else {
             return Result.failure(NSError(gitError: result, pointOfFailure: "git_reference_lookup"))
         }
-        return .success(UnbornBranch(pointer!)!)
+        return .success(UnbornBranch(pointer!, lock: lock)!)
     }
 
     /// Load the reference pointed at by HEAD.
     ///
     /// When on a branch, this will return the current `Branch`.
     func HEAD() -> Result<ReferenceType, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var pointer: OpaquePointer? = nil
         defer { git_reference_free(pointer) }
         let result = git_repository_head(&pointer, self.pointer)
         guard result == GIT_OK.rawValue else {
             return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_head"))
         }
-        let value = referenceWithLibGit2Reference(pointer!)
+        let value = referenceWithLibGit2Reference(pointer!, lock: lock)
         return .success(value)
     }
 
@@ -62,6 +72,8 @@ extension Repository {
     /// :param: oid The OID to set as HEAD.
     /// :returns: Returns a result with void or the error that occurred.
     func setHEAD(_ oid: OID) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return longOID(for: oid).flatMap { oid -> Result<(), NSError> in
             var git_oid = oid.oid
             let result = git_repository_set_head_detached(self.pointer, &git_oid)
@@ -77,10 +89,15 @@ extension Repository {
     /// :param: name The name to set as HEAD.
     /// :returns: Returns a result with void or the error that occurred.
     func setHEAD(_ name: String) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var longName = name
         if !name.isLongRef {
             do {
-                longName = try self.reference(named: name).get().longName
+                guard let reference = try self.reference(named: name).get() else {
+                    return .failure(NSError(gitError: GIT_ENOTFOUND.rawValue, pointOfFailure: "git_repository_set_head"))
+                }
+                longName = reference.longName
             } catch {
                 return .failure(error as NSError)
             }
@@ -98,6 +115,8 @@ extension Repository {
     /// :param: progress A block that's called with the progress of the checkout.
     /// :returns: Returns a result with void or the error that occurred.
     func checkout(_ options: CheckoutOptions? = nil) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var opt = (options ?? CheckoutOptions()).toGit()
 
         let result = git_checkout_head(self.pointer, &opt)
@@ -130,6 +149,8 @@ extension Repository {
 
     /// Get the index for the repo. The caller is responsible for freeing the index.
     func unsafeIndex() -> Result<OpaquePointer, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var index: OpaquePointer? = nil
         let result = git_repository_index(&index, self.pointer)
         guard result == GIT_OK.rawValue && index != nil else {
@@ -141,6 +162,8 @@ extension Repository {
 
     /// Stage the file(s) under the specified path.
     func add(path: String) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var dirPointer = UnsafeMutablePointer<Int8>(mutating: (path as NSString).utf8String)
         return withUnsafeMutablePointer(to: &dirPointer) { pointer in
             var paths = git_strarray(strings: pointer, count: 1)

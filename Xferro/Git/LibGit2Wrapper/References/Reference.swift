@@ -5,6 +5,8 @@
 //  Created by Taha Bebek on 2/3/25.
 //
 
+import Foundation
+
 /// A generic reference to a git object.
 struct Reference: ReferenceType, Hashable, Codable {
     /// The full name of the reference (e.g., `refs/heads/master`).
@@ -17,7 +19,9 @@ struct Reference: ReferenceType, Hashable, Codable {
     let oid: OID
 
     /// Create an instance with a libgit2 `git_reference` object.
-    init(_ pointer: OpaquePointer) {
+    init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
+        lock.lock()
+        defer { lock.unlock() }
         let shorthand = String(validatingCString: git_reference_shorthand(pointer))!
         longName = String(validatingCString: git_reference_name(pointer))!
         shortName = (shorthand == longName ? nil : shorthand)

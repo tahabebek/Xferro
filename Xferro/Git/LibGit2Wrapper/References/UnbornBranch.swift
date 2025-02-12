@@ -5,6 +5,8 @@
 //  Created by Taha Bebek on 2/3/25.
 //
 
+import Foundation
+
 struct UnbornBranch: BaseReferenceType {
 
     /// The full name of the reference (e.g., `refs/heads/master`).
@@ -20,7 +22,9 @@ struct UnbornBranch: BaseReferenceType {
     /// Create an instance with a libgit2 `git_reference` object.
     ///
     /// Returns `nil` if the pointer isn't a branch.
-    init?(_ pointer: OpaquePointer, unborn: Bool = false) {
+    init?(_ pointer: OpaquePointer, unborn: Bool = false, lock: NSRecursiveLock) {
+        lock.lock()
+        defer { lock.unlock() }
         longName = String(validatingCString: git_reference_symbolic_target(pointer))!
         name = longName.split(separator: "/")[2...].joined(separator: "/")
     }

@@ -5,6 +5,8 @@
 //  Created by Taha Bebek on 1/12/25.
 //
 
+import Foundation
+
 /// A reference to a git object.
 protocol BaseReferenceType {
     /// The full name of the reference (e.g., `refs/heads/master`).
@@ -33,12 +35,14 @@ extension ReferenceType {
 }
 
 /// Create a Reference, Branch, or TagReference from a libgit2 `git_reference`.
- func referenceWithLibGit2Reference(_ pointer: OpaquePointer) -> ReferenceType {
+func referenceWithLibGit2Reference(_ pointer: OpaquePointer, lock: NSRecursiveLock) -> ReferenceType {
+    lock.lock()
+    defer { lock.unlock() }
     if git_reference_is_branch(pointer) != 0 || git_reference_is_remote(pointer) != 0 {
-        return Branch(pointer)!
+        return Branch(pointer, lock: lock)!
     } else if git_reference_is_tag(pointer) != 0 {
-        return TagReference(pointer)!
+        return TagReference(pointer, lock: lock)!
     } else {
-        return Reference(pointer)
+        return Reference(pointer, lock: lock)
     }
 }

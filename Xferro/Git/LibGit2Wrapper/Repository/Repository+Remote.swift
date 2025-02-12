@@ -15,6 +15,8 @@ extension Repository {
     ///
     /// Returns an array of remotes, or an error.
     func allRemotes() -> Result<[Remote], NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let pointer = UnsafeMutablePointer<git_strarray>.allocate(capacity: 1)
         defer {
             pointer.deallocate()
@@ -35,6 +37,8 @@ extension Repository {
     }
 
     private func remoteLookup<A>(named name: String, _ callback: (Result<OpaquePointer, NSError>) -> A) -> A {
+        lock.lock()
+        defer { lock.unlock() }
         var pointer: OpaquePointer? = nil
         let result = git_remote_lookup(&pointer, self.pointer, name)
 
@@ -51,6 +55,8 @@ extension Repository {
     ///
     /// Returns the remote if it exists, or an error.
     func remote(named name: String) -> Result<Remote, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return remoteLookup(named: name) {
             $0.map { pointer in
                 let name = String(validatingCString: git_remote_name(pointer))!
@@ -71,6 +77,8 @@ extension Repository {
     func fetch(_ remote: String? = nil,
                       options: FetchOptions? = nil)
         -> Result<(), NSError> {
+            lock.lock()
+            defer { lock.unlock() }
         let remoteName = remote ?? (try? self.trackBranch().get()?.remote) ?? "origin"
         return remoteLookup(named: remoteName) { remote in
             remote.flatMap { pointer in
@@ -89,6 +97,8 @@ extension Repository {
     func pull(remote: String? = nil,
                      branch: String? = nil,
                      options: FetchOptions? = nil) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return self.fetch(remote, options: options).flatMap {_ in
             do {
                 var remoteBranch: Branch? = nil
@@ -114,6 +124,8 @@ extension Repository {
     // source and target reference must be a long name.
     // if source is empty, means delete a reference.
     func push(_ remote: String, sourceRef: String, targetRef: String, force: Bool = false, options: PushOptions? = nil) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var remoteServer: OpaquePointer? = nil
         var result = git_remote_lookup(&remoteServer, self.pointer, remote)
         guard result == GIT_OK.rawValue else {
@@ -147,6 +159,8 @@ extension Repository {
                             to localURL: URL,
                             options: CloneOptions? = nil,
                             recurseSubmodules: Bool? = nil) -> Result<Repository, NSError> {
+        Repository.staticLock.lock()
+        defer { staticLock.unlock() }
         let options = options ?? CloneOptions(fetchOptions: FetchOptions(url: remoteURL.absoluteString))
         var opt = options.toGitOptions()
 
@@ -174,15 +188,19 @@ extension Repository {
     }
 
     class func preProcessURL(_ url: URL) -> Result<String, NSError> {
+        Repository.staticLock.lock()
+        defer { Repository.staticLock.unlock() }
         if (url as NSURL).isFileReferenceURL() {
             return .success(url.path)
         } else {
-            return Config.default().flatMap {
+            return Config.default(lock: staticLock).flatMap {
                 $0.insteadOf(originURL: url.absoluteString, direction: .Fetch)
             }
         }
     }
     class func lsRemote(at url: URL, callback: RemoteCallback? = nil) -> Result<[String], NSError> {
+        Repository.staticLock.lock()
+        defer { Repository.staticLock.unlock() }
         return preProcessURL(url).flatMap { remoteURLString in
             let opts = UnsafeMutablePointer<git_remote_create_options>.allocate(capacity: 1)
             defer { opts.deallocate() }
@@ -219,6 +237,8 @@ extension Repository {
     }
 
     class func lsRemote(at url: URL, showBranch: Bool, showTag: Bool, callback: RemoteCallback? = nil) -> Result<[String], NSError> {
+        Repository.staticLock.lock()
+        defer { staticLock.unlock() }
         return self.lsRemote(at: url, callback: callback).flatMap {
             .success($0.compactMap {
                 if showBranch && $0.starts(with: String.branchPrefix) {

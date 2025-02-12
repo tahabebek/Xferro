@@ -43,34 +43,40 @@ class Config {
     }
 
     var config: OpaquePointer
-    private init(_ config: OpaquePointer) {
+    private var lock: NSRecursiveLock
+    private init(_ config: OpaquePointer, lock: NSRecursiveLock) {
         self.config = config
+        self.lock = lock
     }
 
     deinit {
         git_config_free(self.config)
     }
 
-    private class func open(path: UnsafePointer<Int8>) -> Result<Config, NSError> {
+    private class func open(path: UnsafePointer<Int8>, lock: NSRecursiveLock) -> Result<Config, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var config: OpaquePointer?
         let result = git_config_open_ondisk(&config, path)
         if result != GIT_OK.rawValue {
             return .failure(NSError(gitError: result, pointOfFailure: "git_config_open_ondisk"))
         }
-        return .success(Config(config!))
+        return .success(Config(config!, lock: lock))
     }
 
-    class func open(path: String) -> Result<Config, NSError> {
-        return path.withCString { open(path: $0) }
+    class func open(path: String, lock: NSRecursiveLock) -> Result<Config, NSError> {
+        return path.withCString { open(path: $0, lock: lock) }
     }
 
     class func open(repository: Repository) -> Result<Config, NSError> {
+        repository.lock.lock()
+        defer { repository.lock.unlock() }
         var config: OpaquePointer?
         let result = git_repository_config(&config, repository.pointer)
         guard result == GIT_OK.rawValue else {
             return .failure(NSError(gitError: result, pointOfFailure: "git_repository_config"))
         }
-        let cfg = Config(config!)
+        let cfg = Config(config!, lock: repository.lock)
         if repository.isWorkTree,
            (try? cfg.usingWorktree().get()) == true,
            let worktreeConfigPath = repository.worktreeConfigPath
@@ -80,7 +86,9 @@ class Config {
         return .success(cfg)
     }
 
-    class func open(level: Level) -> Result<Config, NSError> {
+    class func open(level: Level, lock: NSRecursiveLock) -> Result<Config, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var buf = git_buf()
         defer { git_buf_dispose(&buf) }
         switch level {
@@ -100,25 +108,31 @@ class Config {
             return .failure(NSError(gitError: GIT_ERROR.rawValue, pointOfFailure: "could not find configuration for level `\(level)`"))
 
         }
-        return open(path: buf.ptr)
+        return open(path: buf.ptr, lock: lock)
     }
 
-    class func `default`() -> Result<Config, NSError> {
+    class func `default`(lock: NSRecursiveLock) -> Result<Config, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var config: OpaquePointer?
         let result = git_config_open_default(&config)
         guard result == GIT_OK.rawValue else {
             return Result.failure(NSError(gitError: result, pointOfFailure: "git_config_open_default"))
         }
-        return .success(Config(config!))
+        return .success(Config(config!, lock: lock))
     }
 
-    private var snapshot: OpaquePointer {
+    private func snapshot() -> OpaquePointer {
+        lock.lock()
+        defer { lock.unlock() }
         var snapshot: OpaquePointer?
         git_config_snapshot(&snapshot, config)
         return snapshot!
     }
 
-    private var writableConfig: OpaquePointer? {
+    private func writableConfig() -> OpaquePointer? {
+        lock.lock()
+        defer { lock.unlock() }
         var config: OpaquePointer?
         let result = git_config_open_level(&config, self.config, GIT_CONFIG_LEVEL_LOCAL)
         guard result == GIT_OK.rawValue else {
@@ -128,6 +142,8 @@ class Config {
     }
 
     func addConfig(path: String, level: Level, repo: OpaquePointer? = nil) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let result = path.withCString {
             git_config_add_file_ondisk(config, $0, git_config_level_t(rawValue: level.rawValue), repo, 1)
         }
@@ -138,16 +154,20 @@ class Config {
     }
 
     func pickConfig(level: Level) -> Result<Config, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var config: OpaquePointer?
         let result = git_config_open_level(&config, self.config, git_config_level_t(rawValue: level.rawValue))
         guard result == GIT_OK.rawValue else {
             return .failure(NSError(gitError: result, pointOfFailure: "git_config_open_level"))
         }
-        return .success(Config(config!))
+        return .success(Config(config!, lock: lock))
     }
 
     func delete(keyPath: String) -> Result<(), NSError> {
-        let result = keyPath.withCString { git_config_delete_entry(self.writableConfig, $0) }
+        lock.lock()
+        defer { lock.unlock() }
+        let result = keyPath.withCString { git_config_delete_entry(self.writableConfig(), $0) }
         switch result {
         case GIT_ENOTFOUND.rawValue, GIT_OK.rawValue:
             return .success(())
@@ -157,9 +177,11 @@ class Config {
     }
 
     func strings(for keyPath: String) -> Result<[(value: String, depth: UInt32)]?, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return keyPath.withCString { name in
             var iter: UnsafeMutablePointer<git_config_iterator>? = nil
-            var result = git_config_multivar_iterator_new(&iter, self.snapshot, name, nil)
+            var result = git_config_multivar_iterator_new(&iter, self.snapshot(), name, nil)
             guard result == GIT_OK.rawValue else {
                 return .failure(NSError(gitError: result, pointOfFailure: "git_config_multivar_iterator_new"))
             }
@@ -187,8 +209,10 @@ class Config {
     }
 
     func string(for keyPath: String) -> Result<String?, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var value: UnsafePointer<Int8>?
-        let result = keyPath.withCString { git_config_get_string(&value, snapshot, $0) }
+        let result = keyPath.withCString { git_config_get_string(&value, snapshot(), $0) }
         switch result {
         case GIT_ENOTFOUND.rawValue:
             return .success(nil)
@@ -200,8 +224,10 @@ class Config {
     }
 
     func bool(for keyPath: String) -> Result<Bool?, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var value: Int32 = 0
-        let result = keyPath.withCString { git_config_get_bool(&value, snapshot, $0) }
+        let result = keyPath.withCString { git_config_get_bool(&value, snapshot(), $0) }
         switch result {
         case GIT_ENOTFOUND.rawValue:
             return .success(nil)
@@ -213,9 +239,11 @@ class Config {
     }
 
     func set(string: String, for keyPath: String) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return string.withCString { (value) -> Result<(), NSError> in
             keyPath.withCString { (key) -> Result<(), NSError> in
-                let result = git_config_set_string(self.writableConfig, key, value)
+                let result = git_config_set_string(self.writableConfig(), key, value)
                 guard result == GIT_OK.rawValue else {
                     return .failure(NSError(gitError: result, pointOfFailure: "git_config_set_string"))
                 }
@@ -225,8 +253,10 @@ class Config {
     }
 
     func set(bool: Bool, for keyPath: String) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return keyPath.withCString { (key) -> Result<(), NSError> in
-            let result = git_config_set_bool(self.writableConfig, key, bool ? 1 : 0)
+            let result = git_config_set_bool(self.writableConfig(), key, bool ? 1 : 0)
             guard result == GIT_OK.rawValue else {
                 return .failure(NSError(gitError: result, pointOfFailure: "git_config_set_bool"))
             }
@@ -235,9 +265,11 @@ class Config {
     }
 
     func each(regex: String, block: (git_config_entry) -> Bool) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return regex.withCString { regexp in
             var iter: UnsafeMutablePointer<git_config_iterator>? = nil
-            git_config_iterator_glob_new(&iter, self.snapshot, regexp)
+            git_config_iterator_glob_new(&iter, self.snapshot(), regexp)
             defer { git_config_iterator_free(iter!) }
 
             var entry: UnsafeMutablePointer<git_config_entry>! = UnsafeMutablePointer<git_config_entry>.allocate(capacity: 1)
@@ -260,9 +292,11 @@ class Config {
     }
 
     func all() -> Result<[String: [Entry]], NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var values = [String: [Entry]]()
         var iter: UnsafeMutablePointer<git_config_iterator>? = nil
-        git_config_iterator_new(&iter, self.snapshot)
+        git_config_iterator_new(&iter, self.snapshot())
         defer { git_config_iterator_free(iter!) }
 
         var entry: UnsafeMutablePointer<git_config_entry>! = UnsafeMutablePointer<git_config_entry>.allocate(capacity: 1)
@@ -297,6 +331,8 @@ class Config {
     }
 
     func insteadOf(originURL: String, direction: Remote.Direction) -> Result<String, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let regexPrefix = "url"
         let regexSuffix = "\(direction == .Push ? "push" : "")insteadof"
         let regex = "\(regexPrefix)\\..*\\.\(regexSuffix)"

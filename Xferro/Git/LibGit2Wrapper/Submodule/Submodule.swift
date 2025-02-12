@@ -10,6 +10,7 @@ import Foundation
 class Submodule {
     private var git_submodule: OpaquePointer
     private var autorelease: Bool
+    private var lock: NSRecursiveLock
 
     deinit {
         if self.autorelease {
@@ -17,12 +18,15 @@ class Submodule {
         }
     }
 
-    init(pointer: OpaquePointer, autorelease: Bool = true) {
+    init(pointer: OpaquePointer, autorelease: Bool = true, lock: NSRecursiveLock) {
         self.git_submodule = pointer
         self.autorelease = autorelease
+        self.lock = lock
     }
 
     var repository: Repository? {
+        lock.lock()
+        defer { lock.unlock() }
         var repo: OpaquePointer?
         if git_submodule_open(&repo, git_submodule) != 0 {
             return nil
@@ -31,6 +35,8 @@ class Submodule {
     }
 
     lazy var owner: Repository = {
+        lock.lock()
+        defer { lock.unlock() }
         let r = git_submodule_owner(git_submodule)
         return Repository(r!)
     }()
@@ -52,6 +58,8 @@ class Submodule {
     }
 
     var headOID: OID? {
+        lock.lock()
+        defer { lock.unlock() }
         guard let oid = git_submodule_head_id(git_submodule)?.pointee else {
             return nil
         }
@@ -59,6 +67,8 @@ class Submodule {
     }
 
     var indexOID: OID? {
+        lock.lock()
+        defer { lock.unlock() }
         guard let oid = git_submodule_index_id(git_submodule)?.pointee else {
             return nil
         }
@@ -66,6 +76,8 @@ class Submodule {
     }
 
     var workingDirectoryOID: OID? {
+        lock.lock()
+        defer { lock.unlock() }
         guard let oid = git_submodule_wd_id(git_submodule)?.pointee else {
             return nil
         }
@@ -74,6 +86,8 @@ class Submodule {
 
     @discardableResult
     func update(options: UpdateOptions, init: Bool = true, rescurse: Bool? = nil) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let msgBlock = options.fetchOptions.remoteCallback.messageBlock
         msgBlock?("\nClone submodule `\(self.name)`:\n")
         var gitOptions = options.toGitOptions()
@@ -93,15 +107,21 @@ class Submodule {
     }
 
     func sync() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
         return git_submodule_sync(git_submodule) == 0
     }
 
     func reload(force: Bool = false) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
         return git_submodule_reload(git_submodule, force ? 1 : 0) == 0
     }
 
     @discardableResult
     func clone(options: UpdateOptions) -> Result<Repository, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var repo: OpaquePointer?
         var options = options.toGitOptions()
         let result = git_submodule_clone(&repo, git_submodule, &options)
@@ -113,9 +133,13 @@ class Submodule {
 
     var recurseFetch: Recurse {
         set {
+            lock.lock()
+            defer { lock.unlock() }
             git_submodule_set_fetch_recurse_submodules(self.owner.pointer, self.name, newValue.toGit())
         }
         get {
+            lock.lock()
+            defer { lock.unlock() }
             let r = git_submodule_fetch_recurse_submodules(git_submodule)
             return Recurse(git: r)
         }

@@ -5,6 +5,8 @@
 //  Created by Taha Bebek on 2/3/25.
 //
 
+import Foundation
+
 /// A git tag reference, which can be either a lightweight tag or a Tag object.
 enum TagReference: ReferenceType, Hashable, Identifiable {
     var id: String { longName }
@@ -52,7 +54,9 @@ enum TagReference: ReferenceType, Hashable, Identifiable {
     /// Create an instance with a libgit2 `git_reference` object.
     ///
     /// Returns `nil` if the pointer isn't a branch.
-    init?(_ pointer: OpaquePointer) {
+    init?(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
+        lock.lock()
+        defer { lock.unlock() }
         if git_reference_is_tag(pointer) == 0 {
             return nil
         }
@@ -64,7 +68,7 @@ enum TagReference: ReferenceType, Hashable, Identifiable {
         var pointer: OpaquePointer? = nil
         let result = git_object_lookup(&pointer, repo, &oid, GIT_OBJECT_TAG)
         if result == GIT_OK.rawValue {
-            self = .annotated(name, Tag(pointer!))
+            self = .annotated(name, Tag(pointer!, lock: lock))
         } else {
             self = .lightweight(name, OID(oid))
         }

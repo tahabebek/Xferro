@@ -10,7 +10,7 @@ import Foundation
 final class WipWorktree {
     static let wipBranchesPrefix = "_xferro_wip_commits_"
     static let wipWorktreeFolder = "wip_worktrees"
-    private let worktreeRepository: Repository
+    let worktreeRepository: Repository
     let initialBranchName: String
     let initialCommit: OID
 
@@ -38,13 +38,11 @@ final class WipWorktree {
                     path: worktreeRepositoryURL.path(percentEncoded: false)
                 ).mustSucceed()
             worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
-            if !worktreeRepository.localBranchExists(named: initialWorktreeBranchName).mustSucceed() {
-                _ = worktreeRepository.createBranch(
-                    initialWorktreeBranchName,
-                    oid: emptyCommit.oid,
-                    force: true
-                ).mustSucceed()
-            }
+            _ = worktreeRepository.createBranch(
+                initialWorktreeBranchName,
+                oid: emptyCommit.oid,
+                force: true
+            ).mustSucceed()
             worktreeRepository.checkout(initialWorktreeBranchName.longBranchRef,.init(strategy: .Force)).mustSucceed()
             oid = emptyCommit.oid
         }
@@ -62,7 +60,7 @@ final class WipWorktree {
 
         if let status = item as? SelectableStatus {
             if case .noCommit = status.type {
-                return create(originalRepositoryWithNoCommits: item.repository, initialWorktreeBranchName: initialWorktreeBranchName)
+                fatalError("Use create(originalRepositoryWithNoCommits:initialWorktreeBranchName:) instead.")
             }
         }
         let head =  item.repository.HEAD().mustSucceed()
@@ -114,9 +112,6 @@ final class WipWorktree {
                 guard worktreeRepository.isWorkTree else {
                     fatalError(.illegal)
                 }
-                guard let head = try? worktreeRepository.commit().get() else {
-                    fatalError("Could not get head commit for existing worktree repository \(worktreeRepository)")
-                }
             } else {
                 item.repository
                     .addWorkTree(
@@ -125,19 +120,10 @@ final class WipWorktree {
                     ).mustSucceed()
                 worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
             }
-
-            if !worktreeRepository.localBranchExists(named: initialWorktreeBranchName).mustSucceed() {
-                _ = worktreeRepository.createBranch(
-                    initialWorktreeBranchName,
-                    oid: createRepoOID,
-                    force: true
-                ).mustSucceed()
-            }
-            worktreeRepository.checkout(initialWorktreeBranchName.longBranchRef,.init(strategy: .Force)).mustSucceed()
             return WipWorktree(
                 worktreeRepository: worktreeRepository,
                 initialBranchName: initialWorktreeBranchName,
-                initialCommit: head.oid
+                initialCommit: createRepoOID
             )
         } else if let getRepoOID {
             if Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() {
@@ -145,13 +131,10 @@ final class WipWorktree {
                 guard worktreeRepository.isWorkTree else {
                     fatalError(.illegal)
                 }
-                guard let head = try? worktreeRepository.commit().get() else {
-                    fatalError("Could not get head commit for existing worktree repository \(worktreeRepository)")
-                }
                 return WipWorktree(
                     worktreeRepository: worktreeRepository,
                     initialBranchName: initialWorktreeBranchName,
-                    initialCommit: head.oid
+                    initialCommit: getRepoOID
                 )
             }
             else {
@@ -215,41 +198,32 @@ final class WipWorktree {
     }
 
     func getBranch(branchName: String) -> Branch? {
-        if worktreeRepository.localBranchExists(named: branchName).mustSucceed() {
-            return worktreeRepository.localBranch(named: branchName).mustSucceed()
-        }
-        return nil
+        worktreeRepository.localBranch(named: branchName).mustSucceed()
     }
 
-    func addToWorktreeIndex(path: String) {
-         worktreeRepository.add(path: path).mustSucceed()
-    }
-
-    func commit() {
-        var head: OpaquePointer?
-        var commit: OpaquePointer?
-        git_repository_head(&head, worktreeRepository.pointer)
-        let peelResult = withUnsafeMutablePointer(to: &commit) { commitPtr in
-            git_reference_peel(commitPtr, head, GIT_OBJECT_COMMIT)
-        }
-        guard peelResult == GIT_OK.rawValue else {
-            fatalError()
-        }
-
-        let signiture = Signature.default(worktreeRepository).mustSucceed().makeUnsafeSignature().mustSucceed()
-        defer { git_signature_free(signiture) }
-        let index = worktreeRepository.unsafeIndex().mustSucceed()
-        defer { git_index_free(index) }
-        let _ = worktreeRepository.commit(
-            index: index,
-            parentCommits: [commit],
-            message: "Wip commit",
-            signature: signiture
+    @discardableResult
+    func createBranch(branchName: String, oid: OID) -> Branch {
+        worktreeRepository.createBranch(
+            branchName,
+            oid: oid,
+            force: true
         ).mustSucceed()
     }
 
-    func commits(of item : any SelectableItem) -> [SelectableWipCommit] {
-        let branchName = Self.worktreeBranchName(item: item)
+    func checkout(branchName: String) {
+        worktreeRepository.checkout(branchName.longBranchRef,.init(strategy: .Force)).mustSucceed()
+    }
+
+    func addToWorktreeIndex(path: String) {
+        worktreeRepository.add(path: path).mustSucceed()
+    }
+
+    @discardableResult
+    func commit() -> Commit {
+        worktreeRepository.commit(message: "Wip").mustSucceed()
+    }
+
+    func commits(of branchName: String, stop: OID) -> [SelectableWipCommit] {
         guard let branch =  getBranch(branchName: branchName) else {
             fatalError("branch \(branchName) not found")
         }
@@ -259,7 +233,7 @@ final class WipWorktree {
         let commitIterator = CommitIterator(repo: worktreeRepository, root: branch.oid.oid)
         while let commit = try? commitIterator.next()?.get() {
             commits.append(SelectableWipCommit(repository: worktreeRepository, commit: commit))
-            if commit.oid == item.oid {
+            if commit.oid == stop {
                 break
             }
         }

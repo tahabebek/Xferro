@@ -47,6 +47,8 @@ extension Repository {
 
     @discardableResult
     func forEachStash(block: @escaping StashEachBlock) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let blockPointer = UnsafeMutablePointer<StashEachBlock>.allocate(capacity: 1)
         blockPointer.initialize(repeating: block, count: 1)
         defer { blockPointer.deallocate() }
@@ -69,6 +71,8 @@ extension Repository {
     }
 
     func save(stash: String, keepIndex: Bool = false, includeUntracked: Bool = false, includeIgnored: Bool = false) -> Result<Stash, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var flags: UInt32 = GIT_STASH_DEFAULT.rawValue
         if keepIndex {
             flags += GIT_STASH_KEEP_INDEX.rawValue
@@ -93,6 +97,8 @@ extension Repository {
 
     func apply(stash: Int, index: Bool = false) -> Result<(), NSError> {
         // Do this because GIT_STASH_APPLY_OPTIONS_INIT is unavailable in swift
+        lock.lock()
+        defer { lock.unlock() }
         let applyOptionsPointer = UnsafeMutablePointer<git_stash_apply_options>.allocate(capacity: 1)
         git_stash_apply_options_init(applyOptionsPointer, UInt32(GIT_STASH_APPLY_OPTIONS_VERSION))
         var applyOptions = applyOptionsPointer.move()
@@ -109,6 +115,8 @@ extension Repository {
 
     func pop(stash: Int, index: Bool = false) -> Result<(), NSError> {
         // Do this because GIT_STASH_APPLY_OPTIONS_INIT is unavailable in swift
+        lock.lock()
+        defer { lock.unlock() }
         let applyOptionsPointer = UnsafeMutablePointer<git_stash_apply_options>.allocate(capacity: 1)
         git_stash_apply_options_init(applyOptionsPointer, UInt32(GIT_STASH_APPLY_OPTIONS_VERSION))
         var applyOptions = applyOptionsPointer.move()
@@ -125,6 +133,8 @@ extension Repository {
     }
 
     func drop(stash: Int) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let result = git_stash_drop(self.pointer, stash)
         if result != GIT_OK.rawValue {
             return .failure(NSError(gitError: result, pointOfFailure: "git_stash_drop"))

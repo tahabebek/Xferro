@@ -18,7 +18,9 @@ struct Blob: ObjectType, Hashable {
     let data: Data
 
     /// Create an instance with a libgit2 `git_blob`.
-    init(_ pointer: OpaquePointer) {
+    init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
+        lock.lock()
+        defer { lock.unlock() }
         oid = OID(git_object_id(pointer).pointee)
 
         let length = Int(git_blob_rawsize(pointer))

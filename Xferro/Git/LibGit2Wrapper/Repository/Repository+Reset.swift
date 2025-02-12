@@ -29,6 +29,8 @@ extension Repository {
     func reset(reference: ReferenceType? = nil,
                type: ResetType = .mixed,
                progress: CheckoutOptions.ProgressBlock? = nil) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let ref: ReferenceType
         if let reference = reference {
             ref = reference

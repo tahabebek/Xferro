@@ -10,10 +10,14 @@ import Foundation
 extension Repository {
 
     var isWorkTree: Bool {
+        lock.lock()
+        defer { lock.unlock() }
         return git_repository_is_worktree(self.pointer) == 1
     }
 
     func worktrees() -> Result<[String], NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let pointer = UnsafeMutablePointer<git_strarray>.allocate(capacity: 1)
         defer {
             git_strarray_dispose(pointer)
@@ -36,6 +40,8 @@ extension Repository {
     }
 
     func HEAD(for worktree: String) -> Result<ReferenceType, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return worktree.withCString { cname in
             var pointer: OpaquePointer? = nil
             defer { git_reference_free(pointer) }
@@ -43,12 +49,14 @@ extension Repository {
             guard result == GIT_OK.rawValue else {
                 return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_head_for_worktree"))
             }
-            let value = referenceWithLibGit2Reference(pointer!)
+            let value = referenceWithLibGit2Reference(pointer!, lock: lock)
             return .success(value)
         }
     }
 
     func worktreePath(by name: String) -> Result<String, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var wtPointer: OpaquePointer? = nil
 
         let result = git_worktree_lookup(&wtPointer, self.pointer, name)
@@ -61,6 +69,8 @@ extension Repository {
     }
 
     func pruneWorkTree(_ name: String, force: Bool = false) -> Result<String?, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var wtPointer: OpaquePointer? = nil
 
         let result = git_worktree_lookup(&wtPointer, self.pointer, name)
@@ -102,6 +112,8 @@ extension Repository {
     }
 
     func pruneWorkTrees(all: Bool = false) -> Result<[String], NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return self.worktrees().flatMap { names in
             var pruned = [String]()
             for name in names {
@@ -118,6 +130,8 @@ extension Repository {
     }
 
     func addWorkTree(name: String, path: String, head: String? = nil, checkout: Bool = true) -> Result<Void, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let checkoutOptions  = UnsafeMutablePointer<git_checkout_options>.allocate(capacity: 1)
         defer { checkoutOptions.deallocate() }
         var result = git_checkout_options_init(checkoutOptions, UInt32(GIT_CHECKOUT_OPTIONS_VERSION))

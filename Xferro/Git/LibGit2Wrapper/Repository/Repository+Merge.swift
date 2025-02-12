@@ -43,6 +43,8 @@ struct GitMergeAnalysisStatus: OptionSet {
 extension Repository {
 
     func mergeBase(between oid1: OID, and oid2: OID) -> Result<OID, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var baseOID = git_oid()
         var oid1 = oid1.oid
         var oid2 = oid2.oid
@@ -54,6 +56,8 @@ extension Repository {
     }
 
     func mergeAnalyze(sourceOID: OID, targetBranch: Branch) -> Result<GitMergeAnalysisStatus, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         if sourceOID == targetBranch.oid {
             return .success(.upToDate)
         }
@@ -66,7 +70,7 @@ extension Repository {
             return .failure(NSError(gitError: result, pointOfFailure: "git_annotated_commit_lookup"))
         }
 
-        return reference(longName: targetBranch.longName) { targetRef -> Result<GitMergeAnalysisStatus, NSError> in
+        let referenceResult = reference(longName: targetBranch.longName) { targetRef -> Result<GitMergeAnalysisStatus, NSError> in
             var preference = GIT_MERGE_PREFERENCE_NONE
             var analysisResult: git_merge_analysis_t = GIT_MERGE_ANALYSIS_NONE
             result = git_merge_analysis_for_ref(&analysisResult,
@@ -81,9 +85,21 @@ extension Repository {
 
             return .success(GitMergeAnalysisStatus(rawValue: analysisResult.rawValue))
         }
+        switch referenceResult {
+        case .success(let success):
+            if let success {
+                return .success(success)
+            } else {
+                return .failure(NSError(gitError: result, pointOfFailure: "git_merge_analysis_for_ref"))
+            }
+        case .failure(let failure):
+            return .failure(NSError(gitError: result, pointOfFailure: "git_merge_analysis_for_ref"))
+        }
     }
 
     private func merge<T>(with oid: OID, block: (OpaquePointer) -> Result<T, NSError>) -> Result<T, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var result: Int32
         var git_oid = oid.oid
 
@@ -130,6 +146,8 @@ extension Repository {
     }
 
     func merge(with oid: OID, message: String) -> Result<GitMergeAnalysisStatus, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         guard let targetBranch = try? self.HEAD().get() as? Branch else {
             return .failure(NSError(gitError: GIT_ERROR.rawValue, pointOfFailure: "Current Head is not a branch."))
         }
@@ -212,6 +230,8 @@ extension Repository {
     }
 
     func conflictPaths(index: OpaquePointer) -> Result<[String], NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var iterator: OpaquePointer?
         var result = git_index_conflict_iterator_new(&iterator, index)
         defer {
@@ -238,6 +258,8 @@ extension Repository {
     }
 
     func hasMergeConflict(with oid: OID) -> Result<Bool, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let stashResult = save(stash: "Check Merge Conflict", keepIndex: true, includeUntracked: true)
         var stashId: Int = -1
         switch stashResult {

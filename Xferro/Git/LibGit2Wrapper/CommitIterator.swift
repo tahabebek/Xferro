@@ -31,8 +31,6 @@ class CommitIterator: IteratorProtocol, Sequence {
     let repo: Repository
     private var revisionWalker: OpaquePointer?
 
-
-
     init(repo: Repository, root: git_oid, reversed: Bool = false) {
         self.repo = repo
         setupRevisionWalker(root: root, reversed: reversed)
@@ -43,6 +41,8 @@ class CommitIterator: IteratorProtocol, Sequence {
     }
 
     private func setupRevisionWalker(root: git_oid, reversed: Bool = false) {
+        repo.lock.lock()
+        defer { repo.lock.unlock() }
         var oid = root
         git_revwalk_new(&revisionWalker, repo.pointer)
         if reversed {
@@ -57,6 +57,8 @@ class CommitIterator: IteratorProtocol, Sequence {
     }
 
     func next() -> Element? {
+        repo.lock.lock()
+        defer { repo.lock.unlock() }
         var oid = git_oid()
         let revwalkGitResult = git_revwalk_next(&oid, revisionWalker)
         let nextResult = Next(revwalkGitResult, name: "git_revwalk_next")
@@ -72,7 +74,7 @@ class CommitIterator: IteratorProtocol, Sequence {
                   let unwrapCommit = unsafeCommit else {
                 return Result.failure(NSError(gitError: lookupGitResult, pointOfFailure: "git_commit_lookup"))
             }
-            let result: Element = Result.success(Commit(unwrapCommit))
+            let result: Element = Result.success(Commit(unwrapCommit, lock: repo.lock))
             git_commit_free(unsafeCommit)
             return result
         }

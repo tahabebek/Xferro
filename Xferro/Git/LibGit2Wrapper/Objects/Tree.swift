@@ -23,7 +23,9 @@ struct Tree: ObjectType, Hashable {
         let name: String
 
         /// Create an instance with a libgit2 `git_tree_entry`.
-        init(_ pointer: OpaquePointer) {
+        init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
+            lock.lock()
+            defer { lock.unlock() }
             let oid = OID(git_tree_entry_id(pointer).pointee)
             attributes = Int32(git_tree_entry_filemode(pointer).rawValue)
             object = Pointer(oid: oid, type: git_tree_entry_type(pointer))!
@@ -45,12 +47,14 @@ struct Tree: ObjectType, Hashable {
     let entries: [String: Entry]
 
     /// Create an instance with a libgit2 `git_tree`.
-    init(_ pointer: OpaquePointer) {
+    init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
+        lock.lock()
+        defer { lock.unlock() }
         oid = OID(git_object_id(pointer).pointee)
 
         var entries: [String: Entry] = [:]
         for idx in 0..<git_tree_entrycount(pointer) {
-            let entry = Entry(git_tree_entry_byindex(pointer, idx)!)
+            let entry = Entry(git_tree_entry_byindex(pointer, idx)!, lock: lock)
             entries[entry.name] = entry
         }
         self.entries = entries

@@ -10,7 +10,9 @@ import Foundation
 
 extension Repository {
     func clean(_ options: CleanOptions, shouldRemove: ((String) -> Bool)? = nil) -> Result<[String], NSError> {
-        return status().flatMap { entries -> Result<[String], NSError> in
+        lock.lock()
+        defer { lock.unlock() }
+        let result: Result<[String], NSError> = status().flatMap { entries -> Result<[String], NSError> in
             let s = entries.filter({ entry -> Bool in
                 if entry.status == .workTreeNew && !options.contains(.onlyIgnored) {
                     return true
@@ -30,5 +32,6 @@ extension Repository {
             }
             return .success(s)
         }
+        return result
     }
 }

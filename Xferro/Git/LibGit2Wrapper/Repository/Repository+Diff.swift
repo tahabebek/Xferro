@@ -11,6 +11,8 @@ import Foundation
 extension Repository {
 
     func diff(for commit: Commit) -> Result<Diff, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         guard !commit.parents.isEmpty else {
             // Initial commit in a repository
             return self.diff(from: nil, to: commit.oid)
@@ -48,6 +50,8 @@ extension Repository {
     private func diff(from oldCommitOid: OID?, to newCommitOid: OID?, transform: (Result<OpaquePointer, NSError>) -> NSError?) -> NSError? {
         assert(oldCommitOid != nil || newCommitOid != nil, "It is an error to pass nil for both the oldOid and newOid")
 
+        lock.lock()
+        defer { lock.unlock() }
         var oldTree: OpaquePointer? = nil
         defer { git_object_free(oldTree) }
         if let oid = oldCommitOid {
@@ -89,6 +93,8 @@ extension Repository {
     func diff(from oldCommitOid: OID?, to newCommitOid: OID?) -> Result<Diff, NSError> {
         assert(oldCommitOid != nil || newCommitOid != nil, "It is an error to pass nil for both the oldOid and newOid")
 
+        lock.lock()
+        defer { lock.unlock() }
         var oldTree: Tree? = nil
         if let oldCommitOid = oldCommitOid {
             switch safeTreeForCommitId(oldCommitOid) {
@@ -150,12 +156,16 @@ extension Repository {
                                     pointOfFailure: "git_diff_tree_to_tree"))
         }
 
+        lock.lock()
+        defer { lock.unlock() }
         let diffObj = Diff(diff!)
         git_diff_free(diff)
         return .success(diffObj)
     }
 
     private func processDiffDeltas(_ diffResult: OpaquePointer) -> Result<[Diff.Delta], NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var returnDict = [Diff.Delta]()
 
         let count = git_diff_num_deltas(diffResult)
@@ -172,6 +182,8 @@ extension Repository {
     }
 
     private func safeTreeForCommitId(_ oid: OID) -> Result<Tree, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return withGitObject(oid, type: GIT_OBJECT_COMMIT) { commit in
             let treeId = git_commit_tree_id(commit)
             return tree(OID(treeId!.pointee))
@@ -180,6 +192,8 @@ extension Repository {
 
     /// Caller responsible to free returned tree with git_object_free
     private func unsafeTreeForCommitId(_ oid: OID) -> Result<OpaquePointer, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var commit: OpaquePointer? = nil
         var oid = oid.oid
         let commitResult = git_object_lookup(&commit, self.pointer, &oid, GIT_OBJECT_COMMIT)

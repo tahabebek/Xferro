@@ -21,7 +21,7 @@ extension Repository {
     ///
     /// Returns the tag if it exists, or an error.
     func tag(_ oid: OID) -> Result<Tag, NSError> {
-        return withGitObject(oid, type: GIT_OBJECT_TAG) { Tag($0) }
+        return withGitObject(oid, type: GIT_OBJECT_TAG) { Tag($0, lock: lock) }
     }
 
     /// Load the tag with the given name (e.g., "tag-2").
@@ -30,6 +30,8 @@ extension Repository {
     }
 
     func createTag(named name: String, oid: OID, force: Bool = false) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         return longOID(for: oid).flatMap { oid -> Result<(), NSError> in
             var oid = oid.oid
             var object: OpaquePointer? = nil

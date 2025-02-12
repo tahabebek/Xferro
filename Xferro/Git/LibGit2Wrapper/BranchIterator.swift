@@ -19,6 +19,8 @@ class BranchIterator: IteratorProtocol, Sequence {
     private var iterator: OpaquePointer?
 
     init(repo: Repository, type: IteratorType = .local) {
+        repo.lock.lock()
+        defer { repo.lock.unlock() }
         self.repo = repo
 
         let flags = switch type {
@@ -38,6 +40,8 @@ class BranchIterator: IteratorProtocol, Sequence {
     }
 
     func next() -> Element? {
+        repo.lock.lock()
+        defer { repo.lock.unlock() }
         let branchType = UnsafeMutablePointer<git_branch_t>.allocate(capacity: 1)
         var branch: OpaquePointer?
         defer {
@@ -53,7 +57,7 @@ class BranchIterator: IteratorProtocol, Sequence {
         case .over:
             return nil
         case .okay:
-            return .success(Branch(branch!)!)
+            return .success(Branch(branch!, lock: repo.lock)!)
         }
     }
 }

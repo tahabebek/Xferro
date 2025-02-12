@@ -27,7 +27,9 @@ struct Tag: ObjectType, Hashable, Codable {
     let message: String
 
     /// Create an instance with a libgit2 `git_tag`.
-    init(_ pointer: OpaquePointer) {
+    init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
+        lock.lock()
+        defer { lock.unlock() }
         oid = OID(git_object_id(pointer).pointee)
         let targetOID = OID(git_tag_target_id(pointer).pointee)
         target = Pointer(oid: targetOID, type: git_tag_target_type(pointer))!

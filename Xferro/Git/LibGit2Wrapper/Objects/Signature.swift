@@ -43,6 +43,8 @@ struct Signature: Codable {
     }
 
     static func `default`(_ repository: Repository) -> Result<Signature, NSError> {
+        repository.lock.lock()
+        defer { repository.lock.unlock() }
         var signature: UnsafeMutablePointer<git_signature>? = nil
         let signatureResult = git_signature_default(&signature, repository.pointer)
         if signatureResult == GIT_OK.rawValue, let signatureUnwrap = signature {

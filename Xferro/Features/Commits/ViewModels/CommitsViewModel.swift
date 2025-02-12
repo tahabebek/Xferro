@@ -19,6 +19,7 @@ import OrderedCollections
     var currentSelectedItem: SelectedItem? {
         didSet {
             updateWipCommitsForCurrentSelectedItem()
+            print("selectableItem: ", currentSelectedItem?.selectableItem)
         }
     }
 
@@ -29,24 +30,18 @@ import OrderedCollections
     private let userDidSelectFolder: (URL) -> Void
     private var onGitFolderChangeObservers: Set<AnyCancellable> = []
     private var userSelectedAnItem = false
-    private var initialized: Bool = false
 
     init(repositories: [Repository], userDidSelectFolder: @escaping (URL) -> Void) {
         self.userDidSelectFolder = userDidSelectFolder
         for repository in repositories {
             self.addRepository(repository)
         }
-        initialized = true
     }
 
     func addRepository(_ repository: Repository) {
         setupGitObserver(for: repository)
         setupFolderObserver(for: repository)
         updateRepositoryInfo(repository)
-        let head = HEAD(for: repository)
-        if initialized {
-            userTapped(item: SelectableStatus(repository: repository, head: head))
-        }
     }
 
     func repositoryViewModel(for repository: Repository) -> RepositoryViewModel {
@@ -60,33 +55,108 @@ import OrderedCollections
         return repository.gitDir.path
     }
 
-     private func updateRepositoryInfo(_ repository: Repository) {
-        let repositoryInfo = getRepositoryInfo(repository)
-        currentRepositoryInfos[keyForRepository(repository)] = repositoryInfo
-        setupInitialCurrentSelectedItem()
+    private func updateRepositoryInfo(_ repository: Repository) {
+        Task {
+            await MainActor.run {
+                let repositoryInfo = getRepositoryInfo(repository)
+                currentRepositoryInfos[keyForRepository(repository)] = repositoryInfo
+                setupInitialCurrentSelectedItem()
+            }
+        }
     }
 
-
-     private func updateWipCommitsForCurrentSelectedItem() {
-        if let currentSelectedItem {
+    private func updateWipCommitsForCurrentSelectedItem(selectedItem: SelectedItem? = nil, worktree: WipWorktree? = nil) {
+        if let selectedItem, let worktree {
+            let wipCommits =  worktree.commits(
+                of: WipWorktree.worktreeBranchName(item: selectedItem.selectableItem),
+                stop: selectedItem.selectableItem.oid
+            )
+            let wipCommitTitle = "Wip commits of \(selectedItem.selectableItem.wipDescription)"
+            Task {
+                await MainActor.run {
+                    currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
+                }
+            }
+        }
+        else if let currentSelectedItem {
             switch currentSelectedItem.selectedItemType {
             case .regular(let type):
                 switch type {
                 case .stash:
-                    currentWipCommits = CurrentWipCommits(commits: [], title: "Stashes don't have wip commits")
+                    Task {
+                        await MainActor.run {
+                            currentWipCommits = CurrentWipCommits(commits: [], title: "Stashes don't have wip commits")
+                        }
+                    }
+                case .status(let status):
+                    let selectableItem = currentSelectedItem.selectableItem
+                    let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
+                    if case .noCommit = status.type {
+                        let worktree = WipWorktree.create(
+                            originalRepositoryWithNoCommits: currentSelectedItem.repository,
+                            initialWorktreeBranchName: branchName
+                        )
+                        let head = HEAD(for: worktree.worktreeRepository)
+                        Task {
+                            await MainActor.run {
+                                userTapped(item: SelectableStatus(repository: currentSelectedItem.repository, head: head))
+                            }
+                        }
+                    } else {
+                        let worktree = WipWorktree.create(for: selectableItem)
+                        if let worktree, worktree.getBranch(branchName: branchName) == nil {
+                            worktree.createBranch(branchName: branchName, oid: selectableItem.oid)
+                            worktree.checkout(branchName: branchName)
+                        }
+
+                        if let worktree {
+                            let wipCommits =  worktree.commits(of: branchName, stop: selectableItem.oid)
+                            let wipCommitTitle = "Wip commits of \(currentSelectedItem.selectableItem.wipDescription)"
+                            Task {
+                                await MainActor.run {
+                                    currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
+                                }
+                            }
+
+                        } else {
+                            Task {
+                                await MainActor.run {
+                                    currentWipCommits = .init(commits: [], title: "")
+                                }
+                            }
+                        }
+                    }
                 default:
-                    guard let worktree = WipWorktree.create(for: currentSelectedItem.selectableItem) else {
+                    guard let worktree = WipWorktree.create(for: currentSelectedItem.selectableItem),
+                          worktree.getBranch(branchName: WipWorktree.worktreeBranchName(item: currentSelectedItem.selectableItem)) != nil
+                    else {
+                        Task {
+                            await MainActor.run {
+                                currentWipCommits = .init(commits: [], title: "")
+                            }
+                        }
                         return
                     }
-                    let wipCommits =  worktree.commits(of: currentSelectedItem.selectableItem)
+                    let wipCommits =  worktree.commits(
+                        of: WipWorktree.worktreeBranchName(item: currentSelectedItem.selectableItem),
+                        stop: currentSelectedItem.selectableItem.oid
+                    )
                     let wipCommitTitle = "Wip commits of \(currentSelectedItem.selectableItem.wipDescription)"
-                    currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
+                    Task {
+                        await MainActor.run {
+                            currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
+                        }
+                    }
                 }
             case .wip:
                 break
             }
         } else {
-            currentWipCommits = .init(commits: [], title: "")
+            Task {
+                await MainActor.run {
+                    currentWipCommits = .init(commits: [], title: "")
+                }
+            }
         }
     }
 
@@ -162,7 +232,19 @@ import OrderedCollections
         let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: repository)
         let head = HEAD(for: repository)
         let selectableItem = SelectableStatus(repository: repository, head: head)
-        guard let worktree =  WipWorktree.create(for: selectableItem) else { return }
+        let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
+        let worktree: WipWorktree?
+        if case .noCommit = selectableItem.type {
+            worktree = WipWorktree.create(originalRepositoryWithNoCommits: repository, initialWorktreeBranchName: branchName)
+        } else {
+            worktree = WipWorktree.create(for: selectableItem)
+            if let worktree, worktree.getBranch(branchName: branchName) == nil {
+                worktree.createBranch(branchName: branchName, oid: selectableItem.oid)
+                worktree.checkout(branchName: branchName)
+            }
+        }
+
+        guard let worktree else { return }
         let statusEntries = repository.status().mustSucceed()
         let wipWorktreePath = worktreeRepositoryURL.path
         for statusEntry in statusEntries {
@@ -170,7 +252,7 @@ import OrderedCollections
             for (oldPath, newPath) in getPaths(from: statusEntry) {
                 print("-------------------------")
                 print("oldPath: \(oldPath), newPath: \(newPath)")
-            let status = statusEntry.status
+                let status = statusEntry.status
                 if status.contains(.indexNew) || status.contains(.workTreeNew) {
                     if let newPath {
                         let url = URL(filePath: newPath)
@@ -204,15 +286,10 @@ import OrderedCollections
                     let content = try! Data(contentsOf: URL(filePath: originalRepoPath + "/" + newPath!))
                     try! content.write(to: URL(fileURLWithPath: wipWorktreePath + "/" + newPath!))
                 }
-                if let oldPath {
-                     worktree.addToWorktreeIndex(path: oldPath)
-                }
-                if let newPath {
-                     worktree.addToWorktreeIndex(path: newPath)
-                }
             }
         }
-         worktree.commit()
+        worktree.addToWorktreeIndex(path: ".")
+        worktree.commit()
         if let currentSelectedItem, repository.gitDir.path == currentSelectedItem.repository.gitDir.path {
             var isHead = false
             let headId = HEAD(for: repository)!.oid
@@ -251,7 +328,7 @@ import OrderedCollections
             if isHead {
                 Task {
                     await MainActor.run {
-                        updateWipCommitsForCurrentSelectedItem()
+                        updateWipCommitsForCurrentSelectedItem(selectedItem: currentSelectedItem, worktree: worktree)
                     }
                 }
             }
@@ -269,40 +346,48 @@ import OrderedCollections
         return paths
     }
 
-     private func setupInitialCurrentSelectedItem() {
-        guard userSelectedAnItem == false, currentSelectedItem == nil else { return }
-        if !currentRepositoryInfos.isEmpty {
-            let firstRepo = currentRepositoryInfos.values[0].repository
-            let head = HEAD(for: firstRepo)
-            currentSelectedItem = SelectedItem(
-                selectedItemType: .regular(
-                    .status(SelectableStatus(repository: firstRepo, head: head))
-                )
-            )
+    private func setupInitialCurrentSelectedItem() {
+        Task {
+            await MainActor.run {
+                guard userSelectedAnItem == false, currentSelectedItem == nil else { return }
+                if !currentRepositoryInfos.isEmpty {
+                    let firstRepo = currentRepositoryInfos.values[0].repository
+                    let head = HEAD(for: firstRepo)
+                    currentSelectedItem = SelectedItem(
+                        selectedItemType: .regular(
+                            .status(SelectableStatus(repository: firstRepo, head: head))
+                        )
+                    )
+                }
+            }
         }
     }
 
-     func userTapped(item: any SelectableItem) {
-        userSelectedAnItem = true
-        switch item {
-        case let status as SelectableStatus:
-            currentSelectedItem = .init(selectedItemType: .regular(.status(status)))
-        case let commit as SelectableCommit:
-            currentSelectedItem = .init(selectedItemType: .regular(.commit(commit)))
-        case let wipCommit as SelectableWipCommit:
-            currentSelectedItem = .init(selectedItemType: .wip(.wipCommit(wipCommit)))
-        case let historyCommit as SelectableHistoryCommit:
-            currentSelectedItem = .init(selectedItemType: .regular(.historyCommit(historyCommit)))
-        case let detachedCommit as SelectableDetachedCommit:
-            currentSelectedItem = .init(selectedItemType: .regular(.detachedCommit(detachedCommit)))
-        case let detachedTag as SelectableDetachedTag:
-            currentSelectedItem = .init(selectedItemType: .regular(.detachedTag(detachedTag)))
-        case let tag as SelectableTag:
-            currentSelectedItem = .init(selectedItemType: .regular(.tag(tag)))
-        case let stash as SelectableStash:
-            currentSelectedItem = .init(selectedItemType: .regular(.stash(stash)))
-        default:
-            fatalError()
+    func userTapped(item: any SelectableItem) {
+        Task {
+            await MainActor.run {
+                userSelectedAnItem = true
+                switch item {
+                case let status as SelectableStatus:
+                    currentSelectedItem = .init(selectedItemType: .regular(.status(status)))
+                case let commit as SelectableCommit:
+                    currentSelectedItem = .init(selectedItemType: .regular(.commit(commit)))
+                case let wipCommit as SelectableWipCommit:
+                    currentSelectedItem = .init(selectedItemType: .wip(.wipCommit(wipCommit)))
+                case let historyCommit as SelectableHistoryCommit:
+                    currentSelectedItem = .init(selectedItemType: .regular(.historyCommit(historyCommit)))
+                case let detachedCommit as SelectableDetachedCommit:
+                    currentSelectedItem = .init(selectedItemType: .regular(.detachedCommit(detachedCommit)))
+                case let detachedTag as SelectableDetachedTag:
+                    currentSelectedItem = .init(selectedItemType: .regular(.detachedTag(detachedTag)))
+                case let tag as SelectableTag:
+                    currentSelectedItem = .init(selectedItemType: .regular(.tag(tag)))
+                case let stash as SelectableStash:
+                    currentSelectedItem = .init(selectedItemType: .regular(.stash(stash)))
+                default:
+                    fatalError()
+                }
+            }
         }
     }
 

@@ -9,7 +9,10 @@ import Foundation
 
 extension Repository {
     func createEmptyCommit() -> Commit {
-        commit(message: "Empty commit").mustSucceed()
+        lock.lock()
+        defer { lock.unlock() }
+        let commit: Commit = commit(message: "Empty commit").mustSucceed()
+        return commit
     }
 
     func commit(
@@ -18,12 +21,14 @@ extension Repository {
         message: String,
         signature: UnsafeMutablePointer<git_signature>? = nil
     ) -> Result<git_oid, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var msgBuf = git_buf()
         git_message_prettify(&msgBuf, message, 0, /* ascii for # */ 35)
         defer { git_buf_dispose(&msgBuf) }
 
         let parentsContiguous = ContiguousArray(parentCommits)
-        return parentsContiguous.withUnsafeBufferPointer { unsafeBuffer in
+        let result: Result<git_oid, NSError> = parentsContiguous.withUnsafeBufferPointer { unsafeBuffer in
             var commitOID = git_oid()
             let parentsPtr = UnsafeMutablePointer(mutating: unsafeBuffer.baseAddress)
             let result = git_commit_create(
@@ -43,6 +48,7 @@ extension Repository {
             }
             return .success(commitOID)
         }
+        return result
     }
 
     func commit(
@@ -51,6 +57,8 @@ extension Repository {
         message: String,
         signature: UnsafeMutablePointer<git_signature>? = nil
     ) -> Result<git_oid, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var tree: OpaquePointer? = nil
         var treeOIDCopy = oid
         let lookupResult = git_tree_lookup(&tree, self.pointer, &treeOIDCopy)
@@ -59,8 +67,8 @@ extension Repository {
             return .failure(err)
         }
         defer { git_tree_free(tree) }
-
-        return commit(tree: tree!, parentCommits: parentCommits, message: message, signature: signature)
+        let commit = commit(tree: tree!, parentCommits: parentCommits, message: message, signature: signature)
+        return commit
     }
 
     func commit(
@@ -69,19 +77,24 @@ extension Repository {
         message: String,
         signature: UnsafeMutablePointer<git_signature>? = nil
     ) -> Result<git_oid, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var treeOID = git_oid()
         let result = git_index_write_tree(&treeOID, index)
         guard result == GIT_OK.rawValue else {
             let err = NSError(gitError: result, pointOfFailure: "git_index_write_tree")
             return .failure(err)
         }
-        return commit(oid: treeOID, parentCommits: parentCommits, message: message, signature: signature)
+        let commit = commit(oid: treeOID, parentCommits: parentCommits, message: message, signature: signature)
+        return commit
     }
 
     func commit(
         message: String,
         signature: UnsafeMutablePointer<git_signature>? = nil
     ) -> Result<git_oid, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         let unborn: Bool
         let result = git_repository_head_unborn(self.pointer)
         if result == 1 {
@@ -112,10 +125,11 @@ extension Repository {
                 return Result.failure(NSError(gitError: result, pointOfFailure: "git_commit_lookup"))
             }
         }
-        return unsafeIndex().flatMap { index in
+        let oid = unsafeIndex().flatMap { index in
             defer { git_index_free(index) }
             return self.commit(index: index, parentCommits: [commit].filter { $0 != nil }, message: message, signature: signature)
         }
+        return oid
     }
 
     // MARK: - function
@@ -124,9 +138,12 @@ extension Repository {
     ///
     /// Returns the HEAD commit, or an error.
     func commit() -> Result<Commit, NSError> {
-        self.HEAD().flatMap { ref in
+        lock.lock()
+        defer { lock.unlock() }
+        let head = self.HEAD().flatMap { ref in
             commit(ref.oid)
         }
+        return head
     }
 
     /// Loads the commit with the given OID.
@@ -135,7 +152,10 @@ extension Repository {
     ///
     /// Returns the commit if it exists, or an error.
     func commit(_ oid: OID) -> Result<Commit, NSError> {
-        return withGitObject(oid, type: GIT_OBJECT_COMMIT) { Commit($0) }
+        lock.lock()
+        defer { lock.unlock() }
+        let commit = withGitObject(oid, type: GIT_OBJECT_COMMIT) { Commit($0, lock: lock) }
+        return commit
     }
 
     /// Load all commits in the specified branch in topological & time order descending
@@ -143,11 +163,15 @@ extension Repository {
     /// :param: branch The branch to get all commits from
     /// :returns: Returns a result with array of branches or the error that occurred
     func commits(in branch: Branch, reversed: Bool = false) -> CommitIterator {
+        lock.lock()
+        defer { lock.unlock() }
         let iterator = CommitIterator(repo: self, root: branch.oid.oid, reversed: reversed)
         return iterator
     }
 
     func commits(in tag: TagReference) -> CommitIterator {
+        lock.lock()
+        defer { lock.unlock() }
         let iterator = CommitIterator(repo: self, root: tag.oid.oid)
         return iterator
     }
@@ -157,6 +181,8 @@ extension Repository {
                 parents: [Commit],
                 message: String,
                 signature: Signature? = nil) -> Result<Commit, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         // create commit signature
         let sign: Signature
         do {
@@ -164,7 +190,7 @@ extension Repository {
         } catch {
             return .failure(error as NSError)
         }
-        return sign.makeUnsafeSignature().flatMap { signature in
+        let result: Result<Commit, NSError> = sign.makeUnsafeSignature().flatMap { signature in
             defer { git_signature_free(signature) }
             var tree: OpaquePointer? = nil
             var treeOIDCopy = treeOID.oid
@@ -195,11 +221,14 @@ extension Repository {
 
             return commit(tree: tree!, parentCommits: parentGitCommits, message: message, signature: signature).flatMap { commit(OID($0)) }
         }
+        return result
     }
 
     /// Perform a commit of the staged files with the specified message and signature,
     /// assuming we are not doing a merge and using the current tip as the parent.
     func commit(message: String, signature: Signature? = nil) -> Result<Commit, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         // create commit signature
         let sign: Signature
         do {
@@ -207,14 +236,17 @@ extension Repository {
         } catch {
             return .failure(error as NSError)
         }
-        return sign.makeUnsafeSignature().flatMap {
+        let result: Result<Commit, NSError> = sign.makeUnsafeSignature().flatMap {
             self.commit(message: message, signature: $0).flatMap {
                 commit(OID($0))
             }
         }
+        return result
     }
 
     func isDescendant(of oid: OID, for base: OID) -> Result<Bool, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var oid1 = oid.oid
         var oid2 = base.oid
         let result = git_graph_descendant_of(self.pointer, &oid1, &oid2)
@@ -229,8 +261,11 @@ extension Repository {
     }
 
     func isDescendant(of oid: OID) -> Result<Bool, NSError> {
-        return self.HEAD().flatMap {
+        lock.lock()
+        defer { lock.unlock() }
+        let head = self.HEAD().flatMap {
             self.isDescendant(of: oid, for: $0.oid)
         }
+        return head
     }
 }

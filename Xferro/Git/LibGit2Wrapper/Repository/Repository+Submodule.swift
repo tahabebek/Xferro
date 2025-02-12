@@ -9,31 +9,43 @@ import Foundation
 
 typealias SubmoduleEachBlock = (Submodule) -> Int32
 
-private func gitSubmoduleCallback(submodule: OpaquePointer?, name: UnsafePointer<Int8>?, payload: UnsafeMutableRawPointer?) -> Int32 {
-    guard let submodule = submodule, let payload = payload else {
-        return GIT_ERROR.rawValue
-    }
-    let obj = Submodule(pointer: submodule, autorelease: false)
-
-    let buffer = payload.assumingMemoryBound(to: SubmoduleEachBlock.self)
-    let block = buffer.pointee
-    return block(obj)
-}
-
 extension Repository {
+    private struct CallbackContext {
+        let block: SubmoduleEachBlock
+        let lock: NSRecursiveLock
+    }
+
+    private static let gitSubmoduleCallbackFunction: git_submodule_cb = { submodule, name, payload in
+        guard let submodule = submodule, let payload = payload else {
+            return GIT_ERROR.rawValue
+        }
+
+        let context = payload.assumingMemoryBound(to: CallbackContext.self).pointee
+        let obj = Submodule(pointer: submodule, autorelease: false, lock: context.lock)
+        return context.block(obj)
+    }
+
     @discardableResult
     func eachSubmodule(_ block: @escaping SubmoduleEachBlock) -> NSError? {
-        let blockPointer = UnsafeMutablePointer<SubmoduleEachBlock>.allocate(capacity: 1)
-        blockPointer.initialize(repeating: block, count: 1)
-        defer { blockPointer.deallocate() }
-        let result = git_submodule_foreach(self.pointer, gitSubmoduleCallback, UnsafeMutableRawPointer(blockPointer))
-        if result == GIT_OK.rawValue {
-            return nil
+        lock.lock()
+        defer { lock.unlock() }
+        var context = CallbackContext(block: block, lock: lock)
+        return withUnsafePointer(to: &context) { contextPtr -> NSError? in
+            let result = git_submodule_foreach(
+                self.pointer,
+                Repository.gitSubmoduleCallbackFunction,
+                UnsafeMutableRawPointer(mutating: contextPtr)
+            )
+            if result == GIT_OK.rawValue {
+                return nil
+            }
+            return NSError(gitError: result, pointOfFailure: "git_submodule_foreach")
         }
-        return NSError(gitError: result, pointOfFailure: "git_submodule_foreach")
     }
 
     private func eachRepository(name: String, block: @escaping (String, Repository) -> Bool) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
         if !block(name, self) { return false }
         let name = name.isEmpty ? name : name + "/"
         eachSubmodule { (submodule) -> Int32 in
@@ -60,6 +72,8 @@ extension Repository {
     }
 
     func submodule(for name: String) -> Result<Submodule, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
         var module: OpaquePointer?
         let result = name.withCString {
             git_submodule_lookup(&module, self.pointer, $0)
@@ -67,7 +81,7 @@ extension Repository {
         guard result == GIT_OK.rawValue else {
             return .failure(NSError(gitError: result, pointOfFailure: "git_submodule_lookup"))
         }
-        return .success(Submodule(pointer: module!))
+        return .success(Submodule(pointer: module!, lock: lock))
     }
 }
 
