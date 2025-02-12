@@ -25,7 +25,7 @@ extension CommitsViewModel {
         }
     }
 
-    static func HEAD(for repository: Repository) -> CommitsViewModel.Head? {
+    func HEAD(for repository: Repository) -> CommitsViewModel.Head? {
         let getHead: (ReferenceType) -> CommitsViewModel.Head = { headRef in
             let head: CommitsViewModel.Head =
             if let branchRef = headRef as? Branch {

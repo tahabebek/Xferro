@@ -31,11 +31,11 @@ public struct Remote: Hashable {
 
     /// Create an instance with a libgit2 `git_remote`.
     public init(_ pointer: OpaquePointer, originURL: String?, originPushURL: String?) {
-        name = String(validatingUTF8: git_remote_name(pointer))!
+        name = String(validatingCString: git_remote_name(pointer))!
 
         let URL: String?
         if let url = git_remote_url(pointer) {
-            URL = String(validatingUTF8: url)
+            URL = String(validatingCString: url)
         } else {
             URL = nil
         }
@@ -43,7 +43,7 @@ public struct Remote: Hashable {
 
         let pushURL: String?
         if let url = git_remote_pushurl(pointer) {
-            pushURL = String(validatingUTF8: url)
+            pushURL = String(validatingCString: url)
         } else {
             pushURL = nil
         }

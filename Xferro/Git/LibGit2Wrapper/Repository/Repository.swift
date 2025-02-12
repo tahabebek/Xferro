@@ -7,7 +7,7 @@
 
 import Foundation
 
-actor Repository: Identifiable, Equatable {
+class Repository: Identifiable, Equatable {
     static func == (lhs: Repository, rhs: Repository) -> Bool {
         lhs.pointer == rhs.pointer
     }
@@ -33,16 +33,20 @@ actor Repository: Identifiable, Equatable {
      * This is the path of the `.git` folder for normal repositories,
      * or of the repository itself for bare repositories.
      */
-    lazy var gitDir: URL? = {
+    lazy var gitDir: URL = {
         let path = git_repository_path(pointer)
-        return path.map { URL(fileURLWithPath: String(validatingUTF8: $0)!, isDirectory: true) }
+        let result = path.map { URL(fileURLWithPath: String(validatingCString: $0)!, isDirectory: true) }
+        guard let result else {
+            fatalError(.impossible)
+        }
+        return result
     }()
 
     /// The URL of the repository's working directory, or `nil` if the
     /// repository is bare.
     lazy var workDir: URL? = {
         let path = git_repository_workdir(pointer)
-        return path.map { URL(fileURLWithPath: String(validatingUTF8: $0)!, isDirectory: true) }
+        return path.map { URL(fileURLWithPath: String(validatingCString: $0)!, isDirectory: true) }
     }()
 
     /**
@@ -54,7 +58,7 @@ actor Repository: Identifiable, Equatable {
      */
     lazy var commonDir: URL? = {
         let path = git_repository_commondir(pointer)
-        return path.map { URL(fileURLWithPath: String(validatingUTF8: $0)!, isDirectory: true) }
+        return path.map { URL(fileURLWithPath: String(validatingCString: $0)!, isDirectory: true) }
     }()
 
     // MARK: - Object Lookups

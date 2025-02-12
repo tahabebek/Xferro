@@ -46,9 +46,7 @@ import Observation
             errors.append("Passwords do not match")
         }
 
-        DispatchQueue.main.async {
-            self.validationErrors = errors
-        }
+        validationErrors = errors
     }
 
     func signupButtonTapped() {

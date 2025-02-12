@@ -62,14 +62,14 @@ struct Branch: Identifiable, ReferenceType, Hashable, Codable {
     ///
     /// Returns `nil` if the pointer isn't a branch.
     init?(_ pointer: OpaquePointer) {
-        longName = String(validatingUTF8: git_reference_name(pointer))!
+        longName = String(validatingCString: git_reference_name(pointer))!
 
         var namePointer: UnsafePointer<Int8>? = nil
         let success = git_branch_name(&namePointer, pointer)
         guard success == GIT_OK.rawValue else {
             return nil
         }
-        name = String(validatingUTF8: namePointer!)!
+        name = String(validatingCString: namePointer!)!
 
         var oid: OID
         if git_reference_type(pointer).rawValue == GIT_REFERENCE_SYMBOLIC.rawValue {

@@ -161,7 +161,7 @@ private func updateDescription(_ oid1: OID?, _ oid2: OID?) -> String {
     return msg
 }
 
-var userSSHConfigFile: SSH2.ConfigFile?
+nonisolated(unsafe) var userSSHConfigFile: SSH2.ConfigFile?
 
 class RemoteCallback {
     typealias MessageBlock = (String?) -> Void

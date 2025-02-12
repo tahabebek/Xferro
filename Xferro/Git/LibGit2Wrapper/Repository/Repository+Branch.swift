@@ -28,6 +28,32 @@ extension Repository {
         return reference(named: .branchPrefix + name).map { $0 as! Branch }
     }
 
+    func localBranchExists(named name: String) -> Result<Bool, NSError> {
+        let branchName = name.longBranchRef
+        var reference: OpaquePointer? = nil
+
+        let result = git_branch_lookup(
+            &reference,
+            pointer,
+            branchName,
+            GIT_BRANCH_LOCAL
+        )
+
+        defer {
+            if reference != nil {
+                git_reference_free(reference)
+            }
+        }
+
+        if result == GIT_OK.rawValue {
+            return .success(true)
+        } else if result == GIT_ENOTFOUND.rawValue {
+            return .success(false)
+        } else {
+            return Result.failure(NSError(gitError: result, pointOfFailure: "git_branch_lookup"))
+        }
+    }
+
     /// Load the remote branch with the given name (e.g., "origin/master"、"master").
     func remoteBranch(named name: String) -> Result<Branch, NSError> {
         do {

@@ -29,7 +29,7 @@ private func stashForEachCallback(index: Int,
                                   stash_id: UnsafePointer<git_oid>?,
                                   payload: UnsafeMutableRawPointer?) -> Int32 {
     guard let payload = payload,
-        let msg = message.flatMap(String.init(validatingUTF8:)),
+        let msg = message.flatMap(String.init(validatingCString:)),
         let oid = stash_id.flatMap({ OID($0.pointee) }) else {
         return 1
     }

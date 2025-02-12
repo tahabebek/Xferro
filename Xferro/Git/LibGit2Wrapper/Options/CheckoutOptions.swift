@@ -24,7 +24,7 @@ private func checkoutProgressCallback(path: UnsafePointer<Int8>?,
         block = buffer.move()
         buffer.deallocate()
     }
-    block(path.flatMap(String.init(validatingUTF8:)), completedSteps, totalSteps)
+    block(path.flatMap(String.init(validatingCString:)), completedSteps, totalSteps)
 }
 
 class CheckoutOptions {

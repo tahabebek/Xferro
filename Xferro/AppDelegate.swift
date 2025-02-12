@@ -64,7 +64,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return .terminateLater
     }
 
-    private func createMenu() {
+    @MainActor private func createMenu() {
         let mainMenu = NSMenu()
         NSApp.mainMenu = mainMenu
 
@@ -81,7 +81,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                                    keyEquivalent: "q"))
     }
 
-    private func saveBeforeQuit() {
+    @MainActor private func saveBeforeQuit() {
         if let users = Self.users {
             DataManager.save(users, filename: Constants.usersFileName)
         }

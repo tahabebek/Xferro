@@ -16,7 +16,7 @@ struct RepositoryInfo: Identifiable {
         let commits: [SelectableCommit]
     }
     var id: String {
-        let repoId = repository.gitDir?.path ?? ""
+        let repoId = repository.gitDir.path
         let branchInfosId = branchInfos.reduce(into: "") { result, info in
             result += info.id
         }
@@ -90,12 +90,12 @@ extension CommitsViewModel {
     }
     private func branches(of repository: Repository) -> [Branch] {
         var branches: [Branch] = []
-        guard let head = Self.HEAD(for: repository) else { return [] }
+        guard let head = HEAD(for: repository) else { return [] }
 
         let branchIterator = BranchIterator(repo: repository, type: .local)
 
         while let branch = try? branchIterator.next()?.get() {
-            if branch.name.hasPrefix(Worktree.wipBranchesPrefix) { continue }
+            if branch.name.hasPrefix(WipWorktree.wipBranchesPrefix) { continue }
             if isCurrentBranch(branch, head: head, in: repository) {
                 branches.insert(branch, at: 0)
             } else {
@@ -105,7 +105,7 @@ extension CommitsViewModel {
         return branches
     }
     private func detachedTag(of repository: Repository) -> SelectableDetachedTag? {
-        if let head = Self.HEAD(for: repository) {
+        if let head = HEAD(for: repository) {
             switch head {
             case .branch:
                 return nil
@@ -120,7 +120,7 @@ extension CommitsViewModel {
         return nil
     }
     private func detachedCommit(of repository: Repository) -> SelectableDetachedCommit? {
-        if let head = Self.HEAD(for: repository) {
+        if let head = HEAD(for: repository) {
             switch head {
             case .branch, .tag:
                 return nil

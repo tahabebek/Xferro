@@ -26,7 +26,7 @@ struct RepositoryView: View {
         Group {
             VStack(spacing: 0) {
                 HStack {
-                    Label(repositoryViewModel.repositoryInfo.repository.gitDir?.deletingLastPathComponent().lastPathComponent ?? "Unkown", systemImage: "folder")
+                    Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
                     Spacer()
                     Button {
                         withAnimation(.easeInOut) {
@@ -106,8 +106,9 @@ struct RepositoryView: View {
         VStack(spacing: 16) {
             let repositoryInfo = repositoryViewModel.repositoryInfo
             let repository = repositoryInfo.repository
-            let status = SelectableStatus(repository: repository)
-            if let head = CommitsViewModel.HEAD(for: repository) {
+            let head = commitsViewModel.HEAD(for: repository)
+            let status = SelectableStatus(repository: repository, head: head)
+            if let head {
                 if let detachedTag = repositoryInfo.detachedTag {
                     BranchView(
                         name: detachedTag.tag.name,

@@ -36,8 +36,8 @@ struct Commit: ObjectType, Hashable, Codable, CustomStringConvertible, Identifia
     /// Create an instance with a libgit2 `git_commit` object.
     init(_ pointer: OpaquePointer) {
         oid = OID(git_object_id(pointer).pointee)
-        message = String(validatingUTF8: git_commit_message(pointer))!
-        summary = String(validatingUTF8: git_commit_summary(pointer))!
+        message = String(validatingCString: git_commit_message(pointer))!
+        summary = String(validatingCString: git_commit_summary(pointer))!
         author = Signature(git_commit_author(pointer).pointee)
         committer = Signature(git_commit_committer(pointer).pointee)
         tree = PointerTo(OID(git_commit_tree_id(pointer).pointee))

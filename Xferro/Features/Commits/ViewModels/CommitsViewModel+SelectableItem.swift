@@ -22,7 +22,7 @@ struct SelectableStatus: SelectableItem, Identifiable {
         case noCommit(Repository)
 
         var id: String {
-            guard let repoDir = repository.gitDir?.path else { fatalError(.invalid) }
+            let repoDir = repository.gitDir.path
             switch self {
             case .branch(_, let branch):
                 return repoDir + branch.id
@@ -52,8 +52,8 @@ struct SelectableStatus: SelectableItem, Identifiable {
             lhs.id == rhs.id
         }
 
-        static func withRepository(_ repository: Repository) -> StatusType {
-            if let head = CommitsViewModel.HEAD(for: repository) {
+        static func withRepository(_ repository: Repository, head: CommitsViewModel.Head?) -> StatusType {
+            if let head {
                 switch head {
                 case .branch(let branch):
                     return .branch(repository, branch)
@@ -76,19 +76,19 @@ struct SelectableStatus: SelectableItem, Identifiable {
     }
 
     var id: String {
-        CommitsViewModel.idOfRepo(repository) + "/" + type.id
+        repository.idOfRepo + "/" + type.id
     }
 
     var wipDescription: String {
         switch type {
         case .branch(_, let branch):
-            return "'\(branch.commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
+            return "'\(branch.commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'"
         case .tag(_, let tag):
-            return "'\(tag.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
+            return "'\(tag.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'"
         case .detached(_, let commit):
-            return "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'"
+            return "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'"
         case .noCommit:
-            return "repository '\(CommitsViewModel.nameOfRepo(repository))'"
+            return "repository '\(repository.nameOfRepo)'"
         }
     }
 
@@ -108,76 +108,76 @@ struct SelectableStatus: SelectableItem, Identifiable {
     let repository: Repository
     let type: StatusType
 
-    init(repository: Repository) {
+    init(repository: Repository, head: CommitsViewModel.Head?) {
         self.repository = repository
-        self.type = StatusType.withRepository(repository)
+        self.type = StatusType.withRepository(repository, head: head)
     }
 }
 
 struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
-    var id: String { CommitsViewModel.idOfRepo(repository) + branch.id + commit.id }
+    var id: String { repository.idOfRepo + branch.id + commit.id }
     let repository: Repository
     let branch: Branch
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
+    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo))'" }
     var oid: OID { commit.oid }
 }
 
 struct SelectableWipCommit: SelectableItem, Identifiable {
-    var id: String { CommitsViewModel.idOfRepo(repository) + commit.id }
+    var id: String { repository.idOfRepo + commit.id }
     let repository: Repository
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
+    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo))'" }
     var oid: OID { commit.oid }
 }
 
 struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
-    var id: String { CommitsViewModel.idOfRepo(repository) + commit.id }
+    var id: String { repository.idOfRepo + commit.id }
     let repository: Repository
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
+    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo))'" }
     var oid: OID { commit.oid }
 }
 
 struct SelectableDetachedTag: SelectableItem, Identifiable {
-    var id: String { CommitsViewModel.idOfRepo(repository) + tag.id }
+    var id: String { repository.idOfRepo + tag.id }
     let repository: Repository
     let tag: TagReference
-    var wipDescription: String { "'\(tag.name)' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
+    var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo))'" }
     var oid: OID { tag.oid }
 }
 
 struct SelectableHistoryCommit: SelectableItem, Identifiable {
-    var id: String { CommitsViewModel.idOfRepo(repository) + branch.id + commit.id }
+    var id: String { repository.idOfRepo + branch.id + commit.id }
     let repository: Repository
     let branch: Branch
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
+    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { commit.oid }
 }
 
 struct SelectableTag: SelectableItem, Identifiable {
-    var id: String { CommitsViewModel.idOfRepo(repository) + tag.id }
+    var id: String { repository.idOfRepo + tag.id }
     let repository: Repository
     let tag: TagReference
-    var wipDescription: String { "'\(tag.name)' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
+    var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo))'" }
     var oid: OID { tag.oid }
 }
 
 struct SelectableStash: SelectableItem, Identifiable {
-    var id: String { CommitsViewModel.idOfRepo(repository) + stash.id.formatted() }
+    var id: String { repository.idOfRepo + stash.id.formatted() }
     let repository: Repository
     let stash: Stash
-    var wipDescription: String { "'\(stash.oid.debugOID.prefix(4))' in repository '\(CommitsViewModel.nameOfRepo(repository))'" }
+    var wipDescription: String { "'\(stash.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo))'" }
     var oid: OID { stash.oid }
 }
 
-extension CommitsViewModel {
-    static func idOfRepo(_ repository: Repository) -> String {
-        repository.gitDir?.deletingLastPathComponent().path ?? ""
+extension Repository {
+    var idOfRepo: String {
+        gitDir.deletingLastPathComponent().path
     }
 
-    static func nameOfRepo(_ repository: Repository) -> String {
-        repository.gitDir?.deletingLastPathComponent().lastPathComponent ?? ""
+    var nameOfRepo: String {
+        gitDir.deletingLastPathComponent().lastPathComponent
     }
 }

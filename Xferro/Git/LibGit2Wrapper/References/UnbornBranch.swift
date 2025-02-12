@@ -21,7 +21,7 @@ struct UnbornBranch: BaseReferenceType {
     ///
     /// Returns `nil` if the pointer isn't a branch.
     init?(_ pointer: OpaquePointer, unborn: Bool = false) {
-        longName = String(validatingUTF8: git_reference_symbolic_target(pointer))!
+        longName = String(validatingCString: git_reference_symbolic_target(pointer))!
         name = longName.split(separator: "/")[2...].joined(separator: "/")
     }
 }

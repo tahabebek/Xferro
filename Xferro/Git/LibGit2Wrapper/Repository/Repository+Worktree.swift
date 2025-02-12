@@ -117,7 +117,7 @@ extension Repository {
         }
     }
 
-    func addWorkTree(name: String, path: String, head: String? = nil, checkout: Bool = true) -> Result<(), NSError> {
+    func addWorkTree(name: String, path: String, head: String? = nil, checkout: Bool = true) -> Result<Void, NSError> {
         let checkoutOptions  = UnsafeMutablePointer<git_checkout_options>.allocate(capacity: 1)
         defer { checkoutOptions.deallocate() }
         var result = git_checkout_options_init(checkoutOptions, UInt32(GIT_CHECKOUT_OPTIONS_VERSION))

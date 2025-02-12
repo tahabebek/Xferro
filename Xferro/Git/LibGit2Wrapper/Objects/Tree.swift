@@ -27,7 +27,7 @@ struct Tree: ObjectType, Hashable {
             let oid = OID(git_tree_entry_id(pointer).pointee)
             attributes = Int32(git_tree_entry_filemode(pointer).rawValue)
             object = Pointer(oid: oid, type: git_tree_entry_type(pointer))!
-            name = String(validatingUTF8: git_tree_entry_name(pointer))!
+            name = String(validatingCString: git_tree_entry_name(pointer))!
         }
 
         /// Create an instance with the individual values.

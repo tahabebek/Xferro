@@ -57,7 +57,7 @@ enum TagReference: ReferenceType, Hashable, Identifiable {
             return nil
         }
 
-        let name = String(validatingUTF8: git_reference_name(pointer))!
+        let name = String(validatingCString: git_reference_name(pointer))!
         let repo = git_reference_owner(pointer)
         var oid = git_reference_target(pointer).pointee
 
