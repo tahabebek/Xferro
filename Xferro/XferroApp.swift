@@ -7,6 +7,7 @@
 
 import Cocoa
 import SwiftUI
+import TipKit
 
 #if TEST
 @main
@@ -47,6 +48,13 @@ struct SwiftSpaceApp: App {
             .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
             .task {
                 AppDelegate.users = users
+                do {
+                    try Tips.configure()
+                }
+                catch {
+                    // Handle TipKit errors
+                    print("Error initializing TipKit \(error.localizedDescription)")
+                }
             }
             .background(Color.fabulaBack2)
         }

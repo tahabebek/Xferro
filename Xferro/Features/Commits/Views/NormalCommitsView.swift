@@ -16,9 +16,13 @@ struct NormalCommitsView: View {
             HStack {
                 VerticalHeader(title: "Repositories")
                 Spacer()
-                if viewModel.currentRepositoryInfos.count != 0 {
-                    AddRepositoryButton()
-                }
+                AddRepositoryButton()
+                Image(systemName: "cursorarrow.click.2")
+                    .frame(height: 36)
+                    .contentShape(Rectangle())
+                    .hoverButton("Clone a repostory") {
+                        // TODO:
+                    }
             }
         } content: {
             VStack(alignment: .leading, spacing: 16) {

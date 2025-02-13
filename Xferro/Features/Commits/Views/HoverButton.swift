@@ -7,36 +7,45 @@
 
 import SwiftUI
 
-struct HoverButton<Content: View>: View {
+struct HoverButton: ViewModifier {
     @State private var isHovering = false
+    @State var hoverTask: Task<Void, Never>?
     let hoverText: String
     let action: () -> Void
-    let label: () -> Content
-    @State var hoverTask: Task<Void, Never>?
 
-    var body: some View {
+    func body(content: Content) -> some View {
         Button {
             action()
         } label: {
-            label()
+            content
         }
         .buttonStyle(.borderless)
         .onHover { flag in
             if flag {
                 hoverTask = Task {
                     try? await Task.sleep(for: .seconds(0.25))
-                    if hoverTask?.isCancelled == false {
+                    if !Task.isCancelled {
                         isHovering = true
                     }
                 }
             } else {
                 isHovering = false
                 hoverTask?.cancel()
+                hoverTask = nil
             }
         }
         .popover(isPresented: $isHovering, arrowEdge: .bottom) {
             Text(hoverText)
                 .padding(8)
         }
+    }
+}
+
+extension View {
+    func hoverButton(
+        _ hoverText: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        modifier(HoverButton(hoverText: hoverText, action: action))
     }
 }

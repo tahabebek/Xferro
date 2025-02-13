@@ -16,6 +16,12 @@ import OrderedCollections
         let title: String
     }
 
+    var autoCommitEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(autoCommitEnabled, forKey: "autoCommitEnabled")
+        }
+    }
+
     var currentSelectedItem: SelectedItem? {
         didSet {
             updateWipCommitsForCurrentSelectedItem()
@@ -31,6 +37,11 @@ import OrderedCollections
     private var onGitFolderChangeObservers: Set<AnyCancellable> = []
 
     init(repositories: [Repository], userDidSelectFolder: @escaping (URL) -> Void) {
+        if UserDefaults.standard.object(forKey: "autoCommitEnabled") == nil {
+            self.autoCommitEnabled = true
+        } else {
+            self.autoCommitEnabled = UserDefaults.standard.bool(forKey: "autoCommitEnabled")
+        }
         self.userDidSelectFolder = userDidSelectFolder
         for repository in repositories {
             self.addRepository(repository)
@@ -96,7 +107,7 @@ import OrderedCollections
                             currentWipCommits = CurrentWipCommits(commits: [], title: "Stashes don't have wip commits")
                         }
                     }
-                case .status(let status):
+                case .status:
                     let selectableItem = currentSelectedItem.selectableItem
                     let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
                     let worktree = WipWorktree.create(for: selectableItem)
@@ -444,6 +455,14 @@ import OrderedCollections
         userDidSelectFolder(folder)
     }
     func deleteRepositoryButtonTapped(_ repository: Repository) {
+        guard currentRepositoryInfos[keyForRepository(repository)] != nil else {
+            fatalError(.unexpected)
+        }
+        Task {
+            await MainActor.run {
+                currentRepositoryInfos[keyForRepository(repository)] = nil
+            }
+        }
 
     }
 

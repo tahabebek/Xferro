@@ -64,7 +64,7 @@ extension CommitsViewModel {
         return newRepositoryInfo
     }
 
-    func detachedAncestorCommitsOf(oid: OID, in repository: Repository, count: Int = 10) -> [SelectableDetachedCommit] {
+    func detachedAncestorCommitsOf(oid: OID, in repository: Repository, count: Int = 25) -> [SelectableDetachedCommit] {
         var commits: [SelectableDetachedCommit] = []
 
         let commitIterator = CommitIterator(repo: repository, root: oid.oid)
@@ -76,7 +76,7 @@ extension CommitsViewModel {
         return commits
     }
 
-    func detachedCommits(of tag: SelectableDetachedTag, in repository: Repository, count: Int = 10) -> [SelectableDetachedCommit] {
+    func detachedCommits(of tag: SelectableDetachedTag, in repository: Repository, count: Int = 25) -> [SelectableDetachedCommit] {
         detachedAncestorCommitsOf(oid: tag.tag.oid, in: repository, count: count)
     }
 
@@ -140,7 +140,7 @@ extension CommitsViewModel {
             }
         return tags
     }
-    private func commits(of branch: Branch, in repository: Repository, count: Int = 10) -> [SelectableCommit] {
+    private func commits(of branch: Branch, in repository: Repository, count: Int = 25) -> [SelectableCommit] {
         var commits: [SelectableCommit] = []
 
         let commitIterator = CommitIterator(repo: repository, root: branch.oid.oid)

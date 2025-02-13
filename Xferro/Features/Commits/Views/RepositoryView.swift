@@ -27,73 +27,62 @@ struct RepositoryView: View {
             VStack(spacing: 0) {
                 HStack {
                     Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
-                    HoverButton(hoverText: isCollapsed ? "Expand" : "Collapse") {
-                        withAnimation(.easeInOut) {
-                            isCollapsed.toggle()
+                    Image(systemName: "xmark")
+                        .frame(height: 36)
+                        .contentShape(Rectangle())
+                        .hoverButton("Remove Repository") {
+                            withAnimation(.easeInOut) {
+                                commitsViewModel.deleteRepositoryButtonTapped(repositoryViewModel.repositoryInfo.repository)
+                            }
                         }
-                    } label: {
-                        Image(systemName: "chevron.down")
-                            .frame(width: 36, height: 36)
-                            .rotationEffect(Angle(degrees: !isCollapsed ? -180 : 0))
-                            .contentShape(Rectangle())
-                    }
+                    Image(systemName: "chevron.down")
+                        .frame(height: 36)
+                        .rotationEffect(Angle(degrees: !isCollapsed ? -180 : 0))
+                        .contentShape(Rectangle())
+                        .hoverButton(isCollapsed ? "Expand" : "Collapse") {
+                            withAnimation(.easeInOut) {
+                                isCollapsed.toggle()
+                            }
+                        }
 
                     Spacer()
-                    HoverButton(hoverText: isCollapsed ? "Expand" : "Collapse") {
-                        withAnimation(.easeInOut) {
-                            isCollapsed.toggle()
-                        }
-                    } label: {
-                        Image(systemName: "plus.app")
+
+                        Image(systemName: "arrow.down")
                             .frame(height: 36)
                             .contentShape(Rectangle())
-                    }
+                            .hoverButton("Pull changes from remote") {}
 
-                    HoverButton(hoverText: isCollapsed ? "Expand" : "Collapse") {
-                        withAnimation(.easeInOut) {
-                            isCollapsed.toggle()
-                        }
-                    } label: {
-                        Image(systemName: "plus.square.on.square")
+                        Image(systemName: "arrow.up")
                             .frame(height: 36)
                             .contentShape(Rectangle())
-                    }
+                            .hoverButton("Push changes to remote") {}
 
-//                    Button {
-//                        withAnimation(.easeInOut) {
-//                            isCollapsed.toggle()
-//                        }
-//                    } label: {
-//                        Image(systemName: "chevron.down")
-//                            .frame(width: 36, height: 36)
-//                            .rotationEffect(Angle(degrees: !isCollapsed ? -180 : 0))
-//                            .contentShape(Rectangle())
-//                    }
-//                    .buttonStyle(.borderless)
-//                    Spacer()
-//                    Button {
-//                        withAnimation(.easeInOut) {
-//                            isCollapsed.toggle()
-//                        }
-//                    } label: {
-//                        Image(systemName: "plus.app")
-//                            .frame(height: 36)
-//                            .contentShape(Rectangle())
-//                    }
-//                    .buttonStyle(.borderless)
-//                    .onHover { _ in
-//                        
-//                    }
-//                    Button {
-//                        withAnimation(.easeInOut) {
-//                            isCollapsed.toggle()
-//                        }
-//                    } label: {
-//                        Image(systemName: "plus.square.on.square")
-//                            .frame(height: 36)
-//                            .contentShape(Rectangle())
-//                    }
-//                    .buttonStyle(.borderless)
+                        Image(systemName: "plus")
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                            .hoverButton("Create a new local branch") {}
+
+                        Image(systemName: "minus")
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                            .hoverButton("Delete a local branch") {}
+
+                        Image(systemName: "cursorarrow")
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                            .hoverButton("Checkout to a local branch") {}
+                        Image(systemName: "cursorarrow.click.2")
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                            .hoverButton("Checkout to a remote branch") {}
+                        Image(systemName: "point.topright.filled.arrow.triangle.backward.to.point.bottomleft.scurvepath")
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                            .hoverButton("Merge a branch into another branch") {}
+                        Image(systemName: "point.bottomleft.forward.to.arrow.triangle.uturn.scurvepath.fill")
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                            .hoverButton("Rebase a branch into current branch") {}
                 }
                 .frame(height: 36)
                 if !isCollapsed {

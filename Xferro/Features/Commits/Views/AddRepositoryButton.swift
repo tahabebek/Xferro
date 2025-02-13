@@ -11,15 +11,14 @@ struct AddRepositoryButton: View {
     @Environment(CommitsViewModel.self) var viewModel
     @State private var showFolderSelector: Bool = false
     var body: some View {
-        Button {
-            showFolderSelector = true
-        } label: {
-            Text("Add repository")
-        }
-        .buttonStyle(.bordered)
-        .fileImporter(isPresented: $showFolderSelector, allowedContentTypes: [.directory], allowsMultipleSelection: false) { result in
-            guard let directory = try? result.get().first else { return }
-            viewModel.usedDidSelectFolder(directory)
-        }
+        Image(systemName: "plus")
+            .frame(height: 36) .contentShape(Rectangle())
+            .hoverButton("Add local repostory") {
+                showFolderSelector = true
+            }
+            .fileImporter(isPresented: $showFolderSelector, allowedContentTypes: [.directory], allowsMultipleSelection: false) { result in
+                guard let directory = try? result.get().first else { return }
+                viewModel.usedDidSelectFolder(directory)
+            }
     }
 }
