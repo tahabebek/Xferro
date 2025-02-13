@@ -27,8 +27,7 @@ struct RepositoryView: View {
             VStack(spacing: 0) {
                 HStack {
                     Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
-                    Spacer()
-                    Button {
+                    HoverButton(hoverText: isCollapsed ? "Expand" : "Collapse") {
                         withAnimation(.easeInOut) {
                             isCollapsed.toggle()
                         }
@@ -38,8 +37,63 @@ struct RepositoryView: View {
                             .rotationEffect(Angle(degrees: !isCollapsed ? -180 : 0))
                             .contentShape(Rectangle())
                     }
-                    .buttonStyle(.borderless)
 
+                    Spacer()
+                    HoverButton(hoverText: isCollapsed ? "Expand" : "Collapse") {
+                        withAnimation(.easeInOut) {
+                            isCollapsed.toggle()
+                        }
+                    } label: {
+                        Image(systemName: "plus.app")
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                    }
+
+                    HoverButton(hoverText: isCollapsed ? "Expand" : "Collapse") {
+                        withAnimation(.easeInOut) {
+                            isCollapsed.toggle()
+                        }
+                    } label: {
+                        Image(systemName: "plus.square.on.square")
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                    }
+
+//                    Button {
+//                        withAnimation(.easeInOut) {
+//                            isCollapsed.toggle()
+//                        }
+//                    } label: {
+//                        Image(systemName: "chevron.down")
+//                            .frame(width: 36, height: 36)
+//                            .rotationEffect(Angle(degrees: !isCollapsed ? -180 : 0))
+//                            .contentShape(Rectangle())
+//                    }
+//                    .buttonStyle(.borderless)
+//                    Spacer()
+//                    Button {
+//                        withAnimation(.easeInOut) {
+//                            isCollapsed.toggle()
+//                        }
+//                    } label: {
+//                        Image(systemName: "plus.app")
+//                            .frame(height: 36)
+//                            .contentShape(Rectangle())
+//                    }
+//                    .buttonStyle(.borderless)
+//                    .onHover { _ in
+//                        
+//                    }
+//                    Button {
+//                        withAnimation(.easeInOut) {
+//                            isCollapsed.toggle()
+//                        }
+//                    } label: {
+//                        Image(systemName: "plus.square.on.square")
+//                            .frame(height: 36)
+//                            .contentShape(Rectangle())
+//                    }
+//                    .buttonStyle(.borderless)
                 }
                 .frame(height: 36)
                 if !isCollapsed {

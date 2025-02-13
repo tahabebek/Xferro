@@ -19,7 +19,6 @@ struct GroupBoxView<Content: View>: View {
                 content()
                     .padding(8)
             }
-//            .padding(8)
         }
     }
 }

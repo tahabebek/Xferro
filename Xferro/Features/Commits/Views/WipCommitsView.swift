@@ -1,5 +1,5 @@
 //
-//  WIPCommitsView.swift
+//  WipCommitsView.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/4/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct WIPCommitsView: View {
+struct WipCommitsView: View {
     @Environment(CommitsViewModel.self) var viewModel
     let columns = [
         GridItem(.adaptive(minimum: 16, maximum: 16))
@@ -16,7 +16,7 @@ struct WIPCommitsView: View {
 
     var body: some View {
         PinnedScrollableView(showsIndicators: false) {
-            AutoCommitHeaderView()
+            WipHeaderView()
         } content: {
             Group {
                 VStack(spacing: 8) {

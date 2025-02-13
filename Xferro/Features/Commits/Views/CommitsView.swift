@@ -17,7 +17,7 @@ struct CommitsView: View {
                     .frame(width: geometry.size.width, height: geometry.size.height * 0.7)
                 Divider()
                     .padding(.bottom, 8)
-                WIPCommitsView(width: geometry.size.width)
+                WipCommitsView(width: geometry.size.width)
                     .frame(width: geometry.size.width, height: geometry.size.height * 0.3)
                 Spacer()
             }

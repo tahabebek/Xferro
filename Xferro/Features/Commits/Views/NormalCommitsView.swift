@@ -13,7 +13,13 @@ struct NormalCommitsView: View {
 
     var body: some View {
         PinnedScrollableView(showsIndicators: false) {
-            VerticalHeader(title: "Repositories")
+            HStack {
+                VerticalHeader(title: "Repositories")
+                Spacer()
+                if viewModel.currentRepositoryInfos.count != 0 {
+                    AddRepositoryButton()
+                }
+            }
         } content: {
             VStack(alignment: .leading, spacing: 16) {
                 ForEach(viewModel.currentRepositoryInfos.values.elements) { repositoryInfo in
@@ -21,7 +27,10 @@ struct NormalCommitsView: View {
                         .frame(width: width)
                         .environment(viewModel.repositoryViewModel(for: repositoryInfo.repository))
                 }
-                AddRepositoryButton()
+                if viewModel.currentRepositoryInfos.count == 0 {
+                    Text("No repositories found.")
+                    AddRepositoryButton()
+                }
                 Spacer()
             }
             .frame(width: width)
