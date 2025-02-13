@@ -106,38 +106,29 @@ struct RepositoryView: View {
         VStack(spacing: 16) {
             let repositoryInfo = repositoryViewModel.repositoryInfo
             let repository = repositoryInfo.repository
-            let head = commitsViewModel.HEAD(for: repository)
-            let status = SelectableStatus(repository: repository, head: head)
-            if let head {
-                if let detachedTag = repositoryInfo.detachedTag {
-                    BranchView(
-                        name: detachedTag.tag.name,
-                        selectableCommits: commitsViewModel.detachedCommits(of: detachedTag, in: repository),
-                        selectableStatus: status,
-                        isCurrent: true
-                    )
-                } else if let detachedCommit = repositoryInfo.detachedCommit {
-                    BranchView(
-                        name: "Detached Commit",
-                        selectableCommits: commitsViewModel.detachedAncestorCommitsOf(oid: detachedCommit.commit.oid, in: repository),
-                        selectableStatus: status,
-                        isCurrent: true
-                    )
-                }
-                ForEach(repositoryInfo.branchInfos) { branchInfo in
-                    BranchView(
-                        name: branchInfo.branch.name,
-                        selectableCommits: branchInfo.commits,
-                        selectableStatus: status,
-                        isCurrent: commitsViewModel.isCurrentBranch(branchInfo.branch, head: head, in: repository)
-                    )
-                }
-            } else {
+            let head = Head.of(repository)
+            let status = SelectableStatus(repository: repository)
+            if let detachedTag = repositoryInfo.detachedTag {
                 BranchView(
-                    name: "No branch yet.",
-                    selectableCommits: [],
+                    name: detachedTag.tag.name,
+                    selectableCommits: commitsViewModel.detachedCommits(of: detachedTag, in: repository),
                     selectableStatus: status,
                     isCurrent: true
+                )
+            } else if let detachedCommit = repositoryInfo.detachedCommit {
+                BranchView(
+                    name: "Detached Commit",
+                    selectableCommits: commitsViewModel.detachedAncestorCommitsOf(oid: detachedCommit.commit.oid, in: repository),
+                    selectableStatus: status,
+                    isCurrent: true
+                )
+            }
+            ForEach(repositoryInfo.branchInfos) { branchInfo in
+                BranchView(
+                    name: branchInfo.branch.name,
+                    selectableCommits: branchInfo.commits,
+                    selectableStatus: status,
+                    isCurrent: commitsViewModel.isCurrentBranch(branchInfo.branch, head: head, in: repository)
                 )
             }
         }

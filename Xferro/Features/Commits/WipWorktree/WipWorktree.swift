@@ -14,55 +14,10 @@ final class WipWorktree {
     let initialBranchName: String
     let initialCommit: OID
 
-    static func create(
-        originalRepositoryWithNoCommits originalRepository: Repository,
-        initialWorktreeBranchName: String
-    ) -> WipWorktree {
-        let worktreeRepositoryURL = worktreeRepositoryURL(originalRepository: originalRepository)
-        let worktreeRepository: Repository
-        let oid: OID
-        if Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() {
-            worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
-            guard worktreeRepository.isWorkTree else {
-                fatalError(.illegal)
-            }
-            guard let head = try? worktreeRepository.commit().get() else {
-                fatalError("Could not get head commit for existing worktree repository \(worktreeRepository)")
-            }
-            oid = head.oid
-        } else {
-            let emptyCommit =  originalRepository.createEmptyCommit()
-            originalRepository
-                .addWorkTree(
-                    name: initialWorktreeBranchName,
-                    path: worktreeRepositoryURL.path(percentEncoded: false)
-                ).mustSucceed()
-            worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
-            _ = worktreeRepository.createBranch(
-                initialWorktreeBranchName,
-                oid: emptyCommit.oid,
-                force: true
-            ).mustSucceed()
-            worktreeRepository.checkout(initialWorktreeBranchName.longBranchRef,.init(strategy: .Force)).mustSucceed()
-            oid = emptyCommit.oid
-        }
-
-        return WipWorktree(
-                worktreeRepository: worktreeRepository,
-                initialBranchName: initialWorktreeBranchName,
-                initialCommit: oid
-        )
-    }
-
     static func create(for item: any SelectableItem) -> WipWorktree? {
         let worktreeRepositoryURL =  worktreeRepositoryURL(originalRepository: item.repository)
         let initialWorktreeBranchName = worktreeBranchName(item: item)
 
-        if let status = item as? SelectableStatus {
-            if case .noCommit = status.type {
-                fatalError("Use create(originalRepositoryWithNoCommits:initialWorktreeBranchName:) instead.")
-            }
-        }
         let head =  item.repository.HEAD().mustSucceed()
         var createRepoOID: OID?
         var getRepoOID: OID?
@@ -177,8 +132,6 @@ final class WipWorktree {
                 "\(Self.wipBranchesPrefix)for_tag_\(tag.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(tag.oid.description)"
             case .detached(_, let commit):
                 "\(Self.wipBranchesPrefix)for_detached_commit_\(commit.oid.description)"
-            case .noCommit:
-                "\(Self.wipBranchesPrefix)for_no_commit"
             }
         case let commit as SelectableCommit:
             "\(Self.wipBranchesPrefix)for_branch_\(commit.branch.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(commit.oid.description)"

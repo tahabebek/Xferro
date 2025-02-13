@@ -7,27 +7,25 @@
 
 import Foundation
 
-extension CommitsViewModel {
-    enum Head: Codable {
-        case branch(Branch)
-        case tag(TagReference)
-        case reference(Reference)
+enum Head: Codable {
+    case branch(Branch)
+    case tag(TagReference)
+    case reference(Reference)
 
-        var oid: OID {
-            switch self {
-            case .branch(let branch):
-                return branch.oid
-            case .tag(let tagReference):
-                return tagReference.oid
-            case .reference(let reference):
-                return reference.oid
-            }
+    var oid: OID {
+        switch self {
+        case .branch(let branch):
+            return branch.oid
+        case .tag(let tagReference):
+            return tagReference.oid
+        case .reference(let reference):
+            return reference.oid
         }
     }
 
-    func HEAD(for repository: Repository) -> CommitsViewModel.Head? {
-        let getHead: (ReferenceType) -> CommitsViewModel.Head = { headRef in
-            let head: CommitsViewModel.Head =
+    static func of(_ repository: Repository) -> Head {
+        let getHead: (ReferenceType) -> Head = { headRef in
+            let head: Head =
             if let branchRef = headRef as? Branch {
                 .branch(branchRef)
             } else if let tagRef = headRef as? TagReference {
@@ -40,7 +38,10 @@ extension CommitsViewModel {
             return head
 
         }
-        guard let headRef = try? repository.HEAD().get() else { return nil }
+        guard let headRef = try? repository.HEAD().get() else {
+            fatalError("You must create a head for every repository")
+        }
         return getHead(headRef)
     }
 }
+

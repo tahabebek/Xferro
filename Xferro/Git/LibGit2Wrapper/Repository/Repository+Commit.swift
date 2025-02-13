@@ -8,6 +8,7 @@
 import Foundation
 
 extension Repository {
+    @discardableResult
     func createEmptyCommit() -> Commit {
         lock.lock()
         defer { lock.unlock() }

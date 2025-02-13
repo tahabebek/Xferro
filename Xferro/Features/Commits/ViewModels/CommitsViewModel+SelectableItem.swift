@@ -19,7 +19,6 @@ struct SelectableStatus: SelectableItem, Identifiable {
         case branch(Repository, Branch)
         case tag(Repository, TagReference)
         case detached(Repository, Commit)
-        case noCommit(Repository)
 
         var id: String {
             let repoDir = repository.gitDir.path
@@ -30,8 +29,6 @@ struct SelectableStatus: SelectableItem, Identifiable {
                 return repoDir + tag.id
             case .detached(_, let commit):
                 return repoDir + commit.id
-            case .noCommit:
-                return repoDir
             }
         }
 
@@ -43,8 +40,6 @@ struct SelectableStatus: SelectableItem, Identifiable {
                 repository
             case .detached(let repository, _):
                 repository
-            case .noCommit(let repository):
-                repository
             }
         }
 
@@ -52,25 +47,22 @@ struct SelectableStatus: SelectableItem, Identifiable {
             lhs.id == rhs.id
         }
 
-        static func withRepository(_ repository: Repository, head: CommitsViewModel.Head?) -> StatusType {
-            if let head {
-                switch head {
-                case .branch(let branch):
-                    return .branch(repository, branch)
-                case .tag(let tag):
-                    return .tag(repository, tag)
-                case .reference(let reference):
-                    if let tag = try? repository.tag(reference.oid).get() {
-                        return .tag(repository, TagReference.annotated(tag.name, tag))
-                    }
-                    else if let commit = try? repository.commit(reference.oid).get() {
-                        return .detached(repository, commit)
-                    } else {
-                        fatalError(.impossible)
-                    }
+        static func of(_ repository: Repository) -> StatusType {
+            let head = Head.of(repository)
+            switch head {
+            case .branch(let branch):
+                return .branch(repository, branch)
+            case .tag(let tag):
+                return .tag(repository, tag)
+            case .reference(let reference):
+                if let tag = try? repository.tag(reference.oid).get() {
+                    return .tag(repository, TagReference.annotated(tag.name, tag))
                 }
-            } else {
-                return .noCommit(repository)
+                else if let commit = try? repository.commit(reference.oid).get() {
+                    return .detached(repository, commit)
+                } else {
+                    fatalError(.impossible)
+                }
             }
         }
     }
@@ -87,8 +79,6 @@ struct SelectableStatus: SelectableItem, Identifiable {
             return "'\(tag.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'"
         case .detached(_, let commit):
             return "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'"
-        case .noCommit:
-            return "repository '\(repository.nameOfRepo)'"
         }
     }
 
@@ -100,17 +90,15 @@ struct SelectableStatus: SelectableItem, Identifiable {
             return tag.oid
         case .detached(_, let commit):
             return commit.oid
-        case .noCommit:
-            fatalError(.unavailable)
         }
     }
 
     let repository: Repository
     let type: StatusType
 
-    init(repository: Repository, head: CommitsViewModel.Head?) {
+    init(repository: Repository) {
         self.repository = repository
-        self.type = StatusType.withRepository(repository, head: head)
+        self.type = StatusType.of(repository)
     }
 }
 

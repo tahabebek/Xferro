@@ -90,7 +90,7 @@ extension CommitsViewModel {
     }
     private func branches(of repository: Repository) -> [Branch] {
         var branches: [Branch] = []
-        guard let head = HEAD(for: repository) else { return [] }
+        let head = Head.of(repository)
 
         let branchIterator = BranchIterator(repo: repository, type: .local)
 
@@ -105,29 +105,27 @@ extension CommitsViewModel {
         return branches
     }
     private func detachedTag(of repository: Repository) -> SelectableDetachedTag? {
-        if let head = HEAD(for: repository) {
-            switch head {
-            case .branch:
-                return nil
-            case .tag(let tagReference):
-                return SelectableDetachedTag(repository: repository, tag: tagReference)
-            case .reference(let reference):
-                if let tag = try? repository.tag(reference.oid).get() {
-                    return SelectableDetachedTag(repository: repository, tag: TagReference.annotated(tag.name, tag))
-                }
+        let head = Head.of(repository)
+        switch head {
+        case .branch:
+            return nil
+        case .tag(let tagReference):
+            return SelectableDetachedTag(repository: repository, tag: tagReference)
+        case .reference(let reference):
+            if let tag = try? repository.tag(reference.oid).get() {
+                return SelectableDetachedTag(repository: repository, tag: TagReference.annotated(tag.name, tag))
             }
         }
         return nil
     }
     private func detachedCommit(of repository: Repository) -> SelectableDetachedCommit? {
-        if let head = HEAD(for: repository) {
-            switch head {
-            case .branch, .tag:
-                return nil
-            case .reference(let reference):
-                if let commit = try? repository.commit(reference.oid).get() {
-                    return SelectableDetachedCommit(repository: repository, commit: commit)
-                }
+        let head = Head.of(repository)
+        switch head {
+        case .branch, .tag:
+            return nil
+        case .reference(let reference):
+            if let commit = try? repository.commit(reference.oid).get() {
+                return SelectableDetachedCommit(repository: repository, commit: commit)
             }
         }
         return nil
