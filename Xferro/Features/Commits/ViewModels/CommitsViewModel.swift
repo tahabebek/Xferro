@@ -89,19 +89,15 @@ import OrderedCollections
             break
         }
 
-        print(currentBranchName!)
         var shouldDeleteBranch = true
         switch item.selectedItemType {
         case .regular(let type):
             switch type {
-            case .commit(let selectableCommit):
-                print(selectableCommit.oid.debugOID.prefix(4))
-                print(WipWorktree.worktreeBranchName(item: item.selectableItem))
+            case .commit:
                 if currentBranchName == WipWorktree.worktreeBranchName(item: item.selectableItem) {
                     shouldDeleteBranch = false
                 }
             case .historyCommit, .detachedCommit, .detachedTag, .tag, .status:
-                print("something else")
                 shouldDeleteBranch = false
             case .stash:
                 fatalError(.invalid)
@@ -123,8 +119,8 @@ import OrderedCollections
         }
     }
 
-    func addManualCommit(for item: SelectedItem) {
-
+    func addManualWipCommit(for item: SelectedItem) {
+        handleFolderWatchUpdate(repository: item.repository, manualUpdate: true)
     }
 
     func addRepository(_ repository: Repository) {
@@ -318,8 +314,8 @@ import OrderedCollections
         }
     }
 
-    private func handleFolderWatchUpdate(repository: Repository) {
-        guard autoCommitEnabled else { return }
+    private func handleFolderWatchUpdate(repository: Repository, manualUpdate: Bool = false) {
+        guard autoCommitEnabled || manualUpdate else { return }
         let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: repository)
         let selectableItem = SelectableStatus(repository: repository)
         guard let worktree = WipWorktree.getOrCreate(for: selectableItem) else { return }

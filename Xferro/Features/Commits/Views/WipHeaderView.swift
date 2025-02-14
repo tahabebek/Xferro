@@ -17,11 +17,13 @@ struct WipHeaderView: View {
                 get: { viewModel.autoCommitEnabled },
                 set: { viewModel.autoCommitEnabled = $0 }
             ))
-            if !viewModel.autoCommitEnabled {
+            if !viewModel.autoCommitEnabled, let item = viewModel.currentSelectedItem {
                 Image(systemName: "plus")
                     .frame(height: 36)
                     .contentShape(Rectangle())
-                    .hoverButton("Create wip commit") {}
+                    .hoverButton("Create wip commit") {
+                        viewModel.addManualWipCommit(for: item)
+                    }
             }
 
             if let item = viewModel.currentSelectedItem, viewModel.currentWipCommits.commits.count > 0 {

@@ -18,7 +18,7 @@ struct SelectedItemOverlay: View {
         width: CGFloat = 36,
         height: CGFloat = 36,
         color: Color = .yellow.opacity(0.6),
-        lineWidth: CGFloat = 2,
+        lineWidth: CGFloat = 1,
         cornerRadius: CGFloat = 12
     ) {
         self.width = width

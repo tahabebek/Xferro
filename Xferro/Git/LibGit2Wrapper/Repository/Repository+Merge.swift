@@ -92,7 +92,7 @@ extension Repository {
             } else {
                 return .failure(NSError(gitError: result, pointOfFailure: "git_merge_analysis_for_ref"))
             }
-        case .failure(let failure):
+        case .failure:
             return .failure(NSError(gitError: result, pointOfFailure: "git_merge_analysis_for_ref"))
         }
     }

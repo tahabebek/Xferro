@@ -1,11 +1,3 @@
-//
-//  Repository+Branch.swift
-//  MBoxGit
-//
-//  Created by Whirlwind on 2019/6/15.
-//  Copyright © 2019 com.bytedance. All rights reserved.
-//
-
 import Foundation
 
 extension Repository {
