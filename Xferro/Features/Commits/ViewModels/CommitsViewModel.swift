@@ -68,22 +68,76 @@ import OrderedCollections
 
     func deleteAllWipCommits(of item: SelectedItem) {
         let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: item.repository)
-        if Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() {
-            let worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
-            guard worktreeRepository.isWorkTree else {
-                fatalError(.illegal)
-            }
-            worktreeRepository.setHEAD(item.selectableItem.oid).mustSucceed()
+        guard Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() else {
+            fatalError(.impossible)
         }
-        currentWipCommits = .init(commits: [], title: "")
-    }
+        let worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
+        guard worktreeRepository.isWorkTree else {
+            fatalError(.illegal)
+        }
+        let initialWorktreeBranchName = WipWorktree.worktreeBranchName(item: item.selectableItem)
 
-    func deleteAllWipCommits(of branch: Branch) {
-        #if DEBUG
-        fatalError(.unimplemented)
-        #else
-        fatalError(.illegal)
-        #endif
+        let head = Head.of(worktree: initialWorktreeBranchName, in: item.repository)
+        var currentBranchName: String? = nil
+        var currentTagName: String? = nil
+
+        switch head {
+        case .branch(let branch):
+            currentBranchName = branch.longName
+        case .tag(let tagReference):
+            currentTagName = tagReference.longName
+        case .reference:
+            fatalError("Head should never be detached for a worktree.")
+            break
+        }
+
+        var shouldDeleteBranch = true
+        switch item.selectedItemType {
+        case .regular(let type):
+            switch type {
+            case .status(let status):
+                switch status.type {
+                case .branch(_, let branch):
+                    if let currentBranchName, branch.longName == currentBranchName {
+                        shouldDeleteBranch = false
+                    }
+                case .tag(_, let tagReference):
+                    if let currentTagName, tagReference.longName == currentTagName {
+                        shouldDeleteBranch = false
+
+                    }
+                case .detached:
+                    shouldDeleteBranch = false
+                }
+            case .commit(let selectableCommit):
+                if let currentBranchName, selectableCommit.branch.longName == currentBranchName {
+                    shouldDeleteBranch = false
+                }
+            case .historyCommit:
+                shouldDeleteBranch = false
+            case .detachedCommit:
+                shouldDeleteBranch = false
+            case .detachedTag:
+                shouldDeleteBranch = false
+            case .tag:
+                shouldDeleteBranch = false
+            case .stash:
+                fatalError(.invalid)
+            }
+        case .wip:
+            fatalError(.invalid)
+        }
+
+
+        let branchName = WipWorktree.worktreeBranchName(item: item.selectableItem)
+        if shouldDeleteBranch {
+            item.repository.deleteBranch(branchName).mustSucceed()
+        }
+        Task {
+            await MainActor.run {
+                currentWipCommits = .init(commits: [], title: "")
+            }
+        }
     }
 
     func addManualCommit(for item: SelectedItem) {

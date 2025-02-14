@@ -139,7 +139,7 @@ final class WipWorktree {
         case let detachedCommit as SelectableDetachedCommit:
             "\(Self.wipBranchesPrefix)for_detached_commit_\(detachedCommit.oid.description)"
         case let detachedTag as SelectableDetachedTag:
-            "\(Self.wipBranchesPrefix)for_tag_\(detachedTag.tag.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(detachedTag.oid.description)"
+            "\(Self.wipBranchesPrefix)for_detached_tag_\(detachedTag.tag.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(detachedTag.oid.description)"
         case let tag as SelectableTag:
             "\(Self.wipBranchesPrefix)for_tag_\(tag.tag.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(tag.oid.description)"
         case let historyCommit as SelectableHistoryCommit:

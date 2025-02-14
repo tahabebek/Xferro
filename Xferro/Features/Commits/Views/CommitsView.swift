@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct CommitsView: View {
-    @Environment(CommitsViewModel.self) var viewModel
-
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {

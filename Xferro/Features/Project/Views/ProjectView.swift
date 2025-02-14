@@ -14,67 +14,18 @@ struct ProjectView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-//            GeometryReader { geometry in
-                HSplitView {
-//                    GeometryReader { graphViewGeometry in
-                        CommitsView()
-                            .padding(.trailing, 6)
-//                        GitGraphView()
-//                            .environment(projectViewModel.ggViewModel)
-//                            .environment(\.graphWindowInfo, graphViewGeometry.size)
-//                            .onAppear {
-//                                print("graph geometry size : \(graphViewGeometry.size)")
-//                            }
-//                    }
-//                    TreeWrapperView(
-//                        recentered: $recentered,
-//                        currentOffset: $currentOffset,
-//                        zoomScale: $zoomScale,
-//                        onHandleStateChange: handleStateChange,
-//                        onFocusOnCommit: focusOnCommit
-//                    ) {
-//                        AnyView(
-//                            EmptyView()
-//                        )
-//                    }
-                    FileNavigatorView()
-                    PeekView()
-                }
-//            }
+            HSplitView {
+                CommitsView()
+                    .padding(.trailing, 8)
+                FileExplorerView()
+                PeekView()
+            }
         }
-    }
-
-    func handleStateChange() {
-        if recentered {
-//            if let peekCommitHash = viewModel.peekCommitHash {
-//                focusOnCommit(peekCommitHash)
-//            } else {
-//                focusOnCommit(viewModel.currentCommitHash)
-//            }
-        }
-    }
-
-    func focusOnCommit(_ commit: AnyCommit) {
-//        selectedCommitHash = nil
-//        FocusOnCommit.focusOnCommit(
-//            commitHash,
-//            viewModel: viewModel,
-//            windowInfo: windowInfo,
-//            zoomScale: zoomScale,
-//            currentOffset: $currentOffset
-//        )
-    }
-}
-
-struct FileNavigatorView: View {
-//    @Environment(ProjectViewModel.self) var projectViewModel
-    var body: some View {
-        Color.yellow.ignoresSafeArea()
     }
 }
 
 struct PeekView: View {
-//    @Environment(ProjectViewModel.self) var projectViewModel
+    //    @Environment(ProjectViewModel.self) var projectViewModel
     var body: some View {
         Color.blue.ignoresSafeArea()
     }
