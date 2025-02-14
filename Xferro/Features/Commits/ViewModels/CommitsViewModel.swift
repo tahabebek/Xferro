@@ -74,9 +74,9 @@ import OrderedCollections
         guard worktreeRepository.isWorkTree else {
             fatalError(.illegal)
         }
-        let initialWorktreeBranchName = WipWorktree.worktreeBranchName(item: item.selectableItem)
+        let worktreeName = WipWorktree.worktreeName(for: item.repository)
 
-        let head = Head.of(worktree: initialWorktreeBranchName, in: item.repository)
+        let head = Head.of(worktree: worktreeName, in: item.repository)
         var currentBranchName: String? = nil
 
         switch head {
@@ -94,22 +94,13 @@ import OrderedCollections
         switch item.selectedItemType {
         case .regular(let type):
             switch type {
-            case .status(let status):
-                switch status.type {
-                case .branch(_, let branch):
-                    if let currentBranchName, currentBranchName.contains(branch.wipName) {
-                        shouldDeleteBranch = false
-                    }
-                case .tag, .detached:
-                    shouldDeleteBranch = false
-                }
             case .commit(let selectableCommit):
                 print(selectableCommit.oid.debugOID.prefix(4))
-                print(selectableCommit.branch.wipName)
-                if let currentBranchName, currentBranchName.contains(selectableCommit.branch.wipName){
+                print(WipWorktree.worktreeBranchName(item: item.selectableItem))
+                if currentBranchName == WipWorktree.worktreeBranchName(item: item.selectableItem) {
                     shouldDeleteBranch = false
                 }
-            case .historyCommit, .detachedCommit, .detachedTag, .tag:
+            case .historyCommit, .detachedCommit, .detachedTag, .tag, .status:
                 print("something else")
                 shouldDeleteBranch = false
             case .stash:
@@ -119,12 +110,11 @@ import OrderedCollections
             fatalError(.invalid)
         }
 
-
         let branchName = WipWorktree.worktreeBranchName(item: item.selectableItem)
         if shouldDeleteBranch {
             item.repository.deleteBranch(branchName).mustSucceed()
         } else {
-
+            worktreeRepository.reset(oid: item.selectableItem.oid , type: .hard).mustSucceed()
         }
         Task {
             await MainActor.run {

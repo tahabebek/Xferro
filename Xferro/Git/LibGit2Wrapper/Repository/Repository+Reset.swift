@@ -57,4 +57,26 @@ extension Repository {
         git_object_free(object)
         return .success(())
     }
+
+    func reset(oid: OID,
+               type: ResetType = .mixed,
+               progress: CheckoutOptions.ProgressBlock? = nil) -> Result<(), NSError> {
+        lock.lock()
+        defer { lock.unlock() }
+        var object: OpaquePointer? = nil
+        var gitOid = oid.oid
+        var result = git_object_lookup(&object, self.pointer, &gitOid, GIT_OBJECT_ANY)
+        guard result == GIT_OK.rawValue else {
+            return .failure(NSError(gitError: result, pointOfFailure: "git_object_lookup"))
+        }
+
+        var options = CheckoutOptions(strategy: .Safe, progress: progress).toGit()
+
+        result = git_reset(self.pointer, object, type.git_type, &options)
+        guard result == GIT_OK.rawValue else {
+            return .failure(NSError(gitError: result, pointOfFailure: "git_reset"))
+        }
+        git_object_free(object)
+        return .success(())
+    }
 }
