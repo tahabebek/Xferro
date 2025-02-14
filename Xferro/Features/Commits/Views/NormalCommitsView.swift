@@ -17,7 +17,7 @@ struct NormalCommitsView: View {
                 VerticalHeader(title: "Repositories")
                 Spacer()
                 AddRepositoryButton()
-                Image(systemName: "cursorarrow.click.2")
+                Image(systemName: "document.on.document")
                     .frame(height: 36)
                     .contentShape(Rectangle())
                     .hoverButton("Clone a repostory") {

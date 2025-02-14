@@ -37,6 +37,7 @@ struct WipCommitsView: View {
                         }
                     }
                 }
+                .animation(.snappy, value: viewModel.currentWipCommits.commits)
                 .padding()
             }
             .background(

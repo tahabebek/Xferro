@@ -27,6 +27,21 @@ struct RepositoryView: View {
             VStack(spacing: 0) {
                 HStack {
                     Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
+                    Spacer()
+                    Image(systemName: "arrow.down")
+                        .frame(height: 36)
+                        .contentShape(Rectangle())
+                        .hoverButton("Pull changes from remote") {}
+
+                    Image(systemName: "arrow.up")
+                        .frame(height: 36)
+                        .contentShape(Rectangle())
+                        .hoverButton("Push changes to remote") {}
+                    Image(systemName: "cursorarrow.click.2")
+                        .frame(height: 36)
+                        .contentShape(Rectangle())
+                        .hoverButton("Checkout to a remote branch") {}
+                    Spacer()
                     Image(systemName: "xmark")
                         .frame(height: 36)
                         .contentShape(Rectangle())
@@ -44,45 +59,6 @@ struct RepositoryView: View {
                                 isCollapsed.toggle()
                             }
                         }
-
-                    Spacer()
-
-                        Image(systemName: "arrow.down")
-                            .frame(height: 36)
-                            .contentShape(Rectangle())
-                            .hoverButton("Pull changes from remote") {}
-
-                        Image(systemName: "arrow.up")
-                            .frame(height: 36)
-                            .contentShape(Rectangle())
-                            .hoverButton("Push changes to remote") {}
-
-                        Image(systemName: "plus")
-                            .frame(height: 36)
-                            .contentShape(Rectangle())
-                            .hoverButton("Create a new local branch") {}
-
-                        Image(systemName: "minus")
-                            .frame(height: 36)
-                            .contentShape(Rectangle())
-                            .hoverButton("Delete a local branch") {}
-
-                        Image(systemName: "cursorarrow")
-                            .frame(height: 36)
-                            .contentShape(Rectangle())
-                            .hoverButton("Checkout to a local branch") {}
-                        Image(systemName: "cursorarrow.click.2")
-                            .frame(height: 36)
-                            .contentShape(Rectangle())
-                            .hoverButton("Checkout to a remote branch") {}
-                        Image(systemName: "point.topright.filled.arrow.triangle.backward.to.point.bottomleft.scurvepath")
-                            .frame(height: 36)
-                            .contentShape(Rectangle())
-                            .hoverButton("Merge a branch into another branch") {}
-                        Image(systemName: "point.bottomleft.forward.to.arrow.triangle.uturn.scurvepath.fill")
-                            .frame(height: 36)
-                            .contentShape(Rectangle())
-                            .hoverButton("Rebase a branch into current branch") {}
                 }
                 .frame(height: 36)
                 if !isCollapsed {
@@ -131,8 +107,11 @@ struct RepositoryView: View {
     @ViewBuilder private var contentView: some View {
         switch selection {
         case .commits:
-            commitsView
-                .matchedGeometryEffect(id: "contentView", in: animation)
+            commitsView(
+                detachedTag: repositoryViewModel.repositoryInfo.detachedTag,
+                detachedCommit: repositoryViewModel.repositoryInfo.detachedCommit
+            )
+            .matchedGeometryEffect(id: "contentView", in: animation)
         case .tags:
             tagsView
                 .matchedGeometryEffect(id: "contentView", in: animation)
@@ -145,25 +124,36 @@ struct RepositoryView: View {
         }
     }
 
-    private var commitsView: some View {
-        VStack(spacing: 16) {
+    private func commitsView(
+        detachedTag: SelectableDetachedTag?,
+        detachedCommit: SelectableDetachedCommit?
+    ) -> some View {
+        guard detachedTag == nil || detachedCommit == nil else {
+            fatalError(.impossible)
+        }
+        return VStack(spacing: 16) {
             let repositoryInfo = repositoryViewModel.repositoryInfo
             let repository = repositoryInfo.repository
             let head = Head.of(repository)
             let status = SelectableStatus(repository: repository)
-            if let detachedTag = repositoryInfo.detachedTag {
+            let hasDetachedTagOrCommit = detachedTag != nil || detachedCommit != nil
+            if let detachedTag {
                 BranchView(
-                    name: detachedTag.tag.name,
+                    name: "Detached tag \(detachedTag.tag.name)",
                     selectableCommits: commitsViewModel.detachedCommits(of: detachedTag, in: repository),
                     selectableStatus: status,
-                    isCurrent: true
+                    isCurrent: true,
+                    isDetached: true,
+                    branchCount: repositoryInfo.branchInfos.count
                 )
-            } else if let detachedCommit = repositoryInfo.detachedCommit {
+            } else if let detachedCommit {
                 BranchView(
                     name: "Detached Commit",
                     selectableCommits: commitsViewModel.detachedAncestorCommitsOf(oid: detachedCommit.commit.oid, in: repository),
                     selectableStatus: status,
-                    isCurrent: true
+                    isCurrent: true,
+                    isDetached: true,
+                    branchCount: repositoryInfo.branchInfos.count
                 )
             }
             ForEach(repositoryInfo.branchInfos) { branchInfo in
@@ -171,7 +161,10 @@ struct RepositoryView: View {
                     name: branchInfo.branch.name,
                     selectableCommits: branchInfo.commits,
                     selectableStatus: status,
-                    isCurrent: commitsViewModel.isCurrentBranch(branchInfo.branch, head: head, in: repository)
+                    isCurrent: hasDetachedTagOrCommit ? false :
+                        commitsViewModel.isCurrentBranch(branchInfo.branch, head: head, in: repository),
+                    isDetached: false,
+                    branchCount: repositoryInfo.branchInfos.count
                 )
             }
         }

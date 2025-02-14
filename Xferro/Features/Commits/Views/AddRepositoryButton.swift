@@ -13,7 +13,7 @@ struct AddRepositoryButton: View {
     var body: some View {
         Image(systemName: "plus")
             .frame(height: 36) .contentShape(Rectangle())
-            .hoverButton("Add local repostory") {
+            .hoverButton("Add a repostory") {
                 showFolderSelector = true
             }
             .fileImporter(isPresented: $showFolderSelector, allowedContentTypes: [.directory], allowsMultipleSelection: false) { result in

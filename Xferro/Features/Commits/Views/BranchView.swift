@@ -16,7 +16,9 @@ struct BranchView: View {
     let name: String
     let selectableCommits: [any BranchItem]
     let selectableStatus: SelectableStatus
-    let isCurrent : Bool
+    let isCurrent: Bool
+    let isDetached: Bool
+    let branchCount: Int
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -28,16 +30,40 @@ struct BranchView: View {
                         } label: {
                             Text("Switch to \(name)")
                         }
-                        Button {
-                            viewModel.deleteBranchTapped(repository: selectableStatus.repository, branchName: name)
-                        } label: {
-                            Text("Delete \(name)")
+                        if !isDetached {
+                            Button {
+                                viewModel.deleteBranchTapped(repository: selectableStatus.repository, branchName: name)
+                            } label: {
+                                Text("Delete \(name)")
+                            }
                         }
                     }
                     Button {
                         fatalError()
                     } label: {
                         Text("Create a new branch based on \(name)")
+                    }
+                    if !isDetached, branchCount > 1 {
+                        Button {
+                            fatalError()
+                        } label: {
+                            Text("Merge a branch into \(name)")
+                        }
+                        Button {
+                            fatalError()
+                        } label: {
+                            Text("Rebase a branch into \(name)")
+                        }
+                        Button {
+                            fatalError()
+                        } label: {
+                            Text("Merge \(name) into another branch")
+                        }
+                        Button {
+                            fatalError()
+                        } label: {
+                            Text("Rebase \(name) into another branch")
+                        }
                     }
                 } label: {
                     Text(name)
@@ -70,7 +96,7 @@ struct BranchView: View {
                             }
                         } else {
                             let offset = isCurrent ? 1 : 0
-                            let item = self.selectableCommits[index - offset]
+                            let item = selectableCommits[index - offset]
                             FlaredRounded(backgroundColor: isCurrent && index - offset == 0 ? .red.opacity(0.3) : Color(hex: 0x232834).opacity(0.8)) {
                                 ZStack {
                                     Text(selectableCommits[index - offset].commit.oid.debugOID.prefix(4))
