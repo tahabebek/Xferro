@@ -8,7 +8,6 @@
 import Foundation
 
 extension Repository {
-
     var isWorkTree: Bool {
         lock.lock()
         defer { lock.unlock() }
