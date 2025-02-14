@@ -79,18 +79,18 @@ import OrderedCollections
 
         let head = Head.of(worktree: initialWorktreeBranchName, in: item.repository)
         var currentBranchName: String? = nil
-        var currentTagName: String? = nil
 
         switch head {
         case .branch(let branch):
-            currentBranchName = branch.longName
-        case .tag(let tagReference):
-            currentTagName = tagReference.longName
+            currentBranchName = branch.shortName
+        case .tag:
+            fatalError("Head should never be a tag for a worktree")
         case .reference:
             fatalError("Head should never be detached for a worktree.")
             break
         }
 
+        print(currentBranchName!)
         var shouldDeleteBranch = true
         switch item.selectedItemType {
         case .regular(let type):
@@ -98,28 +98,20 @@ import OrderedCollections
             case .status(let status):
                 switch status.type {
                 case .branch(_, let branch):
-                    if let currentBranchName, branch.longName == currentBranchName {
+                    if let currentBranchName, currentBranchName.contains(branch.wipName) {
                         shouldDeleteBranch = false
                     }
-                case .tag(_, let tagReference):
-                    if let currentTagName, tagReference.longName == currentTagName {
-                        shouldDeleteBranch = false
-
-                    }
-                case .detached:
+                case .tag, .detached:
                     shouldDeleteBranch = false
                 }
             case .commit(let selectableCommit):
-                if let currentBranchName, selectableCommit.branch.longName == currentBranchName {
+                print(selectableCommit.oid.debugOID.prefix(4))
+                print(selectableCommit.branch.wipName)
+                if let currentBranchName, currentBranchName.contains(selectableCommit.branch.wipName){
                     shouldDeleteBranch = false
                 }
-            case .historyCommit:
-                shouldDeleteBranch = false
-            case .detachedCommit:
-                shouldDeleteBranch = false
-            case .detachedTag:
-                shouldDeleteBranch = false
-            case .tag:
+            case .historyCommit, .detachedCommit, .detachedTag, .tag:
+                print("something else")
                 shouldDeleteBranch = false
             case .stash:
                 fatalError(.invalid)
@@ -132,6 +124,8 @@ import OrderedCollections
         let branchName = WipWorktree.worktreeBranchName(item: item.selectableItem)
         if shouldDeleteBranch {
             item.repository.deleteBranch(branchName).mustSucceed()
+        } else {
+
         }
         Task {
             await MainActor.run {

@@ -26,6 +26,10 @@ enum TagReference: ReferenceType, Hashable, Identifiable {
         }
     }
 
+    var wipName: String {
+        longName.replacingOccurrences(of: "/", with: "_")
+    }
+
     /// The short human-readable name of the branch (e.g., `master`).
     var name: String {
         return longName.shortRef

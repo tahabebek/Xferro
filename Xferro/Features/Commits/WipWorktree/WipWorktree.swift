@@ -128,22 +128,22 @@ final class WipWorktree {
         case let status as SelectableStatus:
             switch status.type {
             case .branch(_, let branch):
-                "\(Self.wipBranchesPrefix)for_branch_\(branch.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(branch.commit.oid.description)"
+                "\(Self.wipBranchesPrefix)for_branch_\(branch.wipName))_commit_\(branch.commit.oid.description)"
             case .tag(_, let tag):
-                "\(Self.wipBranchesPrefix)for_tag_\(tag.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(tag.oid.description)"
+                "\(Self.wipBranchesPrefix)for_tag_\(tag.wipName)_commit_\(tag.oid.description)"
             case .detached(_, let commit):
                 "\(Self.wipBranchesPrefix)for_detached_commit_\(commit.oid.description)"
             }
         case let commit as SelectableCommit:
-            "\(Self.wipBranchesPrefix)for_branch_\(commit.branch.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(commit.oid.description)"
+            "\(Self.wipBranchesPrefix)for_branch_\(commit.branch.wipName)_commit_\(commit.oid.description)"
         case let detachedCommit as SelectableDetachedCommit:
             "\(Self.wipBranchesPrefix)for_detached_commit_\(detachedCommit.oid.description)"
         case let detachedTag as SelectableDetachedTag:
-            "\(Self.wipBranchesPrefix)for_detached_tag_\(detachedTag.tag.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(detachedTag.oid.description)"
+            "\(Self.wipBranchesPrefix)for_detached_tag_\(detachedTag.tag.wipName)_commit_\(detachedTag.oid.description)"
         case let tag as SelectableTag:
-            "\(Self.wipBranchesPrefix)for_tag_\(tag.tag.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(tag.oid.description)"
+            "\(Self.wipBranchesPrefix)for_tag_\(tag.tag.wipName)_commit_\(tag.oid.description)"
         case let historyCommit as SelectableHistoryCommit:
-            "\(Self.wipBranchesPrefix)for_branch_\(historyCommit.branch.longName.replacingOccurrences(of: "/", with: "_"))_commit_\(historyCommit.oid.description)"
+            "\(Self.wipBranchesPrefix)for_branch_\(historyCommit.branch.wipName)_commit_\(historyCommit.oid.description)"
         case _ as SelectableWipCommit:
             fatalError(.illegal)
         default:
