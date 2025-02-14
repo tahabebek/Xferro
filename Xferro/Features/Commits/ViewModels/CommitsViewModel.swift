@@ -47,14 +47,13 @@ import OrderedCollections
     }
 
     func deleteWipWorktree(for repository: Repository) {
-        for worktreeName in repository.worktrees().mustSucceed() {
-            let worktreePath = repository.worktreePath(by: worktreeName).mustSucceed()
-            if worktreePath.contains("com.xferro.Xferro") {
-                print("deleting worktree...: \(repository.worktreePath(by: worktreeName).mustSucceed())")
-                _ = repository.pruneWorkTree(worktreeName, force: true).mustSucceed()
-                try! FileManager.default.removeItem(at: URL(filePath: worktreePath, directoryHint: .isDirectory))
-            }
+        let worktreeName = WipWorktree.worktreeName(for: repository)
+        guard let worktreePath = try? repository.worktreePath(by: worktreeName).get() else {
+            fatalError(.invalid)
         }
+        print("deleting worktree...: \(worktreePath)")
+        _ = repository.pruneWorkTree(worktreeName, force: true).mustSucceed()
+        try! FileManager.default.removeItem(at: URL(filePath: worktreePath, directoryHint: .isDirectory))
 
         let branchIterator = BranchIterator(repo: repository, type: .local)
         while let branch = try? branchIterator.next()?.get() {
@@ -206,7 +205,7 @@ import OrderedCollections
                 case .status:
                     let selectableItem = currentSelectedItem.selectableItem
                     let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
-                    let worktree = WipWorktree.create(for: selectableItem)
+                    let worktree = WipWorktree.getOrCreate(for: selectableItem)
                     if let worktree, worktree.getBranch(branchName: branchName) == nil {
                         worktree.createBranch(branchName: branchName, oid: selectableItem.oid)
                         worktree.checkout(branchName: branchName)
@@ -229,7 +228,7 @@ import OrderedCollections
                         }
                     }
                 default:
-                    guard let worktree = WipWorktree.create(for: currentSelectedItem.selectableItem),
+                    guard let worktree = WipWorktree.getOrCreate(for: currentSelectedItem.selectableItem),
                           worktree.getBranch(branchName: WipWorktree.worktreeBranchName(item: currentSelectedItem.selectableItem)) != nil
                     else {
                         Task {
@@ -333,7 +332,7 @@ import OrderedCollections
         guard autoCommitEnabled else { return }
         let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: repository)
         let selectableItem = SelectableStatus(repository: repository)
-        guard let worktree = WipWorktree.create(for: selectableItem) else { return }
+        guard let worktree = WipWorktree.getOrCreate(for: selectableItem) else { return }
         let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
         if worktree.getBranch(branchName: branchName) == nil {
             worktree.createBranch(branchName: branchName, oid: selectableItem.oid)

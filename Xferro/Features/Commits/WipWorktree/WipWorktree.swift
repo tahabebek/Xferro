@@ -12,12 +12,20 @@ final class WipWorktree {
     static let wipWorktreeFolder = "wip_worktrees"
     static let wipCommitMessage = "com.xferro.wip"
     let worktreeRepository: Repository
-    let initialBranchName: String
-    let initialCommit: OID
 
-    static func create(for item: any SelectableItem) -> WipWorktree? {
+    static func worktreeName(for originalRepository: Repository) -> String {
+        Self.worktreeRepositoryURL(originalRepository: originalRepository).path.replacingOccurrences(of: "file://", with: "").replacingOccurrences(of: "/", with: "_")
+    }
+
+    static func get(for originalRepository: Repository) -> WipWorktree? {
+        guard let worktreeRepository = originalRepository.worktree(named: worktreeName(for: originalRepository)).mustSucceed()
+        else { return nil }
+        return WipWorktree(worktreeRepository: worktreeRepository)
+    }
+
+    static func getOrCreate(for item: any SelectableItem) -> WipWorktree? {
         let worktreeRepositoryURL =  worktreeRepositoryURL(originalRepository: item.repository)
-        let initialWorktreeBranchName = worktreeBranchName(item: item)
+        let branchName = worktreeBranchName(item: item)
 
         let head =  item.repository.HEAD().mustSucceed()
         var createRepoOID: OID?
@@ -61,37 +69,25 @@ final class WipWorktree {
             fatalError(.unimplemented)
         }
 
-        if let createRepoOID {
+        let worktreeName = worktreeName(for: item.repository)
+        if createRepoOID != nil {
             let worktreeRepository: Repository
-            if Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() {
-                worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
-                guard worktreeRepository.isWorkTree else {
-                    fatalError(.illegal)
-                }
+            if let existingWorktreeRepository = item.repository.worktree(named: worktreeName).mustSucceed() {
+                worktreeRepository = existingWorktreeRepository
             } else {
+                let newBranch = item.repository.createBranch(branchName).mustSucceed()
                 item.repository
                     .addWorkTree(
-                        name: initialWorktreeBranchName,
+                        name: worktreeName,
                         path: worktreeRepositoryURL.path(percentEncoded: false)
                     ).mustSucceed()
                 worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
+                worktreeRepository.checkout(newBranch.longName).mustSucceed()
             }
-            return WipWorktree(
-                worktreeRepository: worktreeRepository,
-                initialBranchName: initialWorktreeBranchName,
-                initialCommit: createRepoOID
-            )
-        } else if let getRepoOID {
-            if Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() {
-                let worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
-                guard worktreeRepository.isWorkTree else {
-                    fatalError(.illegal)
-                }
-                return WipWorktree(
-                    worktreeRepository: worktreeRepository,
-                    initialBranchName: initialWorktreeBranchName,
-                    initialCommit: getRepoOID
-                )
+            return WipWorktree(worktreeRepository: worktreeRepository)
+        } else if getRepoOID != nil {
+            if let existingWorktreeRepository = item.repository.worktree(named: worktreeName).mustSucceed() {
+                return WipWorktree(worktreeRepository: existingWorktreeRepository)
             }
             else {
                 return nil
@@ -101,14 +97,8 @@ final class WipWorktree {
         }
     }
 
-    private init(
-        worktreeRepository: Repository,
-        initialBranchName: String,
-        initialCommit: OID
-    ) {
+    private init(worktreeRepository: Repository) {
         self.worktreeRepository = worktreeRepository
-        self.initialBranchName = initialBranchName
-        self.initialCommit = initialCommit
     }
 
     static func worktreeRepositoryURL(originalRepository: Repository)  -> URL {
@@ -128,7 +118,7 @@ final class WipWorktree {
         case let status as SelectableStatus:
             switch status.type {
             case .branch(_, let branch):
-                "\(Self.wipBranchesPrefix)for_branch_\(branch.wipName))_commit_\(branch.commit.oid.description)"
+                "\(Self.wipBranchesPrefix)for_branch_\(branch.wipName)_commit_\(branch.commit.oid.description)"
             case .tag(_, let tag):
                 "\(Self.wipBranchesPrefix)for_tag_\(tag.wipName)_commit_\(tag.oid.description)"
             case .detached(_, let commit):

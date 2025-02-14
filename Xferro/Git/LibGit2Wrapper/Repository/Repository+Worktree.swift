@@ -54,12 +54,43 @@ extension Repository {
         }
     }
 
-    func worktreePath(by name: String) -> Result<String, NSError> {
+    func worktree(named name: String) -> Result<Repository?, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
+
+        let pathResult = worktreePath(by: name)
+        var path: String?
+        switch pathResult {
+        case .success(let thePath):
+            path = thePath
+        case .failure(let error):
+            return .failure(error)
+        }
+
+        guard let path, let url = URL(string: path) else {
+            return .success(nil)
+        }
+
+        guard let repository = try? Repository.at(url).get() else {
+            return .success(nil)
+        }
+
+        guard repository.isWorkTree else {
+            fatalError(.illegal)
+        }
+
+        return .success(repository)
+    }
+
+    func worktreePath(by name: String) -> Result<String?, NSError> {
         lock.lock()
         defer { lock.unlock() }
         var wtPointer: OpaquePointer? = nil
 
         let result = git_worktree_lookup(&wtPointer, self.pointer, name)
+        if result == GIT_ENOTFOUND.rawValue {
+            return .success(nil)
+        }
         guard result == GIT_OK.rawValue else {
             return .failure(NSError(gitError: result, pointOfFailure: "git_worktree_lookup"))
         }
@@ -129,9 +160,8 @@ extension Repository {
         }
     }
 
-    func addWorkTree(name: String, path: String, head: String? = nil, checkout: Bool = true) -> Result<Void, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+    func addWorkTree(name: String, path: String, head: String? = nil, checkout: Bool = true) -> Result<(), NSError> {
+
         let checkoutOptions  = UnsafeMutablePointer<git_checkout_options>.allocate(capacity: 1)
         defer { checkoutOptions.deallocate() }
         var result = git_checkout_options_init(checkoutOptions, UInt32(GIT_CHECKOUT_OPTIONS_VERSION))
@@ -179,8 +209,8 @@ extension Repository {
                 return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_head"))
             }
             let oid = git_reference_target(ref)
-            let branch = "refs/heads/\(name)"
-            result = git_reference_create(&reference, self.pointer, branch, oid, 0, "Xferro Wip Branch \(name)")
+            let tmpBranch = "refs/heads/Xferro-TMP-\(UUID().uuidString.prefix(6))"
+            result = git_reference_create(&reference, self.pointer, tmpBranch, oid, 0, "Xferro TMP Branch")
             guard result == GIT_OK.rawValue else {
                 return Result.failure(NSError(gitError: result, pointOfFailure: "git_reference_create"))
             }
