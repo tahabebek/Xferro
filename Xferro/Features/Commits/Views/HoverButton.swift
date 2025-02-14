@@ -23,7 +23,7 @@ struct HoverButton: ViewModifier {
         .onHover { flag in
             if flag {
                 hoverTask = Task {
-                    try? await Task.sleep(for: .seconds(0.25))
+                    try? await Task.sleep(for: .seconds(1.0))
                     if !Task.isCancelled {
                         isHovering = true
                     }

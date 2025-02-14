@@ -30,7 +30,6 @@ struct WipCommitsView: View {
                             Label(viewModel.currentWipCommits.title, systemImage: "w.square")
                             Spacer()
                         }
-                        .frame(height: 36)
                         LazyVGrid(columns: columns) {
                             ForEach(viewModel.currentWipCommits.commits) { selectableWipCommit in
                                 wipRectangle(item: selectableWipCommit)

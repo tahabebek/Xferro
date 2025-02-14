@@ -21,9 +21,11 @@ struct NormalCommitsView: View {
                     .frame(height: 36)
                     .contentShape(Rectangle())
                     .hoverButton("Clone a repostory") {
-                        // TODO:
+                        fatalError()
                     }
             }
+            .frame(height: 36)
+            .fixedSize()
         } content: {
             VStack(alignment: .leading, spacing: 16) {
                 ForEach(viewModel.currentRepositoryInfos.values.elements) { repositoryInfo in
@@ -32,8 +34,14 @@ struct NormalCommitsView: View {
                         .environment(viewModel.repositoryViewModel(for: repositoryInfo.repository))
                 }
                 if viewModel.currentRepositoryInfos.count == 0 {
-                    Text("No repositories found.")
-                    AddRepositoryButton()
+                    HStack {
+                        Spacer()
+                        VStack {
+                            Text("No repositories found.")
+                            AddRepositoryButton()
+                        }
+                        Spacer()
+                    }
                 }
                 Spacer()
             }

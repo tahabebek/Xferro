@@ -8,7 +8,7 @@
 import Foundation
 
 struct DataManager {
-    static let appDirPath = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("com.xferro.Xferro").standardized.path
+    static let appDirPath = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("com.xferro.Xferro").standardized.path
     static let appDir = URL(fileURLWithPath: Self.appDirPath, isDirectory: true)
 
     static func save<T: Encodable>(_ object: T, filename: String) {

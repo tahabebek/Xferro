@@ -10,6 +10,7 @@ import Foundation
 class Repository: Identifiable, Equatable {
     static let staticLock = NSRecursiveLock()
     let lock = NSRecursiveLock()
+    var id: ObjectIdentifier { ObjectIdentifier(self) }
 
     static func == (lhs: Repository, rhs: Repository) -> Bool {
         lhs.pointer == rhs.pointer

@@ -8,8 +8,9 @@
 import Foundation
 
 final class WipWorktree {
-    static let wipBranchesPrefix = "_xferro_wip_commits_"
+    static let wipBranchesPrefix = "com.xferro_wip_commits_"
     static let wipWorktreeFolder = "wip_worktrees"
+    static let wipCommitMessage = "com.xferro.wip"
     let worktreeRepository: Repository
     let initialBranchName: String
     let initialCommit: OID
@@ -173,7 +174,7 @@ final class WipWorktree {
 
     @discardableResult
     func commit() -> Commit {
-        worktreeRepository.commit(message: "Wip").mustSucceed()
+        worktreeRepository.commit(message: Self.wipCommitMessage).mustSucceed()
     }
 
     func commits(of branchName: String, stop: OID) -> [SelectableWipCommit] {

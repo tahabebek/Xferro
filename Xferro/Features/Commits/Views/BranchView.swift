@@ -21,19 +21,36 @@ struct BranchView: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .verticalAlignment) {
-                VStack(spacing: 0) {
+                Menu {
+                    if !isCurrent {
+                        Button {
+                            fatalError()
+                        } label: {
+                            Text("Switch to \(name)")
+                        }
+                        Button {
+                            viewModel.deleteBranchTapped(repository: selectableStatus.repository, branchName: name)
+                        } label: {
+                            Text("Delete \(name)")
+                        }
+                    }
+                    Button {
+                        fatalError()
+                    } label: {
+                        Text("Create a new branch based on \(name)")
+                    }
+                } label: {
                     Text(name)
                         .padding(.vertical, 2)
                         .padding(.horizontal, 4)
                         .background(isCurrent ? Color.red.opacity(0.3) : Color.gray.opacity(0.3))
                         .cornerRadius(4)
-                        .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                        .frame(maxWidth: 160)
                         .lineLimit(1)
                         .alignmentGuide(.verticalAlignment, computeValue: { d in
                             d[VerticalAlignment.center] }
                         )
                 }
+                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                 CirclesWithArrows(numberOfCircles: isCurrent ? selectableCommits.count + 1 : selectableCommits.count) { index in
                     ZStack {
                         if isCurrent && index == 0 {

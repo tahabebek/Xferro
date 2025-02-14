@@ -25,16 +25,14 @@ import OrderedCollections
     var currentSelectedItem: SelectedItem? {
         didSet {
             updateWipCommitsForCurrentSelectedItem()
-            print("selectableItem: ", currentSelectedItem?.selectableItem)
         }
     }
-
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
     var currentWipCommits: CurrentWipCommits = CurrentWipCommits(commits: [], title: "")
     private var gitFolderWatchers: [String: FolderWatcher] = [:]
     private var repsositoryFolderWatchers: [String: FolderWatcher] = [:]
     private let userDidSelectFolder: (URL) -> Void
-    private var onGitFolderChangeObservers: Set<AnyCancellable> = []
+    private var folderChangeObservers: Set<AnyCancellable> = []
 
     init(repositories: [Repository], userDidSelectFolder: @escaping (URL) -> Void) {
         if UserDefaults.standard.object(forKey: "autoCommitEnabled") == nil {
@@ -44,9 +42,52 @@ import OrderedCollections
         }
         self.userDidSelectFolder = userDidSelectFolder
         for repository in repositories {
-            self.addRepository(repository)
+            addRepository(repository)
         }
-        setupInitialCurrentSelectedItem()
+    }
+
+    func deleteWipWorktree(for repository: Repository) {
+        for worktreeName in repository.worktrees().mustSucceed() {
+            let worktreePath = repository.worktreePath(by: worktreeName).mustSucceed()
+            if worktreePath.contains("com.xferro.Xferro") {
+                print("deleting worktree...: \(repository.worktreePath(by: worktreeName).mustSucceed())")
+                _ = repository.pruneWorkTree(worktreeName, force: true).mustSucceed()
+                try! FileManager.default.removeItem(at: URL(filePath: worktreePath, directoryHint: .isDirectory))
+            }
+        }
+
+        let branchIterator = BranchIterator(repo: repository, type: .local)
+        while let branch = try? branchIterator.next()?.get() {
+            if branch.name.hasPrefix(WipWorktree.wipBranchesPrefix) {
+                print("deleting branch...: \(branch.name)")
+                repository.deleteBranch(branch.name).mustSucceed()
+            }
+        }
+        currentWipCommits = .init(commits: [], title: "")
+    }
+
+    func deleteAllWipCommits(of item: SelectedItem) {
+        let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: item.repository)
+        if Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() {
+            let worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
+            guard worktreeRepository.isWorkTree else {
+                fatalError(.illegal)
+            }
+            worktreeRepository.setHEAD(item.selectableItem.oid).mustSucceed()
+        }
+        currentWipCommits = .init(commits: [], title: "")
+    }
+
+    func deleteAllWipCommits(of branch: Branch) {
+        #if DEBUG
+        fatalError(.unimplemented)
+        #else
+        fatalError(.illegal)
+        #endif
+    }
+
+    func addManualCommit(for item: SelectedItem) {
+
     }
 
     func addRepository(_ repository: Repository) {
@@ -65,21 +106,28 @@ import OrderedCollections
     }
 
     func repositoryViewModel(for repository: Repository) -> RepositoryViewModel {
-        guard let repositoryInfo = currentRepositoryInfos[keyForRepository(repository)] else {
+        guard let repositoryInfo = currentRepositoryInfos[keyForRepositoryInfos(repository)] else {
             fatalError(.unexpected)
         }
         return RepositoryViewModel(repositoryInfo: repositoryInfo)
     }
 
-    private func keyForRepository(_ repository: Repository) -> String {
-        return repository.gitDir.path
+    private func keyForRepositoryGitWatch(_ repository: Repository) -> String {
+        String(repository.id.hashValue)
+    }
+    private func keyForRepositoryFolderWatch(_ repository: Repository) -> String {
+        String(repository.id.hashValue)
+    }
+    private func keyForRepositoryInfos(_ repository: Repository) -> String {
+        String(repository.id.hashValue)
     }
 
     private func updateRepositoryInfo(_ repository: Repository) {
         Task {
             await MainActor.run {
                 let repositoryInfo = getRepositoryInfo(repository)
-                currentRepositoryInfos[keyForRepository(repository)] = repositoryInfo
+                currentRepositoryInfos[keyForRepositoryInfos(repository)] = repositoryInfo
+                setupInitialCurrentSelectedItem()
             }
         }
     }
@@ -167,7 +215,7 @@ import OrderedCollections
     }
 
     private func setupGitObserver(for repository: Repository) {
-        let key = keyForRepository(repository)
+        let key = keyForRepositoryGitWatch(repository)
         if gitFolderWatchers[key] == nil {
             let gitDir = repository.gitDir
             let changeObserver = PassthroughSubject<Void, Never>()
@@ -183,7 +231,7 @@ import OrderedCollections
                         }
                     }
                 }
-                .store(in: &onGitFolderChangeObservers)
+                .store(in: &folderChangeObservers)
 
             gitFolderWatchers[key] = FolderWatcher(
                 folder: gitDir,
@@ -213,37 +261,43 @@ import OrderedCollections
     }
 
     private func setupFolderObserver(for repository: Repository) {
-        let key = keyForRepository(repository)
+        let key = keyForRepositoryFolderWatch(repository)
         if repsositoryFolderWatchers[key] == nil {
             let changeObserver = PassthroughSubject<Void, Never>()
-            let key = keyForRepository(repository)
             changeObserver
                 .debounce(for: 1, scheduler: RunLoop.main)
                 .sink { [weak self] in
                     guard let self else { return }
                     handleFolderWatchUpdate(repository: repository)
                 }
-                .store(in: &onGitFolderChangeObservers)
+                .store(in: &folderChangeObservers)
 
             repsositoryFolderWatchers[key] = FolderWatcher(
                 folder: repository.gitDir.deletingLastPathComponent(),
                 excludingPaths: [repository.gitDir.path],
-                onChangeObserver: changeObserver)
+                onChangeObserver: changeObserver
+            )
 
         }
     }
 
     private func handleFolderWatchUpdate(repository: Repository) {
+        guard autoCommitEnabled else { return }
         let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: repository)
         let selectableItem = SelectableStatus(repository: repository)
         guard let worktree = WipWorktree.create(for: selectableItem) else { return }
+        let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
+        if worktree.getBranch(branchName: branchName) == nil {
+            worktree.createBranch(branchName: branchName, oid: selectableItem.oid)
+            worktree.checkout(branchName: branchName)
+        }
         let statusEntries = repository.status().mustSucceed()
         let wipWorktreePath = worktreeRepositoryURL.path
         for statusEntry in statusEntries {
             let originalRepoPath = repository.gitDir.deletingLastPathComponent().path
             for (oldPath, newPath) in getPaths(from: statusEntry) {
                 print("-------------------------")
-                print("oldPath: \(oldPath), newPath: \(newPath)")
+                print("oldPath: \(oldPath ?? "nil"), newPath: \(newPath)")
                 let status = statusEntry.status
                 if status.contains(.indexNew) || status.contains(.workTreeNew) {
                     if let newPath {
@@ -381,6 +435,10 @@ import OrderedCollections
         }
     }
 
+    func deleteBranchTapped(repository: Repository, branchName: String) {
+        repository.deleteBranch(branchName).mustSucceed()
+    }
+
     func isSelected(item: any SelectableItem) -> Bool {
         switch item {
         case let status as SelectableStatus:
@@ -448,19 +506,20 @@ import OrderedCollections
 
             UserDefaults.standard.set(bookmarkData, forKey: folder.path)
         } catch {
-            print("Failed to create bookmark: \(error)")
+            fatalError("Failed to create bookmark: \(error)")
         }
 
         folder.stopAccessingSecurityScopedResource()
         userDidSelectFolder(folder)
     }
+
     func deleteRepositoryButtonTapped(_ repository: Repository) {
-        guard currentRepositoryInfos[keyForRepository(repository)] != nil else {
+        guard currentRepositoryInfos[keyForRepositoryInfos(repository)] != nil else {
             fatalError(.unexpected)
         }
         Task {
             await MainActor.run {
-                currentRepositoryInfos[keyForRepository(repository)] = nil
+                currentRepositoryInfos[keyForRepositoryInfos(repository)] = nil
             }
         }
 
