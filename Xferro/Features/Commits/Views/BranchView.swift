@@ -105,7 +105,7 @@ struct BranchView: View {
                                         .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                                 }
                             }
-                            .onTapGesture {
+                            .hoverableButton(item.commit.summary) {
                                 viewModel.userTapped(item: item)
                             }
                             if viewModel.isSelected(item: item) {

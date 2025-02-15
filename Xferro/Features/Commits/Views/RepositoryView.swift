@@ -31,21 +31,21 @@ struct RepositoryView: View {
                     Image(systemName: "arrow.down")
                         .frame(height: 36)
                         .contentShape(Rectangle())
-                        .hoverButton("Pull changes from remote") {}
+                        .hoverableButton("Pull changes from remote") {}
 
                     Image(systemName: "arrow.up")
                         .frame(height: 36)
                         .contentShape(Rectangle())
-                        .hoverButton("Push changes to remote") {}
+                        .hoverableButton("Push changes to remote") {}
                     Image(systemName: "cursorarrow.click.2")
                         .frame(height: 36)
                         .contentShape(Rectangle())
-                        .hoverButton("Checkout to a remote branch") {}
+                        .hoverableButton("Checkout to a remote branch") {}
                     Spacer()
                     Image(systemName: "xmark")
                         .frame(height: 36)
                         .contentShape(Rectangle())
-                        .hoverButton("Remove Repository") {
+                        .hoverableButton("Remove Repository") {
                             withAnimation(.easeInOut) {
                                 commitsViewModel.deleteRepositoryButtonTapped(repositoryViewModel.repositoryInfo.repository)
                             }
@@ -54,7 +54,7 @@ struct RepositoryView: View {
                         .frame(height: 36)
                         .rotationEffect(Angle(degrees: !isCollapsed ? -180 : 0))
                         .contentShape(Rectangle())
-                        .hoverButton(isCollapsed ? "Expand" : "Collapse") {
+                        .hoverableButton(isCollapsed ? "Expand" : "Collapse") {
                             withAnimation(.easeInOut) {
                                 isCollapsed.toggle()
                             }

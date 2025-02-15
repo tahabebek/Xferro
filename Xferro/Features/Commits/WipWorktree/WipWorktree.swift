@@ -12,6 +12,7 @@ final class WipWorktree {
     static let wipWorktreeFolder = "wip_worktrees"
     static let wipCommitMessage = "com.xferro.wip"
     let worktreeRepository: Repository
+    let originalRepository: Repository
 
     static func worktreeName(for originalRepository: Repository) -> String {
         Self.worktreeRepositoryURL(originalRepository: originalRepository).path.replacingOccurrences(of: "file://", with: "").replacingOccurrences(of: "/", with: "_")
@@ -20,7 +21,7 @@ final class WipWorktree {
     static func get(for originalRepository: Repository) -> WipWorktree? {
         guard let worktreeRepository = originalRepository.worktree(named: worktreeName(for: originalRepository)).mustSucceed()
         else { return nil }
-        return WipWorktree(worktreeRepository: worktreeRepository)
+        return WipWorktree(worktreeRepository: worktreeRepository, originalRepository: originalRepository)
     }
 
     static func getOrCreate(for item: any SelectableItem) -> WipWorktree? {
@@ -84,10 +85,10 @@ final class WipWorktree {
                 worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
                 worktreeRepository.checkout(newBranch.longName).mustSucceed()
             }
-            return WipWorktree(worktreeRepository: worktreeRepository)
+            return WipWorktree(worktreeRepository: worktreeRepository, originalRepository: item.repository)
         } else if getRepoOID != nil {
             if let existingWorktreeRepository = item.repository.worktree(named: worktreeName).mustSucceed() {
-                return WipWorktree(worktreeRepository: existingWorktreeRepository)
+                return WipWorktree(worktreeRepository: existingWorktreeRepository, originalRepository: item.repository)
             }
             else {
                 return nil
@@ -97,8 +98,9 @@ final class WipWorktree {
         }
     }
 
-    private init(worktreeRepository: Repository) {
+    private init(worktreeRepository: Repository, originalRepository: Repository) {
         self.worktreeRepository = worktreeRepository
+        self.originalRepository = originalRepository
     }
 
     static func worktreeRepositoryURL(originalRepository: Repository)  -> URL {
@@ -176,7 +178,7 @@ final class WipWorktree {
 
         let commitIterator = CommitIterator(repo: worktreeRepository, root: branch.oid.oid)
         while let commit = try? commitIterator.next()?.get() {
-            commits.append(SelectableWipCommit(repository: worktreeRepository, commit: commit))
+            commits.append(SelectableWipCommit(repository: originalRepository, commit: commit))
             if commit.oid == stop {
                 break
             }

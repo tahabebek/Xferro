@@ -11,6 +11,6 @@ import Observation
 @Observable class UsersLoader {
     var users: Users?
     func loadUsers() {
-        users = DataManager.load(Users.self, filename: Constants.usersFileName)
+        users = DataManager.load(Users.self, filename: DataManager.usersFileName)
     }
 }

@@ -5,27 +5,30 @@
 //  Created by Taha Bebek on 1/12/25.
 //
 
+import Foundation
+
 struct StatusEntry: CustomDebugStringConvertible {
+    var id: String { UUID().uuidString }
     var status: Diff.Status
-    var stagedChanges: Diff.Delta?
-    var unstagedChanges: Diff.Delta?
+    var stagedDelta: Diff.Delta?
+    var unstagedDelta: Diff.Delta?
 
     init(from statusEntry: git_status_entry) {
         self.status = Diff.Status(rawValue: statusEntry.status.rawValue)
 
         if let htoi = statusEntry.head_to_index {
-            self.stagedChanges = Diff.Delta(htoi.pointee)
+            self.stagedDelta = Diff.Delta(htoi.pointee)
         }
 
         if let itow = statusEntry.index_to_workdir {
-            self.unstagedChanges = Diff.Delta(itow.pointee)
+            self.unstagedDelta = Diff.Delta(itow.pointee)
         }
     }
 
     var debugDescription: String {
         var desc = "StatusEntry(status: \(status)"
-        if let stagedChanges { desc += ", stagedChanges: \(stagedChanges)" }
-        if let unstagedChanges { desc += ", unstagedChanges: \(unstagedChanges))" }
+        if let stagedDelta { desc += ", stagedDelta: \(stagedDelta)" }
+        if let unstagedDelta { desc += ", unstagedDelta: \(unstagedDelta))" }
         return desc
     }
 }
@@ -35,7 +38,9 @@ struct Diff {
     /// The set of deltas.
     var deltas = [Delta]()
 
-    struct Delta: CustomDebugStringConvertible {
+    struct Delta: CustomDebugStringConvertible, Identifiable {
+        var id: String { statusName + flags.debugDescription + (oldFile?.path ?? "") + (newFile?.path ?? "") }
+
         enum Status: UInt32, CustomDebugStringConvertible {
             case unmodified     = 0     /**< no changes */
             case added          = 1     /**< entry does not exist in old version */

@@ -83,7 +83,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @MainActor private func saveBeforeQuit() {
         if let users = Self.users {
-            DataManager.save(users, filename: Constants.usersFileName)
+            DataManager.save(users, filename: DataManager.usersFileName)
         }
         git_libgit2_shutdown()
         let app = NSApplication.shared

@@ -20,7 +20,7 @@ extension Repository {
                     return true
                 }
                 return false
-            }).compactMap { $0.unstagedChanges?.newFile?.path }
+            }).compactMap { $0.unstagedDelta?.newFile?.path }
             if !options.contains(.dryRun) {
                 for path in s {
                     if let block = shouldRemove, !block(path) {

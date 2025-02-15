@@ -12,7 +12,7 @@ struct WipHeaderView: View {
 
     var body: some View {
         HStack {
-            VerticalHeader(title: "Wip Commits")
+            VerticalHeader(title: viewModel.autoCommitEnabled ? "AutoWip Commits" :"Wip Commits")
             Toggle("Auto", isOn: Binding<Bool>(
                 get: { viewModel.autoCommitEnabled },
                 set: { viewModel.autoCommitEnabled = $0 }
@@ -21,26 +21,29 @@ struct WipHeaderView: View {
                 Image(systemName: "plus")
                     .frame(height: 36)
                     .contentShape(Rectangle())
-                    .hoverButton("Create wip commit") {
+                    .hoverableButton("Create wip commit") {
                         viewModel.addManualWipCommit(for: item)
                     }
             }
 
-            if let item = viewModel.currentSelectedItem, viewModel.currentWipCommits.commits.count > 0 {
-                Image(systemName: "eraser")
-                    .frame(height: 36)
-                    .contentShape(Rectangle())
-                    .hoverButton("Delete all the wip commits for the commit '\(item.selectableItem.oid.debugOID.prefix(4))'") {
-                        viewModel.deleteAllWipCommits(of: item)
+            if let currentSelectedItem = viewModel.currentSelectedItem {
+                if case .regular = currentSelectedItem.selectedItemType {
+                    if viewModel.currentWipCommits.commits.count > 0 {
+                        Image(systemName: "eraser")
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                            .hoverableButton("Delete all the wip commits for the commit '\(currentSelectedItem.selectableItem.oid.debugOID.prefix(4))'") {
+                                viewModel.deleteAllWipCommits(of: currentSelectedItem)
+                            }
                     }
-            }
-            if let item = viewModel.currentSelectedItem {
-                Image(systemName: "trash")
-                    .frame(height: 36)
-                    .contentShape(Rectangle())
-                    .hoverButton("Delete all the wip commits in '\(item.repository.nameOfRepo)' repository") {
-                        viewModel.deleteWipWorktree(for: item.repository)
-                    }
+
+                    Image(systemName: "trash")
+                        .frame(height: 36)
+                        .contentShape(Rectangle())
+                        .hoverableButton("Delete all the wip commits in '\(currentSelectedItem.repository.nameOfRepo)' repository") {
+                            viewModel.deleteWipWorktree(for: currentSelectedItem.repository)
+                        }
+                }
             }
         }
         .frame(height: 36)

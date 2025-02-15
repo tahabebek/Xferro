@@ -20,7 +20,7 @@ struct NormalCommitsView: View {
                 Image(systemName: "document.on.document")
                     .frame(height: 36)
                     .contentShape(Rectangle())
-                    .hoverButton("Clone a repostory") {
+                    .hoverableButton("Clone a repostory") {
                         fatalError()
                     }
             }

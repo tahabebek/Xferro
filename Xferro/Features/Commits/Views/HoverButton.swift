@@ -11,11 +11,11 @@ struct HoverButton: ViewModifier {
     @State private var isHovering = false
     @State var hoverTask: Task<Void, Never>?
     let hoverText: String
-    let action: () -> Void
+    let action: (() -> Void)?
 
     func body(content: Content) -> some View {
         Button {
-            action()
+            action?()
         } label: {
             content
         }
@@ -42,9 +42,9 @@ struct HoverButton: ViewModifier {
 }
 
 extension View {
-    func hoverButton(
+    func hoverableButton(
         _ hoverText: String,
-        action: @escaping () -> Void
+        action: (() -> Void)? = nil
     ) -> some View {
         modifier(HoverButton(hoverText: hoverText, action: action))
     }

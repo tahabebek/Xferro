@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ProjectView: View {
+    @Environment(CommitsViewModel.self) var commitsViewModel
     @State var recentered: Bool = true
     @State var currentOffset: CGPoint = .zero
     @State var zoomScale: CGFloat = 1.0
@@ -16,8 +17,10 @@ struct ProjectView: View {
         VStack(spacing: 0) {
             HSplitView {
                 CommitsView()
-                    .padding(.trailing, 8)
-                FileExplorerView()
+                    .padding(.trailing, 6)
+                SelectableItemDetailView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .environment(commitsViewModel.detailsViewModel)
                 PeekView()
             }
         }

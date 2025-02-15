@@ -112,10 +112,10 @@ struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
 }
 
 struct SelectableWipCommit: SelectableItem, Identifiable {
-    var id: String { repository.idOfRepo + commit.id }
+    var id: String { repository.gitDir.deletingLastPathComponent().deletingLastPathComponent().lastPathComponent + commit.id }
     let repository: Repository
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo))'" }
+    var wipDescription: String { fatalError(.unavailable) }
     var oid: OID { commit.oid }
 }
 
@@ -123,7 +123,7 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
     var id: String { repository.idOfRepo + commit.id }
     let repository: Repository
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo))'" }
+    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { commit.oid }
 }
 
@@ -131,7 +131,7 @@ struct SelectableDetachedTag: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + tag.id }
     let repository: Repository
     let tag: TagReference
-    var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo))'" }
+    var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { tag.oid }
 }
 
@@ -148,7 +148,7 @@ struct SelectableTag: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + tag.id }
     let repository: Repository
     let tag: TagReference
-    var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo))'" }
+    var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { tag.oid }
 }
 
@@ -156,7 +156,7 @@ struct SelectableStash: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + stash.id.formatted() }
     let repository: Repository
     let stash: Stash
-    var wipDescription: String { "'\(stash.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo))'" }
+    var wipDescription: String { "'\(stash.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { stash.oid }
 }
 
