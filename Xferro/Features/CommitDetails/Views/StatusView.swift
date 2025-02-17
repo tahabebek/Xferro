@@ -16,18 +16,34 @@ struct StatusView: View {
     @State private var commitSummary: String = ""
 
     var body: some View {
-        VStack {
-            VerticalHeader(title: statusViewModel.selectableStatus.repository.nameOfRepo)
-                .frame(height: 36)
-            VSplitView {
-                changeBox
-                    .layoutPriority(1)
-                    .padding(.bottom, 4)
-                commitBox
-                    .padding(.top, 4)
+        VSplitView {
+            changeBox
+                .layoutPriority(1)
+                .padding(.bottom, 4)
+            commitBox
+                .padding(.top, 4)
+        }
+        .onAppear {
+            if currentSelectedItem == nil {
+                setInitialSelection()
+            }
+        }
+        .onChange(of: statusViewModel.selectableStatus) { oldValue, newValue in
+            if oldValue.oid != newValue.oid {
+                setInitialSelection()
             }
         }
         .padding(.horizontal, 6)
+    }
+
+    private func setInitialSelection() {
+        if let firstItem = statusViewModel.stagedDeltaInfos.first {
+            currentSelectedItem = firstItem
+        } else if let firstItem = statusViewModel.unstagedDeltaInfos.first {
+            currentSelectedItem = firstItem
+        } else if let firstItem = statusViewModel.untrackedDeltaInfos.first {
+            currentSelectedItem = firstItem
+        }
     }
 
     private var changeBox: some View {
@@ -98,7 +114,6 @@ struct StatusView: View {
                         .labelsHidden()
                         rowForDeltaInfo(deltaInfo)
                     }
-                    .background(currentSelectedItem == deltaInfo ? Color.accentColor.opacity(0.7) : Color.clear)
                 }
             }
         } header: {
@@ -144,7 +159,6 @@ struct StatusView: View {
                         .labelsHidden()
                         rowForDeltaInfo(deltaInfo)
                     }
-                    .background(currentSelectedItem == deltaInfo ? Color.accentColor.opacity(0.7) : Color.clear)
                 }
             }
         } header: {
@@ -191,7 +205,6 @@ struct StatusView: View {
                         .labelsHidden()
                         rowForDeltaInfo(deltaInfo)
                     }
-                    .background(currentSelectedItem == deltaInfo ? Color.accentColor.opacity(0.7) : Color.clear)
                 }
             }
         } header: {
@@ -229,6 +242,7 @@ struct StatusView: View {
                     HStack {
                         Image(systemName: "a.square").foregroundColor(Color.green)
                         Text(newFileName)
+                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
                         Spacer()
                     }
                 } else {
@@ -239,6 +253,7 @@ struct StatusView: View {
                     HStack {
                         Image(systemName: "d.square").foregroundColor(Color.red)
                         Text(oldFileName)
+                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
                         Spacer()
                     }
                 } else {
@@ -249,6 +264,7 @@ struct StatusView: View {
                     HStack {
                         Image(systemName: "m.square").foregroundColor(Color.blue)
                         Text(newFileName)
+                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
                         Spacer()
                     }
                 } else {
@@ -259,6 +275,7 @@ struct StatusView: View {
                     HStack {
                         Image(systemName: "r.square").foregroundColor(Color.yellow)
                         Text("\(oldFileName) -> \(newFileName)")
+                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
                         Spacer()
                     }
                 } else {
@@ -269,6 +286,7 @@ struct StatusView: View {
                     HStack {
                         Image(systemName: "a.square").foregroundColor(Color.green)
                         Text(newFileName)
+                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
                         Spacer()
                     }
                 } else {
@@ -281,6 +299,7 @@ struct StatusView: View {
                     HStack {
                         Image(systemName: "questionmark").foregroundColor(Color.red)
                         Text(newFileName)
+                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
                         Spacer()
                     }
                 } else {
@@ -291,6 +310,7 @@ struct StatusView: View {
                     HStack {
                         Image(systemName: "m.square").foregroundColor(Color.blue)
                         Text(newFileName)
+                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
                         Spacer()
                     }
                 } else {

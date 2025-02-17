@@ -36,7 +36,7 @@ struct BranchView: View {
         CirclesWithArrows(numberOfCircles: isCurrent ? selectableCommits.count + 1 : selectableCommits.count) { index in
             ZStack {
                 if isCurrent && index == 0 {
-                    Rectangle()
+                    Circle()
                         .fill(Color.accentColor.opacity(0.7))
                         .cornerRadius(12)
                         .overlay {
@@ -53,7 +53,7 @@ struct BranchView: View {
                 } else {
                     let offset = isCurrent ? 1 : 0
                     let item = selectableCommits[index - offset]
-                    FlaredRounded(backgroundColor: Color(hex: 0x232834).opacity(0.8)) {
+                    FlaredCircle(backgroundColor: Color(hex: 0x232834).opacity(0.8)) {
                         ZStack {
                             Text(selectableCommits[index - offset].commit.oid.debugOID.prefix(4))
                                 .font(.caption)

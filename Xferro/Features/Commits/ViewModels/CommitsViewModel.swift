@@ -281,7 +281,6 @@ import OrderedCollections
                         of: WipWorktree.worktreeBranchName(item: currentSelectedItem.selectableItem),
                         stop: currentSelectedItem.selectableItem.oid
                     )
-                    let wipCommitTitle = "Wip of \(currentSelectedItem.selectableItem.wipDescription)"
                     Task {
                         await MainActor.run {
                             currentWipCommits = CurrentWipCommits(commits: wipCommits, item: currentSelectedItem)

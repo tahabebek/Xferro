@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct SelectedItemOverlay: View {
+    @State private var rotation: Double = 0
+
     let width: CGFloat
     let height: CGFloat
     let color: Color
@@ -29,8 +31,23 @@ struct SelectedItemOverlay: View {
     }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: cornerRadius)
-            .stroke(color, lineWidth: lineWidth)
+        Circle()
+            .strokeBorder(
+                style: StrokeStyle(
+                    lineWidth: lineWidth,
+                    dash: [3, 2]
+                )
+            )
+            .foregroundStyle(color)
             .frame(width: width - lineWidth, height: height - lineWidth)
+            .rotationEffect(.degrees(rotation))
+            .onAppear {
+                withAnimation(
+                    .linear(duration: 3)
+                    .repeatForever(autoreverses: false)
+                ) {
+                    rotation = 360
+                }
+            }
     }
 }
