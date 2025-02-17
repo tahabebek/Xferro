@@ -98,7 +98,7 @@ struct StatusView: View {
                         .labelsHidden()
                         rowForDeltaInfo(deltaInfo)
                     }
-                    .background(currentSelectedItem == deltaInfo ? Color.blue.opacity(0.2) : Color.clear)
+                    .background(currentSelectedItem == deltaInfo ? Color.accentColor.opacity(0.7) : Color.clear)
                 }
             }
         } header: {
@@ -116,7 +116,6 @@ struct StatusView: View {
                 } label: {
                     Text("Track selected")
                 }
-//                .buttonStyle(selectedUnstagedIds.isEmpty ? .bordered : .borderedProminent)
                 .controlSize(.small)
                 .disabled(selectedUntrackedIds.isEmpty)
                 .padding(.trailing, 8)
@@ -145,7 +144,7 @@ struct StatusView: View {
                         .labelsHidden()
                         rowForDeltaInfo(deltaInfo)
                     }
-                    .background(currentSelectedItem == deltaInfo ? Color.blue.opacity(0.2) : Color.clear)
+                    .background(currentSelectedItem == deltaInfo ? Color.accentColor.opacity(0.7) : Color.clear)
                 }
             }
         } header: {
@@ -164,7 +163,6 @@ struct StatusView: View {
                     Text("Stage selected")
                 }
                 .disabled(selectedUnstagedIds.isEmpty)
-//                .buttonStyle(selectedUnstagedIds.isEmpty ? .bordered : .borderedProminent)
                 .controlSize(.small)
                 .padding(.trailing, 8)
             }
@@ -193,7 +191,7 @@ struct StatusView: View {
                         .labelsHidden()
                         rowForDeltaInfo(deltaInfo)
                     }
-                    .background(currentSelectedItem == deltaInfo ? Color.blue.opacity(0.2) : Color.clear)
+                    .background(currentSelectedItem == deltaInfo ? Color.accentColor.opacity(0.7) : Color.clear)
                 }
             }
         } header: {
@@ -211,14 +209,12 @@ struct StatusView: View {
                 } label: {
                     Text("Unstage selected")
                 }
-//                .buttonStyle(selectedStagedIds.isEmpty ? .bordered : .borderedProminent)
                 .controlSize(.small)
                 .disabled(selectedStagedIds.isEmpty)
                 .padding(.trailing, 8)
             }
             .padding(.bottom, 4)
         }
-
     }
 
     @ViewBuilder private func rowForDeltaInfo(_ deltaInfo: StatusViewModel.DeltaInfo) -> some View {
@@ -313,37 +309,5 @@ struct StatusView: View {
         .onTapGesture {
             currentSelectedItem = deltaInfo
         }
-    }
-}
-
-fileprivate struct PrimaryButtonStyle: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .padding()
-            .foregroundColor(.white)
-            .background(Color.blue)
-            .cornerRadius(8)
-    }
-}
-
-fileprivate extension View {
-    func primary() -> some View {
-        modifier(PrimaryButtonStyle())
-    }
-}
-
-fileprivate struct SecondaryButtonStyle: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .padding()
-            .foregroundColor(.white)
-            .background(Color.blue)
-            .cornerRadius(8)
-    }
-}
-
-fileprivate extension View {
-    func secondary() -> some View {
-        modifier(PrimaryButtonStyle())
     }
 }

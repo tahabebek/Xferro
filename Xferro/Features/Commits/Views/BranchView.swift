@@ -37,7 +37,7 @@ struct BranchView: View {
             ZStack {
                 if isCurrent && index == 0 {
                     Rectangle()
-                        .fill(Color.green.opacity(0.3))
+                        .fill(Color.accentColor.opacity(0.7))
                         .cornerRadius(12)
                         .overlay {
                             Text("Status")
@@ -53,7 +53,7 @@ struct BranchView: View {
                 } else {
                     let offset = isCurrent ? 1 : 0
                     let item = selectableCommits[index - offset]
-                    FlaredRounded(backgroundColor: isCurrent && index - offset == 0 ? .accentColor.opacity(0.9) : Color(hex: 0x232834).opacity(0.8)) {
+                    FlaredRounded(backgroundColor: Color(hex: 0x232834).opacity(0.8)) {
                         ZStack {
                             Text(selectableCommits[index - offset].commit.oid.debugOID.prefix(4))
                                 .font(.caption)

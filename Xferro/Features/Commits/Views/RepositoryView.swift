@@ -83,14 +83,30 @@ struct RepositoryView: View {
         )
     }
 
-    private var label: some View {
-        Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
-            .fixedSize()
+    @ViewBuilder private var label: some View {
+        if let currentRepository = commitsViewModel.currentSelectedItem?.repository.nameOfRepo,
+           currentRepository == repositoryViewModel.repositoryInfo.repository.nameOfRepo
+        {
+            Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
+                .foregroundStyle(Color.accentColor)
+                .fixedSize()
+        } else {
+            Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
+                .fixedSize()
+        }
     }
 
-    private var smallLabel: some View {
-        Text(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
-            .fixedSize()
+    @ViewBuilder private var smallLabel: some View {
+        if let currentRepository = commitsViewModel.currentSelectedItem?.repository.nameOfRepo,
+           currentRepository == repositoryViewModel.repositoryInfo.repository.nameOfRepo
+        {
+            Text(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
+                .foregroundStyle(Color.accentColor)
+                .fixedSize()
+        } else {
+            Text(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
+                .fixedSize()
+        }
     }
 
     private var actionsView: some View {

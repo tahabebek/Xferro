@@ -60,7 +60,7 @@ struct WipCommitsView: View {
     func wipRectangle(item: SelectableWipCommit) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 2)
-                .fill(Color.accentColor.opacity(0.9))
+                .fill(Color.accentColor.opacity(0.7))
                 .frame(width: 16, height: 16)
                 .overlay(
                     Text("\(item.commit.oid.debugOID.prefix(2))")
