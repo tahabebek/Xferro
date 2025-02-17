@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct GroupBoxView<Content: View>: View {
+struct GroupBoxView<Content>: View where Content: View {
     let title: String
     let image: String?
     let content: () -> Content

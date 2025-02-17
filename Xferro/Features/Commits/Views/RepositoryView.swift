@@ -20,51 +20,53 @@ struct RepositoryView: View {
     @Environment(RepositoryViewModel.self) var repositoryViewModel
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
+    @State var isMinimized: Bool = false
     @Namespace private var animation
 
     var body: some View {
         Group {
             VStack(spacing: 0) {
-                HStack {
-                    Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
-                    Spacer()
-                    Image(systemName: "arrow.down")
-                        .frame(height: 36)
-                        .contentShape(Rectangle())
-                        .hoverableButton("Pull changes from remote") {}
-
-                    Image(systemName: "arrow.up")
-                        .frame(height: 36)
-                        .contentShape(Rectangle())
-                        .hoverableButton("Push changes to remote") {}
-                    Image(systemName: "cursorarrow.click.2")
-                        .frame(height: 36)
-                        .contentShape(Rectangle())
-                        .hoverableButton("Checkout to a remote branch") {}
-                    Spacer()
-                    Image(systemName: "xmark")
-                        .frame(height: 36)
-                        .contentShape(Rectangle())
-                        .hoverableButton("Remove Repository") {
-                            withAnimation(.easeInOut) {
-                                commitsViewModel.deleteRepositoryButtonTapped(repositoryViewModel.repositoryInfo.repository)
-                            }
+                ViewThatFits(in: .horizontal) {
+                    HStack {
+                        label
+                        Spacer()
+                        actionsView
+                        Spacer()
+                        navigationView
+                    }
+                    VStack(spacing: 6) {
+                        smallLabel
+                        HStack {
+                            actionsView
+                            navigationView
                         }
-                    Image(systemName: "chevron.down")
-                        .frame(height: 36)
-                        .rotationEffect(Angle(degrees: !isCollapsed ? -180 : 0))
-                        .contentShape(Rectangle())
-                        .hoverableButton(isCollapsed ? "Expand" : "Collapse") {
-                            withAnimation(.easeInOut) {
-                                isCollapsed.toggle()
-                            }
-                        }
+                    }
+                    .onAppear {
+                        isMinimized = true
+                    }
+                    .onDisappear {
+                        isMinimized = false
+                    }
+                    VStack(spacing: 6) {
+                        smallLabel
+                        navigationView
+                    }
+                    .onAppear {
+                        isMinimized = true
+                    }
+                    .onDisappear {
+                        isMinimized = false
+                    }
                 }
-                .frame(height: 36)
+                .frame(height: isMinimized ? 54 : 36)
                 if !isCollapsed {
                     VStack(spacing: 16) {
-                        picker
-                            .frame(height: 32)
+                        ViewThatFits(in: .horizontal) {
+                            picker
+                            smallPicker
+                        }
+                        .frame(height: 24)
+
                         contentView
                             .padding(.bottom, 8)
                     }
@@ -81,7 +83,70 @@ struct RepositoryView: View {
         )
     }
 
-    @ViewBuilder private var picker: some View {
+    private var label: some View {
+        Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
+            .fixedSize()
+    }
+
+    private var smallLabel: some View {
+        Text(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
+            .fixedSize()
+    }
+
+    private var actionsView: some View {
+        HStack {
+            Image(systemName: "arrow.down")
+                .contentShape(Rectangle())
+                .hoverableButton("Pull changes from remote") {}
+            Image(systemName: "arrow.up")
+                .contentShape(Rectangle())
+                .hoverableButton("Push changes to remote") {}
+            Image(systemName: "cursorarrow.click.2")
+                .contentShape(Rectangle())
+                .hoverableButton("Checkout to a remote branch") {}
+        }
+    }
+
+    private var navigationView: some View {
+        HStack {
+            Image(systemName: "xmark")
+                .contentShape(Rectangle())
+                .hoverableButton("Remove Repository") {
+                    withAnimation(.easeInOut) {
+                        commitsViewModel.deleteRepositoryButtonTapped(repositoryViewModel.repositoryInfo.repository)
+                    }
+                }
+            Image(systemName: "chevron.down")
+                .rotationEffect(Angle(degrees: !isCollapsed ? -180 : 0))
+                .contentShape(Rectangle())
+                .hoverableButton(isCollapsed ? "Expand" : "Collapse") {
+                    withAnimation(.easeInOut) {
+                        isCollapsed.toggle()
+                    }
+                }
+        }
+    }
+
+    private var smallPicker: some View {
+        Picker(selection: $selection) {
+            Group {
+                Text("C")
+                    .tag(Section.commits)
+                Text("T")
+                    .tag(Section.tags)
+                Text("S")
+                    .tag(Section.stashes)
+                Text("H")
+                    .tag(Section.history)
+            }
+            .font(.callout)
+        } label: {
+            Text("Hidden Label")
+        }
+        .pickerStyle()
+    }
+
+    private var picker: some View {
         Picker(selection: $selection) {
             Group {
                 Text("Commits")
@@ -97,11 +162,7 @@ struct RepositoryView: View {
         } label: {
             Text("Hidden Label")
         }
-        .labelsHidden()
-        .padding(.trailing, 2)
-        .background(Color(hex: 0x0B0C10))
-        .clipShape(RoundedRectangle(cornerRadius: 5))
-        .pickerStyle(SegmentedPickerStyle())
+        .pickerStyle()
     }
 
     @ViewBuilder private var contentView: some View {
@@ -269,5 +330,22 @@ struct RepositoryView: View {
 
     private var historyView: some View {
         emptyView
+    }
+}
+
+private struct PickerModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .labelsHidden()
+            .padding(.trailing, 2)
+            .background(Color(hex: 0x0B0C10))
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .pickerStyle(SegmentedPickerStyle())
+    }
+}
+
+private extension View {
+    func pickerStyle() -> some View {
+        modifier(PickerModifier())
     }
 }

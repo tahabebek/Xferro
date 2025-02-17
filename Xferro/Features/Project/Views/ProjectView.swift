@@ -5,6 +5,7 @@
 //  Created by Taha Bebek on 1/13/25.
 //
 
+import AppKit
 import SwiftUI
 
 struct ProjectView: View {
@@ -17,11 +18,17 @@ struct ProjectView: View {
         VStack(spacing: 0) {
             HSplitView {
                 CommitsView()
-                    .padding(.trailing, 6)
+                    .layoutPriority(Dimensions.commitsViewPriority)
+                    .frame(minWidth: 0)
+                    .frame(maxWidth: Dimensions.commitsViewIdealWidth)
                 SelectableItemDetailView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .layoutPriority(Dimensions.commitDetailsPriority)
+                    .frame(minWidth: 0)
+                    .frame(maxWidth: Dimensions.commitDetailsViewIdealWidth)
                     .environment(commitsViewModel.detailsViewModel)
                 PeekView()
+                    .frame(maxWidth: .infinity)
+                    .layoutPriority(Dimensions.fileDetailsViewPriority)
             }
         }
     }

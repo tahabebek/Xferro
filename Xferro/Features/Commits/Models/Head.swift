@@ -1,5 +1,5 @@
 //
-//  CommitsViewModel+HEAD.swift
+//  HEAD.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/8/25.

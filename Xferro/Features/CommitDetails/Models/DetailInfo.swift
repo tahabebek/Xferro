@@ -22,23 +22,23 @@ struct DetailInfo {
         var title: String {
             switch self {
             case .empty:
-                "Empty"
+                "Select a commit"
             case .commit(let commit):
-                "Commit \(commit.wipDescription)"
+                commit.repository.nameOfRepo
             case .wipCommit(let commit, _):
-                "Wip commit '\(commit.oid.debugOID.prefix(2))' of '\(commit.repository.gitDir.deletingLastPathComponent().lastPathComponent)''"
+                commit.repository.nameOfRepo
             case .detachedCommit(let commit):
-                "Detached commit \(commit.wipDescription)"
+                commit.repository.nameOfRepo
             case .historyCommit(let commit):
-                "History commit \(commit.wipDescription)"
+                commit.repository.nameOfRepo
             case .tag(let tag):
-                "Tag \(tag.wipDescription)"
+                tag.repository.nameOfRepo
             case .detachedTag(let tag):
-                "Detached Tag \(tag.wipDescription)"
+                tag.repository.nameOfRepo
             case .status(let status, _):
-                "Status of \(status.wipDescription)"
+                status.repository.nameOfRepo
             case .stash(let stash):
-                "Commit \(stash.wipDescription)"
+                stash.repository.nameOfRepo
             }
         }
     }

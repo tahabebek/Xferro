@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct CirclesWithArrows<CircleContent: View>: View {
+struct CirclesWithArrows<CircleContent>: View where CircleContent: View {
     let numberOfCircles: Int
     let circleContent: (Int) -> CircleContent
     let circleSize: CGFloat

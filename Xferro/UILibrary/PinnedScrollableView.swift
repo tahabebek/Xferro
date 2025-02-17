@@ -7,11 +7,20 @@
 
 import SwiftUI
 
-struct PinnedScrollableView<Header: View, Content: View>: View {
+struct PinnedScrollableView<Header, Content>: View where Header: View, Content: View {
     let showsIndicators: Bool
     let header: () -> Header
     let content: () -> Content
 
+    init(
+        showsIndicators: Bool,
+        @ViewBuilder header: @escaping () -> Header,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.showsIndicators = showsIndicators
+        self.header = header
+        self.content = content
+    }
     var body: some View {
         ScrollView(showsIndicators: showsIndicators) {
             LazyVStack {

@@ -1,5 +1,5 @@
 //
-//  CommitsViewModel+SelectableItem.swift
+//  SelectableItem.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/8/25.

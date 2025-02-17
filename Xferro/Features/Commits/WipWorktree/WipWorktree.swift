@@ -76,11 +76,25 @@ final class WipWorktree {
             if let existingWorktreeRepository = item.repository.worktree(named: worktreeName).mustSucceed() {
                 worktreeRepository = existingWorktreeRepository
             } else {
-                let newBranch = item.repository.createBranch(branchName).mustSucceed()
+                let newBranch: Branch?
+                do {
+                    newBranch = try item.repository.createBranch(branchName).get()
+                } catch {
+                    if GIT_EEXISTS.rawValue == error.code {
+                        // this probably means the worktree folder is deleted by the user (or system) from the caches directory
+                        deleteWipWorktree(for: item.repository)
+                        newBranch = item.repository.createBranch(branchName).mustSucceed()
+                    } else {
+                        fatalError(.unhandledError)
+                    }
+                }
+                guard let newBranch else {
+                    fatalError(.impossible)
+                }
                 item.repository
                     .addWorkTree(
                         name: worktreeName,
-                        path: worktreeRepositoryURL.path(percentEncoded: false)
+                        path: worktreeRepositoryURL.path
                     ).mustSucceed()
                 worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
                 worktreeRepository.checkout(newBranch.longName).mustSucceed()
@@ -141,6 +155,79 @@ final class WipWorktree {
         default:
             fatalError(.unimplemented)
         }
+    }
+
+    static func deleteWipWorktree(for repository: Repository) {
+        let worktreeName = WipWorktree.worktreeName(for: repository)
+        let worktreePath = Self.worktreeRepositoryURL(originalRepository: repository).path
+        repository.pruneWorkTree(worktreeName, force: true).mustSucceed()
+        if FileManager.default.fileExists(atPath: worktreePath) {
+            try! FileManager.default.removeItem(at: URL(filePath: worktreePath, directoryHint: .isDirectory))
+        }
+
+        let branchIterator = BranchIterator(repo: repository, type: .local)
+        while let branch = try? branchIterator.next()?.get() {
+            if branch.name.hasPrefix(WipWorktree.wipBranchesPrefix) {
+                repository.deleteBranch(branch.name).mustSucceed()
+            }
+        }
+    }
+    
+    static func deleteAllWipCommits(of item: SelectedItem) {
+        let worktreeRepository = WipWorktree.worktreeRepository(of: item.repository)
+        let worktreeName = WipWorktree.worktreeName(for: item.repository)
+        let currentBranchNameOfWorktreeRepository = WipWorktree.currentBranchName(ofWorktreeRepository: worktreeRepository, name: worktreeName)
+        let branchNameOfItemInWorktreeRepository = WipWorktree.worktreeBranchName(item: item.selectableItem)
+
+        var shouldDeleteBranch = true
+        switch item.selectedItemType {
+        case .regular(let type):
+            switch type {
+            case .commit:
+                if currentBranchNameOfWorktreeRepository == branchNameOfItemInWorktreeRepository {
+                    shouldDeleteBranch = false
+                }
+            case .historyCommit, .detachedCommit, .detachedTag, .tag, .status:
+                shouldDeleteBranch = false
+            case .stash:
+                fatalError(.invalid)
+            }
+        case .wip:
+            fatalError(.invalid)
+        }
+
+        if shouldDeleteBranch {
+            item.repository.deleteBranch(branchNameOfItemInWorktreeRepository).mustSucceed()
+        } else {
+            worktreeRepository.reset(oid: item.selectableItem.oid , type: .hard).mustSucceed()
+        }
+    }
+
+    static func worktreeRepository(of repository: Repository) -> Repository {
+        let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: repository)
+        guard Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() else {
+            fatalError(.impossible)
+        }
+        let worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
+        guard worktreeRepository.isWorkTree else {
+            fatalError(.illegal)
+        }
+        return worktreeRepository
+    }
+
+    static func currentBranchName(ofWorktreeRepository repository: Repository, name: String) -> String {
+        let head = Head.of(worktree: name, in: repository)
+        var currentBranchName: String
+
+        switch head {
+        case .branch(let branch):
+            currentBranchName = branch.name
+        case .tag:
+            fatalError("Head should never be a tag for a worktree")
+        case .reference:
+            fatalError("Head should never be detached for a worktree.")
+        }
+        return currentBranchName
     }
 
     func getBranch(branchName: String) -> Branch? {

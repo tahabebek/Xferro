@@ -42,7 +42,7 @@ enum PopupStyle {
     case none
 }
 
-struct Popup<Message: View>: ViewModifier {
+struct Popup<Message>: ViewModifier where Message: View {
 
     @Binding var isPresented: Bool
     var size: CGSize = CGSize(width: 200, height: 150)
@@ -117,10 +117,12 @@ struct PopupToggle: ViewModifier {
 }
 
 extension View {
-    func popup<T: View>(isPresented: Binding<Bool>,
-                        size: CGSize = CGSize(width: 200, height: 150),
-                        style: PopupStyle = .blur,
-                        @ViewBuilder content: () -> T) -> some View {
+    func popup<T>(
+        isPresented: Binding<Bool>,
+        size: CGSize = CGSize(width: 200, height: 150),
+        style: PopupStyle = .blur,
+        @ViewBuilder content: () -> T) -> some View where T : View
+    {
         let popup = Popup(isPresented: isPresented, size: size, style: style, message: content())
         let popupToggle = PopupToggle(isPresented: isPresented)
         let modifiedContent = self.modifier(popup).modifier(popupToggle)

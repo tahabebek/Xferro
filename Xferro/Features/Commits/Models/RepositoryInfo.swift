@@ -1,5 +1,5 @@
 //
-//  CommitsViewModel+RepoInfo.swift
+//  RepoInfo.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/10/25.
@@ -140,7 +140,7 @@ extension CommitsViewModel {
             }
         return tags
     }
-    private func commits(of branch: Branch, in repository: Repository, count: Int = 25) -> [SelectableCommit] {
+    private func commits(of branch: Branch, in repository: Repository, count: Int = 10) -> [SelectableCommit] {
         var commits: [SelectableCommit] = []
 
         let commitIterator = CommitIterator(repo: repository, root: branch.oid.oid)

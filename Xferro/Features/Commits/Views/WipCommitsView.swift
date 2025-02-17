@@ -12,32 +12,42 @@ struct WipCommitsView: View {
     let columns = [
         GridItem(.adaptive(minimum: 16, maximum: 16))
     ]
-    let width: CGFloat
 
     var body: some View {
         PinnedScrollableView(showsIndicators: false) {
             WipHeaderView()
+                .frame(height: 36)
+                .padding(.top, 8)
         } content: {
             Group {
                 VStack(spacing: 8) {
-                    if viewModel.currentWipCommits.commits.isEmpty {
+                    if let currentWipCommits = viewModel.currentWipCommits {
+                        HStack {
+                            let item = currentWipCommits.item.selectableItem
+                            ViewThatFits(in: .horizontal) {
+                                Text("Wip commits of \(item.wipDescription)")
+                                    .lineLimit(2)
+                                Text("Wip commits of \(item.oid.debugOID.prefix(4)) in \(item.repository.nameOfRepo)")
+                                Text("Wip commits of \(item.oid.debugOID.prefix(4))")
+                                Text("Wips of \(item.oid.debugOID.prefix(4))")
+                                Text("Wips")
+                            }
+                            .lineLimit(1)
+                            Spacer()
+                        }
+                        LazyVGrid(columns: columns) {
+                            ForEach(currentWipCommits.commits) { selectableWipCommit in
+                                wipRectangle(item: selectableWipCommit)
+                            }
+                        }
+                        .animation(.snappy, value: currentWipCommits.commits)
+                    } else {
                         HStack {
                             Text("No wip commits.")
                             Spacer()
                         }
-                    } else {
-                        HStack {
-                            Label(viewModel.currentWipCommits.title, systemImage: "w.square")
-                            Spacer()
-                        }
-                        LazyVGrid(columns: columns) {
-                            ForEach(viewModel.currentWipCommits.commits) { selectableWipCommit in
-                                wipRectangle(item: selectableWipCommit)
-                            }
-                        }
                     }
                 }
-                .animation(.snappy, value: viewModel.currentWipCommits.commits)
                 .padding()
             }
             .background(
@@ -50,7 +60,7 @@ struct WipCommitsView: View {
     func wipRectangle(item: SelectableWipCommit) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 2)
-                .fill(Color.blue)
+                .fill(Color.accentColor.opacity(0.9))
                 .frame(width: 16, height: 16)
                 .overlay(
                     Text("\(item.commit.oid.debugOID.prefix(2))")

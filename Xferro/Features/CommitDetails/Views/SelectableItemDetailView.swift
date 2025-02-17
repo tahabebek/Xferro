@@ -32,8 +32,8 @@ struct SelectableItemDetailView: View {
                 StatusView()
                     .environment(StatusViewModel(selectableStatus: selectableStatus, statusEntries: statusEntries))
             }
-            Text(viewModel.detailInfo.type.title)
             Spacer()
         }
+        .frame(minWidth: Dimensions.commitDetailsViewIdealWidth)
     }
 }

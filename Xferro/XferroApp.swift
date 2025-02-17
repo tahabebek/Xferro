@@ -42,10 +42,10 @@ struct SwiftSpaceApp: App {
                                 }
                         }
                     }
-                    .environment(\.windowInfo, geometry.size)
+                    .environment(\.windowSize, geometry.size)
                 }
             }
-            .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
+//            .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
             .task {
                 AppDelegate.users = users
                 do {

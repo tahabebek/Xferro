@@ -1,6 +1,7 @@
 import Swift
 
 extension Result {
+    @discardableResult
     func mustSucceed() -> Success {
         switch self {
         case .success(let value):
@@ -15,6 +16,10 @@ extension Result {
             return nil
         }
         return value
+    }
+
+    func discard() -> Void {
+        return ()
     }
 
     var error: Failure? {

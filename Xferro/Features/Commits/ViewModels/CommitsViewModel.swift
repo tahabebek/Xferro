@@ -13,7 +13,7 @@ import OrderedCollections
 @Observable class CommitsViewModel {
     struct CurrentWipCommits {
         let commits: [SelectableWipCommit]
-        let title: String
+        let item: SelectedItem
     }
 
     var autoCommitEnabled: Bool {
@@ -29,7 +29,7 @@ import OrderedCollections
         }
     }
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
-    var currentWipCommits: CurrentWipCommits = CurrentWipCommits(commits: [], title: "")
+    var currentWipCommits: CurrentWipCommits?
     var currentDetailInfo: DetailInfo?
 
     let detailsViewModel: DetailsViewModel = .init(detailInfo: .init(type: .empty))
@@ -226,10 +226,9 @@ import OrderedCollections
                 of: WipWorktree.worktreeBranchName(item: selectedItem.selectableItem),
                 stop: selectedItem.selectableItem.oid
             )
-            let wipCommitTitle = "Wip commits of \(selectedItem.selectableItem.wipDescription)"
             Task {
                 await MainActor.run {
-                    currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
+                    currentWipCommits = CurrentWipCommits(commits: wipCommits, item: selectedItem)
                 }
             }
         }
@@ -240,7 +239,7 @@ import OrderedCollections
                 case .stash:
                     Task {
                         await MainActor.run {
-                            currentWipCommits = CurrentWipCommits(commits: [], title: "Stashes don't have wip commits")
+                            currentWipCommits = nil
                         }
                     }
                 case .status:
@@ -254,17 +253,16 @@ import OrderedCollections
 
                     if let worktree {
                         let wipCommits =  worktree.commits(of: branchName, stop: selectableItem.oid)
-                        let wipCommitTitle = "Wip commits of \(currentSelectedItem.selectableItem.wipDescription)"
                         Task {
                             await MainActor.run {
-                                currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
+                                currentWipCommits = CurrentWipCommits(commits: wipCommits, item: currentSelectedItem)
                             }
                         }
 
                     } else {
                         Task {
                             await MainActor.run {
-                                currentWipCommits = .init(commits: [], title: "")
+                                currentWipCommits = nil
                             }
                         }
                     }
@@ -274,7 +272,7 @@ import OrderedCollections
                     else {
                         Task {
                             await MainActor.run {
-                                currentWipCommits = .init(commits: [], title: "")
+                                currentWipCommits = nil
                             }
                         }
                         return
@@ -283,10 +281,10 @@ import OrderedCollections
                         of: WipWorktree.worktreeBranchName(item: currentSelectedItem.selectableItem),
                         stop: currentSelectedItem.selectableItem.oid
                     )
-                    let wipCommitTitle = "Wip commits of \(currentSelectedItem.selectableItem.wipDescription)"
+                    let wipCommitTitle = "Wip of \(currentSelectedItem.selectableItem.wipDescription)"
                     Task {
                         await MainActor.run {
-                            currentWipCommits = CurrentWipCommits(commits: wipCommits, title: wipCommitTitle)
+                            currentWipCommits = CurrentWipCommits(commits: wipCommits, item: currentSelectedItem)
                         }
                     }
                 }
@@ -296,165 +294,42 @@ import OrderedCollections
         } else {
             Task {
                 await MainActor.run {
-                    currentWipCommits = .init(commits: [], title: "")
+                    currentWipCommits = nil
                 }
             }
         }
     }
 
-    func deleteWipWorktree(for repository: Repository) {
-        let worktreeName = WipWorktree.worktreeName(for: repository)
-        guard let worktreePath = try? repository.worktreePath(by: worktreeName).get() else {
-            fatalError(.invalid)
-        }
-        _ = repository.pruneWorkTree(worktreeName, force: true).mustSucceed()
-        try! FileManager.default.removeItem(at: URL(filePath: worktreePath, directoryHint: .isDirectory))
-
-        let branchIterator = BranchIterator(repo: repository, type: .local)
-        while let branch = try? branchIterator.next()?.get() {
-            if branch.name.hasPrefix(WipWorktree.wipBranchesPrefix) {
-                repository.deleteBranch(branch.name).mustSucceed()
-            }
-        }
-        currentWipCommits = .init(commits: [], title: "")
+    func deleteWipWorktreeTapped(for repository: Repository) {
+        deleteWipWorktree(for: repository)
     }
 
-    func worktreeRepository(of repository: Repository) -> Repository {
-        let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: repository)
-        guard Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() else {
-            fatalError(.impossible)
-        }
-        let worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
-        guard worktreeRepository.isWorkTree else {
-            fatalError(.illegal)
-        }
-        return worktreeRepository
+    private func deleteWipWorktree(for repository: Repository) {
+        WipWorktree.deleteWipWorktree(for: repository)
+        currentWipCommits = nil
     }
 
-    func currentBranchName(ofWorktreeRepository repository: Repository, name: String) -> String {
-        let head = Head.of(worktree: name, in: repository)
-        var currentBranchName: String
-
-        switch head {
-        case .branch(let branch):
-            currentBranchName = branch.name
-        case .tag:
-            fatalError("Head should never be a tag for a worktree")
-        case .reference:
-            fatalError("Head should never be detached for a worktree.")
-        }
-        return currentBranchName
+    func deleteAllWipCommitsTapped(for item: SelectedItem) {
+        deleteAllWipCommits(of: item)
     }
 
-    func deleteAllWipCommits(of item: SelectedItem) {
-        let worktreeRepository = self.worktreeRepository(of: item.repository)
-        let worktreeName = WipWorktree.worktreeName(for: item.repository)
-        let currentBranchNameOfWorktreeRepository = self.currentBranchName(ofWorktreeRepository: worktreeRepository, name: worktreeName)
-        let branchNameOfItemInWorktreeRepository = WipWorktree.worktreeBranchName(item: item.selectableItem)
-
-        var shouldDeleteBranch = true
-        switch item.selectedItemType {
-        case .regular(let type):
-            switch type {
-            case .commit:
-                if currentBranchNameOfWorktreeRepository == branchNameOfItemInWorktreeRepository {
-                    shouldDeleteBranch = false
-                }
-            case .historyCommit, .detachedCommit, .detachedTag, .tag, .status:
-                shouldDeleteBranch = false
-            case .stash:
-                fatalError(.invalid)
-            }
-        case .wip:
-            fatalError(.invalid)
-        }
-
-        if shouldDeleteBranch {
-            item.repository.deleteBranch(branchNameOfItemInWorktreeRepository).mustSucceed()
-        } else {
-            worktreeRepository.reset(oid: item.selectableItem.oid , type: .hard).mustSucceed()
-        }
+    private func deleteAllWipCommits(of item: SelectedItem) {
+        WipWorktree.deleteAllWipCommits(of: item)
         Task {
             await MainActor.run {
-                currentWipCommits = .init(commits: [], title: "")
+                currentWipCommits = nil
             }
         }
     }
 
-    func addManualWipCommit(for item: SelectedItem) {
-        handleFolderWatchUpdate(repository: item.repository, manualUpdate: true)
+    func addManualWipCommitTapped(for item: SelectedItem) {
+        addManualWipCommit(for: item)
+    }
+    private func addManualWipCommit(for item: SelectedItem) {
+        addWipCommit(repository: item.repository)
     }
 
-    // MARK: Folder Observers
-    private func setupGitObserver(for repository: Repository) {
-        let key = keyForRepositoryGitWatch(repository)
-        if gitFolderWatchers[key] == nil {
-            let gitDir = repository.gitDir
-            let changeObserver = PassthroughSubject<Void, Never>()
-            changeObserver
-                .debounce(for: 1, scheduler: RunLoop.main)
-                .sink { [weak self] in
-                    print("--------------------------")
-                    print("git changed for repository \(gitDir.deletingLastPathComponent().lastPathComponent)")
-                    Task {
-                        await MainActor.run { [weak self] in
-                            guard let self else { return }
-                            updateRepositoryInfo(repository)
-                        }
-                    }
-                }
-                .store(in: &folderChangeObservers)
-
-            gitFolderWatchers[key] = FolderWatcher(
-                folder: gitDir,
-                includingPaths: [
-                    "\(gitDir.path)",
-                    "\(gitDir.path)/config",
-                    "\(gitDir.path)/HEAD",
-                    "\(gitDir.path)/ORIG_HEAD",
-                    "\(gitDir.path)/FETCH_HEAD",
-                    "\(gitDir.path)/refs",
-                    "\(gitDir.path)/refs/heads",
-                    "\(gitDir.path)/refs/tags",
-                    "\(gitDir.path)/refs/remotes",
-                    "\(gitDir.path)/refs/notes",
-                    "\(gitDir.path)/logs",
-                    "\(gitDir.path)/logs/HEAD",
-                    "\(gitDir.path)/logs/refs",
-                    "\(gitDir.path)/logs/refs/heads",
-                    "\(gitDir.path)/logs/refs/tags",
-                    "\(gitDir.path)/logs/refs/remotes",
-                    "\(gitDir.path)/logs/refs/notes",
-                    "\(gitDir.path)/index"
-                ],
-                onChangeObserver: changeObserver
-            )
-        }
-    }
-
-    private func setupFolderObserver(for repository: Repository) {
-        let key = keyForRepositoryFolderWatch(repository)
-        if repsositoryFolderWatchers[key] == nil {
-            let changeObserver = PassthroughSubject<Void, Never>()
-            changeObserver
-                .debounce(for: 1, scheduler: RunLoop.main)
-                .sink { [weak self] in
-                    guard let self else { return }
-                    handleFolderWatchUpdate(repository: repository)
-                }
-                .store(in: &folderChangeObservers)
-
-            repsositoryFolderWatchers[key] = FolderWatcher(
-                folder: repository.gitDir.deletingLastPathComponent(),
-                excludingPaths: [repository.gitDir.path],
-                onChangeObserver: changeObserver
-            )
-
-        }
-    }
-
-    private func handleFolderWatchUpdate(repository: Repository, manualUpdate: Bool = false) {
-        guard autoCommitEnabled || manualUpdate else { return }
+    private func addWipCommit(repository: Repository) {
         let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: repository)
         let selectableItem = SelectableStatus(repository: repository)
         guard let worktree = WipWorktree.getOrCreate(for: selectableItem) else { return }
@@ -546,12 +421,19 @@ import OrderedCollections
                     }
                 }
             case .typeChange:
-                fatalError(.unimplemented)
-//                if FileManager.default.fileExists(atPath: wipWorktreePath + "/" + newPath!) {
-//                    try! FileManager.default.removeItem(atPath: wipWorktreePath + "/" + newPath!)
-//                }
-//                let content = try! Data(contentsOf: URL(filePath: originalRepoPath + "/" + newPath!))
-//                try! content.write(to: URL(fileURLWithPath: wipWorktreePath + "/" + newPath!))
+                if let oldPath = delta.oldFile?.path, let newPath = delta.newFile?.path {
+                    let sourceURL = URL(filePath: wipWorktreePath + "/" + oldPath)
+                    let destinationURL = URL(filePath: wipWorktreePath + "/" + newPath)
+                    if FileManager.default.fileExists(atPath: sourceURL.path) {
+                        if FileManager.default.fileExists(atPath: destinationURL.path) {
+                            let content = try! Data(contentsOf: sourceURL)
+                            try! content.write(to: destinationURL)
+                        } else {
+                            try! FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
+                            try! FileManager.default.moveItem(atPath: sourceURL.path, toPath: destinationURL.path)
+                        }
+                    }
+                }
             case .unreadable:
                 fatalError(.unimplemented)
             case .conflicted:
@@ -624,6 +506,79 @@ import OrderedCollections
                 }
             }
         }
+    }
+
+    // MARK: Folder Observers
+    private func setupGitObserver(for repository: Repository) {
+        let key = keyForRepositoryGitWatch(repository)
+        if gitFolderWatchers[key] == nil {
+            let gitDir = repository.gitDir
+            let changeObserver = PassthroughSubject<Void, Never>()
+            changeObserver
+                .debounce(for: 1, scheduler: RunLoop.main)
+                .sink { [weak self] in
+                    print("--------------------------")
+                    print("git changed for repository \(gitDir.deletingLastPathComponent().lastPathComponent)")
+                    Task {
+                        await MainActor.run { [weak self] in
+                            guard let self else { return }
+                            updateRepositoryInfo(repository)
+                        }
+                    }
+                }
+                .store(in: &folderChangeObservers)
+
+            gitFolderWatchers[key] = FolderWatcher(
+                folder: gitDir,
+                includingPaths: [
+                    "\(gitDir.path)",
+                    "\(gitDir.path)/config",
+                    "\(gitDir.path)/HEAD",
+                    "\(gitDir.path)/ORIG_HEAD",
+                    "\(gitDir.path)/FETCH_HEAD",
+                    "\(gitDir.path)/refs",
+                    "\(gitDir.path)/refs/heads",
+                    "\(gitDir.path)/refs/tags",
+                    "\(gitDir.path)/refs/remotes",
+                    "\(gitDir.path)/refs/notes",
+                    "\(gitDir.path)/logs",
+                    "\(gitDir.path)/logs/HEAD",
+                    "\(gitDir.path)/logs/refs",
+                    "\(gitDir.path)/logs/refs/heads",
+                    "\(gitDir.path)/logs/refs/tags",
+                    "\(gitDir.path)/logs/refs/remotes",
+                    "\(gitDir.path)/logs/refs/notes",
+                    "\(gitDir.path)/index"
+                ],
+                onChangeObserver: changeObserver
+            )
+        }
+    }
+
+    private func setupFolderObserver(for repository: Repository) {
+        let key = keyForRepositoryFolderWatch(repository)
+        if repsositoryFolderWatchers[key] == nil {
+            let changeObserver = PassthroughSubject<Void, Never>()
+            changeObserver
+                .debounce(for: 1, scheduler: RunLoop.main)
+                .sink { [weak self] in
+                    guard let self else { return }
+                    handleFolderWatchUpdate(repository: repository)
+                }
+                .store(in: &folderChangeObservers)
+
+            repsositoryFolderWatchers[key] = FolderWatcher(
+                folder: repository.gitDir.deletingLastPathComponent(),
+                excludingPaths: [repository.gitDir.path],
+                onChangeObserver: changeObserver
+            )
+
+        }
+    }
+
+    private func handleFolderWatchUpdate(repository: Repository) {
+        guard autoCommitEnabled else { return }
+        addWipCommit(repository: repository)
     }
 
     // MARK: User actions

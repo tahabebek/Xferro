@@ -9,28 +9,22 @@ import SwiftUI
 
 struct NormalCommitsView: View {
     @Environment(CommitsViewModel.self) var viewModel
-    let width: CGFloat
 
     var body: some View {
         PinnedScrollableView(showsIndicators: false) {
-            HStack {
-                VerticalHeader(title: "Repositories")
-                Spacer()
+            VerticalHeader(title: "Repositories") {
                 AddRepositoryButton()
                 Image(systemName: "document.on.document")
-                    .frame(height: 36)
                     .contentShape(Rectangle())
                     .hoverableButton("Clone a repostory") {
                         fatalError()
                     }
             }
             .frame(height: 36)
-            .fixedSize()
         } content: {
             VStack(alignment: .leading, spacing: 16) {
                 ForEach(viewModel.currentRepositoryInfos.values.elements) { repositoryInfo in
                     RepositoryView()
-                        .frame(width: width)
                         .environment(viewModel.repositoryViewModel(for: repositoryInfo.repository))
                 }
                 if viewModel.currentRepositoryInfos.count == 0 {
@@ -45,8 +39,6 @@ struct NormalCommitsView: View {
                 }
                 Spacer()
             }
-            .frame(width: width)
-            .fixedSize()
         }
     }
 }

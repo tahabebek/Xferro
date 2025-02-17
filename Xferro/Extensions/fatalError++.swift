@@ -16,6 +16,7 @@ public enum FatalErrorReason: String, Hashable {
     case unimplemented
     case unknown
     case unsupported
+    case unhandledError
 }
 
 func fatalError(
@@ -37,6 +38,8 @@ func fatalError(
         fatalError("\(function) unimplemented", file: file, line: line)
     case .unsupported:
         fatalError("\(function) unsupported", file: file, line: line)
+    case .unhandledError:
+        fatalError("\(function) unhandled error", file: file, line: line)
     default:
         fatalError()
     }

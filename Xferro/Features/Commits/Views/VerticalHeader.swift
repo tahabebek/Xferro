@@ -8,20 +8,30 @@
 
 import SwiftUI
 
-struct VerticalHeader: View {
-
+struct VerticalHeader<Content>: View where Content: View {
     let title: String
+    let buttonsView: () -> Content
 
-    var titleView: some View {
-        HStack {
-            Text("\(title)")
-                .font(.title2)
-            Spacer()
-        }
-        .frame(height: 22)
+    init(title: String, @ViewBuilder buttonsView: @escaping () -> Content = { EmptyView() }) {
+        self.title = title
+        self.buttonsView = buttonsView
     }
 
     var body: some View {
-        titleView
+        ViewThatFits(in: .horizontal) {
+            HStack {
+                Text("\(title)")
+                    .font(.title2)
+                Spacer(minLength: 16)
+                buttonsView()
+            }
+            HStack {
+                Spacer()
+                buttonsView()
+                Spacer()
+            }
+        }
+        .padding(.horizontal)
     }
 }
+

@@ -16,7 +16,10 @@ import Observation
         case untracked = 2
     }
 
-    struct DeltaInfo: Identifiable {
+    struct DeltaInfo: Identifiable, Equatable {
+        static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.delta.id == rhs.delta.id
+        }
         var id: String { delta.id + type.id.formatted() }
         
         let delta: Diff.Delta
