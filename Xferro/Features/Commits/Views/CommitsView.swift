@@ -11,7 +11,9 @@ struct CommitsView: View {
     var body: some View {
         VSplitView {
             NormalCommitsView()
+                .padding(.trailing, 6)
             WipCommitsView()
+                .padding(.trailing, 6)
         }
         .frame(minWidth: Dimensions.commitsViewIdealWidth)
     }

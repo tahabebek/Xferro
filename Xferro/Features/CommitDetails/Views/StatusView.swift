@@ -9,40 +9,45 @@ import SwiftUI
 
 struct StatusView: View {
     @Environment(StatusViewModel.self) var statusViewModel
-    @State private var currentSelectedItem: StatusViewModel.DeltaInfo?
-    @State private var selectedStagedIds: Set<String> = []
-    @State private var selectedUnstagedIds: Set<String> = []
-    @State private var selectedUntrackedIds: Set<String> = []
+    @State private var currentSelectedItem = Dictionary<OID, StatusViewModel.DeltaInfo>()
+    @State private var selectedStagedIds = Dictionary<OID, Set<String>>()
+    @State private var selectedUnstagedIds = Dictionary<OID, Set<String>>()
+    @State private var selectedUntrackedIds = Dictionary<OID, Set<String>>()
     @State private var commitSummary: String = ""
 
     var body: some View {
         VSplitView {
-            changeBox
-                .layoutPriority(1)
-                .padding(.bottom, 4)
             commitBox
+                .padding(.bottom, 4)
+            changeBox
                 .padding(.top, 4)
+                .layoutPriority(.greatestFiniteMagnitude)
         }
         .onAppear {
-            if currentSelectedItem == nil {
                 setInitialSelection()
-            }
         }
         .onChange(of: statusViewModel.selectableStatus) { oldValue, newValue in
             if oldValue.oid != newValue.oid {
                 setInitialSelection()
             }
         }
+        .animation(.default, value: statusViewModel.selectableStatus)
+        .animation(.default, value: currentSelectedItem)
+        .animation(.default, value: selectedStagedIds)
+        .animation(.default, value: selectedUnstagedIds)
+        .animation(.default, value: selectedUntrackedIds)
         .padding(.horizontal, 6)
     }
 
     private func setInitialSelection() {
-        if let firstItem = statusViewModel.stagedDeltaInfos.first {
-            currentSelectedItem = firstItem
-        } else if let firstItem = statusViewModel.unstagedDeltaInfos.first {
-            currentSelectedItem = firstItem
-        } else if let firstItem = statusViewModel.untrackedDeltaInfos.first {
-            currentSelectedItem = firstItem
+        if currentSelectedItem[statusViewModel.selectableStatus.oid] == nil {
+            if let firstItem = statusViewModel.stagedDeltaInfos.first {
+                currentSelectedItem[statusViewModel.selectableStatus.oid] = firstItem
+            } else if let firstItem = statusViewModel.unstagedDeltaInfos.first {
+                currentSelectedItem[statusViewModel.selectableStatus.oid] = firstItem
+            } else if let firstItem = statusViewModel.untrackedDeltaInfos.first {
+                currentSelectedItem[statusViewModel.selectableStatus.oid] = firstItem
+            }
         }
     }
 
@@ -88,7 +93,7 @@ struct StatusView: View {
                     Text("Commit")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(!commitSummary.isNotEmptyOrWhitespace || selectedStagedIds.isEmpty)
+                .disabled(!commitSummary.isNotEmptyOrWhitespace || selectedStagedIds.isEmpty(key: statusViewModel.selectableStatus.oid))
             }
             .padding(.horizontal, 8)
         }
@@ -100,13 +105,13 @@ struct StatusView: View {
                 ForEach(statusViewModel.untrackedDeltaInfos) { deltaInfo in
                     HStack {
                         Toggle("", isOn: Binding(
-                            get: { selectedUntrackedIds.contains(deltaInfo.id) },
+                            get: { selectedUntrackedIds.contains(key: statusViewModel.selectableStatus.oid, value: deltaInfo.id) },
                             set: { isSelected in
                                 if isSelected {
-                                    currentSelectedItem = deltaInfo
-                                    selectedUntrackedIds.insert(deltaInfo.id)
+                                    currentSelectedItem[statusViewModel.selectableStatus.oid] = deltaInfo
+                                    selectedUntrackedIds.insert(key: statusViewModel.selectableStatus.oid, value: deltaInfo.id)
                                 } else {
-                                    selectedUntrackedIds.remove(deltaInfo.id)
+                                    selectedUntrackedIds.remove(key: statusViewModel.selectableStatus.oid, value: deltaInfo.id)
                                 }
                             }
                         ))
@@ -118,8 +123,7 @@ struct StatusView: View {
             }
         } header: {
             HStack {
-                Text("Untracked")
-                    .foregroundStyle(.red)
+                Text("Untracked files")
                 Spacer()
                 Button {
                 } label: {
@@ -132,7 +136,7 @@ struct StatusView: View {
                     Text("Track selected")
                 }
                 .controlSize(.small)
-                .disabled(selectedUntrackedIds.isEmpty)
+                .disabled(selectedUntrackedIds.isEmpty(key: statusViewModel.selectableStatus.oid))
                 .padding(.trailing, 8)
             }
             .padding(.bottom, 4)
@@ -145,13 +149,13 @@ struct StatusView: View {
                 ForEach(statusViewModel.unstagedDeltaInfos) { deltaInfo in
                     HStack {
                         Toggle("", isOn: Binding(
-                            get: { selectedUnstagedIds.contains(deltaInfo.id) },
+                            get: { selectedUnstagedIds.contains(key: statusViewModel.selectableStatus.oid, value: deltaInfo.id) },
                             set: { isSelected in
                                 if isSelected {
-                                    currentSelectedItem = deltaInfo
-                                    selectedUnstagedIds.insert(deltaInfo.id)
+                                    currentSelectedItem[statusViewModel.selectableStatus.oid] = deltaInfo
+                                    selectedUnstagedIds.insert(key: statusViewModel.selectableStatus.oid, value: deltaInfo.id)
                                 } else {
-                                    selectedUnstagedIds.remove(deltaInfo.id)
+                                    selectedUnstagedIds.remove(key: statusViewModel.selectableStatus.oid, value: deltaInfo.id)
                                 }
                             }
                         ))
@@ -163,8 +167,7 @@ struct StatusView: View {
             }
         } header: {
             HStack {
-                Text("Not staged")
-                    .foregroundStyle(.red)
+                Text("Not staged files")
                 Spacer()
                 Button {
                 } label: {
@@ -176,7 +179,7 @@ struct StatusView: View {
                 } label: {
                     Text("Stage selected")
                 }
-                .disabled(selectedUnstagedIds.isEmpty)
+                .disabled(selectedUnstagedIds.isEmpty(key: statusViewModel.selectableStatus.oid))
                 .controlSize(.small)
                 .padding(.trailing, 8)
             }
@@ -191,13 +194,13 @@ struct StatusView: View {
                 ForEach(statusViewModel.stagedDeltaInfos) { deltaInfo in
                     HStack {
                         Toggle("", isOn: Binding(
-                            get: { selectedStagedIds.contains(deltaInfo.id) },
+                            get: { selectedStagedIds.contains(key: statusViewModel.selectableStatus.oid, value: deltaInfo.id) },
                             set: { isSelected in
                                 if isSelected {
-                                    currentSelectedItem = deltaInfo
-                                    selectedStagedIds.insert(deltaInfo.id)
+                                    currentSelectedItem[statusViewModel.selectableStatus.oid] = deltaInfo
+                                    selectedStagedIds.insert(key: statusViewModel.selectableStatus.oid, value: deltaInfo.id)
                                 } else {
-                                    selectedStagedIds.remove(deltaInfo.id)
+                                    selectedStagedIds.remove(key: statusViewModel.selectableStatus.oid, value: deltaInfo.id)
                                 }
                             }
                         ))
@@ -209,8 +212,7 @@ struct StatusView: View {
             }
         } header: {
             HStack {
-                Text("Staged")
-                    .foregroundStyle(.green)
+                Text("Staged files")
                 Spacer()
                 Button {
                 } label: {
@@ -223,7 +225,7 @@ struct StatusView: View {
                     Text("Unstage selected")
                 }
                 .controlSize(.small)
-                .disabled(selectedStagedIds.isEmpty)
+                .disabled(selectedStagedIds.isEmpty(key: statusViewModel.selectableStatus.oid))
                 .padding(.trailing, 8)
             }
             .padding(.bottom, 4)
@@ -239,56 +241,56 @@ struct StatusView: View {
                 fatalError(.impossible)
             case .added:
                 if let newFileName {
-                    HStack {
-                        Image(systemName: "a.square").foregroundColor(Color.green)
-                        Text(newFileName)
-                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
-                        Spacer()
-                    }
+                    fileView(
+                        deltaInfo: deltaInfo,
+                        text: newFileName,
+                        color: .green,
+                        imageName: "a.square"
+                    )
                 } else {
                     fatalError(.impossible)
                 }
             case .deleted:
                 if let oldFileName {
-                    HStack {
-                        Image(systemName: "d.square").foregroundColor(Color.red)
-                        Text(oldFileName)
-                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
-                        Spacer()
-                    }
+                    fileView(
+                        deltaInfo: deltaInfo,
+                        text: oldFileName,
+                        color: .red,
+                        imageName: "d.square"
+                    )
                 } else {
                     fatalError(.impossible)
                 }
             case .modified:
                 if let newFileName {
-                    HStack {
-                        Image(systemName: "m.square").foregroundColor(Color.blue)
-                        Text(newFileName)
-                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
-                        Spacer()
-                    }
+                    fileView(
+                        deltaInfo: deltaInfo,
+                        text: newFileName,
+                        color: .blue,
+                        imageName: "m.square"
+                    )
                 } else {
                     fatalError(.impossible)
                 }
             case .renamed:
                 if let oldFileName, let newFileName {
-                    HStack {
-                        Image(systemName: "r.square").foregroundColor(Color.yellow)
-                        Text("\(oldFileName) -> \(newFileName)")
-                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
-                        Spacer()
-                    }
+                    fileView(
+                        deltaInfo: deltaInfo,
+                        text: "\(oldFileName) -> \(newFileName)",
+                        color: .yellow,
+                        imageName: "r.square"
+                    )
                 } else {
                     fatalError(.impossible)
                 }
             case .copied:
                 if let newFileName {
-                    HStack {
-                        Image(systemName: "a.square").foregroundColor(Color.green)
-                        Text(newFileName)
-                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
-                        Spacer()
-                    }
+                    fileView(
+                        deltaInfo: deltaInfo,
+                        text: newFileName,
+                        color: .green,
+                        imageName: "a.square"
+                    )
                 } else {
                     fatalError(.impossible)
                 }
@@ -296,23 +298,23 @@ struct StatusView: View {
                 fatalError(.unimplemented)
             case .untracked:
                 if let newFileName {
-                    HStack {
-                        Image(systemName: "questionmark").foregroundColor(Color.red)
-                        Text(newFileName)
-                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
-                        Spacer()
-                    }
+                    fileView(
+                        deltaInfo: deltaInfo,
+                        text: newFileName,
+                        color: .red,
+                        imageName: "questionmark.square"
+                    )
                 } else {
                     fatalError(.impossible)
                 }
             case .typeChange:
                 if let newFileName {
-                    HStack {
-                        Image(systemName: "m.square").foregroundColor(Color.blue)
-                        Text(newFileName)
-                            .foregroundStyle(currentSelectedItem == deltaInfo ? Color.accentColor : Color.white)
-                        Spacer()
-                    }
+                    fileView(
+                        deltaInfo: deltaInfo,
+                        text: newFileName,
+                        color: .blue,
+                        imageName: "m.square"
+                    )
                 } else {
                     fatalError(.impossible)
                 }
@@ -327,7 +329,22 @@ struct StatusView: View {
         .frame(minHeight: 24)
         .frame(maxHeight: 36)
         .onTapGesture {
-            currentSelectedItem = deltaInfo
+            currentSelectedItem[statusViewModel.selectableStatus.oid] = deltaInfo
+        }
+    }
+
+    private func fileView(
+        deltaInfo: StatusViewModel.DeltaInfo,
+        text: String,
+        color: Color,
+        imageName: String
+    ) -> some View {
+        HStack {
+            Image(systemName: imageName).foregroundColor(color)
+            Text(text)
+                .font(.title3)
+                .foregroundStyle(currentSelectedItem[statusViewModel.selectableStatus.oid] == deltaInfo ? Color.accentColor : Color.fabulaFore1)
+            Spacer()
         }
     }
 }

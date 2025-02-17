@@ -52,38 +52,3 @@ struct FlaredCircle<Content>: View where Content: View {
         }
     }
 }
-
-#Preview {
-    Preview_FlaredCircle().preferredColorScheme(.dark)
-}
-
-struct Preview_FlaredCircle: View {
-
-    let spacing: CGFloat = 20
-
-    var body: some View {
-        HStack(spacing: spacing) {
-            VStack(spacing: spacing) {
-                getView("1")
-                getView("2")
-            }
-            HStack(spacing: spacing) {
-                VStack(spacing: spacing) {
-                    getView("3")
-                    getView("4")
-                }
-                getView("5")
-            }
-        }
-        .padding(.vertical, spacing * 3)
-        .padding(.horizontal, spacing)
-    }
-
-    private func getView(_ text: String) -> some View {
-        FlaredCircle {
-            Text(text)
-                .font(.title2)
-                .foregroundColor(Color.fabulaFore1)
-        }
-    }
-}
