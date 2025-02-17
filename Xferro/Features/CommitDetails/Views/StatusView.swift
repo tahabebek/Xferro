@@ -101,18 +101,18 @@ struct StatusView: View {
                 HStack {
                     commitButton
                     amendButton
-                    stageAllButton
-                    unstageAllButton
-                    Spacer()
-                }
-                HStack {
                     stageAllAndCommitButton
                     stageAllAndAmendButton
                     Spacer()
                 }
                 HStack {
                     stageAllCommitAndPushButton
+                    stageAllCommitAndForcePushButton
+                    Spacer()
+                }
+                HStack {
                     stageAllAmendAndPushButton
+                    stageAllAmendAndForcePushButton
                     Spacer()
                 }
                 HStack {
@@ -135,20 +135,9 @@ struct StatusView: View {
             Group {
                 ForEach(statusViewModel.untrackedDeltaInfos) { deltaInfo in
                     HStack {
-                        Toggle("", isOn: Binding(
-                            get: { selectedUntrackedIds.contains(key: statusViewModel.selectableStatus.oid, value: deltaInfo) },
-                            set: { isSelected in
-                                if isSelected {
-                                    currentSelectedItem[statusViewModel.selectableStatus.oid] = deltaInfo
-                                    selectedUntrackedIds.insert(key: statusViewModel.selectableStatus.oid, value: deltaInfo)
-                                } else {
-                                    selectedUntrackedIds.remove(key: statusViewModel.selectableStatus.oid, value: deltaInfo)
-                                }
-                            }
-                        ))
-                        .toggleStyle(.checkbox)
-                        .labelsHidden()
                         rowForDeltaInfo(deltaInfo)
+                        stageSelectedUntrackedButton(deltaInfo: deltaInfo)
+                            .padding(.trailing, 8)
                     }
                 }
             }
@@ -157,7 +146,6 @@ struct StatusView: View {
                 Text("Untracked files")
                 Spacer()
                 stageAllUntrackedButton
-                stageSelectedUntrackedButton
                 .padding(.trailing, 8)
             }
             .padding(.bottom, 4)
@@ -169,20 +157,9 @@ struct StatusView: View {
             Group {
                 ForEach(statusViewModel.unstagedDeltaInfos) { deltaInfo in
                     HStack {
-                        Toggle("", isOn: Binding(
-                            get: { selectedUnstagedIds.contains(key: statusViewModel.selectableStatus.oid, value: deltaInfo) },
-                            set: { isSelected in
-                                if isSelected {
-                                    currentSelectedItem[statusViewModel.selectableStatus.oid] = deltaInfo
-                                    selectedUnstagedIds.insert(key: statusViewModel.selectableStatus.oid, value: deltaInfo)
-                                } else {
-                                    selectedUnstagedIds.remove(key: statusViewModel.selectableStatus.oid, value: deltaInfo)
-                                }
-                            }
-                        ))
-                        .toggleStyle(.checkbox)
-                        .labelsHidden()
                         rowForDeltaInfo(deltaInfo)
+                        stageSelectedUnstagedButton(deltaInfo: deltaInfo)
+                            .padding(.trailing, 8)
                     }
                 }
             }
@@ -191,7 +168,6 @@ struct StatusView: View {
                 Text("Unstaged changes")
                 Spacer()
                 stageAllUnstagedButton
-                stageSelectedUnstagedButton
                 .padding(.trailing, 8)
             }
             .padding(.bottom, 4)
@@ -204,20 +180,9 @@ struct StatusView: View {
             Group {
                 ForEach(statusViewModel.stagedDeltaInfos) { deltaInfo in
                     HStack {
-                        Toggle("", isOn: Binding(
-                            get: { selectedStagedIds.contains(key: statusViewModel.selectableStatus.oid, value: deltaInfo) },
-                            set: { isSelected in
-                                if isSelected {
-                                    currentSelectedItem[statusViewModel.selectableStatus.oid] = deltaInfo
-                                    selectedStagedIds.insert(key: statusViewModel.selectableStatus.oid, value: deltaInfo)
-                                } else {
-                                    selectedStagedIds.remove(key: statusViewModel.selectableStatus.oid, value: deltaInfo)
-                                }
-                            }
-                        ))
-                        .toggleStyle(.checkbox)
-                        .labelsHidden()
                         rowForDeltaInfo(deltaInfo)
+                        unstageSelectedStagedButton(deltaInfo: deltaInfo)
+                            .padding(.trailing, 8)
                     }
                 }
             }
@@ -226,7 +191,6 @@ struct StatusView: View {
                 Text("Staged changes")
                 Spacer()
                 unstageAllStagedButton
-                unstageSelectedStagedButton
                 .padding(.trailing, 8)
             }
             .padding(.bottom, 4)

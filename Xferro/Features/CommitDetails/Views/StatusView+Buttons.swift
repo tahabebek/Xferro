@@ -27,7 +27,7 @@ extension StatusView {
         }
     }
     var stageAllButton: some View {
-        buttonWith(title: "Stage all", disabled: false) {
+        buttonWith(title: "Stage all") {
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
         }
     }
@@ -41,46 +41,96 @@ extension StatusView {
         }
     }
     var stageAllAndCommitButton: some View {
-        buttonWith(title: "Stage all and commit", disabled: commitSummaryIsEmptyOrWhitespace) {
-            fatalError(.unimplemented)
+        buttonWith(title: "Stage all + commit", disabled: commitSummaryIsEmptyOrWhitespace) {
+            guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                fatalError(.impossible)
+            }
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
+            commitSummary[statusViewModel.selectableStatus.oid] = ""
         }
     }
     var stageAllAndAmendButton: some View {
-        buttonWith(title: "Stage all and amend", disabled: false) {
+        buttonWith(title: "Stage all + amend") {
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
             commitsViewModel.amendTapped(
                 repository: statusViewModel.repository,
                 message: commitSummary[statusViewModel.selectableStatus.oid]
             )
+            commitSummary[statusViewModel.selectableStatus.oid] = ""
         }
     }
     var stageAllCommitAndPushButton: some View {
-        buttonWith(title: "Stage all, commit, and push", disabled: false) {
+        buttonWith(
+            title: "Stage all + commit + push",
+            disabled: commitSummaryIsEmptyOrWhitespace
+        ) {
+            guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                fatalError(.impossible)
+            }
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
+            commitSummary[statusViewModel.selectableStatus.oid] = ""
+            fatalError(.unimplemented)
+        }
+    }
+    var stageAllCommitAndForcePushButton: some View {
+        buttonWith(
+            title: "Stage all + commit + force push",
+            disabled: commitSummaryIsEmptyOrWhitespace,
+            dangerous: true
+        ) {
+            guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                fatalError(.impossible)
+            }
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
+            commitSummary[statusViewModel.selectableStatus.oid] = ""
             fatalError(.unimplemented)
         }
     }
     var stageAllAmendAndPushButton: some View {
-        buttonWith(title: "Stage all, amend, and push", disabled: !commitSummaryIsEmptyOrWhitespace) {
+        buttonWith(title: "Stage all + amend + push") {
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.amendTapped(
+                repository: statusViewModel.repository,
+                message: commitSummary[statusViewModel.selectableStatus.oid]
+            )
+            commitSummary[statusViewModel.selectableStatus.oid] = ""
+            fatalError(.unimplemented)
+        }
+    }
+    var stageAllAmendAndForcePushButton: some View {
+        buttonWith(
+            title: "Stage all + amend + force push",
+            dangerous: true
+        ) {
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.amendTapped(
+                repository: statusViewModel.repository,
+                message: commitSummary[statusViewModel.selectableStatus.oid]
+            )
+            commitSummary[statusViewModel.selectableStatus.oid] = ""
             fatalError(.unimplemented)
         }
     }
     var pushStashButton: some View {
-        buttonWith(title: "Push stash", disabled: false) {
+        buttonWith(title: "Push stash") {
             fatalError(.unimplemented)
         }
     }
     var popStashButton: some View {
-        buttonWith(title: "Pop stash", disabled: false) {
+        buttonWith(title: "Pop stash") {
             fatalError(.unimplemented)
         }
     }
     var applyStashButton: some View {
-        buttonWith(title: "Apply stash", disabled: false) {
+        buttonWith(title: "Apply stash") {
             fatalError(.unimplemented)
         }
     }
     var addCustomButton: some View {
-        buttonWith(title: "Add your custom command button here", disabled: false) {
+        buttonWith(title: "Add your custom command button here") {
             fatalError(.unimplemented)
         }
     }
@@ -89,7 +139,7 @@ extension StatusView {
 // Staged Files
 extension StatusView {
     var unstageAllStagedButton: some View {
-        buttonWith(title: "Unstage All", disabled: false) {
+        buttonWith(title: "Unstage All") {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: false,
                 repository: statusViewModel.repository,
@@ -97,25 +147,24 @@ extension StatusView {
             )
         }
     }
-    var unstageSelectedStagedButton: some View {
-        buttonWith(title: "Unstage Selected", disabled: selectedStagedIds.isEmpty(key: statusViewModel.selectableStatus.oid)) {
+    func unstageSelectedStagedButton(deltaInfo: DeltaInfo) -> some View {
+        Button {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: false,
                 repository: statusViewModel.repository,
-                deltaInfos: selectedStagedIds.values
-                    .flatMap { $0 }
-                    .compactMap { deltaInfo in
-                        deltaInfo.repository == statusViewModel.repository ? deltaInfo : nil
-                    }
+                deltaInfos: [deltaInfo]
             )
+        } label: {
+            Image(systemName: "minus")
         }
+        .buttonStyle(.borderless)
     }
 }
 
 // Unstaged Files
 extension StatusView {
     var stageAllUnstagedButton: some View {
-        buttonWith(title: "Stage All", disabled: false) {
+        buttonWith(title: "Stage All") {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: true,
                 repository: statusViewModel.repository,
@@ -123,25 +172,24 @@ extension StatusView {
             )
         }
     }
-    var stageSelectedUnstagedButton: some View {
-        buttonWith(title: "Stage Selected", disabled: selectedUnstagedIds.isEmpty(key: statusViewModel.selectableStatus.oid)) {
+    func stageSelectedUnstagedButton(deltaInfo: DeltaInfo)-> some View {
+        Button {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: true,
                 repository: statusViewModel.repository,
-                deltaInfos: selectedUnstagedIds.values
-                    .flatMap { $0 }
-                    .compactMap { deltaInfo in
-                        deltaInfo.repository == statusViewModel.repository ? deltaInfo : nil
-                    }
+                deltaInfos: [deltaInfo]
             )
+        } label: {
+            Image(systemName: "plus")
         }
+        .buttonStyle(.borderless)
     }
 }
 
 // Untracked Files
 extension StatusView {
     var stageAllUntrackedButton: some View {
-        buttonWith(title: "Stage all", disabled: false) {
+        buttonWith(title: "Stage all") {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: true,
                 repository: statusViewModel.repository,
@@ -150,41 +198,54 @@ extension StatusView {
         }
     }
 
-    var stageSelectedUntrackedButton: some View {
-        buttonWith(title: "Stage Selected", disabled: selectedUntrackedIds.isEmpty(key: statusViewModel.selectableStatus.oid)) {
+    func stageSelectedUntrackedButton(deltaInfo: DeltaInfo) -> some View {
+        Button {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: true,
                 repository: statusViewModel.repository,
-                deltaInfos: selectedUntrackedIds.values
-                    .flatMap { $0 }
-                    .compactMap { deltaInfo in
-                        deltaInfo.repository == statusViewModel.repository ? deltaInfo : nil
-                    }
+                deltaInfos: [deltaInfo]
             )
+        } label: {
+            Image(systemName: "plus")
         }
+        .buttonStyle(.borderless)
     }
 }
 
 // MARK: Helpers
 extension StatusView {
-    @ViewBuilder private func buttonWith(title: String, disabled: Bool, action: @escaping () -> Void) -> some View {
-        let button = Button {
-            action()
-        } label: {
-            Text(title)
-                .font(.caption)
-        }
-        .controlSize(.small)
-        .disabled(disabled)
+    @ViewBuilder private func buttonWith(
+        title: String,
+        disabled: Bool = false,
+        dangerous: Bool = false,
+        action: @escaping () -> Void) -> some View {
+            let button = Button {
+                action()
+            } label: {
+                if dangerous {
+                    HStack {
+                        Image(systemName: "exclamationmark.octagon.fill")
+                            .foregroundStyle(Color(nsColor: .systemRed))
+                        Text(title)
+                    }
+                    .font(.caption)
+                } else {
+                    Text(title)
+                        .font(.caption)
+                }
+            }
+                .controlSize(.small)
+                .disabled(disabled)
 
-        if disabled {
-            button
-                .buttonStyle(.bordered)
-        } else {
-            button
-                .buttonStyle(.borderedProminent)
+
+            if disabled {
+                button
+                    .buttonStyle(.bordered)
+            } else {
+                button
+                    .buttonStyle(.borderedProminent)
+            }
         }
-    }
 
     var commitSummaryIsEmptyOrWhitespace: Bool {
         commitSummary[statusViewModel.selectableStatus.oid]?.isEmptyOrWhitespace ?? true

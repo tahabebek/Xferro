@@ -9,7 +9,7 @@ import Foundation
 
 enum Dimensions {
     static let commitsViewIdealWidth: CGFloat = 320
-    static let commitDetailsViewIdealWidth: CGFloat = 350
+    static let commitDetailsViewIdealWidth: CGFloat = 400
 
     static let commitsViewPriority: Double = 2
     static let commitDetailsPriority: Double = 3
