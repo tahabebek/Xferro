@@ -14,6 +14,7 @@ import Observation
     let login: Login
     let commitIdentity: CommitIdentity
     var projects: [Project]
+    var lastSelectedRepositoryPath: String?
 
     static func == (lhs: User, rhs: User) -> Bool {
         lhs.userID == rhs.userID

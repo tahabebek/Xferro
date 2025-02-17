@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct StatusEntry: CustomDebugStringConvertible {
+struct StatusEntry: CustomDebugStringConvertible, Equatable {
     var id: String { UUID().uuidString }
     var status: Diff.Status
     var stagedDelta: Diff.Delta?
@@ -38,10 +38,10 @@ struct Diff {
     /// The set of deltas.
     var deltas = [Delta]()
 
-    struct Delta: CustomDebugStringConvertible, Identifiable {
+    struct Delta: CustomDebugStringConvertible, Identifiable, Hashable, Equatable {
         var id: String { statusName + flags.debugDescription + (oldFile?.path ?? "") + (newFile?.path ?? "") }
 
-        enum Status: UInt32, CustomDebugStringConvertible {
+        enum Status: UInt32, CustomDebugStringConvertible, Hashable {
             case unmodified     = 0     /**< no changes */
             case added          = 1     /**< entry does not exist in old version */
             case deleted        = 2     /**< entry does not exist in new version */
@@ -94,7 +94,7 @@ struct Diff {
         }
     }
 
-    struct File: CustomDebugStringConvertible {
+    struct File: CustomDebugStringConvertible, Hashable {
         var oid: OID
         var path: String
         var size: UInt64
@@ -122,7 +122,7 @@ struct Diff {
         }
     }
 
-    struct Status: OptionSet, CustomDebugStringConvertible {
+    struct Status: OptionSet, CustomDebugStringConvertible, Equatable {
         // This appears to be necessary due to bug in Swift
         // https://bugs.swift.org/browse/SR-3003
         init(rawValue: UInt32) {
@@ -165,7 +165,7 @@ struct Diff {
         }
     }
 
-    struct Flags: OptionSet, CustomDebugStringConvertible {
+    struct Flags: OptionSet, CustomDebugStringConvertible, Hashable {
         // This appears to be necessary due to bug in Swift
         // https://bugs.swift.org/browse/SR-3003
         init(rawValue: UInt32) {

@@ -117,6 +117,7 @@ struct BranchView: View {
             }
         } label: {
             Text(name)
+                .font(.caption)
                 .padding(.vertical, 2)
                 .padding(.horizontal, 4)
                 .background(isCurrent ? Color.red.opacity(0.3) : Color.gray.opacity(0.3))
@@ -128,5 +129,9 @@ struct BranchView: View {
         }
         .truncationMode(.middle)
         .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+        .overlay {
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(Color.accentColor, lineWidth: isCurrent ? 1 : 0)
+        }
     }
 }

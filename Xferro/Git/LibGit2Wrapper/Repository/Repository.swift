@@ -7,7 +7,10 @@
 
 import Foundation
 
-class Repository: Identifiable, Equatable {
+class Repository: Identifiable, Equatable, Hashable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(pointer)
+    }
     static let staticLock = NSRecursiveLock()
     let lock = NSRecursiveLock()
     var id: ObjectIdentifier { ObjectIdentifier(self) }

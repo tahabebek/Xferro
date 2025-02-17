@@ -38,7 +38,7 @@ import Observation
             }
         }
         guard repositories.isNotEmpty else { return nil }
-        let commitsViewModel = CommitsViewModel(repositories: repositories) { [weak self] url in
+        let commitsViewModel = CommitsViewModel(repositories: repositories, user: user) { [weak self] url in
             guard let self else { return }
             userDidSelectFolder(url)
         }

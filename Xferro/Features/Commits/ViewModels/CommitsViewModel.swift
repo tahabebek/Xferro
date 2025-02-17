@@ -24,6 +24,7 @@ import OrderedCollections
 
     var currentSelectedItem: SelectedItem? {
         didSet {
+            user.lastSelectedRepositoryPath = currentSelectedItem?.repository.gitDir.path
             updateDetailInfo()
             updateWipCommitsForCurrentSelectedItem()
         }
@@ -40,10 +41,12 @@ import OrderedCollections
     private let statusManager: StatusManager
     private let userDidSelectFolder: (URL) -> Void
     private var folderChangeObservers: Set<AnyCancellable> = []
+    private let user: User
 
     init(
         repositories: [Repository],
         statusManager: StatusManager = .shared,
+        user: User,
         userDidSelectFolder: @escaping (URL) -> Void
     ) {
         if UserDefaults.standard.object(forKey: "autoCommitEnabled") == nil {
@@ -53,6 +56,7 @@ import OrderedCollections
         }
         self.statusManager = statusManager
         self.userDidSelectFolder = userDidSelectFolder
+        self.user = user
         for repository in repositories {
             addRepository(repository)
         }
@@ -141,12 +145,26 @@ import OrderedCollections
             await MainActor.run {
                 guard currentSelectedItem == nil else { return }
                 if !currentRepositoryInfos.isEmpty {
-                    let firstRepo = currentRepositoryInfos.values[0].repository
-                    currentSelectedItem = SelectedItem(
-                        selectedItemType: .regular(
-                            .status(SelectableStatus(repository: firstRepo))
+                    var repository: Repository?
+                    if let lastSelectedRepositoryPath = user.lastSelectedRepositoryPath {
+                        for (_, info) in currentRepositoryInfos {
+                            if info.repository.gitDir.path == lastSelectedRepositoryPath {
+                                repository = info.repository
+                                break
+                            }
+                        }
+                    }
+                    if repository == nil {
+                        repository = currentRepositoryInfos.values[0].repository
+                    }
+
+                    if let repository {
+                        currentSelectedItem = SelectedItem(
+                            selectedItemType: .regular(
+                                .status(SelectableStatus(repository: repository))
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -522,6 +540,17 @@ import OrderedCollections
                         await MainActor.run { [weak self] in
                             guard let self else { return }
                             updateRepositoryInfo(repository)
+                            if let currentSelectedItem {
+                                if case .regular(let item) = currentSelectedItem.selectedItemType {
+                                    if case .status(let selectableStatus) = item {
+                                        if gitDir.path == selectableStatus.repository.gitDir.path {
+                                            print("update status")
+                                            self.currentSelectedItem = SelectedItem(selectedItemType: .regular(.status(selectableStatus)))
+
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -640,6 +669,105 @@ import OrderedCollections
                 currentRepositoryInfos[keyForRepositoryInfos(repository)] = nil
             }
         }
+    }
+
+    func stageOrUnstageButtonTapped(stage: Bool, repository: Repository, deltaInfos: [DeltaInfo]) {
+        for deltaInfo in deltaInfos {
+            switch deltaInfo.delta.status {
+            case .unmodified:
+                fatalError(.unexpected)
+            case .added:
+                guard let newFilePath = deltaInfo.delta.newFile?.path else {
+                    fatalError(.unexpected)
+                }
+                if stage {
+                    repository.stage(path: newFilePath).mustSucceed()
+                } else {
+                    repository.unstage(path: newFilePath).mustSucceed()
+                }
+            case .deleted:
+                guard let oldFilePath = deltaInfo.delta.oldFile?.path else {
+                    fatalError(.unexpected)
+                }
+                if stage {
+                    repository.stage(path: oldFilePath).mustSucceed()
+                } else {
+                    repository.unstage(path: oldFilePath).mustSucceed()
+                }
+            case .modified:
+                guard let newFilePath = deltaInfo.delta.newFile?.path else {
+                    fatalError(.unexpected)
+                }
+                if stage {
+                    print("stage \(newFilePath)")
+                    repository.stage(path: newFilePath).mustSucceed()
+                } else {
+                    print("unstage \(newFilePath)")
+                    repository.unstage(path: newFilePath).mustSucceed()
+                }
+            case .renamed:
+                guard let oldFilePath = deltaInfo.delta.oldFile?.path,
+                        let newFilePath = deltaInfo.delta.newFile?.path else {
+                    fatalError(.unexpected)
+                }
+                if stage {
+                    repository.stage(path: oldFilePath).mustSucceed()
+                    repository.stage(path: newFilePath).mustSucceed()
+                } else {
+                    repository.unstage(path: oldFilePath).mustSucceed()
+                    repository.unstage(path: newFilePath).mustSucceed()
+                }
+            case .copied:
+                guard let newFilePath = deltaInfo.delta.newFile?.path else {
+                    fatalError(.unexpected)
+                }
+                if stage {
+                    repository.stage(path: newFilePath).mustSucceed()
+                } else {
+                    repository.unstage(path: newFilePath).mustSucceed()
+                }
+            case .ignored:
+                fatalError(.unimplemented)
+            case .untracked:
+                guard let newFilePath = deltaInfo.delta.newFile?.path else {
+                    fatalError(.unexpected)
+                }
+                if stage {
+                    repository.stage(path: newFilePath).mustSucceed()
+                } else {
+                    repository.unstage(path: newFilePath).mustSucceed()
+                }
+            case .typeChange:
+                guard let oldFilePath = deltaInfo.delta.oldFile?.path,
+                      let newFilePath = deltaInfo.delta.newFile?.path else {
+                    fatalError(.unexpected)
+                }
+                if stage {
+                    repository.stage(path: oldFilePath).mustSucceed()
+                    repository.stage(path: newFilePath).mustSucceed()
+                } else {
+                    repository.unstage(path: oldFilePath).mustSucceed()
+                    repository.unstage(path: newFilePath).mustSucceed()
+                }
+            case .unreadable:
+                fatalError(.unimplemented)
+            case .conflicted:
+                fatalError(.unimplemented)
+            }
+        }
+    }
+
+    func stageAllButtonTapped(repository: Repository) {
+        repository.stage(path: ".").mustSucceed()
+    }
+
+    @discardableResult
+    func commitTapped(repository: Repository, message: String) -> Commit {
+        repository.commit(message: message).mustSucceed()
+    }
+
+    func amendTapped(repository: Repository, message: String?) {
+        repository.amend(message: message).mustSucceed()
     }
 
     // MARK: Keys

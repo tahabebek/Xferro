@@ -99,6 +99,7 @@ struct RepoManager {
         }
     }
 
+    @discardableResult
     func git(_ repository: Repository, _ args: [String]) -> String {
         guard let workDir = repository.workDir else {
             fatalError("no work dir")
@@ -151,11 +152,12 @@ struct RepoManager {
                                     code: Int(process.terminationStatus),
                                     userInfo: [NSLocalizedDescriptionKey: "Git failed: \(output)"])
                 print(error)
+                fatalError(.unhandledError)
             }
             return output
         } catch {
             print("Failed to run git: \(error)")
-            return ""
+            fatalError(.unhandledError)
         }
     }
 

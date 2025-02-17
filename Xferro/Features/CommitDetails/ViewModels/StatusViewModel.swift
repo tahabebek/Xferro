@@ -8,29 +8,15 @@
 import Observation
 
 @Observable final class StatusViewModel {
-    enum StatusType: Int, Identifiable {
-        var id: Int { rawValue }
-
-        case staged = 0
-        case unstaged = 1
-        case untracked = 2
-    }
-
-    struct DeltaInfo: Identifiable, Equatable {
-        static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.delta.id == rhs.delta.id
-        }
-        var id: String { delta.id + type.id.formatted() }
-        
-        let delta: Diff.Delta
-        let type: StatusType
-    }
-
     var stagedDeltaInfos: [DeltaInfo] = []
     var unstagedDeltaInfos: [DeltaInfo] = []
     var untrackedDeltaInfos: [DeltaInfo] = []
     var selectableStatus: SelectableStatus
+    var statusEntries: [StatusEntry] = []
     private let statusManager: StatusManager
+    var repository: Repository {
+        selectableStatus.repository
+    }
 
     init(
         selectableStatus: SelectableStatus,
@@ -38,26 +24,33 @@ import Observation
         statusManager: StatusManager = .shared
     ) {
         self.selectableStatus = selectableStatus
+        self.statusEntries = statusEntries
         self.statusManager = statusManager
 
         var stagedDeltaInfos: [DeltaInfo] = []
         var unstagedDeltaInfos: [DeltaInfo] = []
         var untrackedDeltaInfos: [DeltaInfo] = []
-        let handleDelta: (Diff.Delta, StatusType) -> Void = { delta, type in
+        let handleDelta: (Repository, Diff.Delta, DeltaInfo.StatusType) -> Void = { repository, delta, type in
             switch delta.status {
             case .unmodified, .ignored:
                 break
             case .added, .deleted, .modified, .renamed, .copied, .typeChange:
                 switch type {
                 case .staged:
-                    stagedDeltaInfos.append(DeltaInfo(delta: delta, type: type))
+                    stagedDeltaInfos.append(
+                        DeltaInfo(delta: delta, type: type, repository: repository)
+                    )
                 case .unstaged:
-                    unstagedDeltaInfos.append(DeltaInfo(delta: delta, type: type))
+                    unstagedDeltaInfos.append(
+                        DeltaInfo(delta: delta, type: type, repository: repository)
+                    )
                 case .untracked:
                     fatalError(.impossible)
                }
             case .untracked:
-                untrackedDeltaInfos.append(DeltaInfo(delta: delta, type: .untracked))
+                untrackedDeltaInfos.append(
+                    DeltaInfo(delta: delta, type: .untracked, repository: repository)
+                )
             case .unreadable:
                 fatalError(.unimplemented)
             case .conflicted:
@@ -68,12 +61,12 @@ import Observation
             var handled: Bool = false
             if let stagedDelta = statusEntry.stagedDelta {
                 handled = true
-                handleDelta(stagedDelta, .staged)
+                handleDelta(selectableStatus.repository, stagedDelta, .staged)
             }
 
             if let unstagedDelta = statusEntry.unstagedDelta {
                 handled = true
-                handleDelta(unstagedDelta, .unstaged)
+                handleDelta(selectableStatus.repository,unstagedDelta, .unstaged)
             }
 
             guard handled else {

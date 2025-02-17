@@ -248,7 +248,7 @@ final class WipWorktree {
     }
 
     func addToWorktreeIndex(path: String) {
-        worktreeRepository.add(path: path).mustSucceed()
+        worktreeRepository.stage(path: path).mustSucceed()
     }
 
     @discardableResult

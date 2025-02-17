@@ -7,17 +7,17 @@
 
 import Foundation
 
-extension Dictionary where Key == OID, Value == Set<String> {
-    mutating func insert(key: Key, value: String) {
+extension Dictionary where Value: SetAlgebra {
+    mutating func insert(key: Key, value: Value.Element) {
         if var existing = self[key] {
             existing.insert(value)
             self[key] = existing
         } else {
-            self[key] = [value]
+            self[key] = Value([value])
         }
     }
 
-    mutating func remove(key: Key, value: String) {
+    mutating func remove(key: Key, value: Value.Element) {
         if var existing = self[key] {
             existing.remove(value)
             self[key] = existing
@@ -28,9 +28,7 @@ extension Dictionary where Key == OID, Value == Set<String> {
         self[key]?.isEmpty ?? true
     }
 
-    func contains(key: Key, value: String) -> Bool {
+    func contains(key: Key, value: Value.Element) -> Bool {
         self[key]?.contains(value) ?? false
     }
-
-
 }

@@ -6,8 +6,8 @@
 //
 
 extension String {
-    var isNotEmptyOrWhitespace: Bool {
-        trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+    var isEmptyOrWhitespace: Bool {
+        trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true
     }
 
     func delimited(by character: Character) -> String {
