@@ -230,7 +230,6 @@ extension Repository {
     func commit(message: String, signature: Signature? = nil) -> Result<Commit, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        // create commit signature
         let sign: Signature
         do {
             sign = try signature ?? Signature.default(self).get()
