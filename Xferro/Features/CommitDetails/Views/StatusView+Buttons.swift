@@ -228,7 +228,7 @@ extension StatusView {
                         .font(.caption)
                 }
             }
-                .controlSize(.small)
+//                .controlSize(.small)
                 .disabled(disabled)
 
 

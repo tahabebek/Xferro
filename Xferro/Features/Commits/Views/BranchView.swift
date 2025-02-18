@@ -65,7 +65,7 @@ struct BranchView: View {
                                 .font(.caption)
                                 .minimumScaleFactor(0.9)
                                 .allowsTightening(true)
-                                .padding(4)
+                                .padding(6)
                                 .lineLimit(4)
                                 .foregroundColor(Color.fabulaFore1)
                                 .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
@@ -130,7 +130,6 @@ struct BranchView: View {
                 .font(.caption)
                 .padding(.vertical, 2)
                 .padding(.horizontal, 4)
-                .background(isCurrent ? Color.red.opacity(0.3) : Color.gray.opacity(0.3))
                 .cornerRadius(4)
                 .lineLimit(1)
                 .alignmentGuide(.verticalAlignment, computeValue: { d in
