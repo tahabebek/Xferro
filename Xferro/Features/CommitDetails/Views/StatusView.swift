@@ -117,9 +117,6 @@ struct StatusView: View {
                     pushStashButton
                     popStashButton
                     applyStashButton
-                    Spacer()
-                }
-                HStack {
                     addCustomButton
                     Spacer()
                 }

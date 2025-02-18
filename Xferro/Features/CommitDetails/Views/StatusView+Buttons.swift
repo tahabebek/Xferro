@@ -117,7 +117,7 @@ extension StatusView {
         }
     }
     var addCustomButton: some View {
-        buttonWith(title: "Add your custom command button here") {
+        buttonWith(title: "Add your command") {
             fatalError(.unimplemented)
         }
     }
