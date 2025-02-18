@@ -12,7 +12,7 @@ protocol BranchItem: SelectableItem {
 }
 
 struct BranchView: View {
-    static let commitNodeSize: CGFloat = 60
+    static let commitNodeSize: CGFloat = 54
     @Environment(CommitsViewModel.self) var viewModel
     let name: String
     let selectableCommits: [any BranchItem]
@@ -59,12 +59,13 @@ struct BranchView: View {
                 } else {
                     let offset = isCurrent ? 1 : 0
                     let item = selectableCommits[index - offset]
-                    FlaredCircle(backgroundColor: Color(hex: 0x232834).opacity(0.8)) {
+                    FlaredRounded(backgroundColor: Color(hex: 0x232834).opacity(0.7)) {
                         ZStack {
                             Text(selectableCommits[index - offset].commit.summary)
                                 .font(.caption)
-                                .multilineTextAlignment(.center)
-                                .padding(8)
+                                .minimumScaleFactor(0.9)
+                                .allowsTightening(true)
+                                .padding(4)
                                 .lineLimit(4)
                                 .foregroundColor(Color.fabulaFore1)
                                 .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))

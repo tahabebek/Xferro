@@ -15,7 +15,7 @@ extension StatusView {
                 fatalError(.impossible)
             }
             commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
-            commitSummary[statusViewModel.selectableStatus.oid] = ""
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
         }
     }
@@ -34,7 +34,7 @@ extension StatusView {
             }
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
             commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
-            commitSummary[statusViewModel.selectableStatus.oid] = ""
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
         }
     }
@@ -45,7 +45,7 @@ extension StatusView {
                 repository: statusViewModel.repository,
                 message: commitSummary[statusViewModel.selectableStatus.oid]
             )
-            commitSummary[statusViewModel.selectableStatus.oid] = ""
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
         }
     }
@@ -59,7 +59,7 @@ extension StatusView {
             }
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
             commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
-            commitSummary[statusViewModel.selectableStatus.oid] = ""
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -75,7 +75,7 @@ extension StatusView {
             }
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
             commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
-            commitSummary[statusViewModel.selectableStatus.oid] = ""
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -87,7 +87,7 @@ extension StatusView {
                 repository: statusViewModel.repository,
                 message: commitSummary[statusViewModel.selectableStatus.oid]
             )
-            commitSummary[statusViewModel.selectableStatus.oid] = ""
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -102,7 +102,7 @@ extension StatusView {
                 repository: statusViewModel.repository,
                 message: commitSummary[statusViewModel.selectableStatus.oid]
             )
-            commitSummary[statusViewModel.selectableStatus.oid] = ""
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }

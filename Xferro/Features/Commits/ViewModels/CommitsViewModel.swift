@@ -768,7 +768,7 @@ import OrderedCollections
 
     func amendTapped(repository: Repository, message: String?) {
         var newMessage = message
-        if newMessage == nil {
+        if newMessage == nil || (newMessage ?? "").isEmptyOrWhitespace {
             let headCommit: Commit = repository.commit().mustSucceed()
             newMessage = headCommit.summary
         }
