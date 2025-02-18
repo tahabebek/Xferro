@@ -99,7 +99,6 @@ import OrderedCollections
             }
         }
     }
-    //
 
     private func updateDetailInfo() {
         Task {

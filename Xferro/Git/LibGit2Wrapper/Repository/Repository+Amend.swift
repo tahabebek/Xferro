@@ -58,7 +58,7 @@ extension Repository {
             "HEAD",
             nil,
             nil,
-            "UTF-8",
+            nil,
             messageBuff,
             tree
         )
