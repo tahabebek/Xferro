@@ -767,16 +767,16 @@ import OrderedCollections
     }
 
     func amendTapped(repository: Repository, message: String?) {
-        var message = message
-        if message == nil {
+        var newMessage = message
+        if newMessage == nil {
             let headCommit: Commit = repository.commit().mustSucceed()
-            message = headCommit.summary
+            newMessage = headCommit.summary
         }
 
-        guard let message else {
+        guard let newMessage, !newMessage.isEmptyOrWhitespace else {
             fatalError(.unsupported)
         }
-        repository.amend(message: message).mustSucceed()
+        repository.amend(message: newMessage).mustSucceed()
     }
 
     // MARK: Keys

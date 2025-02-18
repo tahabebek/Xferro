@@ -59,11 +59,12 @@ struct BranchView: View {
                 } else {
                     let offset = isCurrent ? 1 : 0
                     let item = selectableCommits[index - offset]
-                    FlaredRounded(backgroundColor: Color(hex: 0x232834).opacity(0.8)) {
+                    FlaredCircle(backgroundColor: Color(hex: 0x232834).opacity(0.8)) {
                         ZStack {
                             Text(selectableCommits[index - offset].commit.summary)
                                 .font(.caption)
-                                .padding(6)
+                                .multilineTextAlignment(.center)
+                                .padding(8)
                                 .lineLimit(4)
                                 .foregroundColor(Color.fabulaFore1)
                                 .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))

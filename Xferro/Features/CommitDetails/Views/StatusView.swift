@@ -12,6 +12,7 @@ struct StatusView: View {
     @Environment(StatusViewModel.self) var statusViewModel
     @State private var currentSelectedItem = Dictionary<OID, DeltaInfo>()
     @State var commitSummary = Dictionary<OID, String>()
+    @FocusState var isTextFieldFocused: Bool
 
     var body: some View {
         VSplitView {
@@ -27,6 +28,7 @@ struct StatusView: View {
         .onChange(of: statusViewModel.selectableStatus) { oldValue, newValue in
             if oldValue.oid != newValue.oid {
                 setInitialSelection()
+                isTextFieldFocused = false
             }
         }
         .animation(.default, value: statusViewModel.selectableStatus)
@@ -89,11 +91,18 @@ struct StatusView: View {
             VStack(alignment: .leading) {
                 HStack {
                     Form {
-                        TextField("Summary", text: Binding(
-                            get: { commitSummary[statusViewModel.selectableStatus.oid] ?? "" },
-                            set: { commitSummary[statusViewModel.selectableStatus.oid] = $0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
+                        TextField(
+                            "Message",
+                            text: Binding(
+                                get: { commitSummary[statusViewModel.selectableStatus.oid] ?? "" },
+                                set: { commitSummary[statusViewModel.selectableStatus.oid] = $0 }
+                            ),
+                            prompt: Text("Message for commit, amend or stash"),
+                            axis: .vertical
+                        )
+                        .textFieldStyle(.roundedBorder)
+                        .focused($isTextFieldFocused)
+
                     }
                 }
                 HStack {
