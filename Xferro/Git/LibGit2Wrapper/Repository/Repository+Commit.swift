@@ -109,7 +109,6 @@ extension Repository {
         var commit: OpaquePointer? = nil
         defer { git_commit_free(commit) }
         if !unborn {
-            // get head reference
             var head: OpaquePointer? = nil
             defer { git_reference_free(head) }
             var result = git_repository_head(&head, self.pointer)
@@ -184,7 +183,6 @@ extension Repository {
                 signature: Signature? = nil) -> Result<Commit, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        // create commit signature
         let sign: Signature
         do {
             sign = try signature ?? Signature.default(self).get()

@@ -11,9 +11,6 @@ struct StatusView: View {
     @Environment(CommitsViewModel.self) var commitsViewModel
     @Environment(StatusViewModel.self) var statusViewModel
     @State private var currentSelectedItem = Dictionary<OID, DeltaInfo>()
-    @State var selectedStagedIds = Dictionary<OID, Set<DeltaInfo>>()
-    @State var selectedUnstagedIds = Dictionary<OID, Set<DeltaInfo>>()
-    @State var selectedUntrackedIds = Dictionary<OID, Set<DeltaInfo>>()
     @State var commitSummary = Dictionary<OID, String>()
 
     var body: some View {
@@ -38,9 +35,6 @@ struct StatusView: View {
         .animation(.default, value: statusViewModel.untrackedDeltaInfos)
         .animation(.default, value: statusViewModel.statusEntries)
         .animation(.default, value: currentSelectedItem)
-        .animation(.default, value: selectedStagedIds)
-        .animation(.default, value: selectedUnstagedIds)
-        .animation(.default, value: selectedUntrackedIds)
         .animation(.default, value: commitSummary)
         .padding(.horizontal, 6)
     }
@@ -57,15 +51,19 @@ struct StatusView: View {
         }
     }
 
+    var hasChanges: Bool {
+        !statusViewModel.stagedDeltaInfos.isEmpty ||
+        !statusViewModel.unstagedDeltaInfos.isEmpty ||
+        !statusViewModel.untrackedDeltaInfos.isEmpty
+    }
+
     private var changeBox: some View {
         ZStack {
             Color(hex: 0x15151A)
                 .cornerRadius(8)
             ScrollView(showsIndicators: true) {
-                if statusViewModel.stagedDeltaInfos.isEmpty &&
-                    statusViewModel.unstagedDeltaInfos.isEmpty &&
-                    statusViewModel.untrackedDeltaInfos.isEmpty {
-                    Text("Empty")
+                if !hasChanges {
+                    Text("No changes.")
                 }
                 LazyVStack(spacing: 4) {
                     if statusViewModel.stagedDeltaInfos.isNotEmpty {

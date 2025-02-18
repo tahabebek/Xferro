@@ -26,20 +26,7 @@ extension StatusView {
             )
         }
     }
-    var stageAllButton: some View {
-        buttonWith(title: "Stage all") {
-            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
-        }
-    }
-    var unstageAllButton: some View {
-        buttonWith(title: "Unstage all", disabled: statusViewModel.stagedDeltaInfos.isEmpty) {
-            commitsViewModel.stageOrUnstageButtonTapped(
-                stage: false,
-                repository: statusViewModel.repository,
-                deltaInfos: statusViewModel.stagedDeltaInfos
-            )
-        }
-    }
+
     var stageAllAndCommitButton: some View {
         buttonWith(title: "Stage all + commit", disabled: commitSummaryIsEmptyOrWhitespace) {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
@@ -219,11 +206,12 @@ extension StatusView {
         disabled: Bool = false,
         dangerous: Bool = false,
         action: @escaping () -> Void) -> some View {
+            let disabled = disabled || !hasChanges
             let button = Button {
                 action()
             } label: {
                 if dangerous {
-                    HStack {
+                    HStack(spacing: 4) {
                         Image(systemName: "exclamationmark.octagon.fill")
                             .foregroundStyle(Color(nsColor: .systemRed))
                         Text(title)

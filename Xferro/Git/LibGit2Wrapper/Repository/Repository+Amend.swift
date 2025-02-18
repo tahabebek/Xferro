@@ -9,7 +9,7 @@ import Foundation
 
 extension Repository {
     @discardableResult
-    func amend(message: String? = nil) -> Result<git_oid, NSError> {
+    func amend(message: String) -> Result<git_oid, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let headCommit = commit().mustSucceed()
@@ -43,13 +43,9 @@ extension Repository {
         }
         defer { git_tree_free(tree) }
 
-        var messageBuff: UnsafeMutablePointer<CChar>? = nil
-        if let message {
-            var msgBuf = git_buf()
-            git_message_prettify(&msgBuf, message, 0, /* ascii for # */ 35)
-            defer { git_buf_dispose(&msgBuf) }
-            messageBuff = msgBuf.ptr
-        }
+        var msgBuf = git_buf()
+        git_message_prettify(&msgBuf, message, 0, /* ascii for # */ 35)
+        defer { git_buf_dispose(&msgBuf) }
 
         var commitOID = git_oid()
         result = git_commit_amend(
@@ -59,7 +55,7 @@ extension Repository {
             nil,
             nil,
             nil,
-            messageBuff,
+            msgBuf.ptr,
             tree
         )
         guard result == GIT_OK.rawValue else {

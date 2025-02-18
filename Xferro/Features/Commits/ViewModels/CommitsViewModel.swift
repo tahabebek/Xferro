@@ -767,6 +767,15 @@ import OrderedCollections
     }
 
     func amendTapped(repository: Repository, message: String?) {
+        var message = message
+        if message == nil {
+            let headCommit: Commit = repository.commit().mustSucceed()
+            message = headCommit.summary
+        }
+
+        guard let message else {
+            fatalError(.unsupported)
+        }
         repository.amend(message: message).mustSucceed()
     }
 
