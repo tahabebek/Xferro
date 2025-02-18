@@ -50,10 +50,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // TODO: let users add their workflow model
         // https://nvie.com/posts/a-successful-git-branching-model/
 
-        // TODO: create a clone with -depth 1, and only for the current branch, and then create worktrees for the autowips for each commit
-        // git clone *REMOTE-URL* --branch *BRANCH-NAME* --single-branch --depth 1 *FOLDER*
-
-
         createMenu()
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
