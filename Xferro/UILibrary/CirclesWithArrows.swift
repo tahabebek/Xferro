@@ -15,19 +15,19 @@ struct CirclesWithArrows<CircleContent>: View where CircleContent: View {
     let verticalOffset: CGFloat
 
     private var arrowY: CGFloat { circleSize / 2  + verticalOffset }
-    private var arrowHeadSize: CGFloat { circleSize / 10 }
+    private var arrowHeadSize: CGFloat { circleSize / 20 }
     private let lineWidth: CGFloat = 1
 
     init(
         numberOfCircles: Int,
         circleSize: CGFloat = 36,
-        spacing: CGFloat = 48,
+        spacing: CGFloat = 12,
         verticalOffset: CGFloat = 0,
         @ViewBuilder circleContent: @escaping (Int) -> CircleContent
     ) {
         self.numberOfCircles = numberOfCircles
         self.circleSize = circleSize
-        self.spacing = spacing
+        self.spacing = circleSize + spacing
         self.circleContent = circleContent
         self.verticalOffset = verticalOffset
     }

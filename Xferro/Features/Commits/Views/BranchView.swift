@@ -12,6 +12,7 @@ protocol BranchItem: SelectableItem {
 }
 
 struct BranchView: View {
+    static let commitNodeSize: CGFloat = 60
     @Environment(CommitsViewModel.self) var viewModel
     let name: String
     let selectableCommits: [any BranchItem]
@@ -25,6 +26,7 @@ struct BranchView: View {
             HStack(alignment: .verticalAlignment) {
                 menu
                     .frame(maxWidth: 120)
+                    .padding(.trailing, 8)
                 graph
             }
         }
@@ -33,12 +35,15 @@ struct BranchView: View {
     }
 
     private var graph: some View {
-        CirclesWithArrows(numberOfCircles: isCurrent ? selectableCommits.count + 1 : selectableCommits.count) { index in
+        CirclesWithArrows(
+            numberOfCircles: isCurrent ? selectableCommits.count + 1 : selectableCommits.count,
+            circleSize: Self.commitNodeSize,
+            spacing: 12
+        ) { index in
             ZStack {
                 if isCurrent && index == 0 {
                     Circle()
                         .fill(Color.accentColor.opacity(0.7))
-                        .cornerRadius(12)
                         .overlay {
                             Text("Status")
                                 .font(.caption)
@@ -47,25 +52,28 @@ struct BranchView: View {
                         .onTapGesture {
                             viewModel.userTapped(item: selectableStatus)
                         }
+                        .frame(width: Self.commitNodeSize, height: Self.commitNodeSize)
                     if viewModel.isSelected(item: selectableStatus) {
-                        SelectedItemOverlay()
+                        SelectedItemOverlay(width: Self.commitNodeSize, height: Self.commitNodeSize)
                     }
                 } else {
                     let offset = isCurrent ? 1 : 0
                     let item = selectableCommits[index - offset]
-                    FlaredCircle(backgroundColor: Color(hex: 0x232834).opacity(0.8)) {
+                    FlaredRounded(backgroundColor: Color(hex: 0x232834).opacity(0.8)) {
                         ZStack {
-                            Text(selectableCommits[index - offset].commit.oid.debugOID.prefix(4))
+                            Text(selectableCommits[index - offset].commit.summary)
                                 .font(.caption)
+                                .padding(6)
+                                .lineLimit(4)
                                 .foregroundColor(Color.fabulaFore1)
                                 .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                         }
                     }
-                    .hoverableButton(item.commit.summary) {
+                    .onTapGesture {
                         viewModel.userTapped(item: item)
                     }
                     if viewModel.isSelected(item: item) {
-                        SelectedItemOverlay()
+                        SelectedItemOverlay(width: Self.commitNodeSize, height: Self.commitNodeSize)
                     }
                 }
             }

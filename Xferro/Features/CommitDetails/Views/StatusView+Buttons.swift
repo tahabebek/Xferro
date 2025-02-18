@@ -26,7 +26,6 @@ extension StatusView {
             )
         }
     }
-
     var stageAllAndCommitButton: some View {
         buttonWith(title: "Stage all + commit", disabled: commitSummaryIsEmptyOrWhitespace) {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {

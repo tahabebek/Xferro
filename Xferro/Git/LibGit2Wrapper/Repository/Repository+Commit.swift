@@ -12,7 +12,7 @@ extension Repository {
     func createEmptyCommit() -> Commit {
         lock.lock()
         defer { lock.unlock() }
-        let commit: Commit = commit(message: "Empty commit").mustSucceed()
+        let commit: Commit = commit(message: "Initial Commit").mustSucceed()
         return commit
     }
 
