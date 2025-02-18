@@ -34,6 +34,6 @@ struct SelectableItemDetailView: View {
             }
             Spacer()
         }
-        .frame(minWidth: Dimensions.commitDetailsViewIdealWidth)
+        .frame(width: Dimensions.commitDetailsViewIdealWidth)
     }
 }

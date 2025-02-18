@@ -15,7 +15,7 @@ struct CommitsView: View {
             WipCommitsView()
                 .padding(.trailing, 6)
         }
-        .frame(minWidth: Dimensions.commitsViewIdealWidth)
+        .frame(width: Dimensions.commitsViewIdealWidth)
     }
 }
 
