@@ -33,7 +33,6 @@ struct ProjectView: View {
 }
 
 struct PeekView: View {
-    //    @Environment(ProjectViewModel.self) var projectViewModel
     var body: some View {
         Color.clear.ignoresSafeArea()
     }
