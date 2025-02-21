@@ -13,7 +13,7 @@ import Observation
     let userID: UserID
     let login: Login
     let commitIdentity: CommitIdentity
-    var projects: [Project]
+    private(set) var projects: [Project]
     var lastSelectedRepositoryPath: String?
 
     static func == (lhs: User, rhs: User) -> Bool {
@@ -36,5 +36,17 @@ import Observation
         self.commitIdentity = commitIdentity
         self.projects = projects
         self.lastSelectedRepositoryPath = lastSelectedRepositoryPath
+    }
+
+    func addProject(_ project: Project) -> Bool {
+        if projects.filter({ $0.url == project.url }).count > 0 {
+            return false
+        }
+        projects.append(project)
+        return true
+    }
+
+    func removeProject(_ url: URL) {
+        projects.removeAll { $0.url == url }
     }
 }

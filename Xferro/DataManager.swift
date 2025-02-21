@@ -39,7 +39,9 @@ struct DataManager {
         do {
             let data = try Data(contentsOf: fileURL)
             let decoder = JSONDecoder()
-            return try decoder.decode(type, from: data)
+            let value = try decoder.decode(type, from: data)
+            print("Data successfully loaded from: \(fileURL)")
+            return value
         } catch {
             print("Error loading data: \(error)")
             return nil

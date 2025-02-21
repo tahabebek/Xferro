@@ -66,7 +66,6 @@ import OrderedCollections
         Task {
             for repository in repositories {
                 await addRepository(repository)
-                break
             }
             await MainActor.run {
                 setupInitialCurrentSelectedItem()
@@ -713,7 +712,7 @@ import OrderedCollections
                         setCurrentSelectedItem(itemAndHead: nil)
                     }
                 }
-                user.projects.removeAll { $0.url.path == repository.gitDir.deletingLastPathComponent().path }
+                user.removeProject(repository.gitDir.deletingLastPathComponent())
             }
         }
     }

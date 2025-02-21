@@ -20,12 +20,13 @@ import Observation
     func userDidSelectFolder(_ url: URL) {
         let isGit = isFolderGit(url: url)
         let project = Project(isGit: isGit, url: url)
-        if let repository = try? Repository.at(project.url).get() {
-            Task {
-                await _commitsViewModel?.addRepository(repository)
+        if user.addProject(project) {
+            if let repository = try? Repository.at(project.url).get() {
+                Task {
+                    await _commitsViewModel?.addRepository(repository)
+                }
             }
         }
-        user.projects.append(project)
     }
 
     func commitsViewModel() -> CommitsViewModel? {
