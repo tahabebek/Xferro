@@ -343,7 +343,6 @@ import OrderedCollections
     private func addWipCommit(repository: Repository) {
         wipCommitLock.lock()
         defer { wipCommitLock.unlock() }
-        let start = CFAbsoluteTimeGetCurrent()
         let head = Head.of(repository)
         let selectableItem = SelectableStatus(repository: repository, head: head)
         guard let worktree = WipWorktree.getOrCreate(for: selectableItem, head: head) else { return }
