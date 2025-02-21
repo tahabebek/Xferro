@@ -82,6 +82,7 @@ struct BranchView: View {
         }
     }
 
+    #warning("menu is not working")
     private var menu : some View {
         Menu {
             if !isCurrent {
