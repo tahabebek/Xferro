@@ -192,7 +192,9 @@ import Observation
         ) { [weak self] paths in
             guard let self else { return }
             let nonIgnoredPaths = Set(paths
-                .filter { !repository.ignores(absolutePath: $0) })
+                .filter {
+                    !repository.ignores(absolutePath: $0)
+                })
             if nonIgnoredPaths.isEmpty { return }
             print("paths changed at workdir \(repository.workDir):\n \(nonIgnoredPaths)")
             self.onWorkDirChange(self, nonIgnoredPaths)

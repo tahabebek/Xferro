@@ -10,7 +10,9 @@ import SwiftUI
 // ActionBox
 extension StatusView {
     var commitButton: some View {
-        buttonWith(title: "Commit", disabled: commitSummaryIsEmptyOrWhitespace || statusViewModel.stagedDeltaInfos.isEmpty) {
+        AnyView.buttonWith(
+            title: "Commit",
+            disabled: commitSummaryIsEmptyOrWhitespace || statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                 fatalError(.impossible)
             }
@@ -20,7 +22,7 @@ extension StatusView {
         }
     }
     var amendButton: some View {
-        buttonWith(title: "Amend", disabled: statusViewModel.stagedDeltaInfos.isEmpty) {
+        AnyView.buttonWith(title: "Amend", disabled: statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
             commitsViewModel.amendTapped(
                 repository: statusViewModel.repository,
                 message: commitSummary[statusViewModel.selectableStatus.oid]
@@ -28,7 +30,7 @@ extension StatusView {
         }
     }
     var stageAllAndCommitButton: some View {
-        buttonWith(title: "Stage all + commit", disabled: commitSummaryIsEmptyOrWhitespace) {
+        AnyView.buttonWith(title: "Stage all + commit", disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges) {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                 fatalError(.impossible)
             }
@@ -39,7 +41,7 @@ extension StatusView {
         }
     }
     var stageAllAndAmendButton: some View {
-        buttonWith(title: "Stage all + amend") {
+        AnyView.buttonWith(title: "Stage all + amend", disabled: !hasChanges) {
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
             commitsViewModel.amendTapped(
                 repository: statusViewModel.repository,
@@ -50,9 +52,9 @@ extension StatusView {
         }
     }
     var stageAllCommitAndPushButton: some View {
-        buttonWith(
+        AnyView.buttonWith(
             title: "Stage all + commit + push",
-            disabled: commitSummaryIsEmptyOrWhitespace
+            disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges
         ) {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                 fatalError(.impossible)
@@ -65,9 +67,9 @@ extension StatusView {
         }
     }
     var stageAllCommitAndForcePushButton: some View {
-        buttonWith(
+        AnyView.buttonWith(
             title: "Stage all + commit + force push",
-            disabled: commitSummaryIsEmptyOrWhitespace,
+            disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges,
             dangerous: true
         ) {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
@@ -81,7 +83,7 @@ extension StatusView {
         }
     }
     var stageAllAmendAndPushButton: some View {
-        buttonWith(title: "Stage all + amend + push") {
+        AnyView.buttonWith(title: "Stage all + amend + push", disabled: !hasChanges) {
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
             commitsViewModel.amendTapped(
                 repository: statusViewModel.repository,
@@ -93,8 +95,9 @@ extension StatusView {
         }
     }
     var stageAllAmendAndForcePushButton: some View {
-        buttonWith(
+        AnyView.buttonWith(
             title: "Stage all + amend + force push",
+            disabled: !hasChanges,
             dangerous: true
         ) {
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
@@ -108,23 +111,32 @@ extension StatusView {
         }
     }
     var pushStashButton: some View {
-        buttonWith(title: "Push stash") {
+        AnyView.buttonWith(title: "Push stash", disabled: !hasChanges) {
             fatalError(.unimplemented)
         }
     }
     var popStashButton: some View {
-        buttonWith(title: "Pop stash") {
+        AnyView.buttonWith(title: "Pop stash", disabled: !hasChanges) {
             fatalError(.unimplemented)
         }
     }
     var applyStashButton: some View {
-        buttonWith(title: "Apply stash") {
+        AnyView.buttonWith(title: "Apply stash", disabled: !hasChanges) {
             fatalError(.unimplemented)
         }
     }
     var addCustomButton: some View {
-        buttonWith(title: "Add your command") {
+        AnyView.buttonWith(title: "Add your command", disabled: !hasChanges) {
             fatalError(.unimplemented)
+        }
+    }
+}
+
+// All files
+extension StatusView {
+    func discardSelectedButton(deltaInfo: DeltaInfo) -> some View {
+        AnyView.buttonWith(title: "Discard", dangerous: true, isProminent: false, isSmall: true) {
+            discardDeltaInfo = deltaInfo
         }
     }
 }
@@ -132,7 +144,7 @@ extension StatusView {
 // Staged Files
 extension StatusView {
     var unstageAllStagedButton: some View {
-        buttonWith(title: "Unstage All") {
+        AnyView.buttonWith(title: "Unstage All") {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: false,
                 repository: statusViewModel.repository,
@@ -141,7 +153,7 @@ extension StatusView {
         }
     }
     func unstageSelectedStagedButton(deltaInfo: DeltaInfo) -> some View {
-        buttonWith(title: "Unstage", isProminent: false, isSmall: true) {
+        AnyView.buttonWith(title: "Unstage", isProminent: false, isSmall: true) {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: false,
                 repository: statusViewModel.repository,
@@ -154,7 +166,7 @@ extension StatusView {
 // Unstaged Files
 extension StatusView {
     var stageAllUnstagedButton: some View {
-        buttonWith(title: "Stage All") {
+        AnyView.buttonWith(title: "Stage All") {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: true,
                 repository: statusViewModel.repository,
@@ -163,7 +175,7 @@ extension StatusView {
         }
     }
     func stageSelectedUnstagedButton(deltaInfo: DeltaInfo)-> some View {
-        buttonWith(title: "Stage", isProminent: false, isSmall: true) {
+        AnyView.buttonWith(title: "Stage", isProminent: false, isSmall: true) {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: true,
                 repository: statusViewModel.repository,
@@ -176,7 +188,7 @@ extension StatusView {
 // Untracked Files
 extension StatusView {
     var stageAllUntrackedButton: some View {
-        buttonWith(title: "Track all") {
+        AnyView.buttonWith(title: "Track all") {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: true,
                 repository: statusViewModel.repository,
@@ -186,7 +198,7 @@ extension StatusView {
     }
 
     func stageSelectedUntrackedButton(deltaInfo: DeltaInfo) -> some View {
-        buttonWith(title: "Track", isProminent: false, isSmall: true) {
+        AnyView.buttonWith(title: "Track", isProminent: false, isSmall: true) {
             commitsViewModel.stageOrUnstageButtonTapped(
                 stage: true,
                 repository: statusViewModel.repository,
@@ -196,7 +208,7 @@ extension StatusView {
     }
 
     func ignoreSelectedUntrackedButton(deltaInfo: DeltaInfo) -> some View {
-        buttonWith(title: "Ignore", isProminent: false, isSmall: true) {
+        AnyView.buttonWith(title: "Ignore", isProminent: false, isSmall: true) {
             commitsViewModel.ignoreButtonTapped(
                 repository: statusViewModel.repository,
                 deltaInfo: deltaInfo
@@ -207,89 +219,7 @@ extension StatusView {
 
 // MARK: Helpers
 extension StatusView {
-    @ViewBuilder private func buttonWith(
-        title: String,
-        disabled: Bool = false,
-        dangerous: Bool = false,
-        isProminent: Bool = true,
-        isSmall: Bool = false,
-        action: @escaping () -> Void) -> some View {
-            let isDisabled = disabled || !hasChanges
-            Button {
-                action()
-            } label: {
-                Group {
-                    if dangerous {
-                        HStack(spacing: 4) {
-                            Image(systemName: "exclamationmark.octagon.fill")
-                                .foregroundStyle(Color(nsColor: .systemRed))
-                            Text(title)
-                        }
-                    } else {
-                        Text(title)
-                    }
-                }
-            }
-            .disabled(isDisabled)
-            .style(isDisabled: isDisabled, isProminent: isProminent, isSmall: isSmall)
-        }
-
     var commitSummaryIsEmptyOrWhitespace: Bool {
         commitSummary[statusViewModel.selectableStatus.oid]?.isEmptyOrWhitespace ?? true
-    }
-}
-
-struct XferroButtonStyle: ButtonStyle {
-    let foregroundColor: Color
-    let regularBackgroundColor: Color
-    let prominentBackgroundColor: Color
-    let pressedOpacity: CGFloat
-    let disabledOpacity: CGFloat
-    let isDisabled: Bool
-    let isProminent: Bool
-    let isSmall: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(isSmall ? .caption : .callout)
-            .padding(.vertical, isSmall ? 2 : 3)
-            .padding(.horizontal, isSmall ? 4 : 6)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(isProminent ? prominentBackgroundColor : regularBackgroundColor)
-            )
-            .foregroundColor(foregroundColor)
-            .opacity(configuration.isPressed ? pressedOpacity : 1.0)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
-            .overlay {
-                if isDisabled {
-                    Color.black.opacity(disabledOpacity)
-                }
-            }
-    }
-}
-
-extension View {
-    func style(
-        foregroundColor: Color = .white,
-        regularBackgroundColor: Color = .gray.opacity(0.4),
-        prominentBackgroundColor: Color = .accentColor.opacity(0.7),
-        pressedOpacity: CGFloat = 0.8,
-        disabledOpacity: CGFloat = 0.6,
-        isDisabled: Bool = false,
-        isProminent: Bool = true,
-        isSmall: Bool = false
-    ) -> some View {
-        self.buttonStyle(XferroButtonStyle(
-            foregroundColor: foregroundColor,
-            regularBackgroundColor: regularBackgroundColor,
-            prominentBackgroundColor: prominentBackgroundColor,
-            pressedOpacity: pressedOpacity,
-            disabledOpacity: disabledOpacity,
-            isDisabled: isDisabled,
-            isProminent: isProminent,
-            isSmall: isSmall
-        ))
     }
 }

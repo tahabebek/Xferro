@@ -24,6 +24,7 @@ struct SwiftSpaceApp: App {
 struct SwiftSpaceApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var welcomeViewModel = WelcomeViewModel()
+    @State private var discardPopup = DiscardPopup()
     @State var users: Users? = DataManager.load(Users.self, filename: DataManager.usersFileName)
     private let screenDimensions = NSScreen.main?.visibleFrame.size
 
@@ -34,6 +35,7 @@ struct SwiftSpaceApp: App {
                     Group {
                         if let users, let currentUser = users.currentUser {
                             ProjectsView(viewModel: ProjectsViewModel(user: currentUser))
+                                .environment(discardPopup)
                         } else {
                             WelcomeView(viewModel: welcomeViewModel)
                                 .onChange(of: welcomeViewModel.users) { oldValue, newValue in
@@ -57,6 +59,30 @@ struct SwiftSpaceApp: App {
                 }
             }
             .background(Color.fabulaBack2)
+            .popup(
+                isPresented: $discardPopup.isPresented,
+                backgroundStyle: .dimmed,
+                isDestructive: true
+            ) {
+                VStack {
+                    Text(discardPopup.title)
+                        .padding()
+                    HStack {
+                        AnyView.buttonWith(title: "Cancel") {
+                            discardPopup.onCancel?()
+                            discardPopup.isPresented = false
+                        }
+                        AnyView.buttonWith(title: "Discard") {
+                            discardPopup.onConfirm?()
+                            discardPopup.isPresented = false
+                        }
+                    }
+                    .padding(.top)
+                }
+                .padding()
+            } onCancel: {
+                discardPopup.onCancel?()
+            }
         }
     }
 }

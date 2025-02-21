@@ -825,14 +825,17 @@ import OrderedCollections
     }
 
     func ignoreButtonTapped(repository: Repository, deltaInfo: DeltaInfo) {
-        guard let url = deltaInfo.newFileURL else {
-            fatalError(.illegal)
-        }
-
         guard let path = deltaInfo.newFilePath else {
             fatalError(.illegal)
         }
         repository.ignore(path)
+    }
+
+    func discardFileButtonTapped(repository: Repository, filePaths: [String]) {
+        for filePath in filePaths {
+            RepoManager().git(repository, ["restore", filePath])
+        }
+        
     }
 
     // MARK: Keys

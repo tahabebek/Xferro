@@ -10,9 +10,11 @@ import SwiftUI
 struct StatusView: View {
     @Environment(CommitsViewModel.self) var commitsViewModel
     @Environment(StatusViewModel.self) var statusViewModel
+    @Environment(DiscardPopup.self) var discardPopup
     @State private var currentSelectedItem = Dictionary<OID, DeltaInfo>()
     @State var commitSummary = Dictionary<OID, String>()
     @FocusState var isTextFieldFocused: Bool
+    @State var discardDeltaInfo: DeltaInfo? = nil
 
     var body: some View {
         VSplitView {
@@ -29,6 +31,18 @@ struct StatusView: View {
             if oldValue.oid != newValue.oid {
                 setInitialSelection()
                 isTextFieldFocused = false
+            }
+        }
+        .onChange(of: discardDeltaInfo) { _, newValue in
+            if let newValue, discardPopup.isPresented == false {
+                discardPopup.show(title: discardAlertTitle(deltaInfo: newValue)) {
+                    discard(deltaInfo: newValue)
+                    self.discardDeltaInfo = nil
+                    print("discard tapped")
+                } onCancel: {
+                    print("cancel tapped")
+                    self.discardDeltaInfo = nil
+                }
             }
         }
         .animation(.default, value: statusViewModel.selectableStatus)
@@ -82,6 +96,44 @@ struct StatusView: View {
             .padding()
             .padding(.top, 4)
         }
+    }
+
+    private func discardAlertTitle(deltaInfo: DeltaInfo) -> String {
+        let oldFilePath = deltaInfo.oldFilePath
+        let newFilePath = deltaInfo.newFilePath
+        var title: String = "Are you sure you want to discard all the changes"
+
+        if let oldFilePath, let newFilePath, oldFilePath == newFilePath {
+            title += " to\n\(oldFilePath)?"
+        } else if let oldFilePath, let newFilePath {
+            title += " to\n\(oldFilePath), and\n\(newFilePath)?"
+        } else if let oldFilePath {
+            title += " to\n\(oldFilePath)?"
+        } else if let newFilePath {
+            title += " to\n\(newFilePath)?"
+        }
+        return title
+    }
+
+    func discard(deltaInfo: DeltaInfo) {
+        let oldFilePath = deltaInfo.oldFilePath
+        let newFilePath = deltaInfo.newFilePath
+        var filePaths = [String]()
+
+        if let oldFilePath, let newFilePath, oldFilePath == newFilePath {
+            filePaths.append(oldFilePath)
+        } else {
+            if let oldFilePath {
+                filePaths.append(oldFilePath)
+            }
+            if let newFilePath {
+                filePaths.append(newFilePath)
+            }
+        }
+        commitsViewModel.discardFileButtonTapped(
+            repository: statusViewModel.repository,
+            filePaths: filePaths
+        )
     }
 
     private var actionBox: some View {
@@ -147,6 +199,7 @@ struct StatusView: View {
                         rowForDeltaInfo(deltaInfo)
                         stageSelectedUntrackedButton(deltaInfo: deltaInfo)
                         ignoreSelectedUntrackedButton(deltaInfo: deltaInfo)
+                        discardSelectedButton(deltaInfo: deltaInfo)
                     }
                 }
             }
@@ -167,6 +220,7 @@ struct StatusView: View {
                     HStack {
                         rowForDeltaInfo(deltaInfo)
                         stageSelectedUnstagedButton(deltaInfo: deltaInfo)
+                        discardSelectedButton(deltaInfo: deltaInfo)
                     }
                 }
             }
@@ -188,6 +242,7 @@ struct StatusView: View {
                     HStack {
                         rowForDeltaInfo(deltaInfo)
                         unstageSelectedStagedButton(deltaInfo: deltaInfo)
+                        discardSelectedButton(deltaInfo: deltaInfo)
                     }
                 }
             }
