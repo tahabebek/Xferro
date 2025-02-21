@@ -24,45 +24,45 @@ final class WipWorktree {
         return WipWorktree(worktreeRepository: worktreeRepository, originalRepository: originalRepository)
     }
 
-    static func getOrCreate(for item: any SelectableItem) -> WipWorktree? {
+    static func getOrCreate(for item: any SelectableItem, head: Head) -> WipWorktree? {
         let worktreeRepositoryURL =  worktreeRepositoryURL(originalRepository: item.repository)
         let branchName = worktreeBranchName(item: item)
+        let worktreeName = worktreeName(for: item.repository)
 
-        let head =  item.repository.HEAD().mustSucceed()
-        var createRepoOID: OID?
-        var getRepoOID: OID?
+        var shouldGetOrCreate = false
+        var shouldGetIfExists = false
         switch item {
         case _ as SelectableStatus:
-            createRepoOID = head.oid
+            shouldGetOrCreate = true
         case let commit as SelectableCommit:
             if commit.oid == head.oid {
-                createRepoOID = head.oid
+                shouldGetOrCreate = true
             } else {
-                getRepoOID = commit.oid
+                shouldGetIfExists = true
             }
         case let detachedCommit as SelectableDetachedCommit:
             if detachedCommit.oid == head.oid {
-                createRepoOID = head.oid
+                shouldGetOrCreate = true
             } else {
-                getRepoOID = detachedCommit.oid
+                shouldGetIfExists = true
             }
         case let detachedTag as SelectableDetachedTag:
             if detachedTag.oid == head.oid {
-                createRepoOID = head.oid
+                shouldGetOrCreate = true
             } else {
-                getRepoOID = detachedTag.oid
+                shouldGetIfExists = true
             }
         case let tag as SelectableTag:
             if tag.oid == head.oid {
-                createRepoOID = head.oid
+                shouldGetOrCreate = true
             } else {
-                getRepoOID = tag.oid
+                shouldGetIfExists = true
             }
         case let historyCommit as SelectableHistoryCommit:
             if historyCommit.oid == head.oid {
-                createRepoOID = head.oid
+                shouldGetOrCreate = true
             } else {
-                getRepoOID = historyCommit.oid
+                shouldGetIfExists = true
             }
         case _ as SelectableWipCommit:
             fatalError(.unsupported)
@@ -70,37 +70,15 @@ final class WipWorktree {
             fatalError(.unimplemented)
         }
 
-        let worktreeName = worktreeName(for: item.repository)
-        if createRepoOID != nil {
-            let worktreeRepository: Repository
-            if let existingWorktreeRepository = item.repository.worktree(named: worktreeName).mustSucceed() {
-                worktreeRepository = existingWorktreeRepository
-            } else {
-                let newBranch: Branch?
-                do {
-                    newBranch = try item.repository.createBranch(branchName).get()
-                } catch {
-                    if GIT_EEXISTS.rawValue == error.code {
-                        // this probably means the worktree folder is deleted by the user (or system) from the caches directory
-                        deleteWipWorktree(for: item.repository)
-                        newBranch = item.repository.createBranch(branchName).mustSucceed()
-                    } else {
-                        fatalError(.unhandledError)
-                    }
-                }
-                guard let newBranch else {
-                    fatalError(.impossible)
-                }
-                item.repository
-                    .addWorkTree(
-                        name: worktreeName,
-                        path: worktreeRepositoryURL.path
-                    ).mustSucceed()
-                worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
-                worktreeRepository.checkout(newBranch.longName).mustSucceed()
-            }
-            return WipWorktree(worktreeRepository: worktreeRepository, originalRepository: item.repository)
-        } else if getRepoOID != nil {
+        if shouldGetOrCreate {
+            return getOrCreate(
+                worktreeRepositoryURL: worktreeRepositoryURL,
+                branchName: branchName,
+                worktreeName: worktreeName,
+                item: item,
+                oid: head.oid
+            )
+        } else if shouldGetIfExists {
             if let existingWorktreeRepository = item.repository.worktree(named: worktreeName).mustSucceed() {
                 return WipWorktree(worktreeRepository: existingWorktreeRepository, originalRepository: item.repository)
             }
@@ -110,6 +88,43 @@ final class WipWorktree {
         } else {
             return nil
         }
+    }
+
+    private static func getOrCreate(
+        worktreeRepositoryURL: URL,
+        branchName: String,
+        worktreeName: String,
+        item: any SelectableItem,
+        oid: OID
+    ) -> WipWorktree {
+        let worktreeRepository: Repository
+        if let existingWorktreeRepository = item.repository.worktree(named: worktreeName).mustSucceed() {
+            worktreeRepository = existingWorktreeRepository
+        } else {
+            let newBranch: Branch?
+            do {
+                newBranch = try item.repository.createBranch(branchName, oid: oid).get()
+            } catch {
+                if GIT_EEXISTS.rawValue == error.code {
+                    // this probably means the worktree folder is deleted by the user (or system) from the caches directory
+                    deleteWipWorktree(for: item.repository)
+                    newBranch = item.repository.createBranch(branchName, oid: oid).mustSucceed()
+                } else {
+                    fatalError(.unhandledError)
+                }
+            }
+            guard let newBranch else {
+                fatalError(.impossible)
+            }
+            item.repository
+                .addWorkTree(
+                    name: worktreeName,
+                    path: worktreeRepositoryURL.path
+                ).mustSucceed()
+            worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
+            Head.checkout(repository: worktreeRepository, longName: newBranch.longName).mustSucceed()
+        }
+        return WipWorktree(worktreeRepository: worktreeRepository, originalRepository: item.repository)
     }
 
     private init(worktreeRepository: Repository, originalRepository: Repository) {
@@ -134,11 +149,11 @@ final class WipWorktree {
         case let status as SelectableStatus:
             switch status.type {
             case .branch(_, let branch):
-                "\(Self.wipBranchesPrefix)for_branch_\(branch.wipName)_commit_\(branch.commit.oid.description)"
+                "\(Self.wipBranchesPrefix)for_status_of_branch_\(branch.wipName)"
             case .tag(_, let tag):
-                "\(Self.wipBranchesPrefix)for_tag_\(tag.wipName)_commit_\(tag.oid.description)"
+                "\(Self.wipBranchesPrefix)for_status_of_tag_\(tag.wipName)"
             case .detached(_, let commit):
-                "\(Self.wipBranchesPrefix)for_detached_commit_\(commit.oid.description)"
+                "\(Self.wipBranchesPrefix)for_status_of_detached_commit_\(commit.oid.description)"
             }
         case let commit as SelectableCommit:
             "\(Self.wipBranchesPrefix)for_branch_\(commit.branch.wipName)_commit_\(commit.oid.description)"
@@ -244,7 +259,7 @@ final class WipWorktree {
     }
 
     func checkout(branchName: String) {
-        worktreeRepository.checkout(branchName.longBranchRef,.init(strategy: .Force)).mustSucceed()
+        Head.checkout(repository: worktreeRepository, longName: branchName.longBranchRef,.init(strategy: .Force)).mustSucceed()
     }
 
     func addToWorktreeIndex(path: String) {

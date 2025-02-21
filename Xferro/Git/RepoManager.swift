@@ -9,13 +9,10 @@ import Foundation
 
 struct RepoManager {
     func cleanGarbage(_ repository: Repository) {
-        guard let workDir = repository.workDir else {
-            return
-        }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
         process.arguments = ["gc", "--prune=now"]
-        process.currentDirectoryURL = URL(fileURLWithPath: workDir.path)
+        process.currentDirectoryURL = URL(fileURLWithPath: repository.workDir.path)
 
         // To capture output if needed
         let pipe = Pipe()
@@ -36,13 +33,10 @@ struct RepoManager {
     }
 
     func printFolderTree(_ repository: Repository) {
-        guard let workDir = repository.workDir else {
-            return
-        }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/tree")
         process.arguments = ["-a"]
-        process.currentDirectoryURL = URL(fileURLWithPath: workDir.path)
+        process.currentDirectoryURL = URL(fileURLWithPath: repository.workDir.path)
 
         // To capture output if needed
         let pipe = Pipe()
@@ -101,9 +95,6 @@ struct RepoManager {
 
     @discardableResult
     func git(_ repository: Repository, _ args: [String]) -> String {
-        guard let workDir = repository.workDir else {
-            fatalError("no work dir")
-        }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
 
@@ -131,7 +122,7 @@ struct RepoManager {
         ]
         fullArgs.append(contentsOf: args)
         process.arguments = fullArgs
-        process.currentDirectoryURL = URL(fileURLWithPath: workDir.path)
+        process.currentDirectoryURL = URL(fileURLWithPath: repository.workDir.path)
 
         // To capture output if needed
         let pipe = Pipe()
@@ -167,41 +158,6 @@ struct RepoManager {
         children.forEach {
             printCommit(oid: $0, indent: indent + 1, commitHierarchy: commitHierarchy)
         }
-    }
-
-    func dumpRepo(_ repository: Repository) {
-        guard case .success(let branches) = repository.localBranches() else {
-            fatalError("Failed to get local branches")
-        }
-
-        guard case .success(let head) = repository.HEAD() else {
-            fatalError( "Failed to get head commit")
-        }
-        print("----------------------------------------------")
-
-        if head.longName.isBranchRef {
-            print("Current branch: \(head.longName)")
-            printBranch(repository: repository, branch: head as! Branch)
-        } else if head.longName.isTagRef {
-            print("Current tag: \(head.longName)")
-            printTag(repository: repository, tag: head as! TagReference)
-        } else {
-            print("Current detached head commit: \(head.oid)")
-            guard case .success(let commit) = repository.commit(head.oid) else {
-                fatalError( "Failed to get head commit")
-            }
-            dumpCommitAndTree(commit: commit, repository: repository)
-        }
-
-        for branch in branches {
-            if branch.longName == head.longName {
-                continue
-            }
-            print("----------------------------------------------")
-            print("Branch: \(branch.longName), commit: \(branch.commit.oid)")
-            printBranch(repository: repository, branch: branch)
-        }
-        printIndexContents(repository)
     }
 
     private func printBranch(repository: Repository, branch: Branch) {

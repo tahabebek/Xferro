@@ -12,7 +12,6 @@ final class StatusManager {
 
     func status(of repository: Repository) -> [StatusEntry] {
         repository.status(options: [
-            .recurseUntrackedDirs,
             .includeUntracked,
             .renamesFromRewrites,
             .renamesHeadToIndex,

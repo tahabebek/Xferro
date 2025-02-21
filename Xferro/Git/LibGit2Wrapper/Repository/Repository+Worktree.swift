@@ -159,16 +159,12 @@ extension Repository {
         }
     }
 
-    func addWorkTree(name: String, path: String, head: String? = nil, checkout: Bool = true) -> Result<(), NSError> {
-
+    func addWorkTree(name: String, path: String) -> Result<Void, NSError> {
         let checkoutOptions  = UnsafeMutablePointer<git_checkout_options>.allocate(capacity: 1)
         defer { checkoutOptions.deallocate() }
         var result = git_checkout_options_init(checkoutOptions, UInt32(GIT_CHECKOUT_OPTIONS_VERSION))
         guard result == GIT_OK.rawValue else {
             return .failure(NSError(gitError: result, pointOfFailure: "git_checkout_options_init"))
-        }
-        if !checkout {
-            checkoutOptions.pointee.checkout_strategy = GIT_CHECKOUT_NONE.rawValue
         }
 
         let options = UnsafeMutablePointer<git_worktree_add_options>.allocate(capacity: 1)
@@ -181,38 +177,22 @@ extension Repository {
 
         var reference: OpaquePointer? = nil
         defer {
-            if let reference = reference {
-                if head == nil {
-                    git_reference_delete(reference)
-                }
-                git_reference_free(reference)
+            if let reference {
+                git_reference_delete(reference)
             }
         }
-        if let head {
-            if head.isLongRef || head.isHEAD {
-                let result = git_reference_lookup(&reference, self.pointer, head)
-                guard result == GIT_OK.rawValue else {
-                    return Result.failure(NSError(gitError: result, pointOfFailure: "git_reference_lookup"))
-                }
-            } else {
-                let result = git_reference_dwim(&reference, self.pointer, head)
-                guard result == GIT_OK.rawValue else {
-                    return Result.failure(NSError(gitError: result, pointOfFailure: "git_reference_dwim"))
-                }
-            }
-        } else {
-            var ref: OpaquePointer? = nil
-            defer { git_reference_free(ref) }
-            result = git_repository_head(&ref, self.pointer)
-            guard result == GIT_OK.rawValue else {
-                return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_head"))
-            }
-            let oid = git_reference_target(ref)
-            let tmpBranch = "refs/heads/Xferro-TMP-\(UUID().uuidString.prefix(6))"
-            result = git_reference_create(&reference, self.pointer, tmpBranch, oid, 0, "Xferro TMP Branch")
-            guard result == GIT_OK.rawValue else {
-                return Result.failure(NSError(gitError: result, pointOfFailure: "git_reference_create"))
-            }
+
+        var ref: OpaquePointer? = nil
+        defer { git_reference_free(ref) }
+        result = git_repository_head(&ref, self.pointer)
+        guard result == GIT_OK.rawValue else {
+            return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_head"))
+        }
+        let oid = git_reference_target(ref)
+        let tmpBranch = "refs/heads/Xferro-TMP-\(UUID().uuidString.prefix(6))"
+        result = git_reference_create(&reference, self.pointer, tmpBranch, oid, 0, "Xferro TMP Branch")
+        guard result == GIT_OK.rawValue else {
+            return Result.failure(NSError(gitError: result, pointOfFailure: "git_reference_create"))
         }
         options.pointee.ref = reference
 
@@ -225,12 +205,6 @@ extension Repository {
         guard result == GIT_OK.rawValue else {
             return .failure(NSError(gitError: result, pointOfFailure: "git_worktree_add"))
         }
-        if head == nil {
-            return Repository.at(URL(fileURLWithPath: path)).flatMap { repo -> Result<(), NSError> in
-                repo.HEAD().flatMap { repo.setHEAD($0.oid) }
-            }
-        } else {
-            return .success(())
-        }
+        return .success(())
     }
 }

@@ -38,3 +38,5 @@ playground.xcworkspace
 *.swp
 *.swo
 .undotree
+
+.derivedData/

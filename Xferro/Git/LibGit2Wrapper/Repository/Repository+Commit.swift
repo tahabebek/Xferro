@@ -140,10 +140,8 @@ extension Repository {
     func commit() -> Result<Commit, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        let head = self.HEAD().flatMap { ref in
-            commit(ref.oid)
-        }
-        return head
+        let headOID = Head.of(self).oid
+        return commit(headOID)
     }
 
     /// Loads the commit with the given OID.
@@ -261,9 +259,7 @@ extension Repository {
     func isDescendant(of oid: OID) -> Result<Bool, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        let head = self.HEAD().flatMap {
-            self.isDescendant(of: oid, for: $0.oid)
-        }
-        return head
+        let headOID = Head.of(self).oid
+        return self.isDescendant(of: oid, for: headOID)
     }
 }

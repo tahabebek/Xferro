@@ -66,6 +66,7 @@ extension Repository {
         return branch
     }
 
+    @discardableResult
     func createBranch(_ name: String, oid: OID, force: Bool = false) -> Result<Branch, NSError> {
         lock.lock()
         defer { lock.unlock() }
@@ -90,19 +91,6 @@ extension Repository {
             return .success(r)
         }
         return branch
-    }
-
-    @discardableResult
-    func createBranch(_ name: String, force: Bool = false) -> Result<Branch, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        if !checkValid(name.longBranchRef) {
-            return .failure(NSError(gitError: -1, description: "Branch name `\(name)` is invalid."))
-        }
-        let head = HEAD().flatMap { reference -> Result<Branch, NSError> in
-            createBranch(name, oid: reference.oid, force: force)
-        }
-        return head
     }
 
     @discardableResult
@@ -149,7 +137,7 @@ extension Repository {
         return branch
     }
 
-    func deleteBranch(_ name: String, remote: String, force: Bool = false) -> Result<(), NSError> {
+    func deleteBranch(_ name: String, remote: String, force: Bool = false) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let name = name.longBranchRef
@@ -157,7 +145,7 @@ extension Repository {
         return branch
     }
 
-    func deleteBranch(_ name: String) -> Result<(), NSError> {
+    func deleteBranch(_ name: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let name = name.longBranchRef
@@ -183,7 +171,7 @@ extension Repository {
         return .success(())
     }
 
-    func setTrackBranch(local: String, target: String?, remote: String = "origin") -> Result<(), NSError> {
+    func setTrackBranch(local: String, target: String?, remote: String = "origin") -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         do {
@@ -200,16 +188,13 @@ extension Repository {
         }
     }
 
-    func trackBranch() -> Result<(remote: String, merge: String)?, NSError> {
+    func trackBranch(headRef: ReferenceType) -> Result<(remote: String, merge: String)?, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        let head = HEAD().flatMap({ ref -> Result<(remote: String, merge: String)?, NSError> in
-            guard let branch = ref as? Branch else {
-                return .failure(NSError(gitError: -1, pointOfFailure: "git_branch_lookup"))
-            }
-            return self.trackBranch(local: branch.name)
-        })
-        return head
+        guard let branch = headRef as? Branch else {
+            return .failure(NSError(gitError: -1, pointOfFailure: "git_branch_lookup"))
+        }
+        return self.trackBranch(local: branch.name)
     }
 
     func trackBranch(local: String) -> Result<(remote: String, merge: String)?, NSError> {

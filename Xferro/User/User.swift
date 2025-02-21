@@ -24,10 +24,17 @@ import Observation
         hasher.combine(userID)
     }
 
-    init(userID: UserID, login: Login, commitIdentity: CommitIdentity, projects: [Project] = []) {
+    init(
+        userID: UserID,
+        login: Login,
+        commitIdentity: CommitIdentity,
+        projects: [Project] = [],
+        lastSelectedRepositoryPath: String? = nil
+    ) {
         self.userID = userID
         self.login = login
         self.commitIdentity = commitIdentity
         self.projects = projects
+        self.lastSelectedRepositoryPath = lastSelectedRepositoryPath
     }
 }

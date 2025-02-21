@@ -141,7 +141,7 @@ class Config {
         return config
     }
 
-    func addConfig(path: String, level: Level, repo: OpaquePointer? = nil) -> Result<(), NSError> {
+    func addConfig(path: String, level: Level, repo: OpaquePointer? = nil) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let result = path.withCString {
@@ -164,7 +164,7 @@ class Config {
         return .success(Config(config!, lock: lock))
     }
 
-    func delete(keyPath: String) -> Result<(), NSError> {
+    func delete(keyPath: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let result = keyPath.withCString { git_config_delete_entry(self.writableConfig(), $0) }
@@ -238,11 +238,11 @@ class Config {
         }
     }
 
-    func set(string: String, for keyPath: String) -> Result<(), NSError> {
+    func set(string: String, for keyPath: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        return string.withCString { (value) -> Result<(), NSError> in
-            keyPath.withCString { (key) -> Result<(), NSError> in
+        return string.withCString { (value) -> Result<Void, NSError> in
+            keyPath.withCString { (key) -> Result<Void, NSError> in
                 let result = git_config_set_string(self.writableConfig(), key, value)
                 guard result == GIT_OK.rawValue else {
                     return .failure(NSError(gitError: result, pointOfFailure: "git_config_set_string"))
@@ -252,10 +252,10 @@ class Config {
         }
     }
 
-    func set(bool: Bool, for keyPath: String) -> Result<(), NSError> {
+    func set(bool: Bool, for keyPath: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        return keyPath.withCString { (key) -> Result<(), NSError> in
+        return keyPath.withCString { (key) -> Result<Void, NSError> in
             let result = git_config_set_bool(self.writableConfig(), key, bool ? 1 : 0)
             guard result == GIT_OK.rawValue else {
                 return .failure(NSError(gitError: result, pointOfFailure: "git_config_set_bool"))
@@ -264,7 +264,7 @@ class Config {
         }
     }
 
-    func each(regex: String, block: (git_config_entry) -> Bool) -> Result<(), NSError> {
+    func each(regex: String, block: (git_config_entry) -> Bool) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         return regex.withCString { regexp in
@@ -326,7 +326,7 @@ class Config {
         return self.bool(for: "extensions.worktreeConfig").map { $0 == true }
     }
 
-    func useWorktree() -> Result<(), NSError> {
+    func useWorktree() -> Result<Void, NSError> {
         return self.set(bool: true, for: "extensions.worktreeConfig")
     }
 

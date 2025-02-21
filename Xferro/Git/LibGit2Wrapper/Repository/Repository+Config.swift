@@ -33,10 +33,10 @@ extension Repository {
         return NSString(string: path).appendingPathComponent("config.worktree")
     }
 
-    func addConfig(path: String, level: Config.Level) -> Result<(), NSError> {
+    func addConfig(path: String, level: Config.Level) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        return path.withCString { (value) -> Result<(), NSError> in
+        return path.withCString { (value) -> Result<Void, NSError> in
             let result = git_config_add_file_ondisk(self.config.config, value,  git_config_level_t(rawValue: level.rawValue), self.pointer, 1)
             guard result == GIT_OK.rawValue else {
                 return .failure(NSError(gitError: result, pointOfFailure: "git_config_add_file_ondisk"))

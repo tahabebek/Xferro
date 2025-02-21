@@ -74,12 +74,14 @@ extension Repository {
     /// options     - The options will be used.
     ///
     /// Returns a `Result` with void or an error.
-    func fetch(_ remote: String? = nil,
-                      options: FetchOptions? = nil)
-        -> Result<(), NSError> {
-            lock.lock()
-            defer { lock.unlock() }
-        let remoteName = remote ?? (try? self.trackBranch().get()?.remote) ?? "origin"
+    func fetch(
+        _ remote: String? = nil,
+        headRef: ReferenceType,
+        options: FetchOptions? = nil
+    ) -> Result<Void, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
+        let remoteName = remote ?? (try? self.trackBranch(headRef: headRef).get()?.remote) ?? "origin"
         return remoteLookup(named: remoteName) { remote in
             remote.flatMap { pointer in
                 let url = String(cString: git_remote_url(pointer))
@@ -95,23 +97,24 @@ extension Repository {
     }
 
     func pull(remote: String? = nil,
-                     branch: String? = nil,
-                     options: FetchOptions? = nil) -> Result<(), NSError> {
+              branch: String? = nil,
+              options: FetchOptions? = nil) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        return self.fetch(remote, options: options).flatMap {_ in
+        let headRef = Head.of(self).reference
+        return self.fetch(remote, headRef: headRef, options: options).flatMap {_ in
             do {
                 var remoteBranch: Branch? = nil
                 if let remote = remote, let branch = branch {
                     remoteBranch = try self.remoteBranch(named: "\(remote)/\(branch)").get()
                 } else {
-                    let trackBranch = try self.trackBranch().get()
+                    let trackBranch = try self.trackBranch(headRef: headRef).get()
                     if let remote = remote ?? trackBranch?.remote,
                        let branch = branch ?? trackBranch?.merge {
                         remoteBranch = try self.remoteBranch(named: "\(remote)/\(branch)").get()
                     }
                 }
-                guard let remoteBranch = remoteBranch else {
+                guard let remoteBranch else {
                     return .failure(NSError(gitError: 1, pointOfFailure: "git_config_get_string", description: "Could not find the upstream branch."))
                 }
                 return self.merge(with: remoteBranch.oid, message: "Merge \(remoteBranch)").flatMap { _ in .success(()) }
@@ -123,7 +126,7 @@ extension Repository {
 
     // source and target reference must be a long name.
     // if source is empty, means delete a reference.
-    func push(_ remote: String, sourceRef: String, targetRef: String, force: Bool = false, options: PushOptions? = nil) -> Result<(), NSError> {
+    func push(_ remote: String, sourceRef: String, targetRef: String, force: Bool = false, options: PushOptions? = nil) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         var remoteServer: OpaquePointer? = nil
@@ -156,9 +159,9 @@ extension Repository {
     ///
     /// Returns a `Result` with a `Repository` or an error.
     class func clone(from remoteURL: URL,
-                            to localURL: URL,
-                            options: CloneOptions? = nil,
-                            recurseSubmodules: Bool? = nil) -> Result<Repository, NSError> {
+                     to localURL: URL,
+                     options: CloneOptions? = nil,
+                     recurseSubmodules: Bool? = nil) -> Result<Repository, NSError> {
         Repository.staticLock.lock()
         defer { staticLock.unlock() }
         let options = options ?? CloneOptions(fetchOptions: FetchOptions(url: remoteURL.absoluteString))

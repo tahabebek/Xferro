@@ -47,8 +47,7 @@ struct SelectableStatus: SelectableItem, Identifiable {
             lhs.id == rhs.id
         }
 
-        static func of(_ repository: Repository) -> StatusType {
-            let head = Head.of(repository)
+        static func of(_ repository: Repository, head: Head) -> StatusType {
             switch head {
             case .branch(let branch):
                 return .branch(repository, branch)
@@ -96,13 +95,18 @@ struct SelectableStatus: SelectableItem, Identifiable {
     let repository: Repository
     let type: StatusType
 
-    init(repository: Repository) {
+    init(repository: Repository, head: Head) {
         self.repository = repository
-        self.type = StatusType.of(repository)
+        self.type = StatusType.of(repository, head: head)
     }
 }
 
 struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
+    init(repository: Repository, branch: Branch, commit: Commit) {
+        self.repository = repository
+        self.branch = branch
+        self.commit = commit
+    }
     var id: String { repository.idOfRepo + branch.id + commit.id }
     let repository: Repository
     let branch: Branch

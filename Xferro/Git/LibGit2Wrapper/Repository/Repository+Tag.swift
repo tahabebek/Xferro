@@ -29,10 +29,10 @@ extension Repository {
         return reference(named: name.longTagRef).map { $0 as! TagReference }
     }
 
-    func createTag(named name: String, oid: OID, force: Bool = false) -> Result<(), NSError> {
+    func createTag(named name: String, oid: OID, force: Bool = false) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        return longOID(for: oid).flatMap { oid -> Result<(), NSError> in
+        return longOID(for: oid).flatMap { oid -> Result<Void, NSError> in
             var oid = oid.oid
             var object: OpaquePointer? = nil
             var result = git_object_lookup(&object, self.pointer, &oid, GIT_OBJECT_COMMIT)

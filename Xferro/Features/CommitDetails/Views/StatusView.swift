@@ -79,7 +79,7 @@ struct StatusView: View {
                     }
                 }
             }
-            .padding(6)
+            .padding()
             .padding(.top, 4)
         }
     }
@@ -102,10 +102,11 @@ struct StatusView: View {
                         )
                         .textFieldStyle(.roundedBorder)
                         .focused($isTextFieldFocused)
-
+                        .padding(.bottom, 8)
                     }
                 }
                 HStack {
+                    Spacer()
                     commitButton
                     amendButton
                     stageAllAndCommitButton
@@ -113,16 +114,19 @@ struct StatusView: View {
                     Spacer()
                 }
                 HStack {
+                    Spacer()
                     stageAllCommitAndPushButton
                     stageAllCommitAndForcePushButton
                     Spacer()
                 }
                 HStack {
+                    Spacer()
                     stageAllAmendAndPushButton
                     stageAllAmendAndForcePushButton
                     Spacer()
                 }
                 HStack {
+                    Spacer()
                     pushStashButton
                     popStashButton
                     applyStashButton
@@ -132,6 +136,7 @@ struct StatusView: View {
             }
             .padding()
         }
+        .padding(.vertical)
     }
 
     private var untrackedView: some View {
@@ -141,7 +146,7 @@ struct StatusView: View {
                     HStack {
                         rowForDeltaInfo(deltaInfo)
                         stageSelectedUntrackedButton(deltaInfo: deltaInfo)
-                            .padding(.trailing, 8)
+                        ignoreSelectedUntrackedButton(deltaInfo: deltaInfo)
                     }
                 }
             }
@@ -150,7 +155,6 @@ struct StatusView: View {
                 Text("Untracked files")
                 Spacer()
                 stageAllUntrackedButton
-                .padding(.trailing, 8)
             }
             .padding(.bottom, 4)
         }
@@ -163,7 +167,6 @@ struct StatusView: View {
                     HStack {
                         rowForDeltaInfo(deltaInfo)
                         stageSelectedUnstagedButton(deltaInfo: deltaInfo)
-                            .padding(.trailing, 8)
                     }
                 }
             }
@@ -172,7 +175,6 @@ struct StatusView: View {
                 Text("Unstaged changes")
                 Spacer()
                 stageAllUnstagedButton
-                .padding(.trailing, 8)
             }
             .padding(.bottom, 4)
         }
@@ -186,7 +188,6 @@ struct StatusView: View {
                     HStack {
                         rowForDeltaInfo(deltaInfo)
                         unstageSelectedStagedButton(deltaInfo: deltaInfo)
-                            .padding(.trailing, 8)
                     }
                 }
             }
@@ -195,15 +196,14 @@ struct StatusView: View {
                 Text("Staged changes")
                 Spacer()
                 unstageAllStagedButton
-                .padding(.trailing, 8)
             }
             .padding(.bottom, 4)
         }
     }
 
     @ViewBuilder private func rowForDeltaInfo(_ deltaInfo: DeltaInfo) -> some View {
-        let oldFileName = deltaInfo.delta.oldFile?.path != nil ? URL(filePath: deltaInfo.delta.oldFile!.path).lastPathComponent : nil
-        let newFileName = deltaInfo.delta.newFile?.path != nil ? URL(filePath: deltaInfo.delta.newFile!.path).lastPathComponent : nil
+        let oldFileName = deltaInfo.oldFilePath
+        let newFileName = deltaInfo.newFilePath
         Group {
             switch deltaInfo.delta.status {
             case .unmodified:

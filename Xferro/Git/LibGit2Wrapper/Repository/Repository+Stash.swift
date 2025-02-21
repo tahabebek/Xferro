@@ -46,7 +46,7 @@ private func stashForEachCallback(index: Int,
 extension Repository {
 
     @discardableResult
-    func forEachStash(block: @escaping StashEachBlock) -> Result<(), NSError> {
+    func forEachStash(block: @escaping StashEachBlock) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let blockPointer = UnsafeMutablePointer<StashEachBlock>.allocate(capacity: 1)
@@ -95,7 +95,7 @@ extension Repository {
         }
     }
 
-    func apply(stash: Int, index: Bool = false) -> Result<(), NSError> {
+    func apply(stash: Int, index: Bool = false) -> Result<Void, NSError> {
         // Do this because GIT_STASH_APPLY_OPTIONS_INIT is unavailable in swift
         lock.lock()
         defer { lock.unlock() }
@@ -113,7 +113,7 @@ extension Repository {
         return .success(())
     }
 
-    func pop(stash: Int, index: Bool = false) -> Result<(), NSError> {
+    func pop(stash: Int, index: Bool = false) -> Result<Void, NSError> {
         // Do this because GIT_STASH_APPLY_OPTIONS_INIT is unavailable in swift
         lock.lock()
         defer { lock.unlock() }
@@ -132,7 +132,7 @@ extension Repository {
 
     }
 
-    func drop(stash: Int) -> Result<(), NSError> {
+    func drop(stash: Int) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let result = git_stash_drop(self.pointer, stash)

@@ -31,6 +31,7 @@ class Repository: Identifiable, Equatable, Hashable {
     }
 
     deinit {
+        print("deinit repository \(gitDir)")
         git_repository_free(pointer)
     }
 
@@ -51,9 +52,14 @@ class Repository: Identifiable, Equatable, Hashable {
 
     /// The URL of the repository's working directory, or `nil` if the
     /// repository is bare.
-    lazy var workDir: URL? = {
+    /// (*update, bare repos are not supported yet*
+    lazy var workDir: URL = {
         let path = git_repository_workdir(pointer)
-        return path.map { URL(fileURLWithPath: String(validatingCString: $0)!, isDirectory: true) }
+        let result = path.map { URL(fileURLWithPath: String(validatingCString: $0)!, isDirectory: true) }
+        guard let result else {
+            fatalError(.unsupported)
+        }
+        return result
     }()
 
     /**

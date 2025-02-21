@@ -28,18 +28,14 @@ extension Repository {
 
     func reset(reference: ReferenceType? = nil,
                type: ResetType = .mixed,
-               progress: CheckoutOptions.ProgressBlock? = nil) -> Result<(), NSError> {
+               progress: CheckoutOptions.ProgressBlock? = nil) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let ref: ReferenceType
-        if let reference = reference {
+        if let reference {
             ref = reference
         } else {
-            do {
-                ref = try HEAD().get()
-            } catch {
-                return .failure(error as NSError)
-            }
+            ref = Head.of(self).reference
         }
         var object: OpaquePointer? = nil
         var oid = ref.oid.oid
@@ -60,7 +56,7 @@ extension Repository {
 
     func reset(oid: OID,
                type: ResetType = .mixed,
-               progress: CheckoutOptions.ProgressBlock? = nil) -> Result<(), NSError> {
+               progress: CheckoutOptions.ProgressBlock? = nil) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         var object: OpaquePointer? = nil

@@ -69,4 +69,30 @@ extension String {
 
         replaceSubrange(range, with: string)
     }
+
+    func droppingPrefix(_ prefix: String) -> String
+    {
+        guard hasPrefix(prefix)
+        else { return self }
+
+        return String(self[prefix.endIndex...])
+    }
 }
+
+infix operator +/ : AdditionPrecedence
+
+extension String
+{
+    static func +/ (left: String, right: String) -> String
+    {
+        let right = right.droppingPrefix("/")
+
+        if left.hasSuffix("/") {
+            return left + right
+        }
+        else {
+            return "\(left)/\(right)"
+        }
+    }
+}
+

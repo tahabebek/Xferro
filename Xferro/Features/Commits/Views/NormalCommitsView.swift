@@ -11,6 +11,7 @@ struct NormalCommitsView: View {
     @Environment(CommitsViewModel.self) var viewModel
 
     var body: some View {
+        let _ = Self._printChanges()
         PinnedScrollableView(showsIndicators: false) {
             VerticalHeader(title: "Repositories") {
                 AddRepositoryButton()
@@ -40,5 +41,6 @@ struct NormalCommitsView: View {
                 Spacer()
             }
         }
+        .animation(.default, value: viewModel.currentRepositoryInfos)
     }
 }

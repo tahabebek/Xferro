@@ -125,10 +125,10 @@ extension Repository {
         return .success(OID(git_oid))
     }
 
-    func update(reference name: String, to oid: OID) -> Result<(), NSError> {
+    func update(reference name: String, to oid: OID) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        let result = self.reference(named: name) { pointer -> Result<(), NSError> in
+        let result = self.reference(named: name) { pointer -> Result<Void, NSError> in
             var newRef: OpaquePointer? = nil
             var oid = oid.oid
             let result = git_reference_set_target(&newRef, pointer, &oid, nil)

@@ -236,7 +236,7 @@ extension Repository {
 enum GitError: Error {
     static func getLastErrorMessage() -> String {
         let error = git_error_last()
-        let errorMessage = error?.pointee.message.map { String(cString: $0) } ?? "Unknown error"
+        let errorMessage = error?.pointee.message.map { String(cString: $0) } ?? "Git error last is not available"
         return errorMessage
     }
     case initializationFailed(String)

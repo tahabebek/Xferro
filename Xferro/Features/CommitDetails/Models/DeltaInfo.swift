@@ -5,6 +5,8 @@
 //  Created by Taha Bebek on 2/17/25.
 //
 
+import Foundation
+
 struct DeltaInfo: Identifiable, Equatable, Hashable {
     enum StatusType: Int, Identifiable, Hashable {
         var id: Int { rawValue }
@@ -21,4 +23,21 @@ struct DeltaInfo: Identifiable, Equatable, Hashable {
     let delta: Diff.Delta
     let type: StatusType
     let repository: Repository
+
+    var oldFileURL: URL? {
+        guard let oldFilePath else { return nil }
+        return repository.workDir.appendingPathComponent(oldFilePath)
+    }
+    var newFileURL: URL? {
+        guard let newFilePath else { return nil }
+        return repository.workDir.appendingPathComponent(newFilePath)
+    }
+
+    var oldFilePath: String? {
+        delta.oldFile?.path
+    }
+
+    var newFilePath: String? {
+        delta.newFile?.path
+    }
 }

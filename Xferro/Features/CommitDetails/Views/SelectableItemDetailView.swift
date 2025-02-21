@@ -13,7 +13,12 @@ struct SelectableItemDetailView: View {
         VStack {
             switch viewModel.detailInfo.type {
             case .empty:
-                Text("Empty")
+                VStack {
+                    Spacer()
+                    Text("Nothing is selected.")
+                        .font(.body)
+                    Spacer()
+                }
             case .commit(let commit):
                 CommitView()
             case .detachedCommit(let commit):

@@ -41,7 +41,7 @@ class Index {
         git_index_free(self.git_index)
     }
 
-    func add(entry: Entry) -> Result<(), NSError> {
+    func add(entry: Entry) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         var git_entry = entry.git_entry
@@ -52,7 +52,7 @@ class Index {
         return .failure(NSError(gitError: result, pointOfFailure: "git_index_add"))
     }
 
-    func save() -> Result<(), NSError> {
+    func save() -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let result = git_index_write(self.git_index)
@@ -67,7 +67,7 @@ class Index {
         stage: Bool,
         block: (inout Entry) -> Result<Bool, NSError>
     )
-    -> Result<(), NSError> {
+    -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         guard let result = path.withCString({

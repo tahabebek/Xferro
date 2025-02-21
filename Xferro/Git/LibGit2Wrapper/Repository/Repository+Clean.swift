@@ -9,6 +9,7 @@
 import Foundation
 
 extension Repository {
+    #warning("check what this function does")
     func clean(_ options: CleanOptions, shouldRemove: ((String) -> Bool)? = nil) -> Result<[String], NSError> {
         lock.lock()
         defer { lock.unlock() }
@@ -26,7 +27,7 @@ extension Repository {
                     if let block = shouldRemove, !block(path) {
                         continue
                     }
-                    guard let url = workDir?.appendingPathComponent(path) else { continue }
+                    let url = workDir.appendingPathComponent(path)
                     try? FileManager.default.removeItem(at: url)
                 }
             }

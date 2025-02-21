@@ -26,38 +26,7 @@ struct RepositoryView: View {
     var body: some View {
         Group {
             VStack(spacing: 0) {
-                ViewThatFits(in: .horizontal) {
-                    HStack {
-                        label
-                        Spacer()
-                        actionsView
-                        Spacer()
-                        navigationView
-                    }
-                    VStack(spacing: 6) {
-                        smallLabel
-                        HStack {
-                            actionsView
-                            navigationView
-                        }
-                    }
-                    .onAppear {
-                        isMinimized = true
-                    }
-                    .onDisappear {
-                        isMinimized = false
-                    }
-                    VStack(spacing: 6) {
-                        smallLabel
-                        navigationView
-                    }
-                    .onAppear {
-                        isMinimized = true
-                    }
-                    .onDisappear {
-                        isMinimized = false
-                    }
-                }
+                menu
                 .frame(height: isMinimized ? 54 : 36)
                 if !isCollapsed {
                     VStack(spacing: 16) {
@@ -77,10 +46,51 @@ struct RepositoryView: View {
             .padding(.horizontal)
             .padding(.bottom, !isCollapsed ? 8 : 0)
         }
+        .animation(.default, value: commitsViewModel.currentRepositoryInfos)
+        .animation(.default, value: commitsViewModel.currentSelectedItem)
+        .animation(.default, value: repositoryViewModel.repositoryInfo)
+        .animation(.default, value: isCollapsed)
+        .animation(.default, value: selection)
+        .animation(.default, value: isMinimized)
         .background(
             Color(hex: 0x15151A)
                 .cornerRadius(8)
         )
+    }
+
+    private var menu: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack {
+                label
+                Spacer()
+                actionsView
+                Spacer()
+                navigationView
+            }
+            VStack(spacing: 6) {
+                smallLabel
+                HStack {
+                    actionsView
+                    navigationView
+                }
+            }
+            .onAppear {
+                isMinimized = true
+            }
+            .onDisappear {
+                isMinimized = false
+            }
+            VStack(spacing: 6) {
+                smallLabel
+                navigationView
+            }
+            .onAppear {
+                isMinimized = true
+            }
+            .onDisappear {
+                isMinimized = false
+            }
+        }
     }
 
     @ViewBuilder private var label: some View {
@@ -211,8 +221,7 @@ struct RepositoryView: View {
         return VStack(spacing: 16) {
             let repositoryInfo = repositoryViewModel.repositoryInfo
             let repository = repositoryInfo.repository
-            let head = Head.of(repository)
-            let status = SelectableStatus(repository: repository)
+            let status = SelectableStatus(repository: repository, head: repositoryInfo.head)
             let hasDetachedTagOrCommit = detachedTag != nil || detachedCommit != nil
             if let detachedTag {
                 BranchView(
@@ -221,7 +230,7 @@ struct RepositoryView: View {
                     selectableStatus: status,
                     isCurrent: true,
                     isDetached: true,
-                    branchCount: repositoryInfo.branchInfos.count
+                    branchCount: repositoryInfo.localBranchInfos.count
                 )
             } else if let detachedCommit {
                 BranchView(
@@ -230,18 +239,18 @@ struct RepositoryView: View {
                     selectableStatus: status,
                     isCurrent: true,
                     isDetached: true,
-                    branchCount: repositoryInfo.branchInfos.count
+                    branchCount: repositoryInfo.localBranchInfos.count
                 )
             }
-            ForEach(repositoryInfo.branchInfos) { branchInfo in
+            ForEach(repositoryInfo.localBranchInfos) { branchInfo in
                 BranchView(
                     name: branchInfo.branch.name,
                     selectableCommits: branchInfo.commits,
                     selectableStatus: status,
                     isCurrent: hasDetachedTagOrCommit ? false :
-                        commitsViewModel.isCurrentBranch(branchInfo.branch, head: head, in: repository),
+                        commitsViewModel.isCurrentBranch(branchInfo.branch, head: repositoryInfo.head, in: repository),
                     isDetached: false,
-                    branchCount: repositoryInfo.branchInfos.count
+                    branchCount: repositoryInfo.localBranchInfos.count
                 )
             }
         }

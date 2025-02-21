@@ -11,5 +11,6 @@
 
 #endif /* Xferro_Bridging_Header_h */
 #import <git2.h>
+#import "XTQueueUtils.h"
 
 int create_memory_refdb(git_repository *repo, git_refdb_backend **backend_out);

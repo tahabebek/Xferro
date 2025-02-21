@@ -148,7 +148,8 @@ extension Repository {
     func merge(with oid: OID, message: String) -> Result<GitMergeAnalysisStatus, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        guard let targetBranch = try? self.HEAD().get() as? Branch else {
+        let head = Head.of(self)
+        guard case .branch(let targetBranch) = head else {
             return .failure(NSError(gitError: GIT_ERROR.rawValue, pointOfFailure: "Current Head is not a branch."))
         }
 
@@ -164,7 +165,7 @@ extension Repository {
             } else if status.contains(.fastForward) || status.contains(.unborn) {
                 // Fast-forward branch
                 return self.update(reference: targetBranch.longName, to: oid).flatMap({
-                    self.checkout(targetBranch.longName, CheckoutOptions(strategy: .Force)).flatMap {
+                    Head.checkout(repository: self, longName: targetBranch.longName, CheckoutOptions(strategy: .Force)).flatMap {
                         .success(.fastForward)
                     }
                 })

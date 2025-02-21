@@ -85,7 +85,7 @@ class Submodule {
     }
 
     @discardableResult
-    func update(options: UpdateOptions, init: Bool = true, rescurse: Bool? = nil) -> Result<(), NSError> {
+    func update(options: UpdateOptions, init: Bool = true, rescurse: Bool? = nil) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let msgBlock = options.fetchOptions.remoteCallback.messageBlock

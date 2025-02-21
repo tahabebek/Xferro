@@ -30,123 +30,6 @@ extension Repository {
         return .failure(NSError(gitError: result, pointOfFailure: "git_repository_is_empty"))
     }
 
-    func headIsUnborn() -> Result<Bool, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        let result = git_repository_head_unborn(self.pointer)
-        if result == 1 { return .success(true) }
-        if result == 0 { return .success(false) }
-        return .failure(NSError(gitError: result, pointOfFailure: "git_repository_head_unborn"))
-    }
-
-    func unbornHEAD() -> Result<UnbornBranch, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        var pointer: OpaquePointer? = nil
-        defer { git_reference_free(pointer) }
-        let result = git_reference_lookup(&pointer, self.pointer, "HEAD")
-        guard result == GIT_OK.rawValue else {
-            return Result.failure(NSError(gitError: result, pointOfFailure: "git_reference_lookup"))
-        }
-        return .success(UnbornBranch(pointer!, lock: lock)!)
-    }
-
-    /// Load the reference pointed at by HEAD.
-    ///
-    /// When on a branch, this will return the current `Branch`.
-    func HEAD() -> Result<ReferenceType, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        var pointer: OpaquePointer? = nil
-        defer { git_reference_free(pointer) }
-        let result = git_repository_head(&pointer, self.pointer)
-        guard result == GIT_OK.rawValue else {
-            return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_head"))
-        }
-        let value = referenceWithLibGit2Reference(pointer!, lock: lock)
-        return .success(value)
-    }
-
-    /// Set HEAD to the given oid (detached).
-    ///
-    /// :param: oid The OID to set as HEAD.
-    /// :returns: Returns a result with void or the error that occurred.
-    func setHEAD(_ oid: OID) -> Result<(), NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        return longOID(for: oid).flatMap { oid -> Result<(), NSError> in
-            var git_oid = oid.oid
-            let result = git_repository_set_head_detached(self.pointer, &git_oid)
-            guard result == GIT_OK.rawValue else {
-                return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_set_head_detached"))
-            }
-            return Result.success(())
-        }
-    }
-
-    /// Set HEAD to the given reference.
-    ///
-    /// :param: name The name to set as HEAD.
-    /// :returns: Returns a result with void or the error that occurred.
-    func setHEAD(_ name: String) -> Result<(), NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        var longName = name
-        if !name.isLongRef {
-            do {
-                guard let reference = try self.reference(named: name).get() else {
-                    return .failure(NSError(gitError: GIT_ENOTFOUND.rawValue, pointOfFailure: "git_repository_set_head"))
-                }
-                longName = reference.longName
-            } catch {
-                return .failure(error as NSError)
-            }
-        }
-        let result = git_repository_set_head(self.pointer, longName)
-        guard result == GIT_OK.rawValue else {
-            return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_set_head"))
-        }
-        return Result.success(())
-    }
-
-    /// Check out HEAD.
-    ///
-    /// :param: strategy The checkout strategy to use.
-    /// :param: progress A block that's called with the progress of the checkout.
-    /// :returns: Returns a result with void or the error that occurred.
-    func checkout(_ options: CheckoutOptions? = nil) -> Result<(), NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        var opt = (options ?? CheckoutOptions()).toGit()
-
-        let result = git_checkout_head(self.pointer, &opt)
-        guard result == GIT_OK.rawValue else {
-            return Result.failure(NSError(gitError: result, pointOfFailure: "git_checkout_head"))
-        }
-
-        return Result.success(())
-    }
-
-    /// Check out the given OID.
-    ///
-    /// :param: oid The OID of the commit to check out.
-    /// :param: strategy The checkout strategy to use.
-    /// :param: progress A block that's called with the progress of the checkout.
-    /// :returns: Returns a result with void or the error that occurred.
-    func checkout(_ oid: OID, _ options: CheckoutOptions? = nil) -> Result<(), NSError> {
-        return setHEAD(oid).flatMap { self.checkout(options) }
-    }
-
-    /// Check out the given reference.
-    ///
-    /// :param: longName The long name to check out.
-    /// :param: strategy The checkout strategy to use.
-    /// :param: progress A block that's called with the progress of the checkout.
-    /// :returns: Returns a result with void or the error that occurred.
-    func checkout(_ longName: String, _ options: CheckoutOptions? = nil) -> Result<(), NSError> {
-        return setHEAD(longName).flatMap { self.checkout(options) }
-    }
-
     /// Get the index for the repo. The caller is responsible for freeing the index.
     func unsafeIndex() -> Result<OpaquePointer, NSError> {
         lock.lock()
@@ -160,29 +43,70 @@ extension Repository {
         return .success(index!)
     }
 
-    func stage(path: String) -> Result<(), NSError> {
+    func duplicateIndex(originalIndex: OpaquePointer) -> (copiedIndex: OpaquePointer, paths: [String]) {
+        var newIndex: OpaquePointer?
+
+        // Create a new in-memory index
+        if git_index_new(&newIndex) != 0 || newIndex == nil {
+            fatalError(GitError.getLastErrorMessage())
+        }
+
+        let unwrappedNewIndex = newIndex!
+        var paths: [String] = []
+
+        // Copy all entries from original to new index
+        let entryCount = git_index_entrycount(originalIndex)
+        for i in 0..<entryCount {
+            guard let entry = git_index_get_byindex(originalIndex, i) else {
+                fatalError(GitError.getLastErrorMessage())
+            }
+
+            guard git_index_add(unwrappedNewIndex, entry) == 0 else {
+                fatalError(GitError.getLastErrorMessage())
+            }
+
+            guard let cPath = entry.pointee.path else {
+                fatalError(GitError.getLastErrorMessage())
+            }
+
+            paths.append(String(cString: cPath))
+        }
+
+        return (unwrappedNewIndex, paths)
+    }
+
+    func stage(path: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         var dirPointer = UnsafeMutablePointer<Int8>(mutating: (path as NSString).utf8String)
         return withUnsafeMutablePointer(to: &dirPointer) { pointer in
-            var paths = git_strarray(strings: pointer, count: 1)
             return unsafeIndex().flatMap { index in
                 defer { git_index_free(index) }
-                let addResult = git_index_add_all(index, &paths, 0, nil, nil)
-                guard addResult == GIT_OK.rawValue else {
-                    return .failure(NSError(gitError: addResult, pointOfFailure: "git_index_add_all"))
-                }
-                // write index to disk
-                let writeResult = git_index_write(index)
-                guard writeResult == GIT_OK.rawValue else {
-                    return .failure(NSError(gitError: writeResult, pointOfFailure: "git_index_write"))
-                }
-                return .success(())
+                return Self.stage(path: path, index: index)
             }
         }
     }
 
-    func unstage(path: String) -> Result<(), NSError> {
+    static func stage(path: String, index: OpaquePointer) -> Result<Void, NSError> {
+        staticLock.lock()
+        defer { staticLock.unlock() }
+        var dirPointer = UnsafeMutablePointer<Int8>(mutating: (path as NSString).utf8String)
+        return withUnsafeMutablePointer(to: &dirPointer) { pointer in
+            var paths = git_strarray(strings: pointer, count: 1)
+            let addResult = git_index_add_all(index, &paths, 0, nil, nil)
+            guard addResult == GIT_OK.rawValue else {
+                return .failure(NSError(gitError: addResult, pointOfFailure: "git_index_add_all"))
+            }
+            // write index to disk
+            let writeResult = git_index_write(index)
+            guard writeResult == GIT_OK.rawValue else {
+                return .failure(NSError(gitError: writeResult, pointOfFailure: "git_index_write"))
+            }
+            return .success(())
+        }
+    }
+
+    func unstage(path: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         RepoManager().git(self, ["reset", "-q", "HEAD", path])
@@ -276,7 +200,7 @@ extension Repository {
 //        return .success(())
     }
 
-    func untrack(path: String) -> Result<(), NSError> {
+    func untrack(path: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         var dirPointer = UnsafeMutablePointer<Int8>(mutating: (path as NSString).utf8String)
