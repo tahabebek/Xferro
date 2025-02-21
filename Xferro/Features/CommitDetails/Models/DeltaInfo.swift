@@ -16,7 +16,7 @@ struct DeltaInfo: Identifiable, Equatable, Hashable {
         case untracked = 2
     }
     static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.delta.id == rhs.delta.id
+        lhs.id == rhs.id
     }
     var id: String { delta.id + type.id.formatted() }
 

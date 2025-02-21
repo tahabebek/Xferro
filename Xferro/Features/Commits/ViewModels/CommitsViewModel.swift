@@ -33,12 +33,14 @@ import OrderedCollections
             updateWipCommits()
         }
         currentSelectedItem = itemAndHead?.selectedItem
-        updateDetailInfo()
+        updateDetailInfoAndPeekInfo()
     }
 
     var currentWipCommits: CurrentWipCommits?
     var currentDetailInfo: DetailInfo?
-    let detailsViewModel: DetailsViewModel = .init(detailInfo: .init(type: .empty))
+    var currentPeekInfo: PeekInfo?
+    let detailsViewModel = DetailsViewModel(detailInfo: DetailInfo(type: .empty))
+    let peekViewModel = PeekViewModel(peekInfo: PeekInfo(title: ""))
 
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
     private let statusManager: StatusManager
@@ -87,12 +89,15 @@ import OrderedCollections
         }
     }
 
-    func updateDetailInfo() {
+    func updateDetailInfoAndPeekInfo() {
         Task {
             await MainActor.run {
                 guard let currentSelectedItem else {
                     currentDetailInfo = nil
                     detailsViewModel.detailInfo = DetailInfo(type: .empty)
+
+                    currentPeekInfo = nil
+                    peekViewModel.peekInfo = PeekInfo(title: "")
                     return
                 }
                 switch currentSelectedItem.selectedItemType {
@@ -100,19 +105,26 @@ import OrderedCollections
                     switch type {
                     case .stash(let stash):
                         currentDetailInfo = DetailInfo(type: .stash(stash))
+                        currentPeekInfo = PeekInfo(title: "stash \(stash.oid.debugOID)")
                     case .status(let status):
                         let statusEntries = statusManager.status(of: currentSelectedItem.repository)
                         currentDetailInfo = DetailInfo(type: .status(status, statusEntries))
+                        currentPeekInfo = PeekInfo(title: "status \(status.oid.debugOID)")
                     case .commit(let commit):
                         currentDetailInfo = DetailInfo(type: .commit(commit))
+                        currentPeekInfo = PeekInfo(title: "commit \(commit.oid.debugOID)")
                     case .detachedCommit(let commit):
                         currentDetailInfo = DetailInfo(type: .detachedCommit(commit))
+                        currentPeekInfo = PeekInfo(title: "commit \(commit.oid.debugOID)")
                     case .detachedTag(let tag):
                         currentDetailInfo = DetailInfo(type: .detachedTag(tag))
+                        currentPeekInfo = PeekInfo(title: "tag \(tag.oid.debugOID)")
                     case .tag(let tag):
                         currentDetailInfo = DetailInfo(type: .tag(tag))
+                        currentPeekInfo = PeekInfo(title: "tag \(tag.oid.debugOID)")
                     case .historyCommit(let commit):
                         currentDetailInfo = DetailInfo(type: .historyCommit(commit))
+                        currentPeekInfo = PeekInfo(title: "commit \(commit.oid.debugOID)")
                     }
                 case .wip(let wip):
                     switch wip {
@@ -121,9 +133,11 @@ import OrderedCollections
                             fatalError(.impossible)
                         }
                         currentDetailInfo = DetailInfo(type: .wipCommit(commit, worktree))
+                        currentPeekInfo = PeekInfo(title: "commit \(commit.oid.debugOID)")
                     }
                 }
                 detailsViewModel.detailInfo = currentDetailInfo!
+                peekViewModel.peekInfo = currentPeekInfo!
             }
         }
     }
@@ -548,7 +562,7 @@ import OrderedCollections
             if isHead {
                 Task {
                     await MainActor.run {
-                        updateDetailInfo()
+                        updateDetailInfoAndPeekInfo()
                         updateWipCommits(
                             selectedItem: currentSelectedItem,
                             worktree: worktree,

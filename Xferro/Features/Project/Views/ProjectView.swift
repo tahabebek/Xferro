@@ -25,15 +25,10 @@ struct ProjectView: View {
                     .frame(width: Dimensions.commitDetailsViewIdealWidth)
                     .environment(commitsViewModel.detailsViewModel)
                 PeekView()
-                    .frame(maxWidth: .infinity)
                     .layoutPriority(Dimensions.fileDetailsViewPriority)
+                    .frame(maxWidth: .infinity)
+                    .environment(commitsViewModel.peekViewModel)
             }
         }
-    }
-}
-
-struct PeekView: View {
-    var body: some View {
-        Color.clear.ignoresSafeArea()
     }
 }

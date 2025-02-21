@@ -258,7 +258,7 @@ extension CommitsViewModel {
                             repositoryInfo.detachedTag = self.detachedTag(of: repositoryInfo.repository, head: newHead)
                             repositoryInfo.historyCommits = self.historyCommits(of: repositoryInfo.repository)
                         case .index:
-                            self.updateDetailInfo()
+                            self.updateDetailInfoAndPeekInfo()
                         case .localBranches(let repositoryInfo):
                             repositoryInfo.localBranchInfos = self.localBranchInfos(of: repositoryInfo.repository, head: head)
                         case .remoteBranches(let repositoryInfo):
@@ -276,10 +276,10 @@ extension CommitsViewModel {
             } onWorkDirChange: { repositoryInfo, paths in
                 let head = repositoryInfo.head
             #warning("delete the line below, handle deletion and addition of files by adding wip commits and updating the detail info")
-                self.updateDetailInfo()
+                self.updateDetailInfoAndPeekInfo()
                 for path in paths {
                     if path == repositoryInfo.repository.workDir.path +/ ".gitignore" {
-                        self.updateDetailInfo()
+                        self.updateDetailInfoAndPeekInfo()
                         print("gitignore changed")
                     }
                 }
