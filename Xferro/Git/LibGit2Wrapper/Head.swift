@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum Head: Codable {
+enum Head: Codable, Equatable {
     case branch(Branch)
     case tag(TagReference)
     case reference(Reference)

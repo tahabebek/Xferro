@@ -13,7 +13,7 @@ import Observation
     static func == (lhs: RepositoryInfo, rhs: RepositoryInfo) -> Bool {
         lhs.id == rhs.id
     }
-    struct BranchInfo: Identifiable {
+    struct BranchInfo: Identifiable, Equatable {
         var id: String {
             branch.name + branch.commit.oid.description
         }
