@@ -10,6 +10,7 @@ import Foundation
 import Observation
 
 @Observable final class RepositoryInfo: Identifiable, Equatable {
+    static let commitCountLimit: Int = 10
     static func == (lhs: RepositoryInfo, rhs: RepositoryInfo) -> Bool {
         lhs.id == rhs.id
     }
@@ -19,32 +20,42 @@ import Observation
         }
         let branch: Branch
         let commits: [SelectableCommit]
+        let repository: Repository
+        let head: Head
     }
-    var id: String {
-        let repoId = repository.gitDir.path
-        let headId = head.oid.id
-        let branchInfosId = localBranchInfos.reduce(into: "") { result, info in
-            result += info.id
+
+    struct TagInfo: Identifiable, Equatable {
+        var id: String {
+            tag.id + commits.reduce(into: "") { result, commit in
+                result += commit.id
+            }
         }
-        let tagsId = tags.reduce(into: "") { result, tag in
-            result += tag.id
+        let tag: SelectableDetachedTag
+        let commits: [SelectableDetachedCommit]
+        let repository: Repository
+        let head: Head
+    }
+
+    struct DetachedCommitInfo: Identifiable, Equatable {
+        var id: String {
+            detachedCommit.id + commits.reduce(into: "") { result, commit in
+                result += commit.id
+            }
         }
-        let stashesId = stashes.reduce(into: "") { result, stash in
-            result += stash.id
-        }
-        let detachedCommitId = detachedCommit?.id ?? ""
-        let detachedTagId = detachedTag?.id ?? ""
-        return repoId + headId + branchInfosId + tagsId + stashesId + detachedCommitId + detachedTagId
+        let detachedCommit: SelectableDetachedCommit
+        let commits: [SelectableDetachedCommit]
+        let repository: Repository
+        let head: Head
     }
 
     let repository: Repository
     var head: Head
     var localBranchInfos: [BranchInfo]
     var remoteBranchInfos: [BranchInfo]
-    var tags: [SelectableTag]
+    var tags: [TagInfo]
     var stashes: [SelectableStash]
-    var detachedTag: SelectableDetachedTag?
-    var detachedCommit: SelectableDetachedCommit?
+    var detachedTag: TagInfo?
+    var detachedCommit: DetachedCommitInfo?
     var historyCommits: [SelectableHistoryCommit]
     var gitWatcher: GitWatcher?
 
@@ -76,10 +87,10 @@ import Observation
         head: Head,
         localBranchInfos: [BranchInfo],
         remoteBranchInfos: [BranchInfo],
-        tags: [SelectableTag],
+        tags: [TagInfo],
         stashes: [SelectableStash],
-        detachedTag: SelectableDetachedTag?,
-        detachedCommit: SelectableDetachedCommit?,
+        detachedTag: TagInfo?,
+        detachedCommit: DetachedCommitInfo?,
         historyCommits: [SelectableHistoryCommit],
         onGitChange: @escaping (ChangeType) -> Void,
         onWorkDirChange: @escaping (RepositoryInfo, Set<String>) -> Void
@@ -219,8 +230,8 @@ extension CommitsViewModel {
             repository: repository,
             head: head,
             localBranchInfos: localBranchInfos(of: repository, head: head),
-            remoteBranchInfos: remoteBranchInfos(of: repository),
-            tags: tags(of: repository),
+            remoteBranchInfos: remoteBranchInfos(of: repository, head: head),
+            tags: tags(of: repository, head: head),
             stashes: stashes(of: repository),
             detachedTag: detachedTag(of: repository, head: head),
             detachedCommit: detachedCommit(of: repository, head: head),
@@ -249,9 +260,9 @@ extension CommitsViewModel {
                         case .localBranches(let repositoryInfo):
                             repositoryInfo.localBranchInfos = self.localBranchInfos(of: repositoryInfo.repository, head: head)
                         case .remoteBranches(let repositoryInfo):
-                            repositoryInfo.remoteBranchInfos = self.remoteBranchInfos(of: repositoryInfo.repository)
+                            repositoryInfo.remoteBranchInfos = self.remoteBranchInfos(of: repositoryInfo.repository, head: head)
                         case .tags(let repositoryInfo):
-                            repositoryInfo.tags = self.tags(of: repositoryInfo.repository)
+                            repositoryInfo.tags = self.tags(of: repositoryInfo.repository, head: head)
                         case .reflog:
                             #warning("reflog not implemented")
                             break
@@ -273,7 +284,7 @@ extension CommitsViewModel {
             }
         return newRepositoryInfo
     }
-    func detachedAncestorCommitsOf(oid: OID, in repository: Repository, count: Int = 10) -> [SelectableDetachedCommit] {
+    private func detachedAncestorCommitsOf(oid: OID, in repository: Repository, count: Int = RepositoryInfo.commitCountLimit) -> [SelectableDetachedCommit] {
         var commits: [SelectableDetachedCommit] = []
 
         let commitIterator = CommitIterator(repo: repository, root: oid.oid)
@@ -284,9 +295,6 @@ extension CommitsViewModel {
         }
         return commits
     }
-    func detachedCommits(of tag: SelectableDetachedTag, in repository: Repository, count: Int = 10) -> [SelectableDetachedCommit] {
-        detachedAncestorCommitsOf(oid: tag.tag.oid, in: repository, count: count)
-    }
     private func stashes(of repository: Repository) -> [SelectableStash] {
         var stashes = [SelectableStash]()
 
@@ -295,17 +303,17 @@ extension CommitsViewModel {
         }
         return stashes
     }
-    private func remoteBranchInfos(of repository: Repository) -> [RepositoryInfo.BranchInfo] {
-        return remoteBranches(of: repository).map {
-            RepositoryInfo.BranchInfo(branch: $0, commits: [])
+    private func remoteBranchInfos(of repository: Repository, head: Head) -> [RepositoryInfo.BranchInfo] {
+        repository.remoteBranches().mustSucceed().map {
+            RepositoryInfo.BranchInfo(branch: $0, commits: [], repository: repository, head: head)
         }
     }
     private func localBranchInfos(of repository: Repository, head: Head) -> [RepositoryInfo.BranchInfo] {
-        let branches = localBranches(of: repository, head: head)
-        return branches.map { [weak self] branch in
-            guard let self else { return .init(branch: branch, commits: []) }
-            let commits = commits(of: branch, in: repository)
-            return RepositoryInfo.BranchInfo(branch: branch, commits: commits)
+        localBranches(of: repository, head: head)
+            .map { [weak self] branch in
+                guard let self else { return .init(branch: branch, commits: [], repository: repository, head: head) }
+                let commits = commits(of: branch, in: repository)
+                return RepositoryInfo.BranchInfo(branch: branch, commits: commits, repository: repository, head: head)
         }
     }
     private func localBranches(of repository: Repository, head: Head) -> [Branch] {
@@ -322,46 +330,51 @@ extension CommitsViewModel {
         }
         return branches
     }
-    private func remoteBranches(of repository: Repository) -> [Branch] {
-        repository.remoteBranches().mustSucceed()
-    }
-    private func detachedTag(of repository: Repository, head: Head) -> SelectableDetachedTag? {
+    private func detachedTag(of repository: Repository, head: Head) -> RepositoryInfo.TagInfo? {
         switch head {
         case .branch:
-            nil
+            return nil
         case .tag(let tagReference):
-            SelectableDetachedTag(repository: repository, tag: tagReference)
+            let detachedTag = SelectableDetachedTag(repository: repository, tag: tagReference)
+            let commits = detachedAncestorCommitsOf(oid: detachedTag.oid, in: repository)
+            return RepositoryInfo.TagInfo(tag: detachedTag, commits: commits, repository: repository, head: head)
         case .reference(let reference):
             if let tag = try? repository.tag(reference.oid).get() {
-                SelectableDetachedTag(repository: repository, tag: TagReference.annotated(tag.name, tag))
+                let detachedTag = SelectableDetachedTag(repository: repository, tag: TagReference.annotated(tag.name, tag))
+                let commits = detachedAncestorCommitsOf(oid: detachedTag.oid, in: repository)
+                return RepositoryInfo.TagInfo(tag: detachedTag, commits: commits, repository: repository, head: head)
             } else {
-                nil
+                return nil
             }
         }
     }
-    private func detachedCommit(of repository: Repository, head: Head) -> SelectableDetachedCommit? {
+    private func detachedCommit(of repository: Repository, head: Head) -> RepositoryInfo.DetachedCommitInfo? {
         switch head {
         case .branch, .tag:
-            nil
+            return nil
         case .reference(let reference):
             if let commit = try? repository.commit(reference.oid).get() {
-                SelectableDetachedCommit(repository: repository, commit: commit)
+                let detachedCommit = SelectableDetachedCommit(repository: repository, commit: commit)
+                let commits = detachedAncestorCommitsOf(oid: reference.oid, in: repository)
+                return RepositoryInfo.DetachedCommitInfo(detachedCommit: detachedCommit, commits: commits, repository: repository, head: head)
             } else {
-                nil
+                return nil
             }
         }
     }
-    private func tags(of repository: Repository) -> [SelectableTag] {
-        var tags: [SelectableTag] = []
+    private func tags(of repository: Repository, head: Head) -> [RepositoryInfo.TagInfo] {
+        var tags: [RepositoryInfo.TagInfo] = []
 
         try? repository.allTags().get()
             .sorted { $0.name > $1.name }
             .forEach { tag in
-                tags.append(SelectableTag(repository: repository, tag: tag))
+                let selectableTag = SelectableDetachedTag(repository: repository, tag: tag)
+                let commits = detachedAncestorCommitsOf(oid: tag.oid, in: repository)
+                tags.append(RepositoryInfo.TagInfo(tag: selectableTag, commits: commits, repository: repository, head: head))
             }
         return tags
     }
-    private func commits(of branch: Branch, in repository: Repository, count: Int = 10) -> [SelectableCommit] {
+    private func commits(of branch: Branch, in repository: Repository, count: Int = RepositoryInfo.commitCountLimit) -> [SelectableCommit] {
         var commits: [SelectableCommit] = []
 
         let commitIterator = CommitIterator(repo: repository, root: branch.oid.oid)

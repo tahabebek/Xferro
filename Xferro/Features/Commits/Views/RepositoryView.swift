@@ -201,10 +201,7 @@ struct RepositoryView: View {
     @ViewBuilder private var contentView: some View {
         switch selection {
         case .commits:
-            commitsView(
-                detachedTag: repositoryInfo.detachedTag,
-                detachedCommit: repositoryInfo.detachedCommit
-            )
+            commitsView
             .matchedGeometryEffect(id: "contentView", in: animation)
         case .tags:
             tagsView
@@ -218,31 +215,25 @@ struct RepositoryView: View {
         }
     }
 
-    private func commitsView(
-        detachedTag: SelectableDetachedTag?,
-        detachedCommit: SelectableDetachedCommit?
-    ) -> some View {
-        guard detachedTag == nil || detachedCommit == nil else {
+    private var commitsView: some View {
+        guard repositoryInfo.detachedTag == nil || repositoryInfo.detachedCommit == nil else {
             fatalError(.impossible)
         }
         return VStack(spacing: 16) {
-            let repository = repositoryInfo.repository
-            let status = SelectableStatus(repository: repository, head: repositoryInfo.head)
-            let hasDetachedTagOrCommit = detachedTag != nil || detachedCommit != nil
-            if let detachedTag {
+            if let detachedTag = repositoryInfo.detachedTag {
                 BranchView(
-                    name: "Detached tag \(detachedTag.tag.name)",
-                    selectableCommits: commitsViewModel.detachedCommits(of: detachedTag, in: repository),
-                    selectableStatus: status,
+                    name: "Detached tag \(detachedTag.tag.tag.name)",
+                    selectableCommits: detachedTag.commits,
+                    selectableStatus: SelectableStatus(repository: repositoryInfo.repository, head: repositoryInfo.head),
                     isCurrent: true,
                     isDetached: true,
                     branchCount: repositoryInfo.localBranchInfos.count
                 )
-            } else if let detachedCommit {
+            } else if let detachedCommit = repositoryInfo.detachedCommit {
                 BranchView(
                     name: "Detached Commit",
-                    selectableCommits: commitsViewModel.detachedAncestorCommitsOf(oid: detachedCommit.commit.oid, in: repository),
-                    selectableStatus: status,
+                    selectableCommits: detachedCommit.commits,
+                    selectableStatus: SelectableStatus(repository: repositoryInfo.repository, head: repositoryInfo.head),
                     isCurrent: true,
                     isDetached: true,
                     branchCount: repositoryInfo.localBranchInfos.count
@@ -252,9 +243,9 @@ struct RepositoryView: View {
                 BranchView(
                     name: branchInfo.branch.name,
                     selectableCommits: branchInfo.commits,
-                    selectableStatus: status,
-                    isCurrent: hasDetachedTagOrCommit ? false :
-                        commitsViewModel.isCurrentBranch(branchInfo.branch, head: repositoryInfo.head, in: repository),
+                    selectableStatus: SelectableStatus(repository: repositoryInfo.repository, head: repositoryInfo.head),
+                    isCurrent: (repositoryInfo.detachedTag != nil || repositoryInfo.detachedCommit != nil) ? false :
+                        commitsViewModel.isCurrentBranch(branchInfo.branch, head: repositoryInfo.head, in: branchInfo.repository),
                     isDetached: false,
                     branchCount: repositoryInfo.localBranchInfos.count
                 )
@@ -266,33 +257,33 @@ struct RepositoryView: View {
         if repositoryInfo.tags.isEmpty {
             emptyView
         } else {
-            actualTagsView(tags: repositoryInfo.tags)
+            actualTagsView
         }
     }
 
-    private func actualTagsView(tags: [SelectableTag]) -> some View {
+    private var actualTagsView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top) {
-                ForEach(tags) { selectableTag in
+                ForEach(repositoryInfo.tags) { tagInfo in
                     ZStack {
                         FlaredRounded {
                             VStack {
-                                Text("\(selectableTag.tag.name)")
+                                Text("\(tagInfo.tag.tag.name)")
                                     .font(.title)
                                     .minimumScaleFactor(0.5)
                                     .lineLimit(1)
                                     .frame(maxWidth: 70)
                                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                                Text("\(selectableTag.tag.oid.debugOID.prefix(4))")
+                                Text("\(tagInfo.tag.oid.debugOID.prefix(4))")
                                     .font(.footnote)
                                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                             }
                         }
                         .frame(width: 80, height: 80)
                         .onTapGesture {
-                            commitsViewModel.userTapped(item: selectableTag)
+                            commitsViewModel.userTapped(item: tagInfo.tag)
                         }
-                        if commitsViewModel.isSelected(item: selectableTag) {
+                        if commitsViewModel.isSelected(item: tagInfo.tag) {
                             SelectedItemOverlay(width: 80, height: 80)
                         }
                     }
@@ -308,14 +299,14 @@ struct RepositoryView: View {
         if repositoryInfo.stashes.isEmpty {
             emptyView
         } else {
-            actualStashesView(stashes: repositoryInfo.stashes)
+            actualStashesView
         }
     }
 
-    private func actualStashesView(stashes: [SelectableStash]) -> some View {
+    private var actualStashesView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top) {
-                ForEach(stashes) { selectableStash in
+                ForEach(repositoryInfo.stashes) { selectableStash in
                     ZStack {
                         FlaredRounded {
                             VStack {
