@@ -201,7 +201,6 @@ import Observation
         tagsChangeObserver?.cancel()
         reflogChangeObserver?.cancel()
         stashChangeObserver?.cancel()
-        print("deinit RepositoryInfo")
     }
 
     static func taskQueueID(path: String) -> String

@@ -80,7 +80,6 @@ public class FileEventStream
 
     deinit
     {
-        print("deinit FileEventStream")
         if stream != nil {
             stop()
         }
