@@ -41,7 +41,6 @@ import OrderedCollections
     let detailsViewModel: DetailsViewModel = .init(detailInfo: .init(type: .empty))
 
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
-    private var repositoryViewModels: Dictionary<String, RepositoryViewModel> = [:]
     private let statusManager: StatusManager
     private let userDidSelectFolder: (URL) -> Void
     private let user: User
@@ -77,21 +76,6 @@ import OrderedCollections
 
     func addRepository(_ repository: Repository) async {
         await updateRepositoryInfo(repository)
-    }
-
-    func repositoryViewModel(for repository: Repository) -> RepositoryViewModel {
-        guard let repositoryInfo = currentRepositoryInfos[kRepositoryInfo(repository)] else {
-            fatalError(.unexpected)
-        }
-
-        let kRepositoryViewModel = kRepositoryViewModel(repository)
-        if let repositoryViewModel = repositoryViewModels[kRepositoryViewModel] {
-            repositoryViewModel.repositoryInfo = repositoryInfo
-            return repositoryViewModel
-        }
-        let newRepositoryViewModel = RepositoryViewModel(repositoryInfo: repositoryInfo)
-        repositoryViewModels[kRepositoryViewModel] = newRepositoryViewModel
-        return newRepositoryViewModel
     }
 
     private func updateRepositoryInfo(_ repository: Repository) async {
@@ -724,7 +708,6 @@ import OrderedCollections
         Task {
             await MainActor.run {
                 currentRepositoryInfos.removeValue(forKey: kRepositoryInfo(repository))
-                repositoryViewModels.removeValue(forKey: kRepositoryViewModel(repository))
                 if let currentSelectedItem {
                     if currentSelectedItem.repository.gitDir.path == repository.gitDir.path {
                         setCurrentSelectedItem(itemAndHead: nil)
@@ -863,9 +846,6 @@ import OrderedCollections
     }
     private func kRepositoryInfo(_ repository: Repository) -> String {
         String("info_" + repository.gitDir.path())
-    }
-    private func kRepositoryViewModel(_ repository: Repository) -> String {
-        String("viewmodel_" + repository.gitDir.path())
     }
     private func kFolderObserver(_ repository: Repository) -> String {
         String("folder_observe_" + repository.gitDir.path())

@@ -17,11 +17,11 @@ struct RepositoryView: View {
     }
 
     @Environment(CommitsViewModel.self) var commitsViewModel
-    @Environment(RepositoryViewModel.self) var repositoryViewModel
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
     @State var isMinimized: Bool = false
     @Namespace private var animation
+    @State var repositoryInfo: RepositoryInfo
 
     var body: some View {
         Group {
@@ -48,7 +48,6 @@ struct RepositoryView: View {
         }
         .animation(.default, value: commitsViewModel.currentRepositoryInfos)
         .animation(.default, value: commitsViewModel.currentSelectedItem)
-        .animation(.default, value: repositoryViewModel.repositoryInfo)
         .animation(.default, value: isCollapsed)
         .animation(.default, value: selection)
         .animation(.default, value: isMinimized)
@@ -95,26 +94,26 @@ struct RepositoryView: View {
 
     @ViewBuilder private var label: some View {
         if let currentRepository = commitsViewModel.currentSelectedItem?.repository.nameOfRepo,
-           currentRepository == repositoryViewModel.repositoryInfo.repository.nameOfRepo
+           currentRepository == repositoryInfo.repository.nameOfRepo
         {
-            Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
+            Label(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
                 .foregroundStyle(Color.accentColor)
                 .fixedSize()
         } else {
-            Label(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
+            Label(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
                 .fixedSize()
         }
     }
 
     @ViewBuilder private var smallLabel: some View {
         if let currentRepository = commitsViewModel.currentSelectedItem?.repository.nameOfRepo,
-           currentRepository == repositoryViewModel.repositoryInfo.repository.nameOfRepo
+           currentRepository == repositoryInfo.repository.nameOfRepo
         {
-            Text(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
+            Text(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
                 .foregroundStyle(Color.accentColor)
                 .fixedSize()
         } else {
-            Text(repositoryViewModel.repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
+            Text(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
                 .fixedSize()
         }
     }
@@ -139,7 +138,7 @@ struct RepositoryView: View {
                 .contentShape(Rectangle())
                 .hoverableButton("Remove Repository") {
                     withAnimation(.easeInOut) {
-                        commitsViewModel.deleteRepositoryButtonTapped(repositoryViewModel.repositoryInfo.repository)
+                        commitsViewModel.deleteRepositoryButtonTapped(repositoryInfo.repository)
                     }
                 }
             Image(systemName: "chevron.down")
@@ -195,8 +194,8 @@ struct RepositoryView: View {
         switch selection {
         case .commits:
             commitsView(
-                detachedTag: repositoryViewModel.repositoryInfo.detachedTag,
-                detachedCommit: repositoryViewModel.repositoryInfo.detachedCommit
+                detachedTag: repositoryInfo.detachedTag,
+                detachedCommit: repositoryInfo.detachedCommit
             )
             .matchedGeometryEffect(id: "contentView", in: animation)
         case .tags:
@@ -219,7 +218,6 @@ struct RepositoryView: View {
             fatalError(.impossible)
         }
         return VStack(spacing: 16) {
-            let repositoryInfo = repositoryViewModel.repositoryInfo
             let repository = repositoryInfo.repository
             let status = SelectableStatus(repository: repository, head: repositoryInfo.head)
             let hasDetachedTagOrCommit = detachedTag != nil || detachedCommit != nil
@@ -256,14 +254,11 @@ struct RepositoryView: View {
         }
     }
 
-    private var tagsView: some View {
-        let tags = repositoryViewModel.repositoryInfo.tags
-        return Group {
-            if tags.isEmpty {
-                emptyView
-            } else {
-                actualTagsView(tags: tags)
-            }
+    @ViewBuilder private var tagsView: some View {
+        if repositoryInfo.tags.isEmpty {
+            emptyView
+        } else {
+            actualTagsView(tags: repositoryInfo.tags)
         }
     }
 
@@ -301,14 +296,11 @@ struct RepositoryView: View {
         .environment(\.layoutDirection, .rightToLeft)
     }
 
-    private var stashesView: some View {
-        let stashes = repositoryViewModel.repositoryInfo.stashes
-        return Group {
-            if stashes.isEmpty {
-                emptyView
-            } else {
-                actualStashesView(stashes: stashes)
-            }
+    @ViewBuilder private var stashesView: some View {
+        if repositoryInfo.stashes.isEmpty {
+            emptyView
+        } else {
+            actualStashesView(stashes: repositoryInfo.stashes)
         }
     }
 
