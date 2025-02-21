@@ -182,7 +182,7 @@ struct RepositoryView: View {
     private var picker: some View {
         Picker(selection: $selection) {
             Group {
-                Text("Commits")
+                Text("Branches")
                     .tag(Section.commits)
                 Text("Tags")
                     .tag(Section.tags)
