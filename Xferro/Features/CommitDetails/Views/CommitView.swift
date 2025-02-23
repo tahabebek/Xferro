@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CommitView: View {
-    @Environment(CommitViewModel.self) var viewModel
+//    @Environment(CommitViewModel.self) var viewModel
     var body: some View {
         Text("Commit Details")
     }

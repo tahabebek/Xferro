@@ -266,7 +266,7 @@ struct RepositoryView: View {
             LazyHStack(alignment: .top) {
                 ForEach(repositoryInfo.tags) { tagInfo in
                     ZStack {
-                        FlaredRounded {
+                        FlaredCircle {
                             VStack {
                                 Text("\(tagInfo.tag.tag.name)")
                                     .font(.title)

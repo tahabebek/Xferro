@@ -83,11 +83,11 @@ final class WipWorktree {
         case let status as SelectableStatus:
             switch status.type {
             case .branch(_, let branch):
-                "\(Self.wipBranchesPrefix)for_status_of_branch_\(branch.wipName)"
+                "\(Self.wipBranchesPrefix)for_branch_\(branch.wipName)_commit_\(branch.commit.oid.description)"
             case .tag(_, let tag):
-                "\(Self.wipBranchesPrefix)for_status_of_tag_\(tag.wipName)"
+                "\(Self.wipBranchesPrefix)for_tag_\(tag.wipName)_commit_\(tag.oid.description)"
             case .detached(_, let commit):
-                "\(Self.wipBranchesPrefix)for_status_of_detached_commit_\(commit.oid.description)"
+                "\(Self.wipBranchesPrefix)for_detached_commit_\(commit.oid.description)"
             }
         case let commit as SelectableCommit:
             "\(Self.wipBranchesPrefix)for_branch_\(commit.branch.wipName)_commit_\(commit.oid.description)"
