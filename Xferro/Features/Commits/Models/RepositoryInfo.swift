@@ -193,8 +193,9 @@ extension RepositoryInfo {
 
 
                     let relativePath = path.droppingPrefix(repository.workDir.path + "/")
-                    let destinationPath = wipWorktree.worktreeRepository.workDir.appendingPathComponent(path.droppingPrefix(repository.workDir.path + "/")).path
+                    let destinationPath = wipWorktree.worktreeRepository.workDir.appendingPathComponent(relativePath).path
                     let destinationURL = URL(filePath: destinationPath)
+                    let changeFileName = destinationURL.lastPathComponent
 
                     // is this file in staged or unstaged?
                     if StatusManager.shared.isStagedOrUnstaged(relativePath: relativePath, statusEntries: status) {
@@ -202,7 +203,7 @@ extension RepositoryInfo {
                         if isDeleted {
                             print("file deleted", relativePath)
                             try! FileManager.default.removeItem(atPath: destinationPath)
-                            changes.insert("Wip - \(relativePath) is deleted")
+                            changes.insert("Wip - \(changeFileName) is deleted")
                         } else {
                             if destinationURL.isDirectory {
                                 try? FileManager.default.createDirectory(atPath: destinationURL.path, withIntermediateDirectories: true)
@@ -219,7 +220,7 @@ extension RepositoryInfo {
                                 print("file added or modified", relativePath)
                                 try? FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
                                 FileManager.default.createFile(atPath: destinationPath, contents: contents.data(using: .utf8))
-                                changes.insert("Wip - \(relativePath) is modified")
+                                changes.insert("Wip - \(changeFileName) is modified")
                             }
                         }
                     } else {
@@ -229,7 +230,7 @@ extension RepositoryInfo {
                             if FileManager.default.fileExists(atPath: destinationPath) {
                                 try! FileManager.default.removeItem(atPath: destinationPath)
                                 print("untracked file deleted from worktree", destinationPath)
-                                changes.insert("Wip - \(relativePath) is removed")
+                                changes.insert("Wip - \(changeFileName) is removed")
                             } else {
                                 continue
                             }
@@ -247,12 +248,12 @@ extension RepositoryInfo {
                                 }
                                 try? FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
                                 FileManager.default.createFile(atPath: destinationPath, contents: contents.data(using: .utf8))
-                                changes.insert("Wip - \(relativePath) is modified")
+                                changes.insert("Wip - \(changeFileName) is modified")
                                 print("file (which is not in the index) added or modified", relativePath)
                             } else {
                                 if FileManager.default.fileExists(atPath: destinationPath) {
                                     try! FileManager.default.removeItem(atPath: destinationPath)
-                                    changes.insert("Wip - \(relativePath) is removed")
+                                    changes.insert("Wip - \(changeFileName) is removed")
                                     print("untracked file deleted from worktree", destinationPath)
                                 }
                             }
