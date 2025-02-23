@@ -13,15 +13,15 @@ struct StatusEntry: CustomDebugStringConvertible, Equatable {
     var stagedDelta: Diff.Delta?
     var unstagedDelta: Diff.Delta?
 
-    init(from statusEntry: git_status_entry) {
+    init(from statusEntry: git_status_entry, workDir: URL) {
         self.status = Diff.Status(rawValue: statusEntry.status.rawValue)
 
         if let htoi = statusEntry.head_to_index {
-            self.stagedDelta = Diff.Delta(htoi.pointee)
+            self.stagedDelta = Diff.Delta(htoi.pointee, workDir: workDir)
         }
 
         if let itow = statusEntry.index_to_workdir {
-            self.unstagedDelta = Diff.Delta(itow.pointee)
+            self.unstagedDelta = Diff.Delta(itow.pointee, workDir: workDir)
         }
     }
 
@@ -71,13 +71,33 @@ struct Diff {
             }
         }
 
+        let workDir: URL
+
         var status: Status
         var statusName: String
         var flags: Flags
         var oldFile: File?
         var newFile: File?
 
-        init(_ delta: git_diff_delta) {
+        var oldFileURL: URL? {
+            guard let oldFilePath else { return nil }
+            return workDir.appendingPathComponent(oldFilePath)
+        }
+        var newFileURL: URL? {
+            guard let newFilePath else { return nil }
+            return workDir.appendingPathComponent(newFilePath)
+        }
+
+        var oldFilePath: String? {
+            oldFile?.path
+        }
+
+        var newFilePath: String? {
+            newFile?.path
+        }
+
+        init(_ delta: git_diff_delta, workDir: URL) {
+            self.workDir = workDir
             self.status = Status(rawValue: delta.status.rawValue)!
             self.statusName = String(UnicodeScalar(UInt8(git_diff_status_char(delta.status))))
             self.flags = Flags(rawValue: delta.flags)
@@ -189,10 +209,10 @@ struct Diff {
     }
 
     /// Create an instance with a libgit2 `git_diff`.
-    init(_ pointer: OpaquePointer) {
+    init(_ pointer: OpaquePointer, workDir: URL) {
         for i in 0..<git_diff_num_deltas(pointer) {
             if let delta = git_diff_get_delta(pointer, i) {
-                deltas.append(Diff.Delta(delta.pointee))
+                deltas.append(Diff.Delta(delta.pointee, workDir: workDir))
             }
         }
     }

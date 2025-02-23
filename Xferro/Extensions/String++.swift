@@ -77,6 +77,11 @@ extension String {
 
         return String(self[prefix.endIndex...])
     }
+
+    var lines: [String]
+    {
+        components(separatedBy: .newlines)
+    }
 }
 
 infix operator +/ : AdditionPrecedence
@@ -96,3 +101,8 @@ extension String
     }
 }
 
+extension String {
+    var hash: Hash {
+        generateHash(self)
+    }
+}

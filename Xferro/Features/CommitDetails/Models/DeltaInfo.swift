@@ -34,10 +34,10 @@ struct DeltaInfo: Identifiable, Equatable, Hashable {
     }
 
     var oldFilePath: String? {
-        delta.oldFile?.path
+        delta.oldFilePath
     }
 
     var newFilePath: String? {
-        delta.newFile?.path
+        delta.newFilePath
     }
 }

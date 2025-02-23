@@ -25,6 +25,11 @@ extension URL {
         let contents = try FileManager.default.contentsOfDirectory(at: self, includingPropertiesForKeys: [.isDirectoryKey], options: [])
         return try contents.filter { try $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false }
     }
+
+    func modificationDate() throws -> Date {
+        let attributes = try FileManager.default.attributesOfItem(atPath: path)
+        return attributes[FileAttributeKey.modificationDate] as! Date
+    }
 }
 
 extension URL

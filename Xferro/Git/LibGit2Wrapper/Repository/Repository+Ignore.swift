@@ -44,7 +44,7 @@ extension Repository {
             try! "".write(to: ignoreURL, atomically: true, encoding: .utf8)
         }
         let content = try! String(contentsOfFile: ignoreURL.path, encoding: .utf8)
-        let lines = content.components(separatedBy: .newlines)
+        let lines = content.lines
         let filteredLines = lines.filter { $0 != pattern }
 
         // If nothing changed, pattern wasn't found
@@ -80,5 +80,23 @@ extension Repository {
             fatalError(GitError.getLastErrorMessage())
         }
         return ignored > 0
+    }
+
+    func gitignoreLines() -> [String] {
+        lock.lock()
+        defer { lock.unlock() }
+        let ignoreURL = workDir.appendingPathComponent(".gitignore")
+
+        guard FileManager.default.fileExists(atPath: ignoreURL.path) else {
+            return []
+        }
+        let content = try! String(contentsOfFile: ignoreURL.path, encoding: .utf8)
+        return content.lines
+            .filter {
+                !$0.hasPrefix("#")
+            }
+            .filter {
+                !$0.isEmptyOrWhitespace
+            }
     }
 }

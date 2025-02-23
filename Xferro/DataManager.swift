@@ -27,7 +27,7 @@ struct DataManager {
             let fileURL = appDir.appendingPathComponent(filename)
 
             try data.write(to: fileURL)
-            print("Data saved successfully to: \(fileURL)")
+//            print("Data saved successfully to: \(fileURL)")
         } catch {
             print("Error saving data: \(error)")
         }
@@ -40,7 +40,7 @@ struct DataManager {
             let data = try Data(contentsOf: fileURL)
             let decoder = JSONDecoder()
             let value = try decoder.decode(type, from: data)
-            print("Data successfully loaded from: \(fileURL)")
+//            print("Data successfully loaded from: \(fileURL)")
             return value
         } catch {
             print("Error loading data: \(error)")

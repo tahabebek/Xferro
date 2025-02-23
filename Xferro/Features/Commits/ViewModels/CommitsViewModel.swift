@@ -25,14 +25,14 @@ import OrderedCollections
     // use the func setCurrentSelectedItem to set currentSelectedItem
     var currentSelectedItem: SelectedItem?
 
-    func setCurrentSelectedItem(itemAndHead: (selectedItem: SelectedItem, head: Head)?) {
-        user.lastSelectedRepositoryPath = itemAndHead?.selectedItem.repository.gitDir.path
-        if let itemAndHead {
-            updateWipCommits(selectedItem: itemAndHead.selectedItem, head: itemAndHead.head)
+    func setCurrentSelectedItem(_ selectedItem: SelectedItem?) {
+        user.lastSelectedRepositoryPath = selectedItem?.repository.gitDir.path
+        if let selectedItem {
+            updateWipCommits(selectedItem: selectedItem)
         } else {
-            updateWipCommits()
+            updateWipCommits(selectedItem: nil)
         }
-        currentSelectedItem = itemAndHead?.selectedItem
+        currentSelectedItem = selectedItem
         updateDetailInfoAndPeekInfo()
     }
 
@@ -43,16 +43,12 @@ import OrderedCollections
     let peekViewModel = PeekViewModel(peekInfo: PeekInfo(title: ""))
 
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
-    private let statusManager: StatusManager
     private let userDidSelectFolder: (URL) -> Void
     private let user: User
-    private let fileComparator: any FileComparator
 
     init(
         repositories: [Repository],
-        statusManager: StatusManager = .shared,
         user: User,
-        fileComparator: any FileComparator = FileManagerComparator(),
         userDidSelectFolder: @escaping (URL) -> Void
     ) {
         if UserDefaults.standard.object(forKey: "autoCommitEnabled") == nil {
@@ -60,10 +56,8 @@ import OrderedCollections
         } else {
             self.autoCommitEnabled = UserDefaults.standard.bool(forKey: "autoCommitEnabled")
         }
-        self.statusManager = statusManager
         self.userDidSelectFolder = userDidSelectFolder
         self.user = user
-        self.fileComparator = fileComparator
 
         Task {
             for repository in repositories {
@@ -80,12 +74,9 @@ import OrderedCollections
     }
 
     private func updateRepositoryInfo(_ repository: Repository) async {
-        let start = CFAbsoluteTimeGetCurrent()
         let repositoryInfo = await getRepositoryInfo(repository)
-        await MainActor.run { [start] in
+        await MainActor.run {
             currentRepositoryInfos[kRepositoryInfo(repository)] = repositoryInfo
-            let diff = CFAbsoluteTimeGetCurrent() - start
-            print("update repository info took \(diff)s for \(repository.gitDir.deletingLastPathComponent().lastPathComponent)")
         }
     }
 
@@ -107,8 +98,7 @@ import OrderedCollections
                         currentDetailInfo = DetailInfo(type: .stash(stash))
                         currentPeekInfo = PeekInfo(title: "stash \(stash.oid.debugOID)")
                     case .status(let status):
-                        let statusEntries = statusManager.status(of: currentSelectedItem.repository)
-                        currentDetailInfo = DetailInfo(type: .status(status, statusEntries))
+                        currentDetailInfo = DetailInfo(type: .status(status))
                         currentPeekInfo = PeekInfo(title: "status \(status.oid.debugOID)")
                     case .commit(let commit):
                         currentDetailInfo = DetailInfo(type: .commit(commit))
@@ -163,10 +153,10 @@ import OrderedCollections
                     if let repositoryInfo {
                         let selectedItem = SelectedItem(
                             selectedItemType: .regular(
-                                .status(SelectableStatus(repository: repositoryInfo.repository, head: repositoryInfo.head))
+                                .status(SelectableStatus(repositoryInfo: repositoryInfo))
                             )
                         )
-                        setCurrentSelectedItem(itemAndHead: (selectedItem, repositoryInfo.head))
+                        setCurrentSelectedItem(selectedItem)
                     }
                 }
             }
@@ -228,7 +218,7 @@ import OrderedCollections
         }
     }
 
-    func isCurrentBranch(_ branch: Branch, head: Head, in repository: Repository) -> Bool {
+    func isCurrentBranch(_ branch: Branch, head: Head) -> Bool {
         switch head {
         case .branch(let headBranch):
             if branch == headBranch {
@@ -241,23 +231,8 @@ import OrderedCollections
     }
 
     // MARK: Wip
-    private func updateWipCommits(
-        selectedItem: SelectedItem? = nil,
-        worktree: WipWorktree? = nil,
-        head: Head? = nil
-    ) {
-        if let selectedItem, let worktree {
-            let wipCommits =  worktree.commits(
-                of: WipWorktree.worktreeBranchName(item: selectedItem.selectableItem),
-                stop: selectedItem.selectableItem.oid
-            )
-            Task {
-                await MainActor.run {
-                    currentWipCommits = CurrentWipCommits(commits: wipCommits, item: selectedItem)
-                }
-            }
-        }
-        else if let selectedItem, let head {
+    private func updateWipCommits(selectedItem: SelectedItem?) {
+         if let selectedItem {
             switch selectedItem.selectedItemType {
             case .regular(let type):
                 switch type {
@@ -268,32 +243,23 @@ import OrderedCollections
                         }
                     }
                 case .status:
-                    let selectableItem = selectedItem.selectableItem
-                    let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
-                    let worktree = WipWorktree.getOrCreate(for: selectableItem, head: head)
-                    if let worktree, worktree.getBranch(branchName: branchName) == nil {
-                        worktree.createBranch(branchName: branchName, oid: selectableItem.oid)
-                        worktree.checkout(branchName: branchName)
+                    let branchName = WipWorktree.worktreeBranchName(for: selectedItem)
+                    if selectedItem.wipWorktree.getBranch(branchName: branchName) == nil {
+                        selectedItem.wipWorktree.createBranch(branchName: branchName, oid: selectedItem.oid)
+                        selectedItem.wipWorktree.checkout(branchName: branchName)
                     }
-
-                    if let worktree {
-                        let wipCommits =  worktree.commits(of: branchName, stop: selectableItem.oid)
-                        Task {
-                            await MainActor.run {
-                                currentWipCommits = CurrentWipCommits(commits: wipCommits, item: selectedItem)
-                            }
-                        }
-
-                    } else {
-                        Task {
-                            await MainActor.run {
-                                currentWipCommits = nil
-                            }
+                    let wipCommits =  selectedItem.wipWorktree.wipCommits(
+                        repositoryInfo: selectedItem.repositoryInfo,
+                        branchName: branchName,
+                        stop: selectedItem.oid
+                    )
+                    Task {
+                        await MainActor.run {
+                            currentWipCommits = CurrentWipCommits(commits: wipCommits, item: selectedItem)
                         }
                     }
                 default:
-                    guard let worktree = WipWorktree.getOrCreate(for: selectedItem.selectableItem, head: head),
-                          worktree.getBranch(branchName: WipWorktree.worktreeBranchName(item: selectedItem.selectableItem)) != nil
+                    guard selectedItem.wipWorktree.getBranch(branchName: WipWorktree.worktreeBranchName(item: selectedItem.selectableItem)) != nil
                     else {
                         Task {
                             await MainActor.run {
@@ -302,9 +268,10 @@ import OrderedCollections
                         }
                         return
                     }
-                    let wipCommits =  worktree.commits(
-                        of: WipWorktree.worktreeBranchName(item: selectedItem.selectableItem),
-                        stop: selectedItem.selectableItem.oid
+                    let wipCommits =  selectedItem.wipWorktree.wipCommits(
+                        repositoryInfo: selectedItem.repositoryInfo,
+                        branchName: WipWorktree.worktreeBranchName(for: selectedItem),
+                        stop: selectedItem.oid
                     )
                     Task {
                         await MainActor.run {
@@ -350,180 +317,29 @@ import OrderedCollections
         addManualWipCommit(for: item)
     }
     private func addManualWipCommit(for item: SelectedItem) {
-        addWipCommit(repository: item.repository)
+        addWipCommit(repositoryInfo: item.repositoryInfo)
     }
 
     let wipCommitLock = NSRecursiveLock()
-    private func addWipCommit(repository: Repository) {
+    func addWipCommit(repositoryInfo: RepositoryInfo, summary: String? = nil) {
+#warning("keep a set of tracked file urls, if user adds a new file and then deletes it later before committing, it will disappear from the status, so we need to delete it. Same for track and untrack/ignore later before committing.")
         wipCommitLock.lock()
         defer { wipCommitLock.unlock() }
-        let head = Head.of(repository)
-        let selectableItem = SelectableStatus(repository: repository, head: head)
-        guard let worktree = WipWorktree.getOrCreate(for: selectableItem, head: head) else { return }
+        let worktree = repositoryInfo.wipWorktree
+        let selectableItem = SelectableStatus(repositoryInfo: repositoryInfo)
         let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
         if worktree.getBranch(branchName: branchName) == nil {
             worktree.createBranch(branchName: branchName, oid: selectableItem.oid)
             worktree.checkout(branchName: branchName)
         }
-        let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: repository)
-        let statusEntries = statusManager.status(of: repository)
-        let wipWorktreePath = worktreeRepositoryURL.path
-        let originalRepoPath = repository.gitDir.deletingLastPathComponent().path
-
-        #warning("keep a set of tracked file urls, if user adds a new file and then deletes it later before committing, it will disappear from the status, so we need to delete it. Same for track and untrack/ignore later before committing.")
-        let handleDelta: (Diff.Delta) -> Void = { [weak self] delta in
-            guard let self else { return }
-            switch delta.status {
-            case .unmodified:
-                break
-            case .added:
-                if let newPath = delta.newFile?.path {
-                    let sourceURL = URL(filePath: originalRepoPath + "/" + newPath)
-                    let destinationURL = URL(filePath: wipWorktreePath + "/" + newPath)
-                    if destinationURL.isDirectory {
-                        try? FileManager.default.createDirectory(atPath: destinationURL.path, withIntermediateDirectories: true)
-                    } else {
-                        if FileManager.default.fileExists(atPath: sourceURL.path),
-                           !fileComparator.contentsEqual(sourceURL, destinationURL)
-                        {
-                            print("FileManager: writing file \(newPath)")
-                            try? FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
-                            let content = try! Data(contentsOf: sourceURL)
-                            try! content.write(to: destinationURL)
-                        }
-                    }
-                }
-            case .deleted:
-                if let oldPath = delta.oldFile?.path {
-                    if FileManager.default.fileExists(atPath: wipWorktreePath + "/" + oldPath) {
-                        print("FileManager: removing file \(oldPath)")
-                        try! FileManager.default.removeItem(atPath: wipWorktreePath + "/" + oldPath)
-                    }
-                }
-            case .modified:
-                if let path = delta.newFile?.path ?? delta.oldFile?.path {
-                    let sourceURL = URL(filePath: originalRepoPath + "/" + path)
-                    let destinationURL = URL(fileURLWithPath: wipWorktreePath + "/" + path)
-                    if FileManager.default.fileExists(atPath: sourceURL.path),
-                       !fileComparator.contentsEqual(sourceURL, destinationURL)
-                    {
-                        print("FileManager: writing file \(path)")
-                        let content = try! Data(contentsOf: sourceURL)
-                        try! content.write(to: destinationURL)
-                    }
-                }
-            case .renamed:
-                if let oldPath = delta.oldFile?.path, let newPath = delta.newFile?.path {
-                    let sourceURL = URL(filePath: wipWorktreePath + "/" + oldPath)
-                    let destinationURL = URL(filePath: wipWorktreePath + "/" + newPath)
-                    if FileManager.default.fileExists(atPath: sourceURL.path),
-                       !fileComparator.contentsEqual(sourceURL, destinationURL)
-                        {
-                        if FileManager.default.fileExists(atPath: destinationURL.path) {
-                            print("FileManager: writing file \(newPath)")
-                            let content = try! Data(contentsOf: sourceURL)
-                            try! content.write(to: destinationURL)
-                        } else {
-                            print("FileManager: moving file \(newPath)")
-                            try! FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
-                            try! FileManager.default.moveItem(atPath: sourceURL.path, toPath: destinationURL.path)
-                        }
-                    }
-                }
-            case .copied:
-                if let oldPath = delta.oldFile?.path, let newPath = delta.newFile?.path {
-                    let sourceURL = URL(filePath: wipWorktreePath + "/" + oldPath)
-                    let destinationURL = URL(filePath: wipWorktreePath + "/" + newPath)
-                    if FileManager.default.fileExists(atPath: sourceURL.path),
-                       !fileComparator.contentsEqual(sourceURL, destinationURL)
-                    {
-                        print("FileManager: copying file \(newPath)")
-                        try! FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
-                        try! FileManager.default.copyItem(atPath: sourceURL.path, toPath: destinationURL.path)
-                    }
-                }
-            case .ignored:
-                let sourceURL = URL(filePath: originalRepoPath + "/" + ".gitignore")
-                let destinationURL = URL(filePath: wipWorktreePath + "/" + ".gitignore")
-                if FileManager.default.fileExists(atPath: sourceURL.path),
-                   !fileComparator.contentsEqual(sourceURL, destinationURL)
-                {
-                    print("FileManager: writing file \(destinationURL)")
-                    let content = try! Data(contentsOf: sourceURL)
-                    try! content.write(to: destinationURL)
-                }
-            case .untracked:
-                // not writing untracked files, it could be undesirable.
-                break
-//                if let newPath = delta.newFile?.path {
-//                    let sourceURL = URL(filePath: originalRepoPath + "/" + newPath)
-//                    let destinationURL = URL(filePath: wipWorktreePath + "/" + newPath)
-//                    if destinationURL.isDirectory {
-//                        try? FileManager.default.createDirectory(atPath: destinationURL.path, withIntermediateDirectories: true)
-//                    } else {
-//                        if FileManager.default.fileExists(atPath: sourceURL.path),
-//                           !fileComparator.contentsEqual(sourceURL, destinationURL)
-//                        {
-//                            print("FileManager: writing file \(newPath)")
-//                            try? FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
-//                            let content = try! Data(contentsOf: sourceURL)
-//                            try! content.write(to: destinationURL)
-//                        }
-//                    }
-//                }
-            case .typeChange:
-                if let oldPath = delta.oldFile?.path, let newPath = delta.newFile?.path {
-                    let sourceURL = URL(filePath: wipWorktreePath + "/" + oldPath)
-                    let destinationURL = URL(filePath: wipWorktreePath + "/" + newPath)
-                    if FileManager.default.fileExists(atPath: sourceURL.path),
-                       !fileComparator.contentsEqual(sourceURL, destinationURL)
-                    {
-                        if FileManager.default.fileExists(atPath: destinationURL.path) {
-                            print("FileManager: writing file \(newPath)")
-                            let content = try! Data(contentsOf: sourceURL)
-                            try! content.write(to: destinationURL)
-                        } else {
-                            print("FileManager: moving file \(newPath)")
-                            try! FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
-                            try! FileManager.default.moveItem(atPath: sourceURL.path, toPath: destinationURL.path)
-                        }
-                    }
-                }
-            case .unreadable:
-                fatalError(.unimplemented)
-            case .conflicted:
-                fatalError(.unimplemented)
-            }
-        }
-
-        for statusEntry in statusEntries {
-            var handled: Bool = false
-            if let stagedDelta = statusEntry.stagedDelta {
-                handled = true
-                debugPrint(stagedDelta)
-                handleDelta(stagedDelta)
-            }
-
-            if let unstagedDelta = statusEntry.unstagedDelta {
-                handled = true
-                debugPrint(unstagedDelta)
-                handleDelta(unstagedDelta)
-            }
-
-            guard handled else {
-                fatalError(.unimplemented)
-            }
-        }
         worktree.addToWorktreeIndex(path: ".")
-        worktree.commit()
-        reloadUIAfterAddingWipCommits(
-            repository: repository,
-            worktree: worktree,
-            head: head
-        )
+        worktree.commit(summary: summary)
+        self.reloadUIAfterAddingWipCommits(repositoryInfo: repositoryInfo)
+        
     }
-
-    func reloadUIAfterAddingWipCommits(repository: Repository, worktree: WipWorktree, head: Head) {
+    func reloadUIAfterAddingWipCommits(repositoryInfo: RepositoryInfo) {
+        let repository = repositoryInfo.repository
+        let head = repositoryInfo.head
         if let currentSelectedItem, repository.gitDir.path == currentSelectedItem.repository.gitDir.path {
             var isHead = false
             let headId = head.oid
@@ -563,11 +379,7 @@ import OrderedCollections
                 Task {
                     await MainActor.run {
                         updateDetailInfoAndPeekInfo()
-                        updateWipCommits(
-                            selectedItem: currentSelectedItem,
-                            worktree: worktree,
-                            head: head
-                        )
+                        updateWipCommits(selectedItem: currentSelectedItem)
                     }
                 }
             }
@@ -661,7 +473,6 @@ import OrderedCollections
 
     // MARK: User actions
     func userTapped(item: any SelectableItem) {
-        let head = Head.of(item.repository)
         Task {
             await MainActor.run {
                 let selectedItem: SelectedItem
@@ -685,7 +496,7 @@ import OrderedCollections
                 default:
                     fatalError()
                 }
-                setCurrentSelectedItem(itemAndHead: (selectedItem, head))
+                setCurrentSelectedItem(selectedItem)
             }
         }
     }
@@ -722,7 +533,7 @@ import OrderedCollections
                 currentRepositoryInfos.removeValue(forKey: kRepositoryInfo(repository))
                 if let currentSelectedItem {
                     if currentSelectedItem.repository.gitDir.path == repository.gitDir.path {
-                        setCurrentSelectedItem(itemAndHead: nil)
+                        setCurrentSelectedItem(nil)
                     }
                 }
                 user.removeProject(repository.gitDir.deletingLastPathComponent())
@@ -758,10 +569,10 @@ import OrderedCollections
                     fatalError(.unexpected)
                 }
                 if stage {
-                    print("stage \(newFilePath)")
+//                    print("stage \(newFilePath)")
                     repository.stage(path: newFilePath).mustSucceed()
                 } else {
-                    print("unstage \(newFilePath)")
+//                    print("unstage \(newFilePath)")
                     repository.unstage(path: newFilePath).mustSucceed()
                 }
             case .renamed:
@@ -845,9 +656,13 @@ import OrderedCollections
         repository.ignore(path)
     }
 
-    func discardFileButtonTapped(repository: Repository, filePaths: [String]) {
-        for filePath in filePaths {
-            RepoManager().git(repository, ["restore", filePath])
+    func discardFileButtonTapped(repository: Repository, fileURLs: [URL]) {
+        for fileURL in fileURLs {
+            if fileURL.isDirectory {
+                RepoManager().git(repository, ["restore", fileURL.appendingPathComponent("*").path])
+            } else {
+                RepoManager().git(repository, ["restore", fileURL.path])
+            }
         }
         
     }

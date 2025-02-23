@@ -10,7 +10,7 @@ import Foundation
 struct DetailInfo {
     enum DetailType {
         case empty
-        case status(SelectableStatus, [StatusEntry])
+        case status(SelectableStatus)
         case commit(SelectableCommit)
         case wipCommit(SelectableWipCommit, WipWorktree)
         case detachedCommit(SelectableDetachedCommit)
@@ -35,7 +35,7 @@ struct DetailInfo {
                 tag.repository.nameOfRepo
             case .detachedTag(let tag):
                 tag.repository.nameOfRepo
-            case .status(let status, _):
+            case .status(let status):
                 status.repository.nameOfRepo
             case .stash(let stash):
                 stash.repository.nameOfRepo

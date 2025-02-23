@@ -11,6 +11,7 @@ extension String {
     static let tagPrefix = "refs/tags/"
     static let branchPrefix = "refs/heads/"
     static let remotePrefix = "refs/remotes/"
+    static let wipPrefix = "refs/heads/\(WipWorktree.wipBranchesPrefix)"
 
     var longBranchRef: String {
         return self.isLongRef ? self : "\(String.branchPrefix)\(self)"
@@ -34,6 +35,10 @@ extension String {
 
     var isRemoteRef: Bool {
         return self.hasPrefix(.remotePrefix)
+    }
+
+    var isWipRef: Bool {
+        return self.hasPrefix(.wipPrefix)
     }
 
     var isHEAD: Bool {

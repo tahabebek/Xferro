@@ -12,12 +12,9 @@ struct CommitsView: View {
         VSplitView {
             NormalCommitsView()
                 .padding(.trailing, 6)
-                .layoutPriority(.greatestFiniteMagnitude)
             WipCommitsView()
                 .padding(.trailing, 6)
-                .frame(minHeight: 260)
         }
-        .frame(width: Dimensions.commitsViewIdealWidth)
     }
 }
 

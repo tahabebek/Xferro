@@ -38,9 +38,7 @@ struct StatusView: View {
                 discardPopup.show(title: discardAlertTitle(deltaInfo: newValue)) {
                     discard(deltaInfo: newValue)
                     self.discardDeltaInfo = nil
-                    print("discard tapped")
                 } onCancel: {
-                    print("cancel tapped")
                     self.discardDeltaInfo = nil
                 }
             }
@@ -49,7 +47,6 @@ struct StatusView: View {
         .animation(.default, value: statusViewModel.stagedDeltaInfos)
         .animation(.default, value: statusViewModel.unstagedDeltaInfos)
         .animation(.default, value: statusViewModel.untrackedDeltaInfos)
-        .animation(.default, value: statusViewModel.statusEntries)
         .animation(.default, value: currentSelectedItem)
         .animation(.default, value: commitSummary)
         .padding(.horizontal, 6)
@@ -116,23 +113,23 @@ struct StatusView: View {
     }
 
     func discard(deltaInfo: DeltaInfo) {
-        let oldFilePath = deltaInfo.oldFilePath
-        let newFilePath = deltaInfo.newFilePath
-        var filePaths = [String]()
+        let oldFileURL = deltaInfo.oldFileURL
+        let newFileURL = deltaInfo.newFileURL
+        var fileURLs = [URL]()
 
-        if let oldFilePath, let newFilePath, oldFilePath == newFilePath {
-            filePaths.append(oldFilePath)
+        if let oldFileURL, let newFileURL, oldFileURL == newFileURL {
+            fileURLs.append(oldFileURL)
         } else {
-            if let oldFilePath {
-                filePaths.append(oldFilePath)
+            if let oldFileURL {
+                fileURLs.append(oldFileURL)
             }
-            if let newFilePath {
-                filePaths.append(newFilePath)
+            if let newFileURL {
+                fileURLs.append(newFileURL)
             }
         }
         commitsViewModel.discardFileButtonTapped(
             repository: statusViewModel.repository,
-            filePaths: filePaths
+            fileURLs: fileURLs
         )
     }
 

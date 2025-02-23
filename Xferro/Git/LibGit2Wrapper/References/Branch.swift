@@ -43,16 +43,12 @@ struct Branch: Identifiable, ReferenceType, Hashable, Codable {
     /// This is the same as `commit.oid`, but is declared here to adhere to `ReferenceType`.
     var oid: OID { return commit.oid }
 
-    /// Whether the branch is a local branch.
     var isLocal: Bool { return longName.isBranchRef }
-
-    /// Whether the branch is a remote branch.
     var isRemote: Bool { return longName.isRemoteRef }
-
+    var isWip: Bool { return longName.isWipRef }
     /// Whether the branch is a unborn branch. If it is unborn, the oid will be invalid.
     var isUnborn: Bool = false
 
-    ///
     var isSymbolic: Bool = false
 
     /// The remote repository name if this is a remote branch.

@@ -24,6 +24,7 @@ final class GitWatcher {
     let tagsChangePublisher: PassthroughSubject<[RefKey: Set<String>], Never>
     let stashChangePublisher: PassthroughSubject<Void, Never>
     
+    var changeObserver: AnyCancellable?
     let mutex = NSRecursiveLock()
 
     private var lastIndexChangeGuarded = Date()
@@ -66,26 +67,25 @@ final class GitWatcher {
         repository.references(withPrefix: "").mustSucceed().forEach { localBranchCache[$0.longName] = $0.oid }
         let objectsPath = repository.gitDir.appendingPathComponent("objects").path
 
+        let changeSubject = PassthroughSubject<Set<String>, Never>()
+        self.changeObserver = changeSubject
+            .sink { [weak self] changedPaths in
+                guard let self else { return }
+                self.observeEvents(changedPaths)
+            }
+
         let stream = FileEventStream(
             path: repository.gitDir.path,
             excludePaths: [objectsPath],
             queue: self.queue.queue,
-            latency: 1.0
-        ) { [weak self] (paths) in
-            guard let self else { return }
-            self.observeEvents(paths)
-        }
-
-        guard let stream else {
-            fatalError(.unexpected)
-        }
+            changePublisher: changeSubject)
 
         self.stream = stream
         makePackedRefsWatcher()
         makeStashWatcher()
     }
 
-    func observeEvents(_ paths: [String])
+    func observeEvents(_ paths: Set<String>)
     {
         let standardizedPaths = paths.map { ($0 as NSString).standardizingPath }
 
@@ -127,12 +127,6 @@ final class GitWatcher {
                 makePackedRefsWatcher()
             }
         }
-
-        let refPaths = [
-            "refs/heads",
-            "refs/remotes",
-            "refs/tags",
-        ]
 
         if paths(changedPaths, includeSubpaths: ["refs/heads"]) {
             checkLocalBranches()
@@ -323,6 +317,7 @@ final class GitWatcher {
     deinit {
         stashSink?.cancel()
         packedRefsSink?.cancel()
+        changeObserver?.cancel()
     }
 }
 

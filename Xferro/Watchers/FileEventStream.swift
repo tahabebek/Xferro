@@ -5,81 +5,102 @@
 //  Created by Taha Bebek on 2/20/25.
 //
 
-
+import Combine
 import Foundation
 
 public class FileEventStream
 {
     var stream: FSEventStreamRef!
-    let eventCallback: ([String]) -> Void
+    let changePublisher: PassthroughSubject<Set<String>, Never>
+    private let debounceInterval: TimeInterval = 0.1
 
     static let rescanFlags =
     UInt32(kFSEventStreamEventFlagMustScanSubDirs) |
     UInt32(kFSEventStreamEventFlagUserDropped) |
     UInt32(kFSEventStreamEventFlagKernelDropped)
 
-    public var latestEventID: FSEventStreamEventId
-    { FSEventStreamGetLatestEventId(stream) }
-
-    /// Constructor
-    /// - parameter path: The root path to watch.
-    /// - parameter excludePaths: FSEvents allows up to 8 ignored paths. ?? why?
-    /// - parameter queue: The dispatch queue for the callback.
-    /// - parameter callback: Called with a list of changed paths. An empty list
-    /// means the root directory should be re-scanned.
-    init?(path: String,
-          excludePaths: [String] = [],
-          queue: DispatchQueue,
-          latency: CFTimeInterval = 0.5,
-          callback: @escaping ([String]) -> Void)
-    {
-        self.eventCallback = callback
-
-        let unsafeSelf = UnsafeMutableRawPointer(
-            Unmanaged.passUnretained(self).toOpaque())
-        // Must be var because it will be passed by reference
-        var context = FSEventStreamContext(version: 0,
-                                           info: unsafeSelf,
-                                           retain: nil,
-                                           release: nil,
-                                           copyDescription: nil)
-        let callback: FSEventStreamCallback = {
-            (_, userData, eventCount, paths, flags, _) in
-            guard let cfPaths = unsafeBitCast(paths, to: NSArray.self) as? [String]
-            else { return }
-            let contextSelf = unsafeBitCast(userData, to: FileEventStream.self)
-
-            for index in 0..<eventCount
-            where (flags[index] & FileEventStream.rescanFlags) != 0 {
-                contextSelf.eventCallback([])
-                return
+    init(
+        path: String,
+        excludePaths: [String] = [],
+        gitignoreLines: [String] = [],
+        workDir: URL? = nil,
+        queue: DispatchQueue,
+        changePublisher: PassthroughSubject<Set<String>, Never>
+    ) {
+        var excludePaths = Set(excludePaths.map { (path: String) -> String in
+            let absolutePath = (path as NSString).standardizingPath
+            return (absolutePath as NSString).expandingTildeInPath
+        })
+        self.changePublisher = changePublisher
+        let contents = gitignoreLines.joined(separator: "\n")
+        if let workDir, gitignoreLines.isNotEmpty {
+            gitignoreLines.forEach { line in
+                if let first = line.first, (first == "~" || first == "/" || first == "." || first.isLetter) {
+                    if workDir.appendingPathComponent(line).isDirectory {
+                        if contents.firstRange(of: "!\(line)") == nil {
+                            excludePaths.insert(line)
+                        }
+                    }
+                }
             }
+        }
+        self.setupStream(paths: [path], excludePaths: excludePaths, queue: queue)
+    }
 
-            contextSelf.eventCallback(cfPaths)
+    private func setupStream(paths: [String], excludePaths: Set<String>, queue: DispatchQueue) {
+        let unsafeSelf = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        var context = FSEventStreamContext(
+            version: 0,
+            info: unsafeSelf,
+            retain: nil,
+            release: nil,
+            copyDescription: nil
+        )
+
+        let callback: FSEventStreamCallback = { (streamRef, info, numEvents, eventPaths, eventFlags, _) in
+            guard let info else { return }
+            let monitor = Unmanaged<FileEventStream>.fromOpaque(info).takeUnretainedValue()
+            monitor.handleEvents(
+                numEvents: numEvents,
+                paths: unsafeBitCast(eventPaths, to: NSArray.self) as? [String] ?? [],
+                flags: eventFlags
+            )
         }
 
         self.stream = FSEventStreamCreate(
-            kCFAllocatorDefault, callback,
-            &context, [path] as CFArray,
+            kCFAllocatorDefault,
+            callback,
+            &context,
+            paths as CFArray,
             FSEventStreamEventId(kFSEventStreamEventIdSinceNow),
-            latency,
+            debounceInterval, // 100ms latency
             UInt32(kFSEventStreamCreateFlagUseCFTypes |
                    kFSEventStreamCreateFlagNoDefer |
                    kFSEventStreamCreateFlagFileEvents)
         )
-        if self.stream == nil {
-            return nil
+
+        // Set exclusion paths if any
+        if !excludePaths.isEmpty {
+            FSEventStreamSetExclusionPaths(stream, Array(excludePaths) as CFArray)
         }
 
-        if !excludePaths.isEmpty {
-            FSEventStreamSetExclusionPaths(self.stream, excludePaths as CFArray)
-        }
-        FSEventStreamSetDispatchQueue(self.stream, queue)
-        FSEventStreamStart(self.stream)
+        FSEventStreamSetDispatchQueue(stream, queue)
+        FSEventStreamStart(stream)
     }
+
+    private func handleEvents(numEvents: Int, paths: [String], flags: UnsafePointer<FSEventStreamEventFlags>) {
+        for index in 0..<numEvents
+        where (flags[index] & FileEventStream.rescanFlags) != 0 {
+            changePublisher.send([]) // Empty array indicates need to rescan
+            return
+        }
+        changePublisher.send(Set(paths))
+    }
+
 
     deinit
     {
+        print("Deinit FileEventStream")
         if stream != nil {
             stop()
         }
@@ -87,12 +108,10 @@ public class FileEventStream
 
     func stop()
     {
-        guard stream != nil
-        else { return }
-
+        guard let stream else { return }
         FSEventStreamStop(stream)
         FSEventStreamInvalidate(stream)
         FSEventStreamRelease(stream)
-        stream = nil
+        self.stream = nil
     }
 }

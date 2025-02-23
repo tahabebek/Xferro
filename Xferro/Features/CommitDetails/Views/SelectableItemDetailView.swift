@@ -33,12 +33,11 @@ struct SelectableItemDetailView: View {
                 DetachedTagView()
             case .stash(let stash):
                 StashView()
-            case .status(let selectableStatus, let statusEntries):
+            case .status(let selectableStatus):
                 StatusView()
-                    .environment(StatusViewModel(selectableStatus: selectableStatus, statusEntries: statusEntries))
+                    .environment(StatusViewModel(selectableStatus: selectableStatus))
             }
             Spacer()
         }
-        .frame(width: Dimensions.commitDetailsViewIdealWidth)
     }
 }

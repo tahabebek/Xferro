@@ -256,7 +256,7 @@ class Repository: Identifiable, Equatable, Hashable {
                 continue
             }
 
-            let statusEntry = StatusEntry(from: s!.pointee)
+            let statusEntry = StatusEntry(from: s!.pointee, workDir: workDir)
             returnArray.append(statusEntry)
         }
 

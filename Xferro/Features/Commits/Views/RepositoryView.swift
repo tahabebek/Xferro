@@ -224,7 +224,7 @@ struct RepositoryView: View {
                 BranchView(
                     name: "Detached tag \(detachedTag.tag.tag.name)",
                     selectableCommits: detachedTag.commits,
-                    selectableStatus: SelectableStatus(repository: repositoryInfo.repository, head: repositoryInfo.head),
+                    selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
                     isCurrent: true,
                     isDetached: true,
                     branchCount: repositoryInfo.localBranchInfos.count
@@ -233,7 +233,7 @@ struct RepositoryView: View {
                 BranchView(
                     name: "Detached Commit",
                     selectableCommits: detachedCommit.commits,
-                    selectableStatus: SelectableStatus(repository: repositoryInfo.repository, head: repositoryInfo.head),
+                    selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
                     isCurrent: true,
                     isDetached: true,
                     branchCount: repositoryInfo.localBranchInfos.count
@@ -243,9 +243,9 @@ struct RepositoryView: View {
                 BranchView(
                     name: branchInfo.branch.name,
                     selectableCommits: branchInfo.commits,
-                    selectableStatus: SelectableStatus(repository: repositoryInfo.repository, head: repositoryInfo.head),
+                    selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
                     isCurrent: (repositoryInfo.detachedTag != nil || repositoryInfo.detachedCommit != nil) ? false :
-                        commitsViewModel.isCurrentBranch(branchInfo.branch, head: repositoryInfo.head, in: branchInfo.repository),
+                        commitsViewModel.isCurrentBranch(branchInfo.branch, head: repositoryInfo.head),
                     isDetached: false,
                     branchCount: repositoryInfo.localBranchInfos.count
                 )

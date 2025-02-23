@@ -10,12 +10,37 @@ import Foundation
 struct SelectedItem: Equatable {
     let selectedItemType: SelectedItemType
 
-    var repository: Repository {
+    var repositoryInfo: RepositoryInfo {
         switch selectedItemType {
         case .regular(let regularSelectedItem):
-            regularSelectedItem.repository
+            regularSelectedItem.repositoryInfo
         case .wip(let wipSelectedItem):
-            wipSelectedItem.repository
+            wipSelectedItem.repositoryInfo
+        }
+    }
+
+    var repository: Repository {
+        repositoryInfo.repository
+    }
+
+    var wipWorktree: WipWorktree {
+        switch selectedItemType {
+        case .regular(let regularSelectedItem):
+            regularSelectedItem.repositoryInfo.wipWorktree
+        case .wip(let wipSelectedItem):
+            wipSelectedItem.repositoryInfo.wipWorktree
+        }
+    }
+
+    var oid: OID {
+        switch selectedItemType {
+        case .regular(let regularSelectedItem):
+            regularSelectedItem.selectableItem.oid
+        case .wip(let wipSelectedItem):
+            switch wipSelectedItem {
+            case .wipCommit(let selectableWipCommit):
+                selectableWipCommit.oid
+            }
         }
     }
 
@@ -36,10 +61,21 @@ struct SelectedItem: Equatable {
     enum WipSelectedItem: Equatable {
         case wipCommit(SelectableWipCommit)
 
-        var repository: Repository {
+        var repositoryInfo: RepositoryInfo {
             switch self {
             case .wipCommit(let selectableWipCommit):
-                selectableWipCommit.repository
+                selectableWipCommit.repositoryInfo
+            }
+        }
+        
+        var repository: Repository {
+            repositoryInfo.repository
+        }
+
+        var wipWorktree: WipWorktree {
+            switch self {
+            case .wipCommit(let selectableWipCommit):
+                selectableWipCommit.repositoryInfo.wipWorktree
             }
         }
         var selectableItem: any SelectableItem {
@@ -58,22 +94,45 @@ struct SelectedItem: Equatable {
         case tag(SelectableTag)
         case stash(SelectableStash)
 
-        var repository: Repository {
+        var repositoryInfo: RepositoryInfo {
             switch self {
             case .status(let selectableStatus):
-                selectableStatus.repository
+                selectableStatus.repositoryInfo
             case .commit(let selectableCommit):
-                selectableCommit.repository
+                selectableCommit.repositoryInfo
             case .historyCommit(let selectableHistoryCommit):
-                selectableHistoryCommit.repository
+                selectableHistoryCommit.repositoryInfo
             case .detachedCommit(let selectableDetachedCommit):
-                selectableDetachedCommit.repository
+                selectableDetachedCommit.repositoryInfo
             case .detachedTag(let selectableDetachedTag):
-                selectableDetachedTag.repository
+                selectableDetachedTag.repositoryInfo
             case .tag(let selectableTag):
-                selectableTag.repository
+                selectableTag.repositoryInfo
             case .stash(let selectableStash):
-                selectableStash.repository
+                selectableStash.repositoryInfo
+            }
+        }
+
+        var repository: Repository {
+            repositoryInfo.repository
+        }
+
+        var wipWorktree: WipWorktree {
+            switch self {
+            case .status(let selectableStatus):
+                selectableStatus.repositoryInfo.wipWorktree
+            case .commit(let selectableCommit):
+                selectableCommit.repositoryInfo.wipWorktree
+            case .historyCommit(let selectableHistoryCommit):
+                selectableHistoryCommit.repositoryInfo.wipWorktree
+            case .detachedCommit(let selectableDetachedCommit):
+                selectableDetachedCommit.repositoryInfo.wipWorktree
+            case .detachedTag(let selectableDetachedTag):
+                selectableDetachedTag.repositoryInfo.wipWorktree
+            case .tag(let selectableTag):
+                selectableTag.repositoryInfo.wipWorktree
+            case .stash(let selectableStash):
+                selectableStash.repositoryInfo.wipWorktree
             }
         }
 

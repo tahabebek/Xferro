@@ -12,20 +12,12 @@ import Observation
     var unstagedDeltaInfos: [DeltaInfo] = []
     var untrackedDeltaInfos: [DeltaInfo] = []
     var selectableStatus: SelectableStatus
-    var statusEntries: [StatusEntry] = []
-    private let statusManager: StatusManager
     var repository: Repository {
         selectableStatus.repository
     }
 
-    init(
-        selectableStatus: SelectableStatus,
-        statusEntries: [StatusEntry],
-        statusManager: StatusManager = .shared
-    ) {
+    init(selectableStatus: SelectableStatus) {
         self.selectableStatus = selectableStatus
-        self.statusEntries = statusEntries
-        self.statusManager = statusManager
 
         var stagedDeltaInfos: [DeltaInfo] = []
         var unstagedDeltaInfos: [DeltaInfo] = []
@@ -57,7 +49,7 @@ import Observation
                 fatalError(.unimplemented)
             }
         }
-        for statusEntry in statusEntries {
+        for statusEntry in selectableStatus.statusEntries {
             var handled: Bool = false
             if let stagedDelta = statusEntry.stagedDelta {
                 handled = true

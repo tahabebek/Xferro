@@ -10,15 +10,27 @@ import Foundation
 protocol SelectableItem: Equatable, Identifiable {
     var id: String { get }
     var wipDescription: String { get }
-    var repository: Repository { get }
+    var repositoryInfo: RepositoryInfo { get }
     var oid: OID { get }
+    var repository: Repository { get }
+    var head: Head { get }
+}
+
+extension SelectableItem {
+    var repository: Repository {
+        repositoryInfo.repository
+    }
+
+    var head: Head {
+        repositoryInfo.head
+    }
 }
 
 struct SelectableStatus: SelectableItem, Identifiable {
     enum StatusType: Identifiable, Equatable {
-        case branch(Repository, Branch)
-        case tag(Repository, TagReference)
-        case detached(Repository, Commit)
+        case branch(RepositoryInfo, Branch)
+        case tag(RepositoryInfo, TagReference)
+        case detached(RepositoryInfo, Commit)
 
         var id: String {
             let repoDir = repository.gitDir.path
@@ -34,12 +46,12 @@ struct SelectableStatus: SelectableItem, Identifiable {
 
         var repository: Repository {
             switch self {
-            case .branch(let repository, _):
-                repository
-            case .tag(let repository, _):
-                repository
-            case .detached(let repository, _):
-                repository
+            case .branch(let repositoryInfo, _):
+                repositoryInfo.repository
+            case .tag(let repositoryInfo, _):
+                repositoryInfo.repository
+            case .detached(let repositoryInfo, _):
+                repositoryInfo.repository
             }
         }
 
@@ -47,18 +59,18 @@ struct SelectableStatus: SelectableItem, Identifiable {
             lhs.id == rhs.id
         }
 
-        static func of(_ repository: Repository, head: Head) -> StatusType {
-            switch head {
+        static func of(_ repositoryInfo: RepositoryInfo) -> StatusType {
+            switch repositoryInfo.head {
             case .branch(let branch):
-                return .branch(repository, branch)
+                return .branch(repositoryInfo, branch)
             case .tag(let tag):
-                return .tag(repository, tag)
+                return .tag(repositoryInfo, tag)
             case .reference(let reference):
-                if let tag = try? repository.tag(reference.oid).get() {
-                    return .tag(repository, TagReference.annotated(tag.name, tag))
+                if let tag = try? repositoryInfo.repository.tag(reference.oid).get() {
+                    return .tag(repositoryInfo, TagReference.annotated(tag.name, tag))
                 }
-                else if let commit = try? repository.commit(reference.oid).get() {
-                    return .detached(repository, commit)
+                else if let commit = try? repositoryInfo.repository.commit(reference.oid).get() {
+                    return .detached(repositoryInfo, commit)
                 } else {
                     fatalError(.impossible)
                 }
@@ -92,23 +104,27 @@ struct SelectableStatus: SelectableItem, Identifiable {
         }
     }
 
-    let repository: Repository
+    var statusEntries: [StatusEntry] {
+        repositoryInfo.status
+    }
+
+    let repositoryInfo: RepositoryInfo
     let type: StatusType
 
-    init(repository: Repository, head: Head) {
-        self.repository = repository
-        self.type = StatusType.of(repository, head: head)
+    init(repositoryInfo: RepositoryInfo) {
+        self.repositoryInfo = repositoryInfo
+        self.type = StatusType.of(repositoryInfo)
     }
 }
 
 struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
-    init(repository: Repository, branch: Branch, commit: Commit) {
-        self.repository = repository
+    init(repositoryInfo: RepositoryInfo, branch: Branch, commit: Commit) {
+        self.repositoryInfo = repositoryInfo
         self.branch = branch
         self.commit = commit
     }
     var id: String { repository.idOfRepo + branch.id + commit.id }
-    let repository: Repository
+    let repositoryInfo: RepositoryInfo
     let branch: Branch
     let commit: Commit
     var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
@@ -117,7 +133,8 @@ struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
 
 struct SelectableWipCommit: SelectableItem, Identifiable {
     var id: String { repository.gitDir.deletingLastPathComponent().deletingLastPathComponent().lastPathComponent + commit.id }
-    let repository: Repository
+    let repositoryInfo: RepositoryInfo
+    let branch: Branch
     let commit: Commit
     var wipDescription: String { fatalError(.unavailable) }
     var oid: OID { commit.oid }
@@ -125,7 +142,7 @@ struct SelectableWipCommit: SelectableItem, Identifiable {
 
 struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
     var id: String { repository.idOfRepo + commit.id }
-    let repository: Repository
+    let repositoryInfo: RepositoryInfo
     let commit: Commit
     var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { commit.oid }
@@ -133,7 +150,7 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
 
 struct SelectableDetachedTag: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + tag.id }
-    let repository: Repository
+    let repositoryInfo: RepositoryInfo
     let tag: TagReference
     var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { tag.oid }
@@ -141,7 +158,7 @@ struct SelectableDetachedTag: SelectableItem, Identifiable {
 
 struct SelectableHistoryCommit: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + branch.id + commit.id }
-    let repository: Repository
+    let repositoryInfo: RepositoryInfo
     let branch: Branch
     let commit: Commit
     var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
@@ -150,7 +167,7 @@ struct SelectableHistoryCommit: SelectableItem, Identifiable {
 
 struct SelectableTag: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + tag.id }
-    let repository: Repository
+    let repositoryInfo: RepositoryInfo
     let tag: TagReference
     var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { tag.oid }
@@ -158,7 +175,7 @@ struct SelectableTag: SelectableItem, Identifiable {
 
 struct SelectableStash: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + stash.id.formatted() }
-    let repository: Repository
+    let repositoryInfo: RepositoryInfo
     let stash: Stash
     var wipDescription: String { "'\(stash.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
     var oid: OID { stash.oid }

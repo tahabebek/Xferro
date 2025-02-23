@@ -44,7 +44,7 @@ extension Repository {
             }
         }
 
-        return .success(Diff(mergeDiff!))
+        return .success(Diff(mergeDiff!, workDir: workDir))
     }
 
     private func diff(from oldCommitOid: OID?, to newCommitOid: OID?, transform: (Result<OpaquePointer, NSError>) -> NSError?) -> NSError? {
@@ -158,7 +158,7 @@ extension Repository {
 
         lock.lock()
         defer { lock.unlock() }
-        let diffObj = Diff(diff!)
+        let diffObj = Diff(diff!, workDir: workDir)
         git_diff_free(diff)
         return .success(diffObj)
     }
@@ -172,7 +172,7 @@ extension Repository {
 
         for i in 0..<count {
             let delta = git_diff_get_delta(diffResult, i)
-            let gitDiffDelta = Diff.Delta((delta?.pointee)!)
+            let gitDiffDelta = Diff.Delta((delta?.pointee)!, workDir: workDir)
 
             returnDict.append(gitDiffDelta)
         }
