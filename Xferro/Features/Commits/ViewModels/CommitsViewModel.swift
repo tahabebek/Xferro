@@ -230,7 +230,7 @@ import OrderedCollections
         return false
     }
 
-    // MARK: Wip
+    // MARK: WIP
     private func updateWipCommits(selectedItem: SelectedItem?) {
          if let selectedItem {
             switch selectedItem.selectedItemType {
