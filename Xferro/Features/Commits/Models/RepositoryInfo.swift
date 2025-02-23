@@ -149,7 +149,7 @@ extension RepositoryInfo {
 // MARK: WorkDir Watcher
 extension RepositoryInfo {
     private func setupWorkDirWatcher() -> FileEventStream {
-        let untrackedFolders = StatusManager.shared.untrackedFiles(in: self.status)
+        let untrackedFolders = StatusManager.shared.untrackedPaths(in: self.status)
             .filter {
                 $0.isDirectory
             }
@@ -179,60 +179,82 @@ extension RepositoryInfo {
                     print("rescan workdir")
                     self.workDirWatcher = setupWorkDirWatcher()
                 }
-                let statusBefore: [StatusEntry] = status
-                let statusAfter: [StatusEntry] = StatusManager.shared.status(of: repository)
+                let status: [StatusEntry] = StatusManager.shared.status(of: repository)
                 var changes: Set<String> = []
                 for path in paths {
                     // print("---------")
                     if repository.ignores(absolutePath: path) {
-                        //                         print("ignored file changed", path.droppingPrefix(repository.workDir.path))
+                        #warning("check and implement the logic below if necessary")
+                        // does the worktree have this file?
+                            // yes
+                                // Write .gitignore to the worktree
+                                // ✅ delete from the worktree
+
                         continue
                     }
                     if URL(filePath: path).deletingLastPathComponent().path.hasSuffix("~") {
-                        //                        print("temporary file changed", path.droppingPrefix(repository.workDir.path))
-                        // temporary file
-                        continue
-                    }
-                    let statusBeforeContains = StatusManager.shared.trackedFiles(in: statusBefore).map(\.path).contains(path)
-                    let statusAfterContains = StatusManager.shared.trackedFiles(in: statusAfter).map(\.path).contains(path)
-
-                    if !statusBeforeContains && !statusAfterContains {
-                        //                         print("untracked file changed", path.droppingPrefix(repository.workDir.path))
                         continue
                     }
 
+
+                    let destinationPath = wipWorktree.worktreeRepository.workDir.appendingPathComponent(path.droppingPrefix(repository.workDir.path + "/")).path
+                    let destinationURL = URL(filePath: destinationPath)
                     let contents = try! String(contentsOfFile: path, encoding: .utf8)
-                    // does it exist in the original repo?
-                    let isDeleted = !FileManager.default.fileExists(atPath: path)
-                    let worktreePath = wipWorktree.worktreeRepository.workDir.appendingPathComponent(path.droppingPrefix(repository.workDir.path + "/")).path
-                    if isDeleted {
-                        print("file deleted", path.droppingPrefix(repository.workDir.path))
-                        try! FileManager.default.removeItem(atPath: worktreePath)
-                        changes.insert("Wip - \(path.droppingPrefix(repository.workDir.path + "/")) is deleted")
-                    } else {
-                        let destinationURL = URL(filePath: worktreePath)
-                        if destinationURL.isDirectory {
-                            try? FileManager.default.createDirectory(atPath: destinationURL.path, withIntermediateDirectories: true)
+
+                    // is this file in staged or unstaged?
+                    if StatusManager.shared.isStagedOrUnstaged(relativePath: path, statusEntries: status) {
+                        let isDeleted = !FileManager.default.fileExists(atPath: path)
+                        if isDeleted {
+                            print("file deleted", path.droppingPrefix(repository.workDir.path))
+                            try! FileManager.default.removeItem(atPath: destinationPath)
+                            changes.insert("Wip - \(path.droppingPrefix(repository.workDir.path + "/")) is deleted")
                         } else {
-                            let hash = contents.hash
-                            if fileHashes[path] == nil {
-                                fileHashes[path] = hash
-                                //                                 print("file read for the first time", path.droppingPrefix(repository.workDir.path))
-                            } else if fileHashes[path] != hash {
-                                //                                 print("file changed", path.droppingPrefix(repository.workDir.path))
-                                fileHashes[path] = hash
+                            if destinationURL.isDirectory {
+                                try? FileManager.default.createDirectory(atPath: destinationURL.path, withIntermediateDirectories: true)
                             } else {
-                                //                                 print("file did NOT change", path.droppingPrefix(repository.workDir.path))
+                                let hash = contents.hash
+                                if fileHashes[path] == nil {
+                                    fileHashes[path] = hash
+                                } else if fileHashes[path] != hash {
+                                    fileHashes[path] = hash
+                                } else {
+                                    continue
+                                }
+                                print("file added or modified", path.droppingPrefix(repository.workDir.path + "/"))
+                                try? FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
+                                FileManager.default.createFile(atPath: destinationPath, contents: contents.data(using: .utf8))
+                                changes.insert("Wip - \(path.droppingPrefix(repository.workDir.path + "/")) is modified")
+                            }
+                        }
+                    } else {
+                        // is it in untracked?
+                        if StatusManager.shared.isUntracked(relativePath: path, statusEntries: status) {
+                            // does the worktree have it?
+                            if FileManager.default.fileExists(atPath: destinationPath) {
+                                try! FileManager.default.removeItem(atPath: destinationPath)
+                                print("untracked file deleted from worktree", destinationPath)
+                                changes.insert("Wip - \(path.droppingPrefix(repository.workDir.path + "/")) is removed")
+                            } else {
                                 continue
                             }
-                            print("file added or modified", path.droppingPrefix(repository.workDir.path + "/"))
-                            try? FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
-                            FileManager.default.createFile(atPath: worktreePath, contents: contents.data(using: .utf8))
-                            changes.insert("Wip - \(path.droppingPrefix(repository.workDir.path + "/")) is modified")
+                        } else {
+                            // does the original repo have it?
+                            if FileManager.default.fileExists(atPath: path) {
+                                try? FileManager.default.createDirectory(atPath: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
+                                FileManager.default.createFile(atPath: destinationPath, contents: contents.data(using: .utf8))
+                                changes.insert("Wip - \(path.droppingPrefix(repository.workDir.path + "/")) is modified")
+                                print("file (which is not in the index) added or modified", path.droppingPrefix(repository.workDir.path + "/"))
+                            } else {
+                                if FileManager.default.fileExists(atPath: destinationPath) {
+                                    try! FileManager.default.removeItem(atPath: destinationPath)
+                                    changes.insert("Wip - \(path.droppingPrefix(repository.workDir.path + "/")) is removed")
+                                    print("untracked file deleted from worktree", destinationPath)
+                                }
+                            }
                         }
                     }
                 }
-                status = statusAfter
+                self.status = status
                 if changes.isNotEmpty {
                     self.onWorkDirChange(self, changes.count == 1 ? changes.first! : "Wip - \(changes.count) files are changed")
                 }

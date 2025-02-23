@@ -30,19 +30,52 @@ final class StatusManager {
     func isUntracked(relativePath: String, statusEntries: [StatusEntry]) -> Bool {
         lock.lock()
         defer { lock.unlock() }
+        var maybePartiallyUntracked = false
         for statusEntry in statusEntries {
-            if let delta = statusEntry.unstagedDelta {
-                if case .untracked = delta.status,
-                   let filePath = delta.newFile?.path,
-                   relativePath == filePath {
-                    return true
+            for delta in statusEntry.deltas {
+                switch delta.status {
+                case .untracked:
+                    if let filePath = delta.newFilePath, relativePath == filePath {
+                        maybePartiallyUntracked = true
+                    }
+                    if let filePath = delta.oldFilePath, relativePath == filePath {
+                        maybePartiallyUntracked = true
+                    }
+                default:
+                    if let filePath = delta.newFilePath, relativePath == filePath {
+                        return false
+                    }
+                    if let filePath = delta.oldFilePath, relativePath == filePath {
+                        return false
+                    }
+                }
+            }
+        }
+        return maybePartiallyUntracked
+    }
+
+    func isStagedOrUnstaged(relativePath: String, statusEntries: [StatusEntry]) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        for statusEntry in statusEntries {
+            for delta in statusEntry.deltas {
+                switch delta.status {
+                case .untracked:
+                    break
+                default:
+                    if let filePath = delta.newFilePath, relativePath == filePath {
+                        return true
+                    }
+                    if let filePath = delta.oldFilePath, relativePath == filePath {
+                        return true
+                    }
                 }
             }
         }
         return false
     }
 
-    func untrackedFiles(in status: [StatusEntry]) -> Set<URL> {
+    func untrackedPaths(in status: [StatusEntry]) -> Set<URL> {
         var fileURLs = Set<URL>()
         status
             .forEach {

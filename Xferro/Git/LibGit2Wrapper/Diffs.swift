@@ -13,6 +13,13 @@ struct StatusEntry: CustomDebugStringConvertible, Equatable {
     var stagedDelta: Diff.Delta?
     var unstagedDelta: Diff.Delta?
 
+    var deltas: [Diff.Delta] {
+        var deltas: [Diff.Delta] = []
+        if let stagedDelta = stagedDelta { deltas.append(stagedDelta) }
+        if let unstagedDelta = unstagedDelta { deltas.append(unstagedDelta) }
+        return deltas
+    }
+
     init(from statusEntry: git_status_entry, workDir: URL) {
         self.status = Diff.Status(rawValue: statusEntry.status.rawValue)
 
