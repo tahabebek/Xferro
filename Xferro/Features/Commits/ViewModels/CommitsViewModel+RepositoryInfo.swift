@@ -19,19 +19,19 @@ extension CommitsViewModel {
                     guard let self else { return }
                     switch type {
                     case .head(let repositoryInfo):
+                        repositoryInfo.detachedCommit = self.detachedCommit(of: repositoryInfo)
+                        repositoryInfo.detachedTag = self.detachedTag(of: repositoryInfo)
+                        repositoryInfo.historyCommits = self.historyCommits(of: repositoryInfo)
                         if let currentSelectedItem {
                             if case .regular(let item) = currentSelectedItem.selectedItemType {
                                 if case .status(let selectableStatus) = item {
                                     if selectableStatus.repository.gitDir.path == repositoryInfo.repository.gitDir.path {
-                                        let selectedItem = SelectedItem(selectedItemType: .regular(.status(selectableStatus)))
+                                        let selectedItem = SelectedItem(selectedItemType: .regular(.status(SelectableStatus(repositoryInfo: repositoryInfo))))
                                         self.setCurrentSelectedItem(selectedItem)
                                     }
                                 }
                             }
                         }
-                        repositoryInfo.detachedCommit = self.detachedCommit(of: repositoryInfo)
-                        repositoryInfo.detachedTag = self.detachedTag(of: repositoryInfo)
-                        repositoryInfo.historyCommits = self.historyCommits(of: repositoryInfo)
                     case .index:
                         self.updateDetailInfoAndPeekInfo()
                     case .localBranches(let repositoryInfo):
