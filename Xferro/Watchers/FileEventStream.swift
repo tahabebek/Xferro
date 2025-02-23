@@ -97,7 +97,6 @@ public class FileEventStream
         changePublisher.send(Set(paths))
     }
 
-
     deinit
     {
         print("Deinit FileEventStream")

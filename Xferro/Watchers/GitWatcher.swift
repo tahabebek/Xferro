@@ -9,6 +9,7 @@ import Combine
 import Foundation
 
 final class GitWatcher {
+    static let gitDebounce = 2
     let repository: Repository
 
     var stream: FileEventStream! = nil
@@ -69,8 +70,10 @@ final class GitWatcher {
 
         let changeSubject = PassthroughSubject<Set<String>, Never>()
         self.changeObserver = changeSubject
-            .sink { [weak self] changedPaths in
+            .collect(.byTime(RunLoop.main, .seconds(Self.gitDebounce)))
+            .sink { [weak self] batchPaths in
                 guard let self else { return }
+                let changedPaths = Set(batchPaths.flatMap { $0 })
                 self.observeEvents(changedPaths)
             }
 
