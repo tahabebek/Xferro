@@ -10,7 +10,7 @@ import Foundation
 final class WipWorktree {
     static let wipBranchesPrefix = "com.xferro_wip_commits_"
     static let wipWorktreeFolder = "wip_worktrees"
-    static let wipCommitMessage = "Wip commit"
+    static let wipCommitMessage = "Xferro wip commit"
     let worktreeRepository: Repository
     let originalRepository: Repository
 
@@ -19,7 +19,7 @@ final class WipWorktree {
     }
 
     static func get(for originalRepository: Repository) -> WipWorktree? {
-        guard let worktreeRepository = originalRepository.worktree(named: worktreeName(for: originalRepository)).mustSucceed()
+        guard let worktreeRepository = try? originalRepository.worktree(named: worktreeName(for: originalRepository)).get()
         else { return nil }
         return WipWorktree(worktreeRepository: worktreeRepository, originalRepository: originalRepository)
     }
@@ -66,7 +66,9 @@ final class WipWorktree {
     static func worktreeRepositoryURL(originalRepository: Repository)  -> URL {
         let originalRepositoryPath =  originalRepository.gitDir.deletingLastPathComponent().path()
 
-        let worktreeRepositoryURL = DataManager.appDir.appendingPathComponent(Self.wipWorktreeFolder).appendingPathComponent(String(originalRepositoryPath.dropFirst()))
+        let worktreeRepositoryURL = DataManager.appDir.appendingPathComponent(Self.wipWorktreeFolder)
+            .appendingPathComponent(String(originalRepositoryPath.dropFirst()))
+            .appendingPathComponent("WipWorktree")
         try? FileManager.default.createDirectory(
             at: worktreeRepositoryURL.deletingLastPathComponent(),
             withIntermediateDirectories: true,

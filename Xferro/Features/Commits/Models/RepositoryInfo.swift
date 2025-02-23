@@ -16,7 +16,6 @@ import Observation
     var localBranchInfos: [BranchInfo] = []
     var remoteBranchInfos: [BranchInfo] = []
     var wipBranchInfos: [WipBranchInfo] = []
-    var wipWorktree: WipWorktree
     var tags: [TagInfo] = []
     var stashes: [SelectableStash] = []
     var detachedTag: TagInfo? = nil
@@ -39,6 +38,10 @@ import Observation
     let onGitChange: (ChangeType) -> Void
     let onWorkDirChange: (RepositoryInfo, String?) -> Void
 
+    var wipWorktree: WipWorktree {
+        WipWorktree.worktree(for: repository, headOID: head.oid)
+    }
+
     init(
         repository: Repository,
         onGitChange: @escaping (ChangeType) -> Void,
@@ -46,7 +49,6 @@ import Observation
     ) {
         self.repository = repository
         let head = Head.of(repository)
-        self.wipWorktree = WipWorktree.worktree(for: repository, headOID: head.oid)
         self.head = head
         self.onGitChange = onGitChange
         self.onWorkDirChange = onWorkDirChange
@@ -82,7 +84,6 @@ extension RepositoryInfo {
         self.headChangeObserver = headChangeSubject
             .sink { [weak self] in
                 guard let self else { return }
-                print("head changed for repository \(repository.nameOfRepo)")
                 self.head = Head.of(repository)
                 self.onGitChange(.head(self))
             }
