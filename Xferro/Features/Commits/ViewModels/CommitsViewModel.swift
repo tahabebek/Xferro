@@ -637,16 +637,28 @@ import OrderedCollections
     }
 
     func amendTapped(repository: Repository, message: String?) {
+        guard let currentSelectedItem else {
+            fatalError(.illegal)
+        }
+        let currentWipBranchName = WipWorktree.worktreeBranchName(for: currentSelectedItem)
+
+        let headCommit: Commit = repository.commit().mustSucceed()
         var newMessage = message
         if newMessage == nil || (newMessage ?? "").isEmptyOrWhitespace {
-            let headCommit: Commit = repository.commit().mustSucceed()
             newMessage = headCommit.summary
         }
 
         guard let newMessage, !newMessage.isEmptyOrWhitespace else {
             fatalError(.unsupported)
         }
-        repository.amend(message: newMessage).mustSucceed()
+        let currentOid = headCommit.oid
+        let oid = repository.amend(message: newMessage).mustSucceed()
+        guard let branchNameWithoutCommitSuffix = currentWipBranchName.split(separator: "_commit_").last else {
+            fatalError(.invalid)
+        }
+        let newBranchName = "\(branchNameWithoutCommitSuffix)_\(oid)"
+        #warning("instead of relying on the commit oid to stop on wip branches, keep a notes doc which is gitignored in excludes file, and write the commit oid there")
+        repository.createBranch(newBranchName, baseBranchName: currentWipBranchName)
     }
 
     func ignoreButtonTapped(repository: Repository, deltaInfo: DeltaInfo) {

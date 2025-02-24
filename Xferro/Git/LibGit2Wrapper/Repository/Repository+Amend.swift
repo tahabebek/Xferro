@@ -9,7 +9,7 @@ import Foundation
 
 extension Repository {
     @discardableResult
-    func amend(message: String) -> Result<git_oid, NSError> {
+    func amend(message: String) -> Result<Commit, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let headCommit = commit().mustSucceed()
@@ -61,6 +61,6 @@ extension Repository {
         guard result == GIT_OK.rawValue else {
             return .failure(NSError(gitError: result, pointOfFailure: "git_commit_create"))
         }
-        return .success(commitOID)
+        return self.commit(OID(commitOID))
     }
 }
