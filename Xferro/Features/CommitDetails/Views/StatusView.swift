@@ -40,14 +40,21 @@ struct StatusView: View {
     @State var verticalAlignment: VerticalAlignment = .top
     @State var boxActions: [Action] = BoxActions.allCases.map(\.rawValue).map(Action.init)
     @State private var actionBoxHeight: CGFloat = 0
+    @State private var messageBoxHeight: CGFloat = 0
 
+    static let actionBoxBottomPadding: CGFloat = 4
+    static let actionBoxVerticalInnerPadding: CGFloat = 16
+
+    static var totalVerticalPadding: CGFloat {
+        Self.actionBoxBottomPadding * 2 + Self.actionBoxVerticalInnerPadding * 2
+    }
     var body: some View {
         VSplitView {
             actionBox
-                .padding(.bottom, 4)
+                .frame(height : actionBoxHeight + messageBoxHeight + Self.totalVerticalPadding)
+                .padding(.bottom, Self.actionBoxBottomPadding)
             changeBox
-                .layoutPriority(1)
-                .padding(.top, 4)
+                .padding(.top, Self.actionBoxBottomPadding)
         }
         .onAppear {
             setInitialSelection()
@@ -162,27 +169,37 @@ struct StatusView: View {
             Color(hex: 0x15151A)
                 .cornerRadius(8)
             VStack(alignment: .leading) {
-                HStack {
-                    Form {
-                        TextField(
-                            "Message",
-                            text: Binding(
-                                get: { commitSummary[statusViewModel.selectableStatus.oid] ?? "" },
-                                set: { commitSummary[statusViewModel.selectableStatus.oid] = $0 }
-                            ),
-                            prompt: Text("Message for commit, amend or stash"),
-                            axis: .vertical
-                        )
-                        .textFieldStyle(.roundedBorder)
-                        .focused($isTextFieldFocused)
-                        .padding(.bottom, 8)
-                    }
-                }
+                messageBoxView
                 flowActionsView
                     .frame(height: actionBoxHeight)
             }
-            .padding()
+            .padding(Self.actionBoxVerticalInnerPadding)
         }
+    }
+
+    private var messageBoxView: some View {
+        HStack {
+            Form {
+                TextField(
+                    "Message",
+                    text: Binding(
+                        get: { commitSummary[statusViewModel.selectableStatus.oid] ?? "" },
+                        set: { commitSummary[statusViewModel.selectableStatus.oid] = $0 }
+                    ),
+                    prompt: Text("Message for commit, amend or stash"),
+                    axis: .vertical
+                )
+                .textFieldStyle(.roundedBorder)
+                .focused($isTextFieldFocused)
+                .padding(.bottom, 8)
+            }
+        }
+        .background(GeometryReader { geometry in
+            Color.clear
+                .onChange(of: geometry.size) { _, newValue in
+                    self.messageBoxHeight = newValue.height
+                }
+        })
     }
 
     private var flowActionsView: some View {
@@ -416,12 +433,5 @@ struct StatusView: View {
                 .foregroundStyle(currentSelectedItem[statusViewModel.selectableStatus.oid] == deltaInfo ? Color.accentColor : Color.fabulaFore1)
             Spacer()
         }
-    }
-}
-
-struct ActionBoxPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0.0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
     }
 }
