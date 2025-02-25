@@ -85,11 +85,11 @@ struct SelectableStatus: SelectableItem, Identifiable {
     var wipDescription: String {
         switch type {
         case .branch(_, let branch):
-            return "Branch \(branch.name) of \(repository.nameOfRepo)"
+            "Branch \(branch.name) of \(repository.nameOfRepo)"
         case .tag(_, let tag):
-            return "Tag \(tag.name) of \(repository.nameOfRepo)"
+            "Tag \(tag.name) of \(repository.nameOfRepo)"
         case .detached(_, let commit):
-            return "Detached commit \(commit.oid.debugOID.prefix(4)) of \(repository.nameOfRepo)"
+            "Detached commit \(commit.oid.debugOID.prefix(4)) of \(repository.nameOfRepo)"
         }
     }
 

@@ -35,7 +35,7 @@ struct WipCommitsView: View {
                         .animation(.snappy, value: currentWipCommits.commits)
                     } else {
                         HStack {
-                            Text("No wip commits.")
+                            Text("No history.")
                             Spacer()
                         }
                     }

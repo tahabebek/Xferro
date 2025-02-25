@@ -28,9 +28,9 @@ import OrderedCollections
     func setCurrentSelectedItem(_ selectedItem: SelectedItem?) {
         user.lastSelectedRepositoryPath = selectedItem?.repository.gitDir.path
         if let selectedItem {
-            updateWipCommits(selectedItem: selectedItem)
+            getWipCommits(selectedItem: selectedItem)
         } else {
-            updateWipCommits(selectedItem: nil)
+            getWipCommits(selectedItem: nil)
         }
         currentSelectedItem = selectedItem
         updateDetailInfoAndPeekInfo()

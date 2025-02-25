@@ -8,7 +8,7 @@
 import Foundation
 
 extension CommitsViewModel {
-    func updateWipCommits(selectedItem: SelectedItem?) {
+    func getWipCommits(selectedItem: SelectedItem?) {
         guard let selectedItem else {
             Task {
                 await MainActor.run {
@@ -34,7 +34,6 @@ extension CommitsViewModel {
         guard let branchName else { return }
         if selectedItem.wipWorktree.getBranch(branchName: branchName) == nil {
             selectedItem.wipWorktree.createBranch(branchName: branchName, oid: selectedItem.oid)
-            selectedItem.wipWorktree.checkout(branchName: branchName)
         }
         let wipCommits =  selectedItem.wipWorktree.wipCommits(
             repositoryInfo: selectedItem.repositoryInfo,
@@ -84,8 +83,8 @@ extension CommitsViewModel {
         let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
         if worktree.getBranch(branchName: branchName) == nil {
             worktree.createBranch(branchName: branchName, oid: selectableItem.oid)
-            worktree.checkout(branchName: branchName)
         }
+        worktree.checkout(branchName: branchName)
         worktree.addToWorktreeIndex(path: ".")
         worktree.commit(summary: summary)
         self.reloadUIAfterAddingWipCommits(repositoryInfo: repositoryInfo)
@@ -133,7 +132,7 @@ extension CommitsViewModel {
                 Task {
                     await MainActor.run {
                         updateDetailInfoAndPeekInfo()
-                        updateWipCommits(selectedItem: currentSelectedItem)
+                        getWipCommits(selectedItem: currentSelectedItem)
                     }
                 }
             }
