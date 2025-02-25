@@ -23,7 +23,7 @@ struct WipCommitsView: View {
                 VStack(spacing: 8) {
                     if let currentWipCommits = viewModel.currentWipCommits {
                         HStack {
-                            Text("Wip commits of \(currentWipCommits.item.selectableItem.wipDescription)")
+                            Text(currentWipCommits.item.selectableItem.wipDescription)
                                 .lineLimit(2)
                             Spacer()
                         }
@@ -40,7 +40,8 @@ struct WipCommitsView: View {
                         }
                     }
                 }
-                .padding()
+                .padding(.horizontal)
+                .padding(.vertical, 8)
             }
             .background(
                 Color(hex: 0x15151A)

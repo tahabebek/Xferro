@@ -206,7 +206,7 @@ final class WipWorktree {
         worktreeRepository.commit(message: summary ?? Self.wipCommitMessage).mustSucceed()
     }
 
-    func wipCommits(repositoryInfo: RepositoryInfo, branchName: String, stop: OID) -> [SelectableWipCommit] {
+    func wipCommits(repositoryInfo: RepositoryInfo, branchName: String) -> [SelectableWipCommit] {
         guard let branch =  getBranch(branchName: branchName) else {
             fatalError("branch \(branchName) not found")
         }
@@ -216,9 +216,6 @@ final class WipWorktree {
         let commitIterator = CommitIterator(repo: worktreeRepository, root: branch.oid.oid)
         while let commit = try? commitIterator.next()?.get() {
             commits.append(SelectableWipCommit(repositoryInfo: repositoryInfo, branch: branch, commit: commit))
-            if commit.oid == stop {
-                break
-            }
         }
         return commits
     }

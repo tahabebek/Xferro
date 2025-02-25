@@ -38,8 +38,7 @@ extension CommitsViewModel {
         }
         let wipCommits =  selectedItem.wipWorktree.wipCommits(
             repositoryInfo: selectedItem.repositoryInfo,
-            branchName: branchName,
-            stop: selectedItem.oid
+            branchName: branchName
         )
         Task {
             await MainActor.run {

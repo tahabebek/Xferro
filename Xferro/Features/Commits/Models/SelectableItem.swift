@@ -85,11 +85,11 @@ struct SelectableStatus: SelectableItem, Identifiable {
     var wipDescription: String {
         switch type {
         case .branch(_, let branch):
-            return "'\(branch.name)' in '\(repository.nameOfRepo)'"
+            return "Branch \(branch.name) of \(repository.nameOfRepo)"
         case .tag(_, let tag):
-            return "'\(tag.name)' in '\(repository.nameOfRepo)'"
+            return "Tag \(tag.name) of \(repository.nameOfRepo)"
         case .detached(_, let commit):
-            return "'\(commit.oid.debugOID.prefix(4))' in '\(repository.nameOfRepo)'"
+            return "Detached commit \(commit.oid.debugOID.prefix(4)) of \(repository.nameOfRepo)"
         }
     }
 
@@ -127,7 +127,7 @@ struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
     let repositoryInfo: RepositoryInfo
     let branch: Branch
     let commit: Commit
-    var wipDescription: String { "'\(branch.name)' in '\(repository.nameOfRepo)'" }
+    var wipDescription: String { "Branch \(branch.name) of \(repository.nameOfRepo)" }
     var oid: OID { commit.oid }
 }
 
@@ -147,8 +147,8 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
 
         var name: String {
             switch self {
-            case .tag(let tag): return tag.name
-            case .commit(let commit): return commit.oid.debugOID
+            case .tag(let tag): return "Tag \(tag.name)"
+            case .commit(let commit): return "Detached commit \(commit.oid.debugOID)"
             }
         }
 
@@ -163,7 +163,7 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
     let repositoryInfo: RepositoryInfo
     let commit: Commit
     let owner: Owner
-    var wipDescription: String { "'\(owner.name)' in '\(repository.nameOfRepo)'" }
+    var wipDescription: String { "\(owner.name) of \(repository.nameOfRepo)" }
     var oid: OID { commit.oid }
 
     init(repositoryInfo: RepositoryInfo, commit: Commit, owner: Owner) {
@@ -177,7 +177,7 @@ struct SelectableDetachedTag: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + tag.id }
     let repositoryInfo: RepositoryInfo
     let tag: TagReference
-    var wipDescription: String { "'\(tag.name)' in '\(repository.nameOfRepo)'" }
+    var wipDescription: String { "Tag \(tag.name) of \(repository.nameOfRepo)" }
     var oid: OID { tag.oid }
 }
 

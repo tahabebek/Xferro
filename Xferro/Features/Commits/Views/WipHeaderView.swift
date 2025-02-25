@@ -11,7 +11,7 @@ struct WipHeaderView: View {
     @Environment(CommitsViewModel.self) var viewModel
 
     var body: some View {
-        VerticalHeader(title: viewModel.autoCommitEnabled ? "AutoWip Commits" :"Wip Commits") {
+        VerticalHeader(title: "History (Includes Wip)") {
             Toggle("Auto", isOn: Binding<Bool>(
                 get: { viewModel.autoCommitEnabled },
                 set: { viewModel.autoCommitEnabled = $0 }
