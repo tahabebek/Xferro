@@ -8,60 +8,92 @@
 import Foundation
 
 enum Head: Codable, Equatable {
-    case branch(Branch)
-    case tag(TagReference)
-    case reference(Reference)
+    case branch(Branch, Commit)
+    case tag(TagReference, Commit)
+    case reference(Reference, Commit)
 
     var oid: OID {
         switch self {
-        case .branch(let branch):
+        case .branch(let branch, _):
             branch.oid
-        case .tag(let tagReference):
+        case .tag(let tagReference, _):
             tagReference.oid
-        case .reference(let reference):
+        case .reference(let reference, _):
             reference.oid
+        }
+    }
+
+    var name: String {
+        switch self {
+            case .branch(let branch, _):
+            branch.name
+        case .tag(let tagReference, _):
+            tagReference.name
+        case .reference(let reference, _):
+            reference.shortName!
         }
     }
 
     var reference: ReferenceType {
         switch self {
-        case .branch(let branch):
+        case .branch(let branch, _):
             branch
-        case .tag(let tagReference):
+        case .tag(let tagReference, _):
             tagReference
-        case .reference(let reference):
+        case .reference(let reference, _):
             reference
         }
+    }
+
+    var commit: Commit {
+        switch self {
+            case .branch(_, let commit):
+            commit
+        case .tag(_, let commit):
+            commit
+        case .reference(_, let commit):
+            commit
+        }
+    }
+
+    var time: Date {
+        commit.author.time
     }
 
     static func of(_ repository: Repository) -> Head {
         guard let headRef = try? repository.HEAD().get() else {
             repository.createEmptyCommit()
             let newHeadRef = repository.HEAD().mustSucceed()
-            return getHeadWithReference(newHeadRef)
+            return getHeadWithReference(repository, newHeadRef)
         }
-        return getHeadWithReference(headRef)
+        return getHeadWithReference(repository, headRef)
     }
 
     static func of(worktree: String, in repository: Repository) -> Head {
-        getHeadWithReference(repository.HEAD(for: worktree).mustSucceed())
+        getHeadWithReference(repository, repository.HEAD(for: worktree).mustSucceed())
     }
 
     static func setHead(repository: Repository, oid: OID) -> Result<Void, NSError> {
         repository.setHEAD(oid)
     }
 
-    static func checkout(repository: Repository, longName: String, _ options: CheckoutOptions? = nil) -> Result<Void, NSError> {
+    static func checkout(
+        repository: Repository,
+        longName: String,
+        _ options: CheckoutOptions? = nil
+    ) -> Result<Void, NSError> {
         repository.setHEAD(longName).flatMap { repository.checkout(options) }
     }
 
-    private static func getHeadWithReference(_ headRef: ReferenceType) -> Head {
-        if let branchRef = headRef as? Branch {
-            .branch(branchRef)
+    private static func getHeadWithReference(_ repository: Repository, _ headRef: ReferenceType) -> Head {
+        let headCommit = repository.commit(headRef.oid).mustSucceed()
+
+        return if let branchRef = headRef as? Branch {
+            .branch(branchRef, headCommit)
         } else if let tagRef = headRef as? TagReference {
-            .tag(tagRef)
+            .tag(tagRef, headCommit)
         } else if let reference = headRef as? Reference {
-            .reference(reference)
+            .reference(reference, headCommit)
         } else {
             fatalError(.impossible)
         }

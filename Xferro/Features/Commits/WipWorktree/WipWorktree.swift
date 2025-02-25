@@ -13,15 +13,21 @@ final class WipWorktree {
     static let wipCommitMessage = "Xferro wip commit"
     let worktreeRepository: Repository
     let originalRepository: Repository
+    let name: String
 
     static func worktreeName(for originalRepository: Repository) -> String {
         Self.worktreeRepositoryURL(originalRepository: originalRepository).path.replacingOccurrences(of: "file://", with: "").replacingOccurrences(of: "/", with: "_")
     }
 
     static func get(for originalRepository: Repository) -> WipWorktree? {
-        guard let worktreeRepository = try? originalRepository.worktree(named: worktreeName(for: originalRepository)).get()
+        let name = worktreeName(for: originalRepository)
+        guard let worktreeRepository = try? originalRepository.worktree(named: name).get()
         else { return nil }
-        return WipWorktree(worktreeRepository: worktreeRepository, originalRepository: originalRepository)
+        return WipWorktree(
+            worktreeRepository: worktreeRepository,
+            originalRepository: originalRepository,
+            name: name
+        )
     }
 
     static func worktree(for repositoryInfo: RepositoryInfo) -> WipWorktree {
@@ -56,13 +62,22 @@ final class WipWorktree {
                 ).mustSucceed()
             let worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
             Head.checkout(repository: worktreeRepository, longName: newBranch.longName).mustSucceed()
-            return WipWorktree(worktreeRepository: worktreeRepository, originalRepository: repository)
+            return WipWorktree(
+                worktreeRepository: worktreeRepository,
+                originalRepository: repository,
+                name: worktreeName
+            )
         }
     }
 
-    private init(worktreeRepository: Repository, originalRepository: Repository) {
+    private init(
+        worktreeRepository: Repository,
+        originalRepository: Repository,
+        name: String
+    ) {
         self.worktreeRepository = worktreeRepository
         self.originalRepository = originalRepository
+        self.name = name
     }
 
     static func worktreeRepositoryURL(originalRepository: Repository)  -> URL {
@@ -87,8 +102,8 @@ final class WipWorktree {
                 "\(Self.wipBranchesPrefix)for_branch_\(branch.wipName)"
             case .tag(_, let tag):
                 "\(Self.wipBranchesPrefix)for_tag_\(tag.wipName)"
-            default:
-                fatalError(.unimplemented)
+            case .detached(_, let commit):
+                "\(Self.wipBranchesPrefix)for_detached_commit_\(commit.oid.description)"
             }
         case let commit as SelectableCommit:
             "\(Self.wipBranchesPrefix)for_branch_\(commit.branch.wipName)"
@@ -170,7 +185,7 @@ final class WipWorktree {
         var currentBranchName: String
 
         switch head {
-        case .branch(let branch):
+        case .branch(let branch, _):
             currentBranchName = branch.name
         case .tag:
             fatalError("Head should never be a tag for a worktree")
@@ -195,6 +210,11 @@ final class WipWorktree {
 
     func checkout(branchName: String) {
         Head.checkout(repository: worktreeRepository, longName: branchName.longBranchRef,.init(strategy: .Force)).mustSucceed()
+    }
+
+    @discardableResult
+    func merge(with oid: OID, message: String) -> GitMergeAnalysisStatus {
+        worktreeRepository.merge(with: oid, message: message, conflictStrategy: MergeConflictStrategy.acceptTheirs).mustSucceed()
     }
 
     func addToWorktreeIndex(path: String) {

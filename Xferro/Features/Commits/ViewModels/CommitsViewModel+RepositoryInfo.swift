@@ -176,11 +176,11 @@ extension CommitsViewModel {
         switch repositoryInfo.head {
         case .branch:
             return nil
-        case .tag(let tagReference):
+        case .tag(let tagReference, _):
             let detachedTag = SelectableDetachedTag(repositoryInfo: repositoryInfo, tag: tagReference)
             let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tagReference), in: repositoryInfo)
             return RepositoryInfo.TagInfo(tag: detachedTag, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
-        case .reference(let reference):
+        case .reference(let reference, _):
             if let tag = try? repositoryInfo.repository.tag(reference.oid).get() {
                 let tagReference = TagReference.annotated(tag.name, tag)
                 let detachedTag = SelectableDetachedTag(repositoryInfo: repositoryInfo, tag: tagReference)
@@ -195,7 +195,7 @@ extension CommitsViewModel {
         switch repositoryInfo.head {
         case .branch, .tag:
             return nil
-        case .reference(let reference):
+        case .reference(let reference, _):
             if let commit = try? repositoryInfo.repository.commit(reference.oid).get() {
                 let owner = SelectableDetachedCommit.Owner.commit(commit)
                 let detachedCommit = SelectableDetachedCommit(repositoryInfo: repositoryInfo, commit: commit, owner: owner)

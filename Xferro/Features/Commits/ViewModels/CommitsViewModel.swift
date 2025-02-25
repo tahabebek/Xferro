@@ -221,7 +221,7 @@ import OrderedCollections
 
     func isCurrentBranch(_ branch: Branch, head: Head) -> Bool {
         switch head {
-        case .branch(let headBranch):
+        case .branch(let headBranch, _):
             if branch == headBranch {
                 return true
             }

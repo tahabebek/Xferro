@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct GitMergeAnalysisStatus: OptionSet {
+struct GitMergeAnalysisStatus: OptionSet, CustomDebugStringConvertible {
     let rawValue: UInt32
 
     /**
@@ -38,6 +38,33 @@ struct GitMergeAnalysisStatus: OptionSet {
         self.rawValue = rawValue
     }
 
+    var debugDescription: String {
+        var components: [String] = []
+
+        if self.contains(.normal) {
+            components.append("normal")
+        }
+        if self.contains(.upToDate) {
+            components.append("upToDate")
+        }
+        if self.contains(.fastForward) {
+            components.append("fastForward")
+        }
+        if self.contains(.unborn) {
+            components.append("unborn")
+        }
+
+        if components.isEmpty {
+            return "GitMergeAnalysisStatus(none)"
+        } else {
+            return "GitMergeAnalysisStatus(\(components.joined(separator: ", ")))"
+        }
+    }
+}
+
+enum MergeConflictStrategy {
+    case failOnConflict
+    case acceptTheirs
 }
 
 extension Repository {
@@ -145,11 +172,15 @@ extension Repository {
         return block(index!)
     }
 
-    func merge(with oid: OID, message: String) -> Result<GitMergeAnalysisStatus, NSError> {
+    func merge(
+        with oid: OID,
+        message: String,
+        conflictStrategy: MergeConflictStrategy = .failOnConflict
+    ) -> Result<GitMergeAnalysisStatus, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let head = Head.of(self)
-        guard case .branch(let targetBranch) = head else {
+        guard case .branch(let targetBranch, _) = head else {
             return .failure(NSError(gitError: GIT_ERROR.rawValue, pointOfFailure: "Current Head is not a branch."))
         }
 
@@ -207,8 +238,75 @@ extension Repository {
                 return merge(with: oid) { index in
                     if git_index_has_conflicts(index) != 0 {
                         // Has Conflicts
-                        git_error_set_str(Int32(GIT_ERROR_MERGE.rawValue), "There are some conflicts.")
-                        return .failure(NSError(gitError: GIT_EMERGECONFLICT.rawValue, pointOfFailure: "git_merge_trees"))
+                        if conflictStrategy == .acceptTheirs {
+                            // Resolve conflicts by accepting "theirs"
+                            var conflictIterator: OpaquePointer? = nil
+                            defer { git_index_conflict_iterator_free(conflictIterator) }
+
+                            result = git_index_conflict_iterator_new(&conflictIterator, index)
+                            guard result == GIT_OK.rawValue else {
+                                return .failure(NSError(gitError: result, pointOfFailure: "git_index_conflict_iterator_new"))
+                            }
+
+                            while true {
+                                var ancestor: UnsafePointer<git_index_entry>? = nil
+                                var ours: UnsafePointer<git_index_entry>? = nil
+                                var theirs: UnsafePointer<git_index_entry>? = nil
+
+                                result = git_index_conflict_next(&ancestor, &ours, &theirs, conflictIterator)
+                                if result == GIT_ITEROVER.rawValue {
+                                    break // No more conflicts
+                                }
+                                guard result == GIT_OK.rawValue else {
+                                    return .failure(NSError(gitError: result, pointOfFailure: "git_index_conflict_next"))
+                                }
+
+                                // Need to get the path, regardless of whether theirs exists
+                                let path: String? = {
+                                    if let theirs {
+                                        return String(cString: theirs.pointee.path)
+                                    } else if let ours {
+                                        return String(cString: ours.pointee.path)
+                                    } else if let ancestor {
+                                        return String(cString: ancestor.pointee.path)
+                                    }
+                                    return nil
+                                }()
+
+                                if let path {
+                                    if let theirs {
+                                        // If theirs exists, add it to the index
+                                        result = git_index_add(index, theirs)
+                                        guard result == GIT_OK.rawValue else {
+                                            return .failure(NSError(gitError: result, pointOfFailure: "git_index_add"))
+                                        }
+                                    } else {
+                                        // If theirs is nil, it means the file was deleted in their branch
+                                        // So we should remove it from the index
+                                        result = git_index_remove_bypath(index, path)
+                                        guard result == GIT_OK.rawValue else {
+                                            return .failure(NSError(gitError: result, pointOfFailure: "git_index_remove_bypath"))
+                                        }
+                                    }
+
+                                    // Remove the conflict marker
+                                    result = git_index_conflict_remove(index, path)
+                                    guard result == GIT_OK.rawValue else {
+                                        return .failure(NSError(gitError: result, pointOfFailure: "git_index_conflict_remove"))
+                                    }
+                                }
+                            }
+
+                            // Write the index back
+                            result = git_index_write(index)
+                            guard result == GIT_OK.rawValue else {
+                                return .failure(NSError(gitError: result, pointOfFailure: "git_index_write"))
+                            }
+                        } else {
+                            // Original behavior - fail on conflict
+                            git_error_set_str(Int32(GIT_ERROR_MERGE.rawValue), "There are some conflicts.")
+                            return .failure(NSError(gitError: GIT_EMERGECONFLICT.rawValue, pointOfFailure: "git_merge_trees"))
+                        }
                     }
 
                     // do a commit if no conflicts

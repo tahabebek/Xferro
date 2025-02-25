@@ -84,11 +84,23 @@ extension CommitsViewModel {
         if worktree.getBranch(branchName: branchName) == nil {
             worktree.createBranch(branchName: branchName, oid: selectableItem.oid)
         }
-        worktree.checkout(branchName: branchName)
+
+        let worktreeHead = Head.of(worktree: worktree.name, in: repositoryInfo.repository)
+        if worktreeHead.name != branchName {
+            worktree.checkout(branchName: branchName)
+        }
         worktree.addToWorktreeIndex(path: ".")
+        let originalRepoHead = repositoryInfo.head
+        if worktreeHead.time < originalRepoHead.time {
+            let stashName = UUID().uuidString
+            worktree.worktreeRepository.save(stash: stashName).mustSucceed()
+            worktree.merge(with: originalRepoHead.oid, message: "Merge from original repository")
+            worktree.worktreeRepository.pop(stash: 0).mustSucceed()
+            worktree.addToWorktreeIndex(path: ".")
+        }
         worktree.commit(summary: summary)
+
         self.reloadUIAfterAddingWipCommits(repositoryInfo: repositoryInfo)
-        
     }
     func reloadUIAfterAddingWipCommits(repositoryInfo: RepositoryInfo) {
         let repository = repositoryInfo.repository

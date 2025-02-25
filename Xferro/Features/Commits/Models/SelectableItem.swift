@@ -61,11 +61,11 @@ struct SelectableStatus: SelectableItem, Identifiable {
 
         static func of(_ repositoryInfo: RepositoryInfo) -> StatusType {
             switch repositoryInfo.head {
-            case .branch(let branch):
+            case .branch(let branch, _):
                 return .branch(repositoryInfo, branch)
-            case .tag(let tag):
+            case .tag(let tag, _):
                 return .tag(repositoryInfo, tag)
-            case .reference(let reference):
+            case .reference(let reference, _):
                 if let tag = try? repositoryInfo.repository.tag(reference.oid).get() {
                     return .tag(repositoryInfo, TagReference.annotated(tag.name, tag))
                 }
