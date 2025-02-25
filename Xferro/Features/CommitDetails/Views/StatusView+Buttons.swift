@@ -9,9 +9,9 @@ import SwiftUI
 
 // ActionBox
 extension StatusView {
-    var commitButton: some View {
+    func commitButton(_ title: String) -> some View {
         AnyView.buttonWith(
-            title: "Commit",
+            title: title,
             disabled: commitSummaryIsEmptyOrWhitespace || statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                 fatalError(.impossible)
@@ -21,16 +21,16 @@ extension StatusView {
             isTextFieldFocused = false
         }
     }
-    var amendButton: some View {
-        AnyView.buttonWith(title: "Amend", disabled: statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
+    func amendButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
             commitsViewModel.amendTapped(
                 repository: statusViewModel.repository,
                 message: commitSummary[statusViewModel.selectableStatus.oid]
             )
         }
     }
-    var stageAllAndCommitButton: some View {
-        AnyView.buttonWith(title: "Stage all + commit", disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges) {
+    func stageAllAndCommitButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges) {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                 fatalError(.impossible)
             }
@@ -40,8 +40,8 @@ extension StatusView {
             isTextFieldFocused = false
         }
     }
-    var stageAllAndAmendButton: some View {
-        AnyView.buttonWith(title: "Stage all + amend", disabled: !hasChanges) {
+    func stageAllAndAmendButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
             commitsViewModel.amendTapped(
                 repository: statusViewModel.repository,
@@ -51,9 +51,9 @@ extension StatusView {
             isTextFieldFocused = false
         }
     }
-    var stageAllCommitAndPushButton: some View {
+    func stageAllCommitAndPushButton(_ title: String) -> some View {
         AnyView.buttonWith(
-            title: "Stage all + commit + push",
+            title: title,
             disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges
         ) {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
@@ -66,9 +66,9 @@ extension StatusView {
             fatalError(.unimplemented)
         }
     }
-    var stageAllCommitAndForcePushButton: some View {
+    func stageAllCommitAndForcePushButton(_ title: String) -> some View {
         AnyView.buttonWith(
-            title: "Stage all + commit + force push",
+            title: title,
             disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges,
             dangerous: true
         ) {
@@ -82,8 +82,8 @@ extension StatusView {
             fatalError(.unimplemented)
         }
     }
-    var stageAllAmendAndPushButton: some View {
-        AnyView.buttonWith(title: "Stage all + amend + push", disabled: !hasChanges) {
+    func stageAllAmendAndPushButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
             commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
             commitsViewModel.amendTapped(
                 repository: statusViewModel.repository,
@@ -94,9 +94,9 @@ extension StatusView {
             fatalError(.unimplemented)
         }
     }
-    var stageAllAmendAndForcePushButton: some View {
+    func stageAllAmendAndForcePushButton(_ title: String) -> some View {
         AnyView.buttonWith(
-            title: "Stage all + amend + force push",
+            title: title,
             disabled: !hasChanges,
             dangerous: true
         ) {
@@ -110,23 +110,23 @@ extension StatusView {
             fatalError(.unimplemented)
         }
     }
-    var pushStashButton: some View {
-        AnyView.buttonWith(title: "Push stash", disabled: !hasChanges) {
+    func pushStashButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
             fatalError(.unimplemented)
         }
     }
-    var popStashButton: some View {
-        AnyView.buttonWith(title: "Pop stash", disabled: !hasChanges) {
+    func popStashButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
             fatalError(.unimplemented)
         }
     }
-    var applyStashButton: some View {
-        AnyView.buttonWith(title: "Apply stash", disabled: !hasChanges) {
+    func applyStashButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
             fatalError(.unimplemented)
         }
     }
-    var addCustomButton: some View {
-        AnyView.buttonWith(title: "Add your command", disabled: !hasChanges) {
+    func addCustomButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
             fatalError(.unimplemented)
         }
     }

@@ -7,22 +7,47 @@
 
 import SwiftUI
 
+struct Action: Identifiable, Equatable {
+    let id: String = UUID().uuidString
+    let title: String
+}
+
 struct StatusView: View {
+    enum BoxActions: String, CaseIterable {
+        case commit = "Commit"
+        case amend = "Amend"
+        case stageAll = "Stage All"
+        case stageAllAndCommit = "Stage All and Commit"
+        case stageAllAndAmend = "Stage All and Amend"
+        case stageAllCommitAndPush = "Stage All, Commit, and Push"
+        case stageAllAmendAndPush = "Stage All, Amend, and Push"
+        case stageAllCommitAndForcePush = "Stage All, Commit, and Force Push"
+        case stageAllAmendAndForcePush = "Stage All, Amend, and Force Push"
+        case stash = "Stash"
+        case popStash = "Pop Stash"
+        case applyStash = "Apply Stash"
+        case addCustom = "Add Custom"
+    }
     @Environment(CommitsViewModel.self) var commitsViewModel
     @Environment(StatusViewModel.self) var statusViewModel
     @Environment(DiscardPopup.self) var discardPopup
+    @Environment(\.windowSize) var windowSize
     @State private var currentSelectedItem = Dictionary<OID, DeltaInfo>()
     @State var commitSummary = Dictionary<OID, String>()
     @FocusState var isTextFieldFocused: Bool
     @State var discardDeltaInfo: DeltaInfo? = nil
+    @State var horizontalAlignment: HorizontalAlignment = .leading
+    @State var verticalAlignment: VerticalAlignment = .top
+    @State var boxActions: [Action] = BoxActions.allCases.map(\.rawValue).map(Action.init)
+    @State private var actionBoxHeight: CGFloat = 0
 
     var body: some View {
         VSplitView {
             actionBox
                 .padding(.bottom, 4)
             changeBox
+                .layoutPriority(1)
                 .padding(.top, 4)
-                .layoutPriority(.greatestFiniteMagnitude)
         }
         .onAppear {
             setInitialSelection()
@@ -91,7 +116,6 @@ struct StatusView: View {
                 }
             }
             .padding()
-            .padding(.top, 4)
         }
     }
 
@@ -154,38 +178,63 @@ struct StatusView: View {
                         .padding(.bottom, 8)
                     }
                 }
-                HStack {
-                    Spacer()
-                    commitButton
-                    amendButton
-                    stageAllAndCommitButton
-                    stageAllAndAmendButton
-                    Spacer()
-                }
-                HStack {
-                    Spacer()
-                    stageAllCommitAndPushButton
-                    stageAllCommitAndForcePushButton
-                    Spacer()
-                }
-                HStack {
-                    Spacer()
-                    stageAllAmendAndPushButton
-                    stageAllAmendAndForcePushButton
-                    Spacer()
-                }
-                HStack {
-                    Spacer()
-                    pushStashButton
-                    popStashButton
-                    applyStashButton
-                    addCustomButton
-                    Spacer()
-                }
+                flowActionsView
+                    .frame(height: actionBoxHeight)
             }
             .padding()
         }
-        .padding(.vertical)
+    }
+
+    private var flowActionsView: some View {
+        ScrollView(.vertical) {
+            VStack(spacing: 0) {
+                AnyLayout(FlowLayout(alignment:.init(horizontal: horizontalAlignment, vertical: verticalAlignment))) {
+                    buttons
+                }
+                .background(GeometryReader { geometry in
+                    Color.clear
+                        .onChange(of: geometry.size) { _, newValue in
+                            self.actionBoxHeight = newValue.height
+                        }
+                })
+            }
+            .animation(.default, value: horizontalAlignment)
+            .animation(.default, value: verticalAlignment)
+            .animation(.default, value: boxActions)
+        }
+    }
+
+    private var buttons: some View {
+        ForEach(boxActions) { boxAction in
+            switch boxAction.title {
+            case BoxActions.commit.rawValue:
+                commitButton(boxAction.title)
+            case BoxActions.amend.rawValue:
+                amendButton(boxAction.title)
+            case BoxActions.stageAllAndCommit.rawValue:
+                stageAllAndCommitButton(boxAction.title)
+            case BoxActions.stageAllAndAmend.rawValue:
+                stageAllAndAmendButton(boxAction.title)
+            case BoxActions.stageAllCommitAndPush.rawValue:
+                stageAllCommitAndPushButton(boxAction.title)
+            case BoxActions.stageAllAmendAndPush.rawValue:
+                stageAllAmendAndPushButton(boxAction.title)
+            case BoxActions.stageAllCommitAndForcePush.rawValue:
+                stageAllCommitAndForcePushButton(boxAction.title)
+            case BoxActions.stageAllAmendAndForcePush.rawValue:
+                stageAllAmendAndForcePushButton(boxAction.title)
+            case BoxActions.stash.rawValue:
+                pushStashButton(boxAction.title)
+            case BoxActions.popStash.rawValue:
+                popStashButton(boxAction.title)
+            case BoxActions.applyStash.rawValue:
+                applyStashButton(boxAction.title)
+            case BoxActions.addCustom.rawValue:
+                addCustomButton(boxAction.title)
+            default:
+                EmptyView()
+            }
+        }
     }
 
     private var untrackedView: some View {
@@ -367,5 +416,12 @@ struct StatusView: View {
                 .foregroundStyle(currentSelectedItem[statusViewModel.selectableStatus.oid] == deltaInfo ? Color.accentColor : Color.fabulaFore1)
             Spacer()
         }
+    }
+}
+
+struct ActionBoxPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0.0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
