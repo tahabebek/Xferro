@@ -45,6 +45,7 @@ import OrderedCollections
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
     private let userDidSelectFolder: (URL) -> Void
     private let user: User
+    let wipCommitLock = NSRecursiveLock()
 
     init(
         repositories: [Repository],
@@ -230,247 +231,6 @@ import OrderedCollections
         return false
     }
 
-    // MARK: WIP
-    private func updateWipCommits(selectedItem: SelectedItem?) {
-         if let selectedItem {
-            switch selectedItem.selectedItemType {
-            case .regular(let type):
-                switch type {
-                case .stash:
-                    Task {
-                        await MainActor.run {
-                            currentWipCommits = nil
-                        }
-                    }
-                case .status:
-                    let branchName = WipWorktree.worktreeBranchName(for: selectedItem)
-                    if selectedItem.wipWorktree.getBranch(branchName: branchName) == nil {
-                        selectedItem.wipWorktree.createBranch(branchName: branchName, oid: selectedItem.oid)
-                        selectedItem.wipWorktree.checkout(branchName: branchName)
-                    }
-                    let wipCommits =  selectedItem.wipWorktree.wipCommits(
-                        repositoryInfo: selectedItem.repositoryInfo,
-                        branchName: branchName,
-                        stop: selectedItem.oid
-                    )
-                    Task {
-                        await MainActor.run {
-                            currentWipCommits = CurrentWipCommits(commits: wipCommits, item: selectedItem)
-                        }
-                    }
-                default:
-                    guard selectedItem.wipWorktree.getBranch(branchName: WipWorktree.worktreeBranchName(item: selectedItem.selectableItem)) != nil
-                    else {
-                        Task {
-                            await MainActor.run {
-                                currentWipCommits = nil
-                            }
-                        }
-                        return
-                    }
-                    let wipCommits =  selectedItem.wipWorktree.wipCommits(
-                        repositoryInfo: selectedItem.repositoryInfo,
-                        branchName: WipWorktree.worktreeBranchName(for: selectedItem),
-                        stop: selectedItem.oid
-                    )
-                    Task {
-                        await MainActor.run {
-                            currentWipCommits = CurrentWipCommits(commits: wipCommits, item: selectedItem)
-                        }
-                    }
-                }
-            case .wip:
-                break
-            }
-        } else {
-            Task {
-                await MainActor.run {
-                    currentWipCommits = nil
-                }
-            }
-        }
-    }
-
-    func deleteWipWorktreeTapped(for repository: Repository) {
-        deleteWipWorktree(for: repository)
-    }
-
-    private func deleteWipWorktree(for repository: Repository) {
-        WipWorktree.deleteWipWorktree(for: repository)
-        currentWipCommits = nil
-    }
-
-    func deleteAllWipCommitsTapped(for item: SelectedItem) {
-        deleteAllWipCommits(of: item)
-    }
-
-    private func deleteAllWipCommits(of item: SelectedItem) {
-        WipWorktree.deleteAllWipCommits(of: item)
-        Task {
-            await MainActor.run {
-                currentWipCommits = nil
-            }
-        }
-    }
-
-    func addManualWipCommitTapped(for item: SelectedItem) {
-        addManualWipCommit(for: item)
-    }
-    private func addManualWipCommit(for item: SelectedItem) {
-        addWipCommit(repositoryInfo: item.repositoryInfo)
-    }
-
-    let wipCommitLock = NSRecursiveLock()
-    func addWipCommit(repositoryInfo: RepositoryInfo, summary: String? = nil) {
-#warning("keep a set of tracked file urls, if user adds a new file and then deletes it later before committing, it will disappear from the status, so we need to delete it. Same for track and untrack/ignore later before committing.")
-        wipCommitLock.lock()
-        defer { wipCommitLock.unlock() }
-        let worktree = repositoryInfo.wipWorktree
-        let selectableItem = SelectableStatus(repositoryInfo: repositoryInfo)
-        let branchName = WipWorktree.worktreeBranchName(item: selectableItem)
-        if worktree.getBranch(branchName: branchName) == nil {
-            worktree.createBranch(branchName: branchName, oid: selectableItem.oid)
-            worktree.checkout(branchName: branchName)
-        }
-        worktree.addToWorktreeIndex(path: ".")
-        worktree.commit(summary: summary)
-        self.reloadUIAfterAddingWipCommits(repositoryInfo: repositoryInfo)
-        
-    }
-    func reloadUIAfterAddingWipCommits(repositoryInfo: RepositoryInfo) {
-        let repository = repositoryInfo.repository
-        let head = repositoryInfo.head
-        if let currentSelectedItem, repository.gitDir.path == currentSelectedItem.repository.gitDir.path {
-            var isHead = false
-            let headId = head.oid
-            switch currentSelectedItem.selectedItemType {
-            case .regular(let type):
-                switch type {
-                case .status:
-                    isHead = true
-                case .commit(let selectableCommit):
-                    if selectableCommit.oid == headId {
-                        isHead = true
-                    }
-                case .historyCommit(let selectableHistoryCommit):
-                    if selectableHistoryCommit.oid == headId {
-                        isHead = true
-                    }
-                case .detachedCommit(let selectableDetachedCommit):
-                    if selectableDetachedCommit.oid == headId {
-                        isHead = true
-                    }
-                case .detachedTag(let selectableDetachedTag):
-                    if selectableDetachedTag.oid == headId {
-                        isHead = true
-                    }
-                case .tag(let selectableTag):
-                    if selectableTag.oid == headId {
-                        isHead = true
-                    }
-                case .stash:
-                    break
-                }
-            case .wip:
-                break
-            }
-
-            if isHead {
-                Task {
-                    await MainActor.run {
-                        updateDetailInfoAndPeekInfo()
-                        updateWipCommits(selectedItem: currentSelectedItem)
-                    }
-                }
-            }
-        }
-
-    }
-
-    // MARK: Folder Observers
-//    private func setupGitObserver(for repository: Repository) async {
-//        let start = CFAbsoluteTimeGetCurrent()
-//        let kGitWatcher = kGitWatcher(repository)
-//        let kGitObserver = kGitObserver(repository)
-//        if gitFolderWatchers[kGitWatcher] == nil {
-//            let gitDir = repository.gitDir
-//            let changeObserver = PassthroughSubject<Void, Never>()
-//            gitFolderObservers[kGitObserver] = changeObserver
-//                .debounce(for: 1, scheduler: RunLoop.main)
-//                .sink { [weak self] in
-//                    print("--------------------------")
-//                    print("git changed for repository \(gitDir.deletingLastPathComponent().lastPathComponent)")
-//                    Task {
-//                        await self?.updateRepositoryInfo(repository)
-//                        await MainActor.run { [weak self] in
-//                            guard let self else { return }
-//                            if let currentSelectedItem {
-//                                if case .regular(let item) = currentSelectedItem.selectedItemType {
-//                                    if case .status(let selectableStatus) = item {
-//                                        if gitDir.path == selectableStatus.repository.gitDir.path {
-//                                            let head = Head.of(selectableStatus.repository)
-//                                            let selectedItem = SelectedItem(selectedItemType: .regular(.status(selectableStatus)))
-//                                            self.setCurrentSelectedItem(itemAndHead: (selectedItem, head))
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//
-//            gitFolderWatchers[kGitWatcher] = FolderWatcher(
-//                folder: repository.gitDir,
-//                includingPaths: [
-//                    "\(gitDir.path)",
-//                    "\(gitDir.path)/refs",
-//                    "\(gitDir.path)/refs/heads",
-//                    "\(gitDir.path)/refs/tags",
-//                    "\(gitDir.path)/refs/remotes",
-//                    "\(gitDir.path)/refs/notes",
-//                    "\(gitDir.path)/logs",
-//                    "\(gitDir.path)/logs/refs",
-//                    "\(gitDir.path)/logs/refs/heads",
-//                    "\(gitDir.path)/logs/refs/tags",
-//                    "\(gitDir.path)/logs/refs/remotes",
-//                    "\(gitDir.path)/logs/refs/notes",
-//                    "\(gitDir.path)/hooks",
-//                    "\(gitDir.path)/worktrees",
-//                ],
-//                onChangeObserver: changeObserver,
-//                debugEnabled: true
-//            )
-//        }
-//        let diff = CFAbsoluteTimeGetCurrent() - start
-//        print("setup git observer took \(diff)s for \(repository.gitDir.deletingLastPathComponent().lastPathComponent)")
-//    }
-
-//    private func setupFolderObserver(for repository: Repository) async {
-//        let start = CFAbsoluteTimeGetCurrent()
-//        let kFolderWatcher = kFolderWatcher(repository)
-//        let kFolderObserver = kFolderObserver(repository)
-//        if repositoryFolderWatchers[kFolderWatcher] == nil {
-//            let changeObserver = PassthroughSubject<Void, Never>()
-//            repositoryFolderObservers[kFolderObserver] = changeObserver
-//                .debounce(for: 1, scheduler: RunLoop.main)
-//                .sink { [weak self] diff in
-//                    guard let self else { return }
-//                    guard autoCommitEnabled else { return }
-//                    addWipCommit(repository: repository)
-//                }
-//
-//            repositoryFolderWatchers[kFolderWatcher] = FolderWatcher(
-//                folder: repository.gitDir.deletingLastPathComponent(),
-//                excludingPaths: [repository.gitDir.path],
-//                onChangeObserver: changeObserver,
-//                debugEnabled: true
-//            )
-//
-//        }
-//        let diff = CFAbsoluteTimeGetCurrent() - start
-//        print("setup folder observer took \(diff)s for \(repository.gitDir.deletingLastPathComponent().lastPathComponent)")
-//    }
-
     // MARK: User actions
     func userTapped(item: any SelectableItem) {
         Task {
@@ -637,11 +397,6 @@ import OrderedCollections
     }
 
     func amendTapped(repository: Repository, message: String?) {
-        guard let currentSelectedItem else {
-            fatalError(.illegal)
-        }
-        let currentWipBranchName = WipWorktree.worktreeBranchName(for: currentSelectedItem)
-
         let headCommit: Commit = repository.commit().mustSucceed()
         var newMessage = message
         if newMessage == nil || (newMessage ?? "").isEmptyOrWhitespace {
@@ -651,14 +406,7 @@ import OrderedCollections
         guard let newMessage, !newMessage.isEmptyOrWhitespace else {
             fatalError(.unsupported)
         }
-        let currentOid = headCommit.oid
-        let oid = repository.amend(message: newMessage).mustSucceed()
-        guard let branchNameWithoutCommitSuffix = currentWipBranchName.split(separator: "_commit_").last else {
-            fatalError(.invalid)
-        }
-        let newBranchName = "\(branchNameWithoutCommitSuffix)_\(oid)"
-        #warning("instead of relying on the commit oid to stop on wip branches, keep a notes doc which is gitignored in excludes file, and write the commit oid there")
-        repository.createBranch(newBranchName, baseBranchName: currentWipBranchName)
+        repository.amend(message: newMessage).mustSucceed()
     }
 
     func ignoreButtonTapped(repository: Repository, deltaInfo: DeltaInfo) {
@@ -676,7 +424,6 @@ import OrderedCollections
                 RepoManager().git(repository, ["restore", fileURL.path])
             }
         }
-        
     }
 
     // MARK: Keys

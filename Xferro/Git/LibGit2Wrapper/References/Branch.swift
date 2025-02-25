@@ -14,7 +14,7 @@ struct Branch: Identifiable, ReferenceType, Hashable, Codable {
     let longName: String
 
     var wipName: String {
-        longName.replacingOccurrences(of: "/", with: "_")
+        name.replacingOccurrences(of: "/", with: "_")
     }
 
     /// The short human-readable name of the branch (e.g., `master`).

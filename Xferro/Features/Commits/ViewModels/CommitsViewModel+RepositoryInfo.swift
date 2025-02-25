@@ -66,16 +66,16 @@ extension CommitsViewModel {
         return newRepositoryInfo
     }
     private func detachedAncestorCommitsOf(
-        oid: OID,
+        owner: SelectableDetachedCommit.Owner,
         in repositoryInfo: RepositoryInfo,
         count: Int = RepositoryInfo.commitCountLimit) -> [SelectableDetachedCommit]
     {
         var commits: [SelectableDetachedCommit] = []
 
-        let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: oid.oid)
+        let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: owner.oid.oid)
         var counter = 0
         while counter < count, let commit = try? commitIterator.next()?.get() {
-            commits.append(SelectableDetachedCommit(repositoryInfo: repositoryInfo, commit: commit))
+            commits.append(SelectableDetachedCommit(repositoryInfo: repositoryInfo, commit: commit, owner: owner))
             counter += 1
         }
         return commits
@@ -178,12 +178,13 @@ extension CommitsViewModel {
             return nil
         case .tag(let tagReference):
             let detachedTag = SelectableDetachedTag(repositoryInfo: repositoryInfo, tag: tagReference)
-            let commits = detachedAncestorCommitsOf(oid: detachedTag.oid, in: repositoryInfo)
+            let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tagReference), in: repositoryInfo)
             return RepositoryInfo.TagInfo(tag: detachedTag, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
         case .reference(let reference):
             if let tag = try? repositoryInfo.repository.tag(reference.oid).get() {
-                let detachedTag = SelectableDetachedTag(repositoryInfo: repositoryInfo, tag: TagReference.annotated(tag.name, tag))
-                let commits = detachedAncestorCommitsOf(oid: detachedTag.oid, in: repositoryInfo)
+                let tagReference = TagReference.annotated(tag.name, tag)
+                let detachedTag = SelectableDetachedTag(repositoryInfo: repositoryInfo, tag: tagReference)
+                let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tagReference), in: repositoryInfo)
                 return RepositoryInfo.TagInfo(tag: detachedTag, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
             } else {
                 return nil
@@ -196,8 +197,9 @@ extension CommitsViewModel {
             return nil
         case .reference(let reference):
             if let commit = try? repositoryInfo.repository.commit(reference.oid).get() {
-                let detachedCommit = SelectableDetachedCommit(repositoryInfo: repositoryInfo, commit: commit)
-                let commits = detachedAncestorCommitsOf(oid: reference.oid, in: repositoryInfo)
+                let owner = SelectableDetachedCommit.Owner.commit(commit)
+                let detachedCommit = SelectableDetachedCommit(repositoryInfo: repositoryInfo, commit: commit, owner: owner)
+                let commits = detachedAncestorCommitsOf(owner: owner, in: repositoryInfo)
                 return RepositoryInfo.DetachedCommitInfo(detachedCommit: detachedCommit, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
             } else {
                 return nil
@@ -211,7 +213,7 @@ extension CommitsViewModel {
             .sorted { $0.name > $1.name }
             .forEach { tag in
                 let selectableTag = SelectableDetachedTag(repositoryInfo: repositoryInfo, tag: tag)
-                let commits = detachedAncestorCommitsOf(oid: tag.oid, in: repositoryInfo)
+                let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tag), in: repositoryInfo)
                 tags.append(RepositoryInfo.TagInfo(tag: selectableTag, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head))
             }
         return tags

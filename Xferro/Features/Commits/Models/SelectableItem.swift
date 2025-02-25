@@ -85,11 +85,11 @@ struct SelectableStatus: SelectableItem, Identifiable {
     var wipDescription: String {
         switch type {
         case .branch(_, let branch):
-            return "'\(branch.commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'"
+            return "'\(branch.name)' in '\(repository.nameOfRepo)'"
         case .tag(_, let tag):
-            return "'\(tag.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'"
+            return "'\(tag.name)' in '\(repository.nameOfRepo)'"
         case .detached(_, let commit):
-            return "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'"
+            return "'\(commit.oid.debugOID.prefix(4))' in '\(repository.nameOfRepo)'"
         }
     }
 
@@ -127,7 +127,7 @@ struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
     let repositoryInfo: RepositoryInfo
     let branch: Branch
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
+    var wipDescription: String { "'\(branch.name)' in '\(repository.nameOfRepo)'" }
     var oid: OID { commit.oid }
 }
 
@@ -141,18 +141,43 @@ struct SelectableWipCommit: SelectableItem, Identifiable {
 }
 
 struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
+    enum Owner: Equatable {
+        case tag(TagReference)
+        case commit(Commit)
+
+        var name: String {
+            switch self {
+            case .tag(let tag): return tag.name
+            case .commit(let commit): return commit.oid.debugOID
+            }
+        }
+
+        var oid: OID {
+            switch self {
+            case .tag(let tag): return tag.oid
+            case .commit(let commit): return commit.oid
+            }
+        }
+    }
     var id: String { repository.idOfRepo + commit.id }
     let repositoryInfo: RepositoryInfo
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
+    let owner: Owner
+    var wipDescription: String { "'\(owner.name)' in '\(repository.nameOfRepo)'" }
     var oid: OID { commit.oid }
+
+    init(repositoryInfo: RepositoryInfo, commit: Commit, owner: Owner) {
+        self.repositoryInfo = repositoryInfo
+        self.commit = commit
+        self.owner = owner
+    }
 }
 
 struct SelectableDetachedTag: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + tag.id }
     let repositoryInfo: RepositoryInfo
     let tag: TagReference
-    var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo)'" }
+    var wipDescription: String { "'\(tag.name)' in '\(repository.nameOfRepo)'" }
     var oid: OID { tag.oid }
 }
 
@@ -161,7 +186,7 @@ struct SelectableHistoryCommit: SelectableItem, Identifiable {
     let repositoryInfo: RepositoryInfo
     let branch: Branch
     let commit: Commit
-    var wipDescription: String { "'\(commit.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
+    var wipDescription: String { fatalError(.unavailable) }
     var oid: OID { commit.oid }
 }
 
@@ -169,7 +194,7 @@ struct SelectableTag: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + tag.id }
     let repositoryInfo: RepositoryInfo
     let tag: TagReference
-    var wipDescription: String { "'\(tag.name)' in repository '\(repository.nameOfRepo)'" }
+    var wipDescription: String { fatalError(.unavailable) }
     var oid: OID { tag.oid }
 }
 
@@ -177,7 +202,7 @@ struct SelectableStash: SelectableItem, Identifiable {
     var id: String { repository.idOfRepo + stash.id.formatted() }
     let repositoryInfo: RepositoryInfo
     let stash: Stash
-    var wipDescription: String { "'\(stash.oid.debugOID.prefix(4))' in repository '\(repository.nameOfRepo)'" }
+    var wipDescription: String { fatalError(.unavailable) }
     var oid: OID { stash.oid }
 }
 

@@ -23,16 +23,8 @@ struct WipCommitsView: View {
                 VStack(spacing: 8) {
                     if let currentWipCommits = viewModel.currentWipCommits {
                         HStack {
-                            let item = currentWipCommits.item.selectableItem
-                            ViewThatFits(in: .horizontal) {
-                                Text("Wip commits of \(item.wipDescription)")
-                                    .lineLimit(2)
-                                Text("Wip commits of \(item.oid.debugOID.prefix(4)) in \(item.repository.nameOfRepo)")
-                                Text("Wip commits of \(item.oid.debugOID.prefix(4))")
-                                Text("Wips of \(item.oid.debugOID.prefix(4))")
-                                Text("Wips")
-                            }
-                            .lineLimit(1)
+                            Text("Wip commits of \(currentWipCommits.item.selectableItem.wipDescription)")
+                                .lineLimit(2)
                             Spacer()
                         }
                         LazyVGrid(columns: columns) {

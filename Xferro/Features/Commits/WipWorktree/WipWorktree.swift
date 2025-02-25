@@ -24,14 +24,16 @@ final class WipWorktree {
         return WipWorktree(worktreeRepository: worktreeRepository, originalRepository: originalRepository)
     }
 
-    static func worktree(for repository: Repository, headOID: OID) -> WipWorktree {
+    static func worktree(for repositoryInfo: RepositoryInfo) -> WipWorktree {
+        let repository = repositoryInfo.repository
+        let headOID = repositoryInfo.headOID
         let worktreeRepositoryURL =  worktreeRepositoryURL(originalRepository: repository)
         let worktreeName = worktreeName(for: repository)
 
         if let existingWorktree = get(for: repository) {
             return existingWorktree
         } else {
-            let branchName = worktreeBranchName(item: nil)
+            let branchName = worktreeBranchName(item: SelectableStatus(repositoryInfo: repositoryInfo))
             let newBranch: Branch?
             do {
                 newBranch = try repository.createBranch(branchName, oid: headOID).get()
@@ -77,39 +79,32 @@ final class WipWorktree {
         return worktreeRepositoryURL
     }
 
-    static func worktreeBranchName(item: (any SelectableItem)?) -> String {
-        guard let item else {
-            return Self.wipBranchesPrefix
-        }
-        return switch item {
+    static func worktreeBranchName(item: any SelectableItem) -> String {
+        switch item {
         case let status as SelectableStatus:
             switch status.type {
             case .branch(_, let branch):
-                "\(Self.wipBranchesPrefix)for_branch_\(branch.wipName)_commit_\(branch.commit.oid.description)"
+                "\(Self.wipBranchesPrefix)for_branch_\(branch.wipName)"
             case .tag(_, let tag):
-                "\(Self.wipBranchesPrefix)for_tag_\(tag.wipName)_commit_\(tag.oid.description)"
-            case .detached(_, let commit):
-                "\(Self.wipBranchesPrefix)for_detached_commit_\(commit.oid.description)"
+                "\(Self.wipBranchesPrefix)for_tag_\(tag.wipName)"
+            default:
+                fatalError(.unimplemented)
             }
         case let commit as SelectableCommit:
-            "\(Self.wipBranchesPrefix)for_branch_\(commit.branch.wipName)_commit_\(commit.oid.description)"
+            "\(Self.wipBranchesPrefix)for_branch_\(commit.branch.wipName)"
         case let detachedCommit as SelectableDetachedCommit:
             "\(Self.wipBranchesPrefix)for_detached_commit_\(detachedCommit.oid.description)"
         case let detachedTag as SelectableDetachedTag:
-            "\(Self.wipBranchesPrefix)for_detached_tag_\(detachedTag.tag.wipName)_commit_\(detachedTag.oid.description)"
+            "\(Self.wipBranchesPrefix)for_detached_tag_\(detachedTag.tag.wipName)"
         case let tag as SelectableTag:
-            "\(Self.wipBranchesPrefix)for_tag_\(tag.tag.wipName)_commit_\(tag.oid.description)"
-        case let historyCommit as SelectableHistoryCommit:
-            "\(Self.wipBranchesPrefix)for_branch_\(historyCommit.branch.wipName)_commit_\(historyCommit.oid.description)"
-        case _ as SelectableWipCommit:
-            fatalError(.illegal)
+            "\(Self.wipBranchesPrefix)for_tag_\(tag.tag.wipName)"
         default:
             fatalError(.unimplemented)
         }
     }
 
-    static func worktreeBranchName(for item: SelectedItem?) -> String {
-        worktreeBranchName(item: item?.selectableItem)
+    static func worktreeBranchName(for item: SelectedItem) -> String {
+        worktreeBranchName(item: item.selectableItem)
     }
 
     static func deleteWipWorktree(for repository: Repository) {
