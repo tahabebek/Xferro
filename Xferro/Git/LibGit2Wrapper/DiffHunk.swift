@@ -91,6 +91,20 @@ struct DiffHunk
     var oldLines: Int32 { hunk.old_lines }
     var newStart: Int32 { hunk.new_start }
     var newLines: Int32 { hunk.new_lines }
+    var lineCount: Int {
+        Int(git_patch_num_lines_in_hunk(patch.patch, index))
+    }
+
+    func lineAtIndex(_ lineIndex: Int) -> any DiffLine {
+        var linePointer: UnsafePointer<git_diff_line>?
+        let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, index, Int(lineIndex))
+
+        guard result == GIT_OK.rawValue, let linePointer else {
+            let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
+            fatalError(err.localizedDescription)
+        }
+        return linePointer.pointee
+    }
 
     func enumerateLines(_ callback: (git_diff_line) -> Void)
     {

@@ -62,7 +62,7 @@ extension Repository {
 
     private func setupRepositoryIdentity(sourcePath: String, identity: CommitIdentity) throws {
         let configPath = String(sourcePath.replacingOccurrences(of: "/", with: "-").appending("-config").dropFirst())
-        let addConfigResult = addConfig(path: FileManager.default.temporaryDirectory.appendingPathComponent(configPath).path, level: .repository)
+        let addConfigResult = addConfig(path: FileManager.tempDirectory.appendingPathComponent(configPath).path, level: .repository)
         switch addConfigResult {
         case .success:
             let nameResult = config.set(string: identity.name, for: "user.name")

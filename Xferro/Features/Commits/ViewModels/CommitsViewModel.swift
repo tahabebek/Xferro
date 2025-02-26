@@ -96,31 +96,31 @@ import OrderedCollections
                     peekViewModel.peekInfo = nil
                     return
                 }
-                var peekInfoOid: DeltaInfo?
+                var deltaInfo: DeltaInfo?
                 switch currentSelectedItem.selectedItemType {
                 case .regular(let type):
                     switch type {
                     case .stash(let item):
                         currentDetailInfo = DetailInfo(type: .stash(item))
-                        peekInfoOid = currentDeltaInfo[item.oid]
+                        deltaInfo = currentDeltaInfo[item.oid]
                     case .status(let item):
                         currentDetailInfo = DetailInfo(type: .status(item))
-                        peekInfoOid = currentDeltaInfo[item.oid]
+                        deltaInfo = currentDeltaInfo[item.oid]
                     case .commit(let item):
                         currentDetailInfo = DetailInfo(type: .commit(item))
-                        peekInfoOid = currentDeltaInfo[item.oid]
+                        deltaInfo = currentDeltaInfo[item.oid]
                     case .detachedCommit(let item):
                         currentDetailInfo = DetailInfo(type: .detachedCommit(item))
-                        peekInfoOid = currentDeltaInfo[item.oid]
+                        deltaInfo = currentDeltaInfo[item.oid]
                     case .detachedTag(let item):
                         currentDetailInfo = DetailInfo(type: .detachedTag(item))
-                        peekInfoOid = currentDeltaInfo[item.oid]
+                        deltaInfo = currentDeltaInfo[item.oid]
                     case .tag(let item):
                         currentDetailInfo = DetailInfo(type: .tag(item))
-                        peekInfoOid = currentDeltaInfo[item.oid]
+                        deltaInfo = currentDeltaInfo[item.oid]
                     case .historyCommit(let item):
                         currentDetailInfo = DetailInfo(type: .historyCommit(item))
-                        peekInfoOid = currentDeltaInfo[item.oid]
+                        deltaInfo = currentDeltaInfo[item.oid]
                     }
                 case .wip(let wip):
                     switch wip {
@@ -129,14 +129,14 @@ import OrderedCollections
                             fatalError(.impossible)
                         }
                         currentDetailInfo = DetailInfo(type: .wipCommit(item, worktree))
-                        peekInfoOid = currentDeltaInfo[item.oid]
+                        deltaInfo = currentDeltaInfo[item.oid]
                     }
                 }
                 detailsViewModel.detailInfo = currentDetailInfo!
-                if let peekInfoOid {
+                if deltaInfo != nil {
                     peekViewModel.peekInfo = PeekViewModel.PeekInfo(
                         selectableItem: currentSelectedItem.selectableItem,
-                        deltaInfo: peekInfoOid
+                        deltaInfo: deltaInfo!
                     )
                 }
             }
@@ -339,10 +339,8 @@ import OrderedCollections
                     fatalError(.unexpected)
                 }
                 if stage {
-//                    print("stage \(newFilePath)")
                     repository.stage(path: newFilePath).mustSucceed()
                 } else {
-//                    print("unstage \(newFilePath)")
                     repository.unstage(path: newFilePath).mustSucceed()
                 }
             case .renamed:

@@ -18,49 +18,61 @@ import Observation
     @ObservationIgnored var peekInfo: PeekInfo? {
         didSet {
             let patchMaker: PatchMaker?
-            if let peekInfo, let filePath = peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath {
+            if let peekInfo {
+                let isStaged = peekInfo.deltaInfo.type == .staged
                 switch peekInfo.selectableItem {
                 case let item as SelectableStatus:
-                    patchMaker = item.repository.stagedDiff(head: item.head, file: filePath)?.patchMaker
+                    if isStaged {
+                        patchMaker = item.repository.stagedDiff(
+                            head: item.head,
+                            oldFile: peekInfo.deltaInfo.oldFilePath,
+                            newFile: peekInfo.deltaInfo.newFilePath
+                        )?.patchMaker
+                    } else {
+                        patchMaker = item.repository.unstagedDiff(
+                            oldFile: peekInfo.deltaInfo.oldFilePath,
+                            newFile: peekInfo.deltaInfo.newFilePath
+                        )?.patchMaker
+                    }
                 case let item as SelectableCommit:
                     patchMaker = item.repository.diffMaker(
-                        forFile: filePath,
+                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
                         commitOID: item.oid,
                         parentOID: item.commit.parents.first?.oid
                     )?.patchMaker
                 case let item as SelectableWipCommit:
                     patchMaker = item.repository.diffMaker(
-                        forFile: filePath,
+                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableHistoryCommit:
                     patchMaker = item.repository.diffMaker(
-                        forFile: filePath,
+                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableDetachedCommit:
                     patchMaker = item.repository.diffMaker(
-                        forFile: filePath,
+                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableDetachedTag:
                     patchMaker = item.repository.diffMaker(
-                        forFile: filePath,
+                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableTag:
                     patchMaker = item.repository.diffMaker(
-                        forFile: filePath,
+                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableStash:
                     patchMaker = item.repository.diffMaker(
-                        forFile: filePath,
+                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker

@@ -24,6 +24,12 @@ struct DeltaInfo: Identifiable, Equatable, Hashable {
     let type: StatusType
     let repository: Repository
 
+    init(delta: Diff.Delta, type: StatusType, repository: Repository) {
+        self.delta = delta
+        self.type = type
+        self.repository = repository
+    }
+
     var oldFileURL: URL? {
         guard let oldFilePath else { return nil }
         return repository.workDir.appendingPathComponent(oldFilePath)

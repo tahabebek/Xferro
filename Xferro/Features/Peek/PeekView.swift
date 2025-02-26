@@ -22,5 +22,6 @@ struct PeekView: View {
                 print(peekViewModel.patch?.hunkCount ?? "0")
             }
         }
+        .padding(.leading, 6)
     }
 }

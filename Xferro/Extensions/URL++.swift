@@ -13,7 +13,7 @@ extension URL {
     }
 
     func pathByCollapsingTilde() -> String {
-        let homeDirectory = FileManager.default.homeDirectoryForCurrentUser.path
+        let homeDirectory = FileManager.homeDirectory.path
         if path.hasPrefix(homeDirectory) {
             let shortPath = "~" + path.dropFirst(homeDirectory.count)
             return shortPath
@@ -22,12 +22,12 @@ extension URL {
     }
 
     func subfolders() throws -> [URL] {
-        let contents = try FileManager.default.contentsOfDirectory(at: self, includingPropertiesForKeys: [.isDirectoryKey], options: [])
+        let contents = try FileManager.contentsOfDirectory(self, includingPropertiesForKeys: [.isDirectoryKey], options: [])
         return try contents.filter { try $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false }
     }
 
     func modificationDate() throws -> Date {
-        let attributes = try FileManager.default.attributesOfItem(atPath: path)
+        let attributes = try FileManager.attributesOfItem(at: path)
         return attributes[FileAttributeKey.modificationDate] as! Date
     }
 }

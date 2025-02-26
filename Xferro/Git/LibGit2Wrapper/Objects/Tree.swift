@@ -18,46 +18,46 @@ struct Tree: ObjectType, Hashable {
 
         /// The object pointed to by the entry.
         let object: Pointer
+        let owner: Pointer
+        let owned: Bool
 
         /// The file name of the entry.
         let name: String
 
         /// Create an instance with a libgit2 `git_tree_entry`.
-        init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
-            lock.lock()
-            defer { lock.unlock() }
+        init(
+            _ pointer: OpaquePointer,
+            owner: Pointer,
+            owned: Bool
+        ) {
             let oid = OID(git_tree_entry_id(pointer).pointee)
-            attributes = Int32(git_tree_entry_filemode(pointer).rawValue)
-            object = Pointer(oid: oid, type: git_tree_entry_type(pointer))!
-            name = String(validatingCString: git_tree_entry_name(pointer))!
-        }
-
-        /// Create an instance with the individual values.
-        init(attributes: Int32, object: Pointer, name: String) {
-            self.attributes = attributes
-            self.object = object
-            self.name = name
+            self.attributes = Int32(git_tree_entry_filemode(pointer).rawValue)
+            self.object = Pointer(oid: oid, type: git_tree_entry_type(pointer))!
+            self.owner = owner
+            self.owned = owned
+            self.name = String(validatingCString: git_tree_entry_name(pointer))!
         }
     }
 
     /// The OID of the tree.
     let oid: OID
 
-    /// The entries in the tree.
-    let entries: [String: Entry]
-
     /// Create an instance with a libgit2 `git_tree`.
     init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
         lock.lock()
         defer { lock.unlock() }
         oid = OID(git_object_id(pointer).pointee)
+    }
 
-        var entries: [String: Entry] = [:]
-        for idx in 0..<git_tree_entrycount(pointer) {
-            let entry = Entry(git_tree_entry_byindex(pointer, idx)!, lock: lock)
-            entries[entry.name] = entry
-        }
-        self.entries = entries
+    static func entry(tree: OpaquePointer, path: String) -> Entry?
+    {
+        guard let owner = git_tree_owner(tree),
+              let entry = try? OpaquePointer.from({
+                  git_tree_entry_bypath(&$0, tree, path)
+              })
+        else { return nil }
+
+        return Entry(entry, owner: Pointer.tree(OID(git_object_id(owner).pointee)), owned: true)
     }
 }
 

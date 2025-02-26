@@ -8,14 +8,14 @@
 import Foundation
 
 struct DataManager {
-    static let appDirPath = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("com.xferro.Xferro").standardized.path
+    static let appDirPath = FileManager.urls(forDirectory: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("com.xferro.Xferro").standardized.path
     static let appDir = URL(fileURLWithPath: Self.appDirPath, isDirectory: true)    
     static let usersFileName = "xferro-users.json"
 
 
     static func save<T: Encodable>(_ object: T, filename: String) {
-        try? FileManager.default.createDirectory(
-            at: appDir,
+        try? FileManager.createDirectory(
+            atURL: appDir,
             withIntermediateDirectories: true,
             attributes: nil
         )
@@ -52,8 +52,8 @@ struct DataManager {
         let fileURL = appDir.appendingPathComponent(filename)
 
         do {
-            if FileManager.default.fileExists(atPath: fileURL.path) {
-                try FileManager.default.removeItem(at: fileURL)
+            if FileManager.fileExists(at: fileURL.path) {
+                try FileManager.removeItem(atURL: fileURL)
                 return
             } else {
                 return
