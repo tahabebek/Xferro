@@ -82,6 +82,34 @@ extension String {
     {
         components(separatedBy: .newlines)
     }
+
+    enum LineEndingStyle: String
+    {
+        case crlf
+        case lf
+        case unknown
+
+        var string: String
+        {
+            switch self
+            {
+            case .crlf: return "\r\n"
+            case .lf:   return "\n"
+            case .unknown: return "\n"
+            }
+        }
+    }
+
+    var lineEndingStyle: LineEndingStyle
+    {
+        if range(of: "\r\n") != nil {
+            return .crlf
+        }
+        if range(of: "\n") != nil {
+            return .lf
+        }
+        return .unknown
+    }
 }
 
 infix operator +/ : AdditionPrecedence

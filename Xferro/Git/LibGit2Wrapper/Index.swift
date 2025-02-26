@@ -27,6 +27,10 @@ class Index {
                 }
             }
         }
+
+        var oid: OID {
+            OID(self.git_entry.id)
+        }
     }
 
     var git_index: OpaquePointer
@@ -35,6 +39,43 @@ class Index {
     init(git_index: OpaquePointer, lock: NSRecursiveLock) {
         self.git_index = git_index
         self.lock = lock
+    }
+
+    var entryCount: Int {
+        git_index_entrycount(git_index)
+    }
+
+    var hasConflicts: Bool {
+        git_index_has_conflicts(git_index) != 0
+    }
+
+//    var conflicts: AnySequence<ConflictEntry> {
+//        AnySequence {
+//            ConflictIterator(index: self.index)
+//        }
+//    }
+
+    func entry(atIndex index: Int) -> Index.Entry!
+    {
+        switch index {
+        case 0..<entryCount:
+            guard let entry = git_index_get_byindex(git_index, index)
+            else { return nil }
+
+            return Entry(git_entry: entry.pointee)
+        default:
+            return nil
+        }
+    }
+
+    func entry(at path: String) -> Index.Entry?
+    {
+        var position: Int = 0
+        guard git_index_find(&position, git_index, path) == 0,
+              let entry = git_index_get_byindex(git_index, position)
+        else { return nil }
+
+        return Entry(git_entry: entry.pointee)
     }
 
     deinit {

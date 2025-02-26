@@ -50,6 +50,32 @@ struct OID: Equatable, Identifiable {
         var oid = self.oid
         return git_oid_is_zero(&oid) == 1
     }
+
+    init?(sha: SHA)
+    {
+        var oid = git_oid()
+        guard git_oid_fromstr(&oid, sha.rawValue) == 0
+        else { return nil }
+
+        self.oid = oid
+        self.length = size_t(GIT_OID_SHA1_HEXSIZE)
+        self.debugOID = String(Self.desc(length: Int(GIT_OID_SHA1_HEXSIZE), oid: oid).prefix(7))
+    }
+
+    public var sha: SHA
+    {
+        let length = length + 1
+        let storage = UnsafeMutablePointer<Int8>.allocate(capacity: length)
+        var oid = self.oid
+        defer {
+            storage.deallocate()
+        }
+
+        git_oid_fmt(storage, &oid)
+        // `git_oid_fmt()` doesn't add the terminator
+        (storage + length).pointee = 0
+        return .init(String(cString: storage))!
+    }
 }
 
 extension OID: CustomStringConvertible {
