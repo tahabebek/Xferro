@@ -139,6 +139,6 @@ final class Patch: Equatable
         })
         else { return nil }
 
-        return .init(hunk: hunk.pointee, index: index, patch: self)
+        return .init(hunk: hunk.pointee, hunkIndex: index, patch: self)
     }
 }

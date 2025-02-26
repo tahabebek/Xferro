@@ -15,7 +15,8 @@ struct HunkView: View {
     }
 
     var body: some View {
-        LazyVStack(spacing: 0) {
+        print("hunk line count: \(hunk.lineCount)")
+        return LazyVStack(spacing: 0) {
             ForEach(0..<hunk.lineCount, id: \.self) { index in
                 lineView(for: hunk.lineAtIndex(index))
                     .padding(.horizontal, 4)
@@ -52,29 +53,57 @@ struct HunkView: View {
         }
     }
 
+    func checkmarkForPart(line: DiffLine) -> some View {
+        Text(line.isPartSelected ? "✓" : " ")
+            .monospaced()
+            .opacity(line.isAdditionOrDeletion ? 1 : 0)
+    }
+
+    func checkmarkForLine(_ line: DiffLine) -> some View {
+        Text(line.isSelected ? "✓" : " ")
+            .monospaced()
+            .opacity(line.isAdditionOrDeletion ? 1 : 0)
+    }
+
     func lineView(for line: DiffLine) -> some View {
         ZStack(alignment: .leading) {
             color(for: line)
                 .frame(maxWidth: .infinity)
                 .frame(height: 20)
             HStack(spacing: 0) {
-                Group {
-                    HStack {
+                HStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        Spacer()
+                        checkmarkForPart(line: line)
+                        Divider()
+                    }
+                    .frame(width: 20)
+                    HStack(spacing: 0) {
+                        Spacer()
+                        checkmarkForLine(line)
+                        Divider()
+                    }
+                    .frame(width: 20)
+                    HStack(spacing: 0) {
                         Spacer()
                         Text(lineNumber(line.oldLine))
+                            .padding(.trailing, 2)
                         Divider()
                     }
                     .frame(width: 40)
-                    HStack {
+                    HStack(spacing: 0) {
                         Spacer()
                         Text(lineNumber(line.newLine))
+                            .padding(.trailing, 2)
                         Divider()
                     }
                     .frame(width: 40)
                 }
+                .font(.callout)
                 .monospacedDigit()
                 .frame(height: 20)
                 .minimumScaleFactor(0.75)
+                .border(.red)
                 Text(line.text)
                     .font(.body)
                     .frame(height: 20)

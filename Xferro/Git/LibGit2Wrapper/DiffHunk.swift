@@ -10,12 +10,13 @@ import Foundation
 struct DiffHunk: Identifiable, Equatable
 {
     static func == (lhs: DiffHunk, rhs: DiffHunk) -> Bool {
-        (lhs.patch == rhs.patch) && (lhs.index == rhs.index)
+        (lhs.patch == rhs.patch) && (lhs.hunkIndex == rhs.hunkIndex)
     }
 
     var id: String {
-        ObjectIdentifier(patch).debugDescription + "-\(index)"
+        ObjectIdentifier(patch).debugDescription + "-\(hunkIndex)"
     }
+
     /// Applies just this hunk to the target text.
     /// - parameter text: The target text.
     /// - parameter reversed: True if the target text is the "new" text and the
@@ -91,7 +92,7 @@ struct DiffHunk: Identifiable, Equatable
     }
 
     let hunk: git_diff_hunk
-    let index: Int
+    let hunkIndex: Int
     let patch: Patch
 
     var oldStart: Int32 { hunk.old_start }
@@ -99,31 +100,105 @@ struct DiffHunk: Identifiable, Equatable
     var newStart: Int32 { hunk.new_start }
     var newLines: Int32 { hunk.new_lines }
     var lineCount: Int {
-        Int(git_patch_num_lines_in_hunk(patch.patch, index))
+        Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
     }
 
-    func lineAtIndex(_ lineIndex: Int) -> any DiffLine {
+    private func isPreviousLineAdditionOrDeletion(_ lineIndex: Int) -> Bool {
         var linePointer: UnsafePointer<git_diff_line>?
-        let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, index, Int(lineIndex))
+        let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex - 1))
 
         guard result == GIT_OK.rawValue, let linePointer else {
             let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
             fatalError(err.localizedDescription)
         }
-        return linePointer.pointee
+        let type = DiffLineType(rawValue: UInt32(linePointer.pointee.origin))
+        return type == .deletion || type == .addition
     }
 
-    func enumerateLines(_ callback: (git_diff_line) -> Void)
+    private func isNextLineAdditionOrDeletion(_ lineIndex: Int) -> Bool {
+        var linePointer: UnsafePointer<git_diff_line>?
+        let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex + 1))
+
+        guard result == GIT_OK.rawValue, let linePointer else {
+            let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
+            fatalError(err.localizedDescription)
+        }
+        let type = DiffLineType(rawValue: UInt32(linePointer.pointee.origin))
+        return type == .deletion || type == .addition
+    }
+
+    func lineAtIndex(_ lineIndex: Int) -> DiffLine {
+        var linePointer: UnsafePointer<git_diff_line>?
+        let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex))
+
+        guard result == GIT_OK.rawValue, let linePointer else {
+            let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
+            fatalError(err.localizedDescription)
+        }
+        var diffLine = DiffLine(linePointer.pointee)
+        if lineIndex == 0 {
+            if !diffLine.isAdditionOrDeletion {
+                diffLine.isPartSelected = false
+            } else {
+                diffLine.isPartSelected = true
+                if lineCount > 1 {
+                    var next = 1
+                    while next < lineCount {
+                        let nextLine = lineAtIndex(next)
+                        if nextLine.isAdditionOrDeletion {
+                            if !nextLine.isSelected {
+                                diffLine.isPartSelected = false
+                                break
+                            }
+                        }
+                        next += 1
+                    }
+                } else {
+                    diffLine.isPartSelected = true
+                }
+            }
+        } else {
+            if !diffLine.isAdditionOrDeletion {
+                diffLine.isPartSelected = false
+            }
+            let isPreviousLineAdditionOrDeletion = isPreviousLineAdditionOrDeletion(lineIndex)
+            if isPreviousLineAdditionOrDeletion {
+                diffLine.isPartSelected = false
+            } else if lineCount > lineIndex + 1, !isNextLineAdditionOrDeletion(lineIndex) {
+                diffLine.isPartSelected = false
+            } else {
+                diffLine.isPartSelected = true
+                if lineCount > lineIndex + 1 {
+                    var next = lineIndex + 1
+                    while next < lineCount {
+                        let nextLine = lineAtIndex(next)
+                        if nextLine.isAdditionOrDeletion {
+                            if !nextLine.isSelected {
+                                diffLine.isPartSelected = false
+                                break
+                            }
+                        }
+                        next += 1
+                    }
+                } else {
+                    diffLine.isPartSelected = true
+                }
+            }
+        }
+        return diffLine
+    }
+
+    func enumerateLines(_ callback: (DiffLine) -> Void)
     {
-        let lineCount = git_patch_num_lines_in_hunk(patch.patch, index)
+        let lineCount = git_patch_num_lines_in_hunk(patch.patch, hunkIndex)
 
         for lineIndex in 0..<lineCount {
             guard let line: UnsafePointer<git_diff_line> = try? .from({
-                git_patch_get_line_in_hunk(&$0, patch.patch, index, Int(lineIndex))
+                git_patch_get_line_in_hunk(&$0, patch.patch, hunkIndex, Int(lineIndex))
             })
             else { continue }
 
-            callback(line.pointee)
+            callback(DiffLine(line.pointee))
         }
     }
 }

@@ -7,28 +7,53 @@
 
 import Foundation
 
-protocol DiffLine
+struct DiffLine: Equatable
 {
-    var type: DiffLineType { get }
-    var oldLine: Int32 { get }
-    var newLine: Int32 { get }
-    var lineCount: Int32 { get }
-    var byteCount: Int { get }
-    var offset: Int64 { get }
-    var text: String { get }
-}
+    static func == (lhs: DiffLine, rhs: DiffLine) -> Bool {
+        let result = lhs.type == rhs.type
+        && lhs.oldLine == rhs.oldLine
+        && lhs.newLine == rhs.newLine
+        && lhs.lineCount == rhs.lineCount
+        && lhs.byteCount == rhs.byteCount
+        && lhs.offset == rhs.offset
+        && lhs.text == rhs.text
+        print(result)
+        return result
+    }
+    let gitDiffLine: git_diff_line
+    var isSelected: Bool = false
+    var isPartSelected = true
 
-extension git_diff_line: DiffLine
-{
-    var type: DiffLineType { DiffLineType(rawValue: UInt32(origin)) }
-    public var oldLine: Int32 { old_lineno }
-    public var newLine: Int32 { new_lineno }
-    public var lineCount: Int32 { num_lines }
-    public var byteCount: Int { content_len }
-    public var offset: Int64 { content_offset }
-    public var text: String
-    {
-        if let text = NSString(bytes: content, length: content_len,
+    init(_ gitDiffLine: git_diff_line) {
+        self.gitDiffLine = gitDiffLine
+        self.isSelected = self.isAdditionOrDeletion
+    }
+
+    var type: DiffLineType {
+        DiffLineType(rawValue: UInt32(gitDiffLine.origin))
+    }
+    var oldLine: Int32 {
+        gitDiffLine.old_lineno
+    }
+    var newLine: Int32 {
+        gitDiffLine.new_lineno
+    }
+    var lineCount: Int32 {
+        gitDiffLine.num_lines
+    }
+    var byteCount: Int {
+        gitDiffLine.content_len
+    }
+    var offset: Int64 {
+        gitDiffLine.content_offset
+    }
+
+    var isAdditionOrDeletion: Bool {
+        type == .addition || type == .deletion
+    }
+
+    var text: String {
+        if let text = NSString(bytes: gitDiffLine.content, length: gitDiffLine.content_len,
                                encoding: String.Encoding.utf8.rawValue) as String? {
             return text.trimmingCharacters(in: .newlines)
         }
