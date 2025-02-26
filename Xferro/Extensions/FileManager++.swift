@@ -40,7 +40,7 @@ extension FileManager {
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: createIntermediates, attributes: attributes)
     }
 
-
+    @discardableResult
     static func createFile(at path: String, contents data: Data?, attributes attr: [FileAttributeKey : Any]? = nil) -> Bool {
         FileManager.default.createFile(atPath: path, contents: data, attributes: attr)
     }

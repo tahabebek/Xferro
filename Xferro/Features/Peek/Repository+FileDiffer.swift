@@ -237,7 +237,9 @@ extension Repository {
             guard isTextFile(newFile, context: .workspace) else {
                 return .binary
             }
-            let newFileData = try! Data(contentsOf: deltaInfo.newFileURL!)
+            guard let newFileData = try? Data(contentsOf: deltaInfo.newFileURL!) else {
+                return nil
+            }
             let headBlob = fileBlob(head: head, path: newFile)
             return .diff(PatchMaker(
                 repository: self,

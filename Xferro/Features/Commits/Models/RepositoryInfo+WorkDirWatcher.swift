@@ -24,6 +24,7 @@ extension RepositoryInfo {
             .collect(.byTime(RunLoop.main, .seconds(Self.workDirDebounce)))
             .sink { [weak self] batchPaths in
                 guard let self else { return }
+                #warning("collect after updating the status, status update is urgent")
                 self.status = StatusManager.shared.status(of: repository)
                 let paths = Set(batchPaths
                     .flatMap { batch in
