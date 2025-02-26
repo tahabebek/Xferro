@@ -13,8 +13,8 @@ import Observation
         var selectableItem: any SelectableItem
         var deltaInfo: DeltaInfo
     }
-    var patch: Patch?
-    
+    var hunks = [DiffHunk]()
+
     @ObservationIgnored var peekInfo: PeekInfo? {
         didSet {
             let patchMaker: PatchMaker?
@@ -25,54 +25,53 @@ import Observation
                     if isStaged {
                         patchMaker = item.repository.stagedDiff(
                             head: item.head,
-                            oldFile: peekInfo.deltaInfo.oldFilePath,
-                            newFile: peekInfo.deltaInfo.newFilePath
+                            deltaInfo: peekInfo.deltaInfo
                         )?.patchMaker
                     } else {
                         patchMaker = item.repository.unstagedDiff(
-                            oldFile: peekInfo.deltaInfo.oldFilePath,
-                            newFile: peekInfo.deltaInfo.newFilePath
+                            head: item.head,
+                            deltaInfo: peekInfo.deltaInfo
                         )?.patchMaker
                     }
                 case let item as SelectableCommit:
                     patchMaker = item.repository.diffMaker(
-                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
+                        deltaInfo: peekInfo.deltaInfo,
                         commitOID: item.oid,
                         parentOID: item.commit.parents.first?.oid
                     )?.patchMaker
                 case let item as SelectableWipCommit:
                     patchMaker = item.repository.diffMaker(
-                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
+                        deltaInfo: peekInfo.deltaInfo,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableHistoryCommit:
                     patchMaker = item.repository.diffMaker(
-                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
+                        deltaInfo: peekInfo.deltaInfo,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableDetachedCommit:
                     patchMaker = item.repository.diffMaker(
-                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
+                        deltaInfo: peekInfo.deltaInfo,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableDetachedTag:
                     patchMaker = item.repository.diffMaker(
-                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
+                        deltaInfo: peekInfo.deltaInfo,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableTag:
                     patchMaker = item.repository.diffMaker(
-                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
+                        deltaInfo: peekInfo.deltaInfo,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
                 case let item as SelectableStash:
                     patchMaker = item.repository.diffMaker(
-                        forFile: peekInfo.deltaInfo.newFilePath ?? peekInfo.deltaInfo.oldFilePath!,
+                        deltaInfo: peekInfo.deltaInfo,
                         commitOID: item.oid,
                         parentOID: item.head.oid
                     )?.patchMaker
@@ -82,7 +81,17 @@ import Observation
             } else {
                 patchMaker = nil
             }
-            self.patch = patchMaker?.makePatch()
+            let patch = patchMaker?.makePatch()
+            if let patch {
+                var hunks = [DiffHunk]()
+                let hunkCount = patch.hunkCount
+                for index in 0..<hunkCount {
+                    if let hunk = patch.hunk(at: index) {
+                        hunks.append(hunk)
+                    }
+                }
+                self.hunks = hunks
+            }
         }
     }
 

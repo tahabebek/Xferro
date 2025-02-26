@@ -18,72 +18,161 @@ extension Repository {
         case workspace
     }
 
-    func diffMaker(forFile file: String, commitOID: OID, parentOID: OID?) -> PatchMaker.PatchResult?
+    func diffMaker(deltaInfo: DeltaInfo, commitOID: OID, parentOID: OID?) -> PatchMaker.PatchResult?
     {
-        let toCommit = commit(commitOID).mustSucceed()
+        switch deltaInfo.delta.status {
+        case .unmodified:
+            return .noDifference
+        case .added, .copied, .untracked, .modified:
+            guard let newFile = deltaInfo.newFilePath else {
+                fatalError(.invalid)
+            }
+            let toCommit = commit(commitOID).mustSucceed()
 
-        let parentCommit = parentOID.flatMap { commit($0).mustSucceed() }
-        guard isTextFile(file, context: .commit(toCommit)) ||
-                parentCommit.map({ isTextFile(file, context: .commit($0)) }) ?? false
-        else { return .binary }
+            let parentCommit = parentOID.flatMap { commit($0).mustSucceed() }
+            guard isTextFile(newFile, context: .commit(toCommit)) ||
+                    parentCommit.map({ isTextFile(newFile, context: .commit($0)) }) ?? false
+            else { return .binary }
 
-        let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: toCommit, path: file) {
-            .blob(toBlob)
-        } else {
-            .data(Data())
+            let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: toCommit, path: newFile) {
+                .blob(toBlob)
+            } else {
+                .data(Data())
+            }
+
+            let fromSource: PatchMaker.SourceType =
+            if let parentCommit, let fromBlob = blob(commit: parentCommit, path: newFile) {
+                .blob(fromBlob)
+            } else {
+                .data(Data())
+            }
+
+            return .diff(PatchMaker(repository: self, from: fromSource, to: toSource, path: newFile))
+        case .deleted:
+            guard let oldFile = deltaInfo.oldFilePath else {
+                fatalError(.invalid)
+            }
+            let toCommit = commit(commitOID).mustSucceed()
+
+            let parentCommit = parentOID.flatMap { commit($0).mustSucceed() }
+            guard isTextFile(oldFile, context: .commit(toCommit)) ||
+                    parentCommit.map({ isTextFile(oldFile, context: .commit($0)) }) ?? false
+            else { return .binary }
+
+            let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: toCommit, path: oldFile) {
+                .blob(toBlob)
+            } else {
+                .data(Data())
+            }
+
+            let fromSource: PatchMaker.SourceType =
+            if let parentCommit, let fromBlob = blob(commit: parentCommit, path: oldFile) {
+                .blob(fromBlob)
+            } else {
+                .data(Data())
+            }
+
+            return .diff(PatchMaker(repository: self, from: fromSource, to: toSource, path: oldFile))
+        case .renamed, .typeChange:
+            guard let oldFile = deltaInfo.delta.oldFile?.path,
+                  let newFile = deltaInfo.delta.newFile?.path else {
+                fatalError(.invalid)
+            }
+            let toCommit = commit(commitOID).mustSucceed()
+
+            let parentCommit = parentOID.flatMap { commit($0).mustSucceed() }
+            guard isTextFile(newFile, context: .commit(toCommit)) ||
+                    parentCommit.map({ isTextFile(oldFile, context: .commit($0)) }) ?? false
+            else { return .binary }
+
+            let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: toCommit, path: newFile) {
+                .blob(toBlob)
+            } else {
+                .data(Data())
+            }
+
+            let fromSource: PatchMaker.SourceType =
+            if let parentCommit, let fromBlob = blob(commit: parentCommit, path: oldFile) {
+                .blob(fromBlob)
+            } else {
+                .data(Data())
+            }
+
+            return .diff(PatchMaker(repository: self, from: fromSource, to: toSource, path: newFile))
+        case .ignored, .unreadable:
+            return nil
+        case .conflicted:
+            fatalError(.unimplemented)
         }
-
-        let fromSource: PatchMaker.SourceType =
-        if let parentCommit, let fromBlob = blob(commit: parentCommit, path: file) {
-            .blob(fromBlob)
-        } else {
-            .data(Data())
-        }
-
-        return .diff(PatchMaker(repository: self, from: fromSource, to: toSource, path: file))
     }
 
     /// Returns a diff maker for a file in the index, compared to HEAD
-    func stagedDiff(head: Head, oldFile: String?, newFile: String?) -> PatchMaker.PatchResult?
+    func stagedDiff(head: Head, deltaInfo: DeltaInfo) -> PatchMaker.PatchResult?
     {
-        if let oldFile, let newFile {
-            guard isTextFile(oldFile, context: .workspace), isTextFile(newFile, context: .workspace)
-            else { return .binary }
+        switch deltaInfo.delta.status {
+        case .unmodified:
+            return .noDifference
+        case .added, .copied, .untracked:
+            guard let newFile = deltaInfo.newFilePath else {
+                fatalError(.invalid)
+            }
+            guard isTextFile(newFile, context: .workspace) else {
+                return .binary
+            }
             let indexBlob = stagedBlob(file: newFile)
-            let headBlob = fileBlob(head: head, path: oldFile)
-
             return .diff(PatchMaker(
                 repository: self,
-                from: PatchMaker.SourceType(headBlob),
+                from: .data(Data()),
                 to: PatchMaker.SourceType(indexBlob),
                 path: newFile)
             )
-        } else if let newFile {
-            guard isTextFile(newFile, context: .workspace)
-            else { return .binary }
-            let indexBlob = stagedBlob(file: newFile)
-            let headBlob = fileBlob(head: head, path: newFile)
-
-            return .diff(PatchMaker(
-                repository: self,
-                from: PatchMaker.SourceType(headBlob),
-                to: PatchMaker.SourceType(indexBlob),
-                path: newFile)
-            )
-        } else if let oldFile {
-            guard isTextFile(oldFile, context: .workspace)
-            else { return .binary }
+        case .deleted:
+            guard let oldFile = deltaInfo.oldFilePath else {
+                fatalError(.invalid)
+            }
+            guard isTextFile(oldFile, context: .workspace) else {
+                return .binary
+            }
             let indexBlob = stagedBlob(file: oldFile)
             let headBlob = fileBlob(head: head, path: oldFile)
-
             return .diff(PatchMaker(
                 repository: self,
                 from: PatchMaker.SourceType(headBlob),
                 to: PatchMaker.SourceType(indexBlob),
                 path: oldFile)
             )
-        } else {
+        case .modified:
+            guard let newFile = deltaInfo.newFilePath else {
+                fatalError(.invalid)
+            }
+            guard isTextFile(newFile, context: .workspace) else {
+                return .binary
+            }
+            let indexBlob = stagedBlob(file: newFile)
+            let headBlob = fileBlob(head: head, path: newFile)
+            return .diff(PatchMaker(
+                repository: self,
+                from: PatchMaker.SourceType(headBlob),
+                to: PatchMaker.SourceType(indexBlob),
+                path: newFile)
+            )
+        case .renamed, .typeChange:
+            guard let oldFile = deltaInfo.delta.oldFile?.path,
+                  let newFile = deltaInfo.delta.newFile?.path else {
+                fatalError(.invalid)
+            }
+            let indexBlob = stagedBlob(file: newFile)
+            let headBlob = fileBlob(head: head, path: oldFile)
+            return .diff(PatchMaker(
+                repository: self,
+                from: PatchMaker.SourceType(headBlob),
+                to: PatchMaker.SourceType(indexBlob),
+                path: newFile)
+             )
+        case .ignored, .unreadable:
             return nil
+        case .conflicted:
+            fatalError(.unimplemented)
         }
     }
 
@@ -107,95 +196,73 @@ extension Repository {
         )
     }
 
-    #warning("handle rename by passing old path as well as new path")
     /// Returns a diff maker for a file in the workspace, compared to the index.
-    func unstagedDiff(oldFile: String?, newFile: String?) -> PatchMaker.PatchResult?
+    func unstagedDiff(head: Head, deltaInfo: DeltaInfo) -> PatchMaker.PatchResult?
     {
-        guard (oldFile != nil || newFile != nil) else { return nil }
-        if let file = oldFile ?? newFile {
-        }
-
-        if let oldFile, let newFile {
-            guard isTextFile(oldFile, context: .workspace), isTextFile(newFile, context: .workspace)
-            else { return .binary }
-            let oldFileURL = fileURL(oldFile)
-            let oldFileExists = FileManager.fileExists(at: oldFileURL.path)
-            let newFileURL = fileURL(newFile)
-            let newFileExists = FileManager.fileExists(at: newFileURL.path)
-
-            do {
-                let oldFileData = oldFileExists ? try Data(contentsOf: oldFileURL) : Data()
-                let newFileData = newFileExists ? try Data(contentsOf: newFileURL) : Data()
-                if let stagedBlob = stagedBlob(file: oldFile) {
-                    return .diff(PatchMaker(
-                        repository: self,
-                        from: PatchMaker.SourceType(stagedBlob),
-                        to: .data(newFileData),
-                        path: newFile)
-                    )
-                }
-                else {
-                    return .diff(PatchMaker(
-                        repository: self,
-                        from: .data(oldFileData),
-                        to: .data(newFileData),
-                        path: newFile)
-                    )
-                }
+        print("oldFile: \(String(describing: deltaInfo.oldFilePath)) \nnewFile: \(String(describing: deltaInfo.newFilePath))")
+        switch deltaInfo.delta.status {
+        case .unmodified:
+            return .noDifference
+        case .added, .copied, .untracked:
+            guard let newFile = deltaInfo.newFilePath else {
+                fatalError(.invalid)
             }
-            catch {
-                return nil
+            guard isTextFile(newFile, context: .workspace) else {
+                return .binary
             }
-        } else if let newFile {
-            guard isTextFile(newFile, context: .workspace)
-            else { return .binary }
-            let url = fileURL(newFile)
-            let exists = FileManager.fileExists(at: url.path)
-
-            do {
-                let data = exists ? try Data(contentsOf: url) : Data()
-                if let stagedBlob = stagedBlob(file: newFile) {
-                    return .diff(PatchMaker(
-                        repository: self,
-                        from: PatchMaker.SourceType(stagedBlob),
-                        to: .data(data),
-                        path: newFile)
-                    )
-                }
-                else {
-                    return .diff(PatchMaker(
-                        repository: self,
-                        from: .data(Data()),
-                        to: .data(data),
-                        path: newFile)
-                    )
-                }
+            let newFileData = try! Data(contentsOf: deltaInfo.newFileURL!)
+            return .diff(PatchMaker(
+                repository: self,
+                from: .data(Data()),
+                to: .data(newFileData),
+                path: newFile)
+            )
+        case .deleted:
+            guard let oldFile = deltaInfo.oldFilePath else {
+                fatalError(.invalid)
             }
-            catch {
-                return nil
+            guard isTextFile(oldFile, context: .workspace) else {
+                return .binary
             }
-        } else if let oldFile {
-            guard isTextFile(oldFile, context: .workspace)
-            else { return .binary }
-            let url = fileURL(oldFile)
-            if let stagedBlob = stagedBlob(file: oldFile) {
-                return .diff(PatchMaker(
-                    repository: self,
-                    from: PatchMaker.SourceType(stagedBlob),
-                    to: .data(Data()),
-                    path: oldFile)
-                )
+            let headBlob = fileBlob(head: head, path: oldFile)
+            return .diff(PatchMaker(
+                repository: self,
+                from: PatchMaker.SourceType(headBlob),
+                to: .data(Data()),
+                path: oldFile)
+            )
+        case .modified:
+            guard let newFile = deltaInfo.newFilePath else {
+                fatalError(.invalid)
             }
-            else {
-                return .diff(PatchMaker(
-                    repository: self,
-                    from: .data(Data()),
-                    to: .data(Data()),
-                    path: oldFile)
-                )
+            guard isTextFile(newFile, context: .workspace) else {
+                return .binary
             }
-        } else {
+            let newFileData = try! Data(contentsOf: deltaInfo.newFileURL!)
+            let headBlob = fileBlob(head: head, path: newFile)
+            return .diff(PatchMaker(
+                repository: self,
+                from: PatchMaker.SourceType(headBlob),
+                to: .data(newFileData),
+                path: newFile)
+            )
+        case .renamed, .typeChange:
+            guard let oldFile = deltaInfo.delta.oldFile?.path,
+                  let newFile = deltaInfo.delta.newFile?.path else {
+                fatalError(.invalid)
+            }
+            let newFileData = try! Data(contentsOf: deltaInfo.newFileURL!)
+            let headBlob = fileBlob(head: head, path: oldFile)
+            return .diff(PatchMaker(
+                repository: self,
+                from: PatchMaker.SourceType(headBlob),
+                to: .data(newFileData),
+                path: newFile)
+            )
+        case .ignored, .unreadable:
             return nil
+        case .conflicted:
+            fatalError(.unimplemented)
         }
     }
 

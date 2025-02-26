@@ -316,9 +316,9 @@ import OrderedCollections
             switch deltaInfo.delta.status {
             case .unmodified:
                 fatalError(.unexpected)
-            case .added:
+            case .added, .modified, .copied, .untracked:
                 guard let newFilePath = deltaInfo.delta.newFile?.path else {
-                    fatalError(.unexpected)
+                    fatalError(.invalid)
                 }
                 if stage {
                     repository.stage(path: newFilePath).mustSucceed()
@@ -327,26 +327,17 @@ import OrderedCollections
                 }
             case .deleted:
                 guard let oldFilePath = deltaInfo.delta.oldFile?.path else {
-                    fatalError(.unexpected)
+                    fatalError(.invalid)
                 }
                 if stage {
                     repository.stage(path: oldFilePath).mustSucceed()
                 } else {
                     repository.unstage(path: oldFilePath).mustSucceed()
                 }
-            case .modified:
-                guard let newFilePath = deltaInfo.delta.newFile?.path else {
-                    fatalError(.unexpected)
-                }
-                if stage {
-                    repository.stage(path: newFilePath).mustSucceed()
-                } else {
-                    repository.unstage(path: newFilePath).mustSucceed()
-                }
-            case .renamed:
+            case .renamed, .typeChange:
                 guard let oldFilePath = deltaInfo.delta.oldFile?.path,
                       let newFilePath = deltaInfo.delta.newFile?.path else {
-                    fatalError(.unexpected)
+                    fatalError(.invalid)
                 }
                 if stage {
                     repository.stage(path: oldFilePath).mustSucceed()
@@ -355,41 +346,7 @@ import OrderedCollections
                     repository.unstage(path: oldFilePath).mustSucceed()
                     repository.unstage(path: newFilePath).mustSucceed()
                 }
-            case .copied:
-                guard let newFilePath = deltaInfo.delta.newFile?.path else {
-                    fatalError(.unexpected)
-                }
-                if stage {
-                    repository.stage(path: newFilePath).mustSucceed()
-                } else {
-                    repository.unstage(path: newFilePath).mustSucceed()
-                }
-            case .ignored:
-                fatalError(.unimplemented)
-            case .untracked:
-                guard let newFilePath = deltaInfo.delta.newFile?.path else {
-                    fatalError(.unexpected)
-                }
-                if stage {
-                    repository.stage(path: newFilePath).mustSucceed()
-                } else {
-                    repository.unstage(path: newFilePath).mustSucceed()
-                }
-            case .typeChange:
-                guard let oldFilePath = deltaInfo.delta.oldFile?.path,
-                      let newFilePath = deltaInfo.delta.newFile?.path else {
-                    fatalError(.unexpected)
-                }
-                if stage {
-                    repository.stage(path: oldFilePath).mustSucceed()
-                    repository.stage(path: newFilePath).mustSucceed()
-                } else {
-                    repository.unstage(path: oldFilePath).mustSucceed()
-                    repository.unstage(path: newFilePath).mustSucceed()
-                }
-            case .unreadable:
-                fatalError(.unimplemented)
-            case .conflicted:
+            case .ignored, .unreadable, .conflicted:
                 fatalError(.unimplemented)
             }
         }

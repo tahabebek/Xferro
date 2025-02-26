@@ -90,17 +90,11 @@ extension CommitsViewModel {
             worktree.checkout(branchName: branchName)
         }
         worktree.addToWorktreeIndex(path: ".")
+        worktree.commit(summary: summary)
         let originalRepoHead = repositoryInfo.head
         if worktreeHead.time < originalRepoHead.time {
-            let stashName = UUID().uuidString
-            let stash = try? worktree.worktreeRepository.save(stash: stashName).get()
-            worktree.merge(with: originalRepoHead.oid, message: "Merge from branch")
-            if stash != nil {
-                worktree.worktreeRepository.pop(stash: 0).mustSucceed()
-            }
-            worktree.addToWorktreeIndex(path: ".")
+            _ = try? worktree.merge(with: originalRepoHead.oid, message: "Merge from branch").get()
         }
-        worktree.commit(summary: summary)
 
         self.reloadUIAfterAddingWipCommits(repositoryInfo: repositoryInfo)
     }

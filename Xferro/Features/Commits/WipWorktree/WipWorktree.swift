@@ -213,8 +213,8 @@ final class WipWorktree {
     }
 
     @discardableResult
-    func merge(with oid: OID, message: String) -> GitMergeAnalysisStatus {
-        worktreeRepository.merge(with: oid, message: message, conflictStrategy: MergeConflictStrategy.acceptTheirs).mustSucceed()
+    func merge(with oid: OID, message: String) -> Result<GitMergeAnalysisStatus, NSError> {
+        worktreeRepository.merge(with: oid, message: message, conflictStrategy: MergeConflictStrategy.acceptTheirs)
     }
 
     func addToWorktreeIndex(path: String) {

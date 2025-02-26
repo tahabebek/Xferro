@@ -31,7 +31,7 @@ class Repository: Identifiable, Equatable, Hashable {
     }
 
     deinit {
-        print("deinit repository \(gitDir)")
+//        print("deinit repository \(gitDir)")
         git_repository_free(pointer)
     }
 

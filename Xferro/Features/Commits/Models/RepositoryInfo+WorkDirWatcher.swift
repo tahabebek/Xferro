@@ -66,7 +66,7 @@ extension RepositoryInfo {
                     if StatusManager.shared.isStagedOrUnstaged(relativePath: relativePath, statusEntries: status) {
                         let isDeleted = !FileManager.fileExists(at: path)
                         if isDeleted {
-                            print("file deleted", relativePath)
+//                            print("file deleted", relativePath)
                             try! FileManager.removeItem(at: destinationPath)
                             changes.insert("Wip - \(changeFileName) is deleted")
                         } else {
@@ -82,7 +82,7 @@ extension RepositoryInfo {
                                 } else {
                                     continue
                                 }
-                                print("file added or modified", relativePath)
+//                                print("file added or modified", relativePath)
                                 try? FileManager.createDirectory(at: destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
                                 FileManager.createFile(at: destinationPath, contents: contents.data(using: .utf8))
                                 changes.insert("Wip - \(changeFileName) is modified")
@@ -94,7 +94,7 @@ extension RepositoryInfo {
                             // does the worktree have it?
                             if FileManager.fileExists(at: destinationPath) {
                                 try! FileManager.removeItem(at: destinationPath)
-                                print("untracked file deleted from worktree", destinationPath)
+//                                print("untracked file deleted from worktree", destinationPath)
                                 changes.insert("Wip - \(changeFileName) is removed")
                             } else {
                                 continue
@@ -116,12 +116,12 @@ extension RepositoryInfo {
                                     FileManager.createFile(at: destinationPath, contents: contents.data(using: .utf8))
                                 }
                                 changes.insert("Wip - \(changeFileName) is modified")
-                                print("file (which is not in the index) added or modified", relativePath)
+//                                print("file (which is not in the index) added or modified", relativePath)
                             } else {
                                 if FileManager.fileExists(at: destinationPath) {
                                     try! FileManager.removeItem(at: destinationPath)
                                     changes.insert("Wip - \(changeFileName) is removed")
-                                    print("untracked file deleted from worktree", destinationPath)
+//                                    print("untracked file deleted from worktree", destinationPath)
                                 }
                             }
                         }

@@ -7,8 +7,15 @@
 
 import Foundation
 
-struct DiffHunk
+struct DiffHunk: Identifiable, Equatable
 {
+    static func == (lhs: DiffHunk, rhs: DiffHunk) -> Bool {
+        (lhs.patch == rhs.patch) && (lhs.index == rhs.index)
+    }
+
+    var id: String {
+        ObjectIdentifier(patch).debugDescription + "-\(index)"
+    }
     /// Applies just this hunk to the target text.
     /// - parameter text: The target text.
     /// - parameter reversed: True if the target text is the "new" text and the
