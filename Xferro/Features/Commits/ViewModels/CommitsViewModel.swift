@@ -138,6 +138,8 @@ import OrderedCollections
                         selectableItem: currentSelectedItem.selectableItem,
                         deltaInfo: deltaInfo!
                     )
+                } else {
+                    peekViewModel.peekInfo = nil
                 }
             }
         }
