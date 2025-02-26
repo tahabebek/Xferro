@@ -63,6 +63,7 @@ struct BranchView: View {
                         ZStack {
                             Text(selectableCommits[index - offset].commit.summary)
                                 .font(.caption)
+                                .multilineTextAlignment(.center)
                                 .minimumScaleFactor(0.9)
                                 .allowsTightening(true)
                                 .padding(6)
