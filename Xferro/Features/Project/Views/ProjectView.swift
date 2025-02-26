@@ -19,11 +19,11 @@ struct ProjectView: View {
             HSplitView {
                 CommitsView()
 //                    .layoutPriority(Dimensions.commitsViewPriority)
-                    .frame(maxWidth: Dimensions.commitsViewIdealWidth)
+                    .frame(maxWidth: Dimensions.commitsViewMaxWidth)
                     .frame(minWidth: 0)
                 SelectableItemDetailView()
 //                    .layoutPriority(Dimensions.commitDetailsPriority)
-                    .frame(maxWidth: Dimensions.commitDetailsViewIdealWidth)
+                    .frame(maxWidth: Dimensions.commitDetailsViewMaxWidth)
                     .frame(minWidth: 0)
                     .environment(commitsViewModel.detailsViewModel)
                 PeekView()
