@@ -199,7 +199,6 @@ extension Repository {
     /// Returns a diff maker for a file in the workspace, compared to the index.
     func unstagedDiff(head: Head, deltaInfo: DeltaInfo) -> PatchMaker.PatchResult?
     {
-        print("oldFile: \(String(describing: deltaInfo.oldFilePath)) \nnewFile: \(String(describing: deltaInfo.newFilePath))")
         switch deltaInfo.delta.status {
         case .unmodified:
             return .noDifference
