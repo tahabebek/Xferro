@@ -11,13 +11,31 @@ struct PeekView: View {
     @Environment(PeekViewModel.self) var peekViewModel
     var body: some View {
         ScrollView(showsIndicators: true) {
-            LazyVStack {
-                ForEach(peekViewModel.hunks) { hunk in
-                    hunkView(hunk)
+            if peekViewModel.hunks.isEmpty {
+                ZStack {
+                    Color.clear
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(
+                            Color(hex: 0x15151A)
+                                .cornerRadius(8)
+                        )
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Text("No changes found")
+                                .padding()
+                            Spacer()
+                        }
+                        Spacer()
+                    }
                 }
-            }
-            .onChange(of: peekViewModel.hunks) { _, _ in
-                print(peekViewModel.hunks.debugDescription)
+            } else {
+                LazyVStack {
+                    ForEach(peekViewModel.hunks) { hunk in
+                        hunkView(hunk)
+                    }
+                }
             }
         }
         .padding(.leading, 6)
