@@ -62,17 +62,21 @@ struct HunkView: View {
                     HStack {
                         Spacer()
                         Text(lineNumber(line.oldLine))
+                        Divider()
                     }
+                    .frame(width: 40)
                     HStack {
                         Spacer()
                         Text(lineNumber(line.newLine))
+                        Divider()
                     }
+                    .frame(width: 40)
                 }
                 .monospacedDigit()
-                .frame(width: 40)
                 .frame(height: 20)
                 .minimumScaleFactor(0.75)
                 Text(line.text)
+                    .font(.body)
                     .frame(height: 20)
                     .padding(.leading, 8)
                 Spacer()
