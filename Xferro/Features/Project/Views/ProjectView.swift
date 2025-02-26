@@ -18,18 +18,16 @@ struct ProjectView: View {
         VStack(spacing: 0) {
             HSplitView {
                 CommitsView()
-//                    .layoutPriority(Dimensions.commitsViewPriority)
                     .frame(maxWidth: Dimensions.commitsViewMaxWidth)
                     .frame(minWidth: 0)
                 SelectableItemDetailView()
-//                    .layoutPriority(Dimensions.commitDetailsPriority)
                     .frame(maxWidth: Dimensions.commitDetailsViewMaxWidth)
                     .frame(minWidth: 0)
                     .environment(commitsViewModel.detailsViewModel)
                 PeekView()
-//                    .layoutPriority(Dimensions.fileDetailsViewPriority)
                     .frame(idealWidth: .infinity)
                     .environment(commitsViewModel.peekViewModel)
+
             }
         }
     }

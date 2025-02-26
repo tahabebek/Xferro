@@ -27,13 +27,13 @@ extension Repository {
                 parentCommit.map({ isTextFile(file, context: .commit($0)) }) ?? false
         else { return .binary }
 
-        var toSource: PatchMaker.SourceType = if let toBlob = blob(commit: toCommit, file: file) {
+        let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: toCommit, file: file) {
             .blob(toBlob)
         } else {
             .data(Data())
         }
 
-        var fromSource: PatchMaker.SourceType =
+        let fromSource: PatchMaker.SourceType =
         if let parentCommit, let fromBlob = blob(commit: parentCommit, file: file) {
             .blob(fromBlob)
         } else {

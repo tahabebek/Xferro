@@ -32,7 +32,6 @@ struct StatusView: View {
     @Environment(StatusViewModel.self) var statusViewModel
     @Environment(DiscardPopup.self) var discardPopup
     @Environment(\.windowSize) var windowSize
-    @State private var currentSelectedItem = Dictionary<OID, DeltaInfo>()
     @State var commitSummary = Dictionary<OID, String>()
     @FocusState var isTextFieldFocused: Bool
     @State var discardDeltaInfo: DeltaInfo? = nil
@@ -79,19 +78,23 @@ struct StatusView: View {
         .animation(.default, value: statusViewModel.stagedDeltaInfos)
         .animation(.default, value: statusViewModel.unstagedDeltaInfos)
         .animation(.default, value: statusViewModel.untrackedDeltaInfos)
-        .animation(.default, value: currentSelectedItem)
+        .animation(.default, value: commitsViewModel.currentDeltaInfo)
         .animation(.default, value: commitSummary)
         .padding(.horizontal, 6)
     }
 
     private func setInitialSelection() {
-        if currentSelectedItem[statusViewModel.selectableStatus.oid] == nil {
+        if commitsViewModel.currentDeltaInfo[statusViewModel.selectableStatus.oid] == nil {
+            var item: DeltaInfo?
             if let firstItem = statusViewModel.stagedDeltaInfos.first {
-                currentSelectedItem[statusViewModel.selectableStatus.oid] = firstItem
+                item = firstItem
             } else if let firstItem = statusViewModel.unstagedDeltaInfos.first {
-                currentSelectedItem[statusViewModel.selectableStatus.oid] = firstItem
+                item = firstItem
             } else if let firstItem = statusViewModel.untrackedDeltaInfos.first {
-                currentSelectedItem[statusViewModel.selectableStatus.oid] = firstItem
+                item = firstItem
+            }
+            if let item {
+                commitsViewModel.setCurrentDeltaInfo(oid: statusViewModel.selectableStatus.oid, deltaInfo: item)
             }
         }
     }
@@ -416,7 +419,7 @@ struct StatusView: View {
         .frame(minHeight: 24)
         .frame(maxHeight: 48)
         .onTapGesture {
-            currentSelectedItem[statusViewModel.selectableStatus.oid] = deltaInfo
+            commitsViewModel.setCurrentDeltaInfo(oid: statusViewModel.selectableStatus.oid, deltaInfo: deltaInfo)
         }
     }
 
@@ -430,7 +433,7 @@ struct StatusView: View {
             Image(systemName: imageName).foregroundColor(color)
             Text(text)
                 .font(.body)
-                .foregroundStyle(currentSelectedItem[statusViewModel.selectableStatus.oid] == deltaInfo ? Color.accentColor : Color.fabulaFore1)
+                .foregroundStyle(commitsViewModel.currentDeltaInfo[statusViewModel.selectableStatus.oid] == deltaInfo ? Color.accentColor : Color.fabulaFore1)
             Spacer()
         }
     }

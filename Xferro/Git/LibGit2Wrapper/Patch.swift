@@ -7,8 +7,13 @@
 
 import Foundation
 
-final class Patch
+final class Patch: Equatable
 {
+    static func == (lhs: Patch, rhs: Patch) -> Bool
+    {
+        return lhs === rhs
+    }
+
     let patch: OpaquePointer // git_patch
 
     // Data buffers need to be kept because the patch references them
@@ -111,7 +116,7 @@ final class Patch
     var hunkCount: Int {
         git_patch_num_hunks(patch)
     }
-    
+
     var addedLinesCount: Int
     {
         var result: Int = 0

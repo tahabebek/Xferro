@@ -10,13 +10,17 @@ import SwiftUI
 struct PeekView: View {
     @Environment(PeekViewModel.self) var peekViewModel
     var body: some View {
-        Color.clear.ignoresSafeArea()
-            .overlay {
-                VStack {
-                    Spacer()
-                    Text(peekViewModel.peekInfo.title)
-                    Spacer()
+        ScrollView(showsIndicators: true) {
+            LazyVStack {
+                if let patch = peekViewModel.patch, patch.hunkCount > 0 {
+                    ForEach(0..<patch.hunkCount, id: \.self) { index in
+                        HunkView(hunk: patch.hunk(at: index))
+                    }
                 }
             }
+            .onChange(of: peekViewModel.patch) { _, _ in
+                print(peekViewModel.patch?.hunkCount ?? "0")
+            }
+        }
     }
 }

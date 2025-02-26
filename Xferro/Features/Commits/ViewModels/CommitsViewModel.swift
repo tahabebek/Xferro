@@ -15,15 +15,15 @@ import OrderedCollections
         let commits: [SelectableWipCommit]
         let item: SelectedItem
     }
-
+    
     var autoCommitEnabled: Bool {
         didSet {
             UserDefaults.standard.set(autoCommitEnabled, forKey: "autoCommitEnabled")
         }
     }
-
+    
     // use the func setCurrentSelectedItem to set currentSelectedItem
-    var currentSelectedItem: SelectedItem?
+    private(set) var currentSelectedItem: SelectedItem?
 
     func setCurrentSelectedItem(_ selectedItem: SelectedItem?) {
         user.lastSelectedRepositoryPath = selectedItem?.repository.gitDir.path
@@ -35,12 +35,17 @@ import OrderedCollections
         currentSelectedItem = selectedItem
         updateDetailInfoAndPeekInfo()
     }
-
+    
     var currentWipCommits: CurrentWipCommits?
     var currentDetailInfo: DetailInfo?
-    var currentPeekInfo: PeekInfo?
+    private(set) var currentDeltaInfo = Dictionary<OID, DeltaInfo>()
+    func setCurrentDeltaInfo(oid: OID, deltaInfo: DeltaInfo) {
+        currentDeltaInfo[oid] = deltaInfo
+        updateDetailInfoAndPeekInfo()
+    }
+
     let detailsViewModel = DetailsViewModel(detailInfo: DetailInfo(type: .empty))
-    let peekViewModel = PeekViewModel(peekInfo: PeekInfo(title: ""))
+    let peekViewModel = PeekViewModel(peekInfo: nil)
 
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
     private let userDidSelectFolder: (URL) -> Void
@@ -88,47 +93,52 @@ import OrderedCollections
                     currentDetailInfo = nil
                     detailsViewModel.detailInfo = DetailInfo(type: .empty)
 
-                    currentPeekInfo = nil
-                    peekViewModel.peekInfo = PeekInfo(title: "")
+                    peekViewModel.peekInfo = nil
                     return
                 }
+                var peekInfoOid: DeltaInfo?
                 switch currentSelectedItem.selectedItemType {
                 case .regular(let type):
                     switch type {
-                    case .stash(let stash):
-                        currentDetailInfo = DetailInfo(type: .stash(stash))
-                        currentPeekInfo = PeekInfo(title: "stash \(stash.oid.debugOID)")
-                    case .status(let status):
-                        currentDetailInfo = DetailInfo(type: .status(status))
-                        currentPeekInfo = PeekInfo(title: "status \(status.oid.debugOID)")
-                    case .commit(let commit):
-                        currentDetailInfo = DetailInfo(type: .commit(commit))
-                        currentPeekInfo = PeekInfo(title: "commit \(commit.oid.debugOID)")
-                    case .detachedCommit(let commit):
-                        currentDetailInfo = DetailInfo(type: .detachedCommit(commit))
-                        currentPeekInfo = PeekInfo(title: "commit \(commit.oid.debugOID)")
-                    case .detachedTag(let tag):
-                        currentDetailInfo = DetailInfo(type: .detachedTag(tag))
-                        currentPeekInfo = PeekInfo(title: "tag \(tag.oid.debugOID)")
-                    case .tag(let tag):
-                        currentDetailInfo = DetailInfo(type: .tag(tag))
-                        currentPeekInfo = PeekInfo(title: "tag \(tag.oid.debugOID)")
-                    case .historyCommit(let commit):
-                        currentDetailInfo = DetailInfo(type: .historyCommit(commit))
-                        currentPeekInfo = PeekInfo(title: "commit \(commit.oid.debugOID)")
+                    case .stash(let item):
+                        currentDetailInfo = DetailInfo(type: .stash(item))
+                        peekInfoOid = currentDeltaInfo[item.oid]
+                    case .status(let item):
+                        currentDetailInfo = DetailInfo(type: .status(item))
+                        peekInfoOid = currentDeltaInfo[item.oid]
+                    case .commit(let item):
+                        currentDetailInfo = DetailInfo(type: .commit(item))
+                        peekInfoOid = currentDeltaInfo[item.oid]
+                    case .detachedCommit(let item):
+                        currentDetailInfo = DetailInfo(type: .detachedCommit(item))
+                        peekInfoOid = currentDeltaInfo[item.oid]
+                    case .detachedTag(let item):
+                        currentDetailInfo = DetailInfo(type: .detachedTag(item))
+                        peekInfoOid = currentDeltaInfo[item.oid]
+                    case .tag(let item):
+                        currentDetailInfo = DetailInfo(type: .tag(item))
+                        peekInfoOid = currentDeltaInfo[item.oid]
+                    case .historyCommit(let item):
+                        currentDetailInfo = DetailInfo(type: .historyCommit(item))
+                        peekInfoOid = currentDeltaInfo[item.oid]
                     }
                 case .wip(let wip):
                     switch wip {
-                    case .wipCommit(let commit):
-                        guard let worktree = WipWorktree.get(for: commit.repository) else {
+                    case .wipCommit(let item):
+                        guard let worktree = WipWorktree.get(for: item.repository) else {
                             fatalError(.impossible)
                         }
-                        currentDetailInfo = DetailInfo(type: .wipCommit(commit, worktree))
-                        currentPeekInfo = PeekInfo(title: "commit \(commit.oid.debugOID)")
+                        currentDetailInfo = DetailInfo(type: .wipCommit(item, worktree))
+                        peekInfoOid = currentDeltaInfo[item.oid]
                     }
                 }
                 detailsViewModel.detailInfo = currentDetailInfo!
-                peekViewModel.peekInfo = currentPeekInfo!
+                if let peekInfoOid {
+                    peekViewModel.peekInfo = PeekViewModel.PeekInfo(
+                        selectableItem: currentSelectedItem.selectableItem,
+                        deltaInfo: peekInfoOid
+                    )
+                }
             }
         }
     }

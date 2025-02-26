@@ -24,6 +24,14 @@ final class PatchMaker {
         case noDifference
         case binary
         case diff(PatchMaker)
+
+        var patchMaker: PatchMaker?
+        {
+            switch self {
+            case .diff(let maker): return maker
+            default: return nil
+            }
+        }
     }
     
     enum WhitespaceMode: String, CaseIterable
