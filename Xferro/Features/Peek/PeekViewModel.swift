@@ -91,6 +91,8 @@ import Observation
                     }
                 }
                 self.hunks = hunks
+            } else {
+                self.hunks = []
             }
         }
     }
