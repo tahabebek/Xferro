@@ -27,7 +27,6 @@ struct ProjectView: View {
                 PeekView()
                     .frame(idealWidth: .infinity)
                     .environment(commitsViewModel.peekViewModel)
-
             }
         }
     }

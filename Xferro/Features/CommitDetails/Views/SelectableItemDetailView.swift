@@ -10,7 +10,7 @@ import SwiftUI
 struct SelectableItemDetailView: View {
     @Environment(DetailsViewModel.self) var viewModel
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             switch viewModel.detailInfo.type {
             case .empty:
                 VStack {
@@ -37,7 +37,7 @@ struct SelectableItemDetailView: View {
                 StatusView()
                     .environment(StatusViewModel(selectableStatus: selectableStatus))
             }
-            Spacer()
+            Spacer(minLength: 0)
         }
     }
 }

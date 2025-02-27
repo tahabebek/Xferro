@@ -6,26 +6,27 @@
 //
 
 import Foundation
+import Observation
 
-struct DiffHunk: Identifiable, Equatable
+@Observable final class DiffHunk: Identifiable, Equatable
 {
     static func == (lhs: DiffHunk, rhs: DiffHunk) -> Bool {
         (lhs.patch == rhs.patch) && (lhs.hunkIndex == rhs.hunkIndex)
     }
 
-    struct DiffHunkPart: Equatable {
+    @Observable final class DiffHunkPart: Equatable {
+        static func == (lhs: DiffHunkPart, rhs: DiffHunkPart) -> Bool {
+            lhs === rhs
+        }
+
         enum DiffHunkPartType: Equatable {
             case context([DiffLine])
             case additionOrDeletion([DiffLine])
         }
-        let type: DiffHunkPartType
+        var type: DiffHunkPartType
 
         init(type: DiffHunkPartType) {
             self.type = type
-            self.lines = switch type {
-            case .context(let lines), .additionOrDeletion(let lines):
-                lines
-            }
             self.isSelected = switch type {
             case .context:
                 false
@@ -33,8 +34,53 @@ struct DiffHunk: Identifiable, Equatable
                 array.allSatisfy { $0.isSelected }
             }
         }
-        let lines: [DiffLine]
-        let isSelected: Bool
+        var lines: [DiffLine] {
+            get {
+                switch type {
+                case .context(let lines), .additionOrDeletion(let lines):
+                    lines
+                }
+            }
+        }
+
+        var isSelected: Bool
+        var hasSomeSelected: Bool {
+            lines.contains(where: \.isSelected)
+        }
+
+        func toggleLine(lineIndex: Int) {
+            switch type {
+            case .context(let lines):
+                var linesCopy = lines
+                linesCopy[lineIndex].isSelected.toggle()
+                type = .context(linesCopy)
+            case .additionOrDeletion(let lines):
+                var linesCopy = lines
+                linesCopy[lineIndex].isSelected.toggle()
+                type = .additionOrDeletion(linesCopy)
+            }
+        }
+
+        func selectLine(lineIndex: Int, flag: Bool) {
+            switch type {
+            case .context(let lines):
+                var linesCopy = lines
+                linesCopy[lineIndex].isSelected = flag
+                type = .context(linesCopy)
+            case .additionOrDeletion(let lines):
+                var linesCopy = lines
+                linesCopy[lineIndex].isSelected = flag
+                type = .additionOrDeletion(linesCopy)
+            }
+        }
+        func refreshSelectedStatus() {
+            isSelected = switch type {
+            case .context:
+                false
+            case .additionOrDeletion(let array):
+                array.allSatisfy { $0.isSelected }
+            }
+        }
     }
 
     var parts: [DiffHunkPart]
@@ -117,6 +163,19 @@ struct DiffHunk: Identifiable, Equatable
         lines.replaceSubrange(replaceRange, with: replacementLines)
 
         return lines.joined(separator: text.lineEndingStyle.string)
+    }
+
+    func toggleSelected(lineIndex: Int, partIndex: Int) {
+        parts[partIndex].toggleLine(lineIndex: lineIndex)
+        parts[partIndex].refreshSelectedStatus()
+    }
+
+    func toggleSelected(partIndex: Int) {
+        let isSelected = parts[partIndex].isSelected
+        for lineIndex in 0..<parts[partIndex].lines.count {
+            parts[partIndex].selectLine(lineIndex: lineIndex, flag: !isSelected)
+        }
+        parts[partIndex].refreshSelectedStatus()
     }
 
     /// Returns true if the hunk can be applied to the given text.

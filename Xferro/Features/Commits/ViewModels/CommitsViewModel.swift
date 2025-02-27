@@ -134,10 +134,16 @@ import OrderedCollections
                 }
                 detailsViewModel.detailInfo = currentDetailInfo!
                 if deltaInfo != nil {
-                    peekViewModel.peekInfo = PeekViewModel.PeekInfo(
-                        selectableItem: currentSelectedItem.selectableItem,
-                        deltaInfo: deltaInfo!
-                    )
+                    if let peekInfo = peekViewModel.peekInfo {
+                        peekInfo.selectableItem = currentSelectedItem.selectableItem
+                        peekInfo.deltaInfo = deltaInfo!
+                        peekViewModel.peekInfo = peekInfo
+                    } else {
+                        peekViewModel.peekInfo = PeekViewModel.PeekInfo(
+                            selectableItem: currentSelectedItem.selectableItem,
+                            deltaInfo: deltaInfo!
+                        )
+                    }
                 } else {
                     peekViewModel.peekInfo = nil
                 }

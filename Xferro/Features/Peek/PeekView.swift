@@ -33,12 +33,13 @@ struct PeekView: View {
                         }
                     }
                 } else {
-                    LazyVStack {
+                    LazyVStack(spacing: 0) {
                         Color.red
                             .frame(height: 000.1)
                             .id("top")
-                        ForEach(peekViewModel.hunks) { hunk in
-                            HunkView(hunk)
+                        ForEach(peekViewModel.hunks.indices, id: \.self) { index in
+                            HunkView(peekViewModel.hunks[index])
+                                .padding(.bottom, (index != peekViewModel.hunks.count - 1) ? 8 : 0)
                         }
                     }
                 }

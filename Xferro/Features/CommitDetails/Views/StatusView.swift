@@ -54,6 +54,7 @@ struct StatusView: View {
                 .padding(.bottom, Self.actionBoxBottomPadding)
             changeBox
                 .padding(.top, Self.actionBoxBottomPadding)
+                .frame(maxHeight: .infinity)
         }
         .onAppear {
             setInitialSelection()
@@ -211,12 +212,14 @@ struct StatusView: View {
                 AnyLayout(FlowLayout(alignment:.init(horizontal: horizontalAlignment, vertical: verticalAlignment))) {
                     buttons
                 }
-                .background(GeometryReader { geometry in
-                    Color.clear
-                        .onChange(of: geometry.size) { _, newValue in
-                            self.actionBoxHeight = newValue.height
-                        }
-                })
+                .background(
+                    GeometryReader { geometry in
+                        Color.clear
+                            .onChange(of: geometry.size) { _, newValue in
+                                self.actionBoxHeight = newValue.height
+                            }
+                    }
+                )
             }
             .animation(.default, value: horizontalAlignment)
             .animation(.default, value: verticalAlignment)

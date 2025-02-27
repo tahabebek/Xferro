@@ -9,9 +9,14 @@ import Foundation
 import Observation
 
 @Observable final class PeekViewModel {
-    struct PeekInfo {
+    @Observable final class PeekInfo {
         var selectableItem: any SelectableItem
         var deltaInfo: DeltaInfo
+
+        init(selectableItem: any SelectableItem, deltaInfo: DeltaInfo) {
+            self.selectableItem = selectableItem
+            self.deltaInfo = deltaInfo
+        }
     }
     var hunks = [DiffHunk]()
 
