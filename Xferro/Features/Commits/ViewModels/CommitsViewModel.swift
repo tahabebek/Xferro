@@ -38,14 +38,14 @@ import OrderedCollections
     
     var currentWipCommits: CurrentWipCommits?
     var currentDetailInfo: DetailInfo?
-    private(set) var currentDeltaInfo = Dictionary<OID, DeltaInfo>()
+    var currentDeltaInfo: DeltaInfo?
+    private(set) var currentDeltaInfos = Dictionary<OID, DeltaInfo>()
     func setCurrentDeltaInfo(oid: OID, deltaInfo: DeltaInfo) {
-        currentDeltaInfo[oid] = deltaInfo
+        currentDeltaInfos[oid] = deltaInfo
         updateDetailInfoAndPeekInfo()
     }
 
     let detailsViewModel = DetailsViewModel(detailInfo: DetailInfo(type: .empty))
-    let peekViewModel = PeekViewModel(peekInfo: nil)
 
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
     private let userDidSelectFolder: (URL) -> Void
@@ -92,35 +92,33 @@ import OrderedCollections
                 guard let currentSelectedItem else {
                     currentDetailInfo = nil
                     detailsViewModel.detailInfo = DetailInfo(type: .empty)
-
-                    peekViewModel.peekInfo = nil
+                    currentDeltaInfo = nil
                     return
                 }
-                var deltaInfo: DeltaInfo?
                 switch currentSelectedItem.selectedItemType {
                 case .regular(let type):
                     switch type {
                     case .stash(let item):
                         currentDetailInfo = DetailInfo(type: .stash(item))
-                        deltaInfo = currentDeltaInfo[item.oid]
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .status(let item):
                         currentDetailInfo = DetailInfo(type: .status(item))
-                        deltaInfo = currentDeltaInfo[item.oid]
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .commit(let item):
                         currentDetailInfo = DetailInfo(type: .commit(item))
-                        deltaInfo = currentDeltaInfo[item.oid]
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .detachedCommit(let item):
                         currentDetailInfo = DetailInfo(type: .detachedCommit(item))
-                        deltaInfo = currentDeltaInfo[item.oid]
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .detachedTag(let item):
                         currentDetailInfo = DetailInfo(type: .detachedTag(item))
-                        deltaInfo = currentDeltaInfo[item.oid]
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .tag(let item):
                         currentDetailInfo = DetailInfo(type: .tag(item))
-                        deltaInfo = currentDeltaInfo[item.oid]
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .historyCommit(let item):
                         currentDetailInfo = DetailInfo(type: .historyCommit(item))
-                        deltaInfo = currentDeltaInfo[item.oid]
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     }
                 case .wip(let wip):
                     switch wip {
@@ -129,24 +127,10 @@ import OrderedCollections
                             fatalError(.impossible)
                         }
                         currentDetailInfo = DetailInfo(type: .wipCommit(item, worktree))
-                        deltaInfo = currentDeltaInfo[item.oid]
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     }
                 }
                 detailsViewModel.detailInfo = currentDetailInfo!
-                if deltaInfo != nil {
-                    if let peekInfo = peekViewModel.peekInfo {
-                        peekInfo.selectableItem = currentSelectedItem.selectableItem
-                        peekInfo.deltaInfo = deltaInfo!
-                        peekViewModel.peekInfo = peekInfo
-                    } else {
-                        peekViewModel.peekInfo = PeekViewModel.PeekInfo(
-                            selectableItem: currentSelectedItem.selectableItem,
-                            deltaInfo: deltaInfo!
-                        )
-                    }
-                } else {
-                    peekViewModel.peekInfo = nil
-                }
             }
         }
     }
@@ -369,6 +353,10 @@ import OrderedCollections
         repository.commit(message: message).mustSucceed()
     }
 
+    func splitAndCommitTapped(repository: Repository, message: String) -> Commit {
+        fatalError(.unimplemented)
+    }
+
     func amendTapped(repository: Repository, message: String?) {
         let headCommit: Commit = repository.commit().mustSucceed()
         var newMessage = message
@@ -397,22 +385,5 @@ import OrderedCollections
                 RepoManager().git(repository, ["restore", fileURL.path])
             }
         }
-    }
-
-    // MARK: Keys
-    private func kGitWatcher(_ repository: Repository) -> String {
-        String("git_watch_" + repository.gitDir.path)
-    }
-    private func kFolderWatcher(_ repository: Repository) -> String {
-        String("folder_watch_" + repository.gitDir.path)
-    }
-    private func kRepositoryInfo(_ repository: Repository) -> String {
-        String("info_" + repository.gitDir.path())
-    }
-    private func kFolderObserver(_ repository: Repository) -> String {
-        String("folder_observe_" + repository.gitDir.path())
-    }
-    private func kGitObserver(_ repository: Repository) -> String {
-        String("git_observe_" + repository.gitDir.path())
     }
 }

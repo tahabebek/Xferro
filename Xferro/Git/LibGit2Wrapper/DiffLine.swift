@@ -10,7 +10,7 @@ import Foundation
 struct DiffLine: Identifiable, Equatable
 {
     var id: String {
-        type.rawValue.formatted() + "_\(offset)" + "_\(text)" + "_\(oldLine)" + "_\(newLine)"
+        type.rawValue.formatted() + "\(offset),\(text),\(oldLine),\(newLine),\(lineCount),\(byteCount),\(index)"
     }
     static func == (lhs: DiffLine, rhs: DiffLine) -> Bool {
         lhs.type == rhs.type
@@ -23,8 +23,9 @@ struct DiffLine: Identifiable, Equatable
     }
     let gitDiffLine: git_diff_line
     var isSelected: Bool = false
+    let index: Int
 
-    init(_ gitDiffLine: git_diff_line) {
+    init(_ gitDiffLine: git_diff_line, index: Int) {
         self.gitDiffLine = gitDiffLine
         self.type = DiffLineType(rawValue: UInt32(gitDiffLine.origin))
         self.oldLine = gitDiffLine.old_lineno
@@ -43,6 +44,7 @@ struct DiffLine: Identifiable, Equatable
             ""
         }
         self.isSelected = self.isAdditionOrDeletion
+        self.index = index
     }
 
     let type: DiffLineType

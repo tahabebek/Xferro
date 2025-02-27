@@ -11,22 +11,41 @@ import Observation
 @Observable final class DiffHunk: Identifiable, Equatable
 {
     static func == (lhs: DiffHunk, rhs: DiffHunk) -> Bool {
-        (lhs.patch == rhs.patch) && (lhs.hunkIndex == rhs.hunkIndex)
+        print(lhs.id)
+        print(rhs.id)
+        let result = lhs.id == rhs.id
+        print(result)
+        return result
     }
 
-    @Observable final class DiffHunkPart: Equatable {
+    var id: String {
+        "\(patch.id).\(hunkIndex).\(parts.map(\.id).joined(separator: ","))"
+    }
+
+    struct DiffHunkPart: Equatable, Identifiable {
         static func == (lhs: DiffHunkPart, rhs: DiffHunkPart) -> Bool {
-            lhs === rhs
+            lhs.type == rhs.type && lhs.index == rhs.index && lhs.isSelected == rhs.isSelected && lhs.hasSomeSelected == rhs.hasSomeSelected
         }
 
-        enum DiffHunkPartType: Equatable {
+        var id: String { "\(type.id).\(index).\(isSelected).\(hasSomeSelected)" }
+
+        enum DiffHunkPartType: Equatable, Identifiable {
+            var id: String {
+                switch self {
+                case .context(let lines):
+                    return lines.map(\.id).joined(separator: ",") + ".context"
+                case .additionOrDeletion(let lines):
+                    return lines.map(\.id).joined(separator: ",") + ".additionOrDeletion"
+                }
+            }
             case context([DiffLine])
             case additionOrDeletion([DiffLine])
         }
         var type: DiffHunkPartType
-
-        init(type: DiffHunkPartType) {
+        let index: Int
+        init(type: DiffHunkPartType, index: Int) {
             self.type = type
+            self.index = index
             self.isSelected = switch type {
             case .context:
                 false
@@ -48,7 +67,7 @@ import Observation
             lines.contains(where: \.isSelected)
         }
 
-        func toggleLine(lineIndex: Int) {
+        mutating func toggleLine(lineIndex: Int) {
             switch type {
             case .context(let lines):
                 var linesCopy = lines
@@ -61,7 +80,7 @@ import Observation
             }
         }
 
-        func selectLine(lineIndex: Int, flag: Bool) {
+        mutating func selectLine(lineIndex: Int, flag: Bool) {
             switch type {
             case .context(let lines):
                 var linesCopy = lines
@@ -73,7 +92,7 @@ import Observation
                 type = .additionOrDeletion(linesCopy)
             }
         }
-        func refreshSelectedStatus() {
+        mutating func refreshSelectedStatus() {
             isSelected = switch type {
             case .context:
                 false
@@ -85,10 +104,6 @@ import Observation
 
     var parts: [DiffHunkPart]
 
-    var id: String {
-        ObjectIdentifier(patch).debugDescription + "-\(hunkIndex)"
-    }
-
     init(hunk: git_diff_hunk, hunkIndex: Int, patch: Patch) {
         self.hunk = hunk
         self.hunkIndex = hunkIndex
@@ -96,12 +111,14 @@ import Observation
         let lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
         self.parts = []
         var currentPart = DiffHunkPart.DiffHunkPartType.context([])
+        var partIndex = 0
         for index in 0..<lineCount {
             let line = lineAtIndex(index)
             switch currentPart {
             case .context(let array):
                 if line.isAdditionOrDeletion {
-                    parts.append(DiffHunkPart(type: currentPart))
+                    parts.append(DiffHunkPart(type: currentPart, index: partIndex))
+                    partIndex += 1
                     currentPart = .additionOrDeletion([line])
                 } else {
                     currentPart = .context(array + [line])
@@ -110,12 +127,13 @@ import Observation
                 if line.isAdditionOrDeletion {
                     currentPart = .additionOrDeletion(array + [line])
                 } else {
-                    parts.append(DiffHunkPart(type: currentPart))
+                    parts.append(DiffHunkPart(type: currentPart, index: partIndex))
+                    partIndex += 1
                     currentPart = .context([line])
                 }
             }
         }
-        parts.append(DiffHunkPart(type: currentPart))
+        parts.append(DiffHunkPart(type: currentPart, index: partIndex))
     }
 
     /// Applies just this hunk to the target text.
@@ -225,7 +243,7 @@ import Observation
             let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
             fatalError(err.localizedDescription)
         }
-        return DiffLine(linePointer.pointee)
+        return DiffLine(linePointer.pointee, index: lineIndex)
     }
 
     func enumerateLines(_ callback: (DiffLine) -> Void)
@@ -238,7 +256,7 @@ import Observation
             })
             else { continue }
 
-            callback(DiffLine(line.pointee))
+            callback(DiffLine(line.pointee, index: Int(lineIndex)))
         }
     }
 }

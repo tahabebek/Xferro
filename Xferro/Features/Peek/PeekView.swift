@@ -8,40 +8,25 @@
 import SwiftUI
 
 struct PeekView: View {
-    @Environment(PeekViewModel.self) var peekViewModel
+    @State var peekViewModel: PeekViewModel
 
     var body: some View {
         ScrollViewReader { scrollView in
             ScrollView(showsIndicators: true) {
-                if peekViewModel.hunks.isEmpty {
-                    ZStack {
-                        Color.clear
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(
-                                Color(hex: 0x15151A)
-                                    .cornerRadius(8)
-                            )
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Spacer()
-                                Text("No changes found")
-                                    .padding()
-                                Spacer()
-                            }
-                            Spacer()
+                if let hunks = peekViewModel.hunks, hunks.hunks.isEmpty {
+                    empty
+                } else if let hunks = peekViewModel.hunks?.hunks {
+                    LazyVStack(spacing: 0) {
+                        Color.red
+                            .frame(height: peekViewModel.randomValue)
+                            .id("top")
+                        ForEach(hunks) { hunk in
+                            HunkView(hunk: hunk)
+//                                .padding(.bottom, (hunk != hunks.last) ? 8 : 0)
                         }
                     }
                 } else {
-                    LazyVStack(spacing: 0) {
-                        Color.red
-                            .frame(height: 000.1)
-                            .id("top")
-                        ForEach(peekViewModel.hunks.indices, id: \.self) { index in
-                            HunkView(peekViewModel.hunks[index])
-                                .padding(.bottom, (index != peekViewModel.hunks.count - 1) ? 8 : 0)
-                        }
-                    }
+                    empty
                 }
             }
             .onChange(of: peekViewModel.hunks) { _, newValue in
@@ -49,5 +34,26 @@ struct PeekView: View {
             }
         }
         .padding(.leading, 6)
+    }
+
+    var empty: some View {
+        ZStack {
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(
+                    Color(hex: 0x15151A)
+                        .cornerRadius(8)
+                )
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Text("No changes found")
+                        .padding()
+                    Spacer()
+                }
+                Spacer()
+            }
+        }
     }
 }

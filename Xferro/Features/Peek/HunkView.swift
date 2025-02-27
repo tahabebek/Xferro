@@ -20,14 +20,10 @@ struct HunkView: View {
     @State var hoveredLine: HoveredLine?
     @State var hoveredPartIndex: Int?
 
-    init(_ hunk: DiffHunk) {
-        self.hunk = hunk
-    }
-
     var body: some View {
         LazyVStack(spacing: 0) {
-            ForEach(hunk.parts.indices, id: \.self) { partIndex in
-                lineView(for: partIndex)
+            ForEach(hunk.parts) { part in
+                lineView(for: part)
             }
         }
         .padding(.vertical)
@@ -51,8 +47,8 @@ struct HunkView: View {
         line == -1 ? "" : line.formatted()
     }
 
-    func color(lineIndex: Int, partIndex: Int) -> Color {
-        switch hunk.parts[partIndex].lines[lineIndex].type {
+    func color(line: DiffLine, part: DiffHunk.DiffHunkPart) -> Color {
+        switch line.type {
         case .addition:
             Color(hex: 0x28A745)
         case .deletion:
@@ -62,11 +58,11 @@ struct HunkView: View {
         }
     }
 
-    func checkmarkForPart(lineIndex: Int, partIndex: Int) -> some View {
-        let string: String = if hunk.parts[partIndex].lines[lineIndex] == hunk.parts[partIndex].lines.first! {
-            if hunk.parts[partIndex].isSelected {
+    func checkmarkForPart(line: DiffLine, part: DiffHunk.DiffHunkPart) -> some View {
+        let string: String = if line == part.lines.first! {
+            if part.isSelected {
                 "✓"
-            } else if hunk.parts[partIndex].hasSomeSelected {
+            } else if part.hasSomeSelected {
                 "-"
             } else {
                 " "
@@ -76,23 +72,23 @@ struct HunkView: View {
         }
         return Text(string)
             .monospaced()
-            .opacity(hunk.parts[partIndex].lines[lineIndex].isAdditionOrDeletion ? 1 : 0)
+            .opacity(line.isAdditionOrDeletion ? 1 : 0)
     }
 
-    func checkmarkForLine(lineIndex: Int, partIndex: Int) -> some View {
-        Text(hunk.parts[partIndex].lines[lineIndex].isSelected ? "✓" : " ")
+    func checkmarkForLine(line: DiffLine, part: DiffHunk.DiffHunkPart) -> some View {
+        Text(line.isSelected ? "✓" : " ")
             .monospaced()
-            .opacity(hunk.parts[partIndex].lines[lineIndex].isAdditionOrDeletion ? 1 : 0)
+            .opacity(line.isAdditionOrDeletion ? 1 : 0)
     }
 
-    func lineView(for partIndex: Int) -> some View {
-        ForEach(hunk.parts[partIndex].lines.indices, id: \.self) { lineIndex in
-            lineView(for: lineIndex, partIndex: partIndex)
+    func lineView(for part: DiffHunk.DiffHunkPart) -> some View {
+        ForEach(part.lines) { line in
+            lineView(for: line, part: part)
                 .padding(.horizontal, 4)
         }
     }
 
-    func lineView(for lineIndex: Int, partIndex: Int) -> some View {
+    func lineView(for line: DiffLine, part: DiffHunk.DiffHunkPart) -> some View {
         ZStack(alignment: .leading) {
             HStack(spacing: 0) {
                 HStack {
@@ -100,33 +96,33 @@ struct HunkView: View {
                         // Select/Unselect all box
                         HStack(spacing: 0) {
                             Spacer(minLength: 0)
-                            checkmarkForPart(lineIndex: lineIndex, partIndex: partIndex)
+                            checkmarkForPart(line: line, part: part)
                             Spacer(minLength: 0)
                             Divider()
                         }
                         .frame(width: 20)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            if hunk.parts[partIndex].lines[lineIndex].isAdditionOrDeletion {
-                                hunk.toggleSelected(partIndex: partIndex)
+                            if line.isAdditionOrDeletion {
+                                hunk.toggleSelected(partIndex: part.index)
                             }
                         }
                         .background {
-                            if hunk.parts[partIndex].lines[lineIndex].isAdditionOrDeletion {
-                                if hunk.parts[partIndex].hasSomeSelected {
+                            if line.isAdditionOrDeletion {
+                                if part.hasSomeSelected {
                                     Color.accentColor.opacity(Self.hoveredPartBackgroundOpacity)
                                 } else {
-                                    if let hoveredLine, hoveredLine.partIndex == partIndex, hoveredLine.lineIndex == lineIndex {
-                                        color(lineIndex: lineIndex, partIndex: partIndex).opacity(Self.hoveredPartBackgroundOpacity)
+                                    if let hoveredLine, hoveredLine.partIndex == part.index, hoveredLine.lineIndex == line.index {
+                                        color(line: line, part: part).opacity(Self.hoveredPartBackgroundOpacity)
                                     } else {
-                                        color(lineIndex: lineIndex, partIndex: partIndex).opacity(Self.backgroundOpacity)
+                                        color(line: line, part: part).opacity(Self.backgroundOpacity)
                                     }
                                 }
                             }
                         }
                         .onHover { flag in
                             if flag {
-                                hoveredPartIndex = partIndex
+                                hoveredPartIndex = part.index
                             } else {
                                 hoveredPartIndex = nil
                             }
@@ -136,7 +132,7 @@ struct HunkView: View {
                             // Select line box
                             HStack(spacing: 0) {
                                 Spacer(minLength: 0)
-                                checkmarkForLine(lineIndex: lineIndex, partIndex: partIndex)
+                                checkmarkForLine(line: line, part: part)
                                 Spacer(minLength: 0)
                                 Divider()
                             }
@@ -146,7 +142,7 @@ struct HunkView: View {
                             // Old line number box
                             HStack(spacing: 0) {
                                 Spacer()
-                                Text(lineNumber(hunk.parts[partIndex].lines[lineIndex].oldLine))
+                                Text(lineNumber(line.oldLine))
                                     .padding(.trailing, 2)
                                 Divider()
                             }
@@ -155,7 +151,7 @@ struct HunkView: View {
                             // New line number box
                             HStack(spacing: 0) {
                                 Spacer()
-                                Text(lineNumber(hunk.parts[partIndex].lines[lineIndex].newLine))
+                                Text(lineNumber(line.newLine))
                                     .padding(.trailing, 2)
                                 Divider()
                             }
@@ -163,18 +159,18 @@ struct HunkView: View {
                         }
                         .onHover { flag in
                             if flag {
-                                hoveredLine = HoveredLine(partIndex: partIndex, lineIndex: lineIndex)
+                                hoveredLine = HoveredLine(partIndex: part.index, lineIndex: line.index)
                             } else {
                                 hoveredLine = nil
                             }
                         }
                         .onTapGesture {
-                            if hunk.parts[partIndex].lines[lineIndex].isAdditionOrDeletion {
-                                hunk.toggleSelected(lineIndex: lineIndex, partIndex: partIndex)
+                            if line.isAdditionOrDeletion {
+                                hunk.toggleSelected(lineIndex: line.index, partIndex: part.index)
                             }
                         }
                         .background {
-                            backgroundForSelectionBox(lineIndex: lineIndex, partIndex: partIndex)
+                            backgroundForSelectionBox(line: line, part: part)
                         }
                     }
                 }
@@ -183,10 +179,10 @@ struct HunkView: View {
                 .frame(height: 20)
                 .minimumScaleFactor(0.75)
                 ZStack(alignment: .leading) {
-                    color(lineIndex: lineIndex, partIndex: partIndex).opacity(Self.backgroundOpacity)
+                    color(line: line, part: part).opacity(Self.backgroundOpacity)
                         .frame(maxWidth: .infinity)
                         .frame(height: 20)
-                    Text(hunk.parts[partIndex].lines[lineIndex].text)
+                    Text(line.text)
                         .font(.body)
                         .frame(height: 20)
                         .padding(.leading, 8)
@@ -197,20 +193,20 @@ struct HunkView: View {
         .frame(height: 20)
     }
 
-    func backgroundForSelectionBox(lineIndex: Int, partIndex: Int) -> some View {
-        if hunk.parts[partIndex].lines[lineIndex].isSelected {
-            if (hoveredLine != nil && hoveredLine!.partIndex == partIndex && hoveredLine!.lineIndex == lineIndex) ||
-            (hoveredPartIndex != nil && hoveredPartIndex! == partIndex) {
+    func backgroundForSelectionBox(line: DiffLine, part: DiffHunk.DiffHunkPart) -> some View {
+        if line.isSelected {
+            if (hoveredLine != nil && hoveredLine!.partIndex == part.index && hoveredLine!.lineIndex == line.index) ||
+                (hoveredPartIndex != nil && hoveredPartIndex! == part.index) {
                 Color.accentColor.opacity(Self.hoveredLineBackgroundOpacity)
             } else {
                 Color.accentColor.opacity(Self.selectedLineBackgroundOpacity)
             }
         } else {
-            if (hoveredLine != nil && hoveredLine!.partIndex == partIndex && hoveredLine!.lineIndex == lineIndex) ||
-                (hoveredPartIndex != nil && hoveredPartIndex! == partIndex) {
-                color(lineIndex: lineIndex, partIndex: partIndex).opacity(Self.hoveredLineBackgroundOpacity)
+            if (hoveredLine != nil && hoveredLine!.partIndex == part.index && hoveredLine!.lineIndex == line.index) ||
+                (hoveredPartIndex != nil && hoveredPartIndex! == part.index) {
+                color(line: line, part: part).opacity(Self.hoveredLineBackgroundOpacity)
             } else {
-                color(lineIndex: lineIndex, partIndex: partIndex).opacity(Self.backgroundOpacity)
+                color(line: line, part: part).opacity(Self.backgroundOpacity)
             }
         }
     }

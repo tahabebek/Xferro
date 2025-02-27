@@ -16,9 +16,15 @@ struct DeltaInfo: Identifiable, Equatable, Hashable {
         case untracked = 2
     }
     static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.id == rhs.id
+        print(lhs.id)
+        print(rhs.id)
+        let result = lhs.id == rhs.id
+        print(result)
+        return result
     }
-    var id: String { delta.id + type.id.formatted() }
+    var id: String {
+        delta.id + type.id.formatted() + (oldFileURL?.path ?? "") + (newFileURL?.path ?? "") + repository.workDir.path
+    }
 
     let delta: Diff.Delta
     let type: StatusType

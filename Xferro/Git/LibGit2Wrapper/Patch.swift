@@ -7,11 +7,11 @@
 
 import Foundation
 
-final class Patch: Equatable
+final class Patch: Equatable, Identifiable
 {
     static func == (lhs: Patch, rhs: Patch) -> Bool
     {
-        return lhs === rhs
+        lhs.patch == rhs.patch && lhs.oldData == rhs.oldData && lhs.newData == rhs.newData
     }
 
     let patch: OpaquePointer // git_patch

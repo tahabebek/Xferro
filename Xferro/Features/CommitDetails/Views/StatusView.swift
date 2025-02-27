@@ -14,7 +14,7 @@ struct Action: Identifiable, Equatable {
 
 struct StatusView: View {
     enum BoxActions: String, CaseIterable {
-        case commit = "Commit"
+        case splitAndCommit = "Split and Commit"
         case amend = "Amend"
         case stageAll = "Stage All"
         case stageAllAndCommit = "Stage All and Commit"
@@ -26,7 +26,8 @@ struct StatusView: View {
         case stash = "Stash"
         case popStash = "Pop Stash"
         case applyStash = "Apply Stash"
-        case addCustom = "Add Custom"
+        // TODO:
+//        case addCustom = "Add Custom"
     }
     @Environment(CommitsViewModel.self) var commitsViewModel
     @Environment(StatusViewModel.self) var statusViewModel
@@ -85,7 +86,7 @@ struct StatusView: View {
     }
 
     private func setInitialSelection() {
-        if commitsViewModel.currentDeltaInfo[statusViewModel.selectableStatus.oid] == nil {
+        if commitsViewModel.currentDeltaInfos[statusViewModel.selectableStatus.oid] == nil {
             var item: DeltaInfo?
             if let firstItem = statusViewModel.stagedDeltaInfos.first {
                 item = firstItem
@@ -195,15 +196,22 @@ struct StatusView: View {
                 )
                 .textFieldStyle(.roundedBorder)
                 .focused($isTextFieldFocused)
-                .padding(.bottom, 8)
+            }
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                commitButton("Commit")
+                Spacer(minLength: 0)
             }
         }
-        .background(GeometryReader { geometry in
-            Color.clear
-                .onChange(of: geometry.size) { _, newValue in
-                    self.messageBoxHeight = newValue.height
-                }
-        })
+        .padding(.bottom, 8)
+        .background(
+            GeometryReader { geometry in
+                Color.clear
+                    .onChange(of: geometry.size) { _, newValue in
+                        self.messageBoxHeight = newValue.height
+                    }
+            }
+        )
     }
 
     private var flowActionsView: some View {
@@ -230,8 +238,8 @@ struct StatusView: View {
     private var buttons: some View {
         ForEach(boxActions) { boxAction in
             switch boxAction.title {
-            case BoxActions.commit.rawValue:
-                commitButton(boxAction.title)
+            case BoxActions.splitAndCommit.rawValue:
+                splitAndCommitButton(boxAction.title)
             case BoxActions.amend.rawValue:
                 amendButton(boxAction.title)
             case BoxActions.stageAllAndCommit.rawValue:
@@ -252,8 +260,6 @@ struct StatusView: View {
                 popStashButton(boxAction.title)
             case BoxActions.applyStash.rawValue:
                 applyStashButton(boxAction.title)
-            case BoxActions.addCustom.rawValue:
-                addCustomButton(boxAction.title)
             default:
                 EmptyView()
             }
@@ -436,7 +442,7 @@ struct StatusView: View {
             Image(systemName: imageName).foregroundColor(color)
             Text(text)
                 .font(.body)
-                .foregroundStyle(commitsViewModel.currentDeltaInfo[statusViewModel.selectableStatus.oid] == deltaInfo ? Color.accentColor : Color.fabulaFore1)
+//                .foregroundStyle(commitsViewModel.currentDeltaInfos[statusViewModel.selectableStatus.oid] == deltaInfo ? Color.accentColor : Color.fabulaFore1)
             Spacer()
         }
     }

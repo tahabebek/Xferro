@@ -24,9 +24,27 @@ struct ProjectView: View {
                     .frame(maxWidth: Dimensions.commitDetailsViewMaxWidth)
                     .frame(minWidth: 0)
                     .environment(commitsViewModel.detailsViewModel)
-                PeekView()
-                    .frame(idealWidth: .infinity)
-                    .environment(commitsViewModel.peekViewModel)
+                Group {
+                    if let item = commitsViewModel.currentSelectedItem?.selectableItem,
+                       let delta = commitsViewModel.currentDeltaInfo {
+                        PeekView(peekViewModel: PeekViewModel(
+                            selectableItem: item,
+                            deltaInfo: delta)
+                        )
+                    } else {
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Spacer()
+                                Text("No changes found")
+                                    .padding()
+                                Spacer()
+                            }
+                            Spacer()
+                        }
+                    }
+                }
+                .frame(idealWidth: .infinity)
             }
         }
     }

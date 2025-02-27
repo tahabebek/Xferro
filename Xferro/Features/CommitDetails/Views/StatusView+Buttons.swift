@@ -21,6 +21,18 @@ extension StatusView {
             isTextFieldFocused = false
         }
     }
+    func splitAndCommitButton(_ title: String) -> some View {
+        AnyView.buttonWith(
+            title: title,
+            disabled: !hasChanges) {
+                guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                    fatalError(.impossible)
+                }
+                commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
+                commitSummary[statusViewModel.selectableStatus.oid] = nil
+                isTextFieldFocused = false
+            }
+    }
     func amendButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
             commitsViewModel.amendTapped(
