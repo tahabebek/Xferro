@@ -7,60 +7,52 @@
 
 import Foundation
 
-struct DiffLine: Equatable
+struct DiffLine: Identifiable, Equatable
 {
+    var id: String {
+        type.rawValue.formatted() + "_\(offset)" + "_\(text)" + "_\(oldLine)" + "_\(newLine)"
+    }
     static func == (lhs: DiffLine, rhs: DiffLine) -> Bool {
-        let result = lhs.type == rhs.type
+        lhs.type == rhs.type
         && lhs.oldLine == rhs.oldLine
         && lhs.newLine == rhs.newLine
         && lhs.lineCount == rhs.lineCount
         && lhs.byteCount == rhs.byteCount
         && lhs.offset == rhs.offset
         && lhs.text == rhs.text
-        print(result)
-        return result
     }
     let gitDiffLine: git_diff_line
     var isSelected: Bool = false
-    var isPartSelected = true
 
     init(_ gitDiffLine: git_diff_line) {
         self.gitDiffLine = gitDiffLine
+        self.type = DiffLineType(rawValue: UInt32(gitDiffLine.origin))
+        self.oldLine = gitDiffLine.old_lineno
+        self.newLine = gitDiffLine.new_lineno
+        self.lineCount = gitDiffLine.num_lines
+        self.byteCount = gitDiffLine.content_len
+        self.offset = gitDiffLine.content_offset
+        self.isAdditionOrDeletion = self.type == .addition || self.type == .deletion
+        self.text = if let text = NSString(
+            bytes: gitDiffLine.content,
+            length: gitDiffLine.content_len,
+            encoding: String.Encoding.utf8.rawValue
+        ) as String? {
+            text.trimmingCharacters(in: .newlines)
+        } else {
+            ""
+        }
         self.isSelected = self.isAdditionOrDeletion
     }
 
-    var type: DiffLineType {
-        DiffLineType(rawValue: UInt32(gitDiffLine.origin))
-    }
-    var oldLine: Int32 {
-        gitDiffLine.old_lineno
-    }
-    var newLine: Int32 {
-        gitDiffLine.new_lineno
-    }
-    var lineCount: Int32 {
-        gitDiffLine.num_lines
-    }
-    var byteCount: Int {
-        gitDiffLine.content_len
-    }
-    var offset: Int64 {
-        gitDiffLine.content_offset
-    }
-
-    var isAdditionOrDeletion: Bool {
-        type == .addition || type == .deletion
-    }
-
-    var text: String {
-        if let text = NSString(bytes: gitDiffLine.content, length: gitDiffLine.content_len,
-                               encoding: String.Encoding.utf8.rawValue) as String? {
-            return text.trimmingCharacters(in: .newlines)
-        }
-        else {
-            return ""
-        }
-    }
+    let type: DiffLineType
+    let oldLine: Int32
+    let newLine: Int32
+    let lineCount: Int32
+    let byteCount: Int
+    let offset: Int64
+    let isAdditionOrDeletion: Bool
+    let text: String
 }
 
 struct DiffLineType: Equatable {

@@ -13,8 +13,63 @@ struct DiffHunk: Identifiable, Equatable
         (lhs.patch == rhs.patch) && (lhs.hunkIndex == rhs.hunkIndex)
     }
 
+    struct DiffHunkPart: Equatable {
+        enum DiffHunkPartType: Equatable {
+            case context([DiffLine])
+            case additionOrDeletion([DiffLine])
+        }
+        let type: DiffHunkPartType
+
+        init(type: DiffHunkPartType) {
+            self.type = type
+            self.lines = switch type {
+            case .context(let lines), .additionOrDeletion(let lines):
+                lines
+            }
+            self.isSelected = switch type {
+            case .context:
+                false
+            case .additionOrDeletion(let array):
+                array.allSatisfy { $0.isSelected }
+            }
+        }
+        let lines: [DiffLine]
+        let isSelected: Bool
+    }
+
+    var parts: [DiffHunkPart]
+
     var id: String {
         ObjectIdentifier(patch).debugDescription + "-\(hunkIndex)"
+    }
+
+    init(hunk: git_diff_hunk, hunkIndex: Int, patch: Patch) {
+        self.hunk = hunk
+        self.hunkIndex = hunkIndex
+        self.patch = patch
+        let lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
+        self.parts = []
+        var currentPart = DiffHunkPart.DiffHunkPartType.context([])
+        for index in 0..<lineCount {
+            let line = lineAtIndex(index)
+            switch currentPart {
+            case .context(let array):
+                if line.isAdditionOrDeletion {
+                    parts.append(DiffHunkPart(type: currentPart))
+                    currentPart = .additionOrDeletion([line])
+                } else {
+                    currentPart = .context(array + [line])
+                }
+            case .additionOrDeletion(let array):
+                if line.isAdditionOrDeletion {
+                    currentPart = .additionOrDeletion(array + [line])
+                } else {
+                    parts.append(DiffHunkPart(type: currentPart))
+                    currentPart = .context([line])
+                }
+            }
+        }
+        parts.append(DiffHunkPart(type: currentPart))
     }
 
     /// Applies just this hunk to the target text.
@@ -103,31 +158,7 @@ struct DiffHunk: Identifiable, Equatable
         Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
     }
 
-    private func isPreviousLineAdditionOrDeletion(_ lineIndex: Int) -> Bool {
-        var linePointer: UnsafePointer<git_diff_line>?
-        let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex - 1))
-
-        guard result == GIT_OK.rawValue, let linePointer else {
-            let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
-            fatalError(err.localizedDescription)
-        }
-        let type = DiffLineType(rawValue: UInt32(linePointer.pointee.origin))
-        return type == .deletion || type == .addition
-    }
-
-    private func isNextLineAdditionOrDeletion(_ lineIndex: Int) -> Bool {
-        var linePointer: UnsafePointer<git_diff_line>?
-        let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex + 1))
-
-        guard result == GIT_OK.rawValue, let linePointer else {
-            let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
-            fatalError(err.localizedDescription)
-        }
-        let type = DiffLineType(rawValue: UInt32(linePointer.pointee.origin))
-        return type == .deletion || type == .addition
-    }
-
-    func lineAtIndex(_ lineIndex: Int) -> DiffLine {
+    private func lineAtIndex(_ lineIndex: Int) -> DiffLine {
         var linePointer: UnsafePointer<git_diff_line>?
         let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex))
 
@@ -135,57 +166,7 @@ struct DiffHunk: Identifiable, Equatable
             let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
             fatalError(err.localizedDescription)
         }
-        var diffLine = DiffLine(linePointer.pointee)
-        if lineIndex == 0 {
-            if !diffLine.isAdditionOrDeletion {
-                diffLine.isPartSelected = false
-            } else {
-                diffLine.isPartSelected = true
-                if lineCount > 1 {
-                    var next = 1
-                    while next < lineCount {
-                        let nextLine = lineAtIndex(next)
-                        if nextLine.isAdditionOrDeletion {
-                            if !nextLine.isSelected {
-                                diffLine.isPartSelected = false
-                                break
-                            }
-                        }
-                        next += 1
-                    }
-                } else {
-                    diffLine.isPartSelected = true
-                }
-            }
-        } else {
-            if !diffLine.isAdditionOrDeletion {
-                diffLine.isPartSelected = false
-            }
-            let isPreviousLineAdditionOrDeletion = isPreviousLineAdditionOrDeletion(lineIndex)
-            if isPreviousLineAdditionOrDeletion {
-                diffLine.isPartSelected = false
-            } else if lineCount > lineIndex + 1, !isNextLineAdditionOrDeletion(lineIndex) {
-                diffLine.isPartSelected = false
-            } else {
-                diffLine.isPartSelected = true
-                if lineCount > lineIndex + 1 {
-                    var next = lineIndex + 1
-                    while next < lineCount {
-                        let nextLine = lineAtIndex(next)
-                        if nextLine.isAdditionOrDeletion {
-                            if !nextLine.isSelected {
-                                diffLine.isPartSelected = false
-                                break
-                            }
-                        }
-                        next += 1
-                    }
-                } else {
-                    diffLine.isPartSelected = true
-                }
-            }
-        }
-        return diffLine
+        return DiffLine(linePointer.pointee)
     }
 
     func enumerateLines(_ callback: (DiffLine) -> Void)

@@ -15,11 +15,9 @@ struct HunkView: View {
     }
 
     var body: some View {
-        print("hunk line count: \(hunk.lineCount)")
-        return LazyVStack(spacing: 0) {
-            ForEach(0..<hunk.lineCount, id: \.self) { index in
-                lineView(for: hunk.lineAtIndex(index))
-                    .padding(.horizontal, 4)
+        LazyVStack(spacing: 0) {
+            ForEach(hunk.parts.indices, id: \.self) { index in
+                lineView(for: hunk.parts[index])
             }
         }
         .padding(.vertical)
@@ -53,8 +51,8 @@ struct HunkView: View {
         }
     }
 
-    func checkmarkForPart(line: DiffLine) -> some View {
-        Text(line.isPartSelected ? "✓" : " ")
+    func checkmarkForLine(_ line: DiffLine, part: DiffHunk.DiffHunkPart) -> some View {
+        Text((part.isSelected && line == part.lines.first!) ? "✓" : " ")
             .monospaced()
             .opacity(line.isAdditionOrDeletion ? 1 : 0)
     }
@@ -65,7 +63,14 @@ struct HunkView: View {
             .opacity(line.isAdditionOrDeletion ? 1 : 0)
     }
 
-    func lineView(for line: DiffLine) -> some View {
+    func lineView(for part: DiffHunk.DiffHunkPart) -> some View {
+        ForEach(part.lines) { line in
+            lineView(for: line, part: part)
+                .padding(.horizontal, 4)
+        }
+    }
+
+    func lineView(for line: DiffLine, part: DiffHunk.DiffHunkPart) -> some View {
         ZStack(alignment: .leading) {
             color(for: line)
                 .frame(maxWidth: .infinity)
@@ -74,7 +79,7 @@ struct HunkView: View {
                 HStack(spacing: 0) {
                     HStack(spacing: 0) {
                         Spacer()
-                        checkmarkForPart(line: line)
+                        checkmarkForLine(line, part: part)
                         Divider()
                     }
                     .frame(width: 20)
