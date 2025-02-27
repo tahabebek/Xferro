@@ -31,6 +31,7 @@ struct ProjectView: View {
                             selectableItem: item,
                             deltaInfo: delta)
                         )
+                        .id("peekView-\(delta.id)")
                     } else {
                         VStack {
                             Spacer()

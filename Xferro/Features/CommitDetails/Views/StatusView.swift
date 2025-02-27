@@ -442,7 +442,7 @@ struct StatusView: View {
             Image(systemName: imageName).foregroundColor(color)
             Text(text)
                 .font(.body)
-//                .foregroundStyle(commitsViewModel.currentDeltaInfos[statusViewModel.selectableStatus.oid] == deltaInfo ? Color.accentColor : Color.fabulaFore1)
+                .foregroundStyle(commitsViewModel.currentDeltaInfos[statusViewModel.selectableStatus.oid] == deltaInfo ? Color.accentColor : Color.fabulaFore1)
             Spacer()
         }
     }

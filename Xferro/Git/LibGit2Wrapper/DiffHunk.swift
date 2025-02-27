@@ -11,11 +11,7 @@ import Observation
 @Observable final class DiffHunk: Identifiable, Equatable
 {
     static func == (lhs: DiffHunk, rhs: DiffHunk) -> Bool {
-        print(lhs.id)
-        print(rhs.id)
-        let result = lhs.id == rhs.id
-        print(result)
-        return result
+        lhs.id == rhs.id
     }
 
     var id: String {
