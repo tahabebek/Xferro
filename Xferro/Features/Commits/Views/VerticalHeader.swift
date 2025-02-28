@@ -22,7 +22,7 @@ struct VerticalHeader<Content>: View where Content: View {
             HStack {
                 Text("\(title)")
                     .font(.title2)
-                Spacer(minLength: 16)
+                Spacer(minLength: 8)
                 buttonsView()
             }
             HStack {

@@ -16,12 +16,12 @@ struct RepositoryView: View {
         case history = 3
     }
 
-    @Environment(CommitsViewModel.self) var commitsViewModel
+    let viewModel: CommitsViewModel
+    let repositoryInfo: RepositoryInfo
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
     @State private var isMinimized: Bool = false
     @Namespace private var animation
-    let repositoryInfo: RepositoryInfo
 
     var body: some View {
         Group {
@@ -46,8 +46,8 @@ struct RepositoryView: View {
             .padding(.horizontal)
             .padding(.bottom, !isCollapsed ? 8 : 0)
         }
-        .animation(.default, value: commitsViewModel.currentRepositoryInfos)
-        .animation(.default, value: commitsViewModel.currentSelectedItem)
+        .animation(.default, value: viewModel.currentRepositoryInfos)
+        .animation(.default, value: viewModel.currentSelectedItem)
         .animation(.default, value: repositoryInfo.detachedCommit)
         .animation(.default, value: repositoryInfo.detachedTag)
         .animation(.default, value: repositoryInfo.localBranchInfos)
@@ -101,7 +101,7 @@ struct RepositoryView: View {
     }
 
     @ViewBuilder private var label: some View {
-        if let currentRepository = commitsViewModel.currentSelectedItem?.repository.nameOfRepo,
+        if let currentRepository = viewModel.currentSelectedItem?.repository.nameOfRepo,
            currentRepository == repositoryInfo.repository.nameOfRepo
         {
             Label(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
@@ -114,7 +114,7 @@ struct RepositoryView: View {
     }
 
     @ViewBuilder private var smallLabel: some View {
-        if let currentRepository = commitsViewModel.currentSelectedItem?.repository.nameOfRepo,
+        if let currentRepository = viewModel.currentSelectedItem?.repository.nameOfRepo,
            currentRepository == repositoryInfo.repository.nameOfRepo
         {
             Text(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
@@ -146,7 +146,7 @@ struct RepositoryView: View {
                 .contentShape(Rectangle())
                 .hoverableButton("Remove Repository") {
                     withAnimation(.easeInOut) {
-                        commitsViewModel.deleteRepositoryButtonTapped(repositoryInfo.repository)
+                        viewModel.deleteRepositoryButtonTapped(repositoryInfo.repository)
                     }
                 }
             Image(systemName: "chevron.down")
@@ -222,6 +222,7 @@ struct RepositoryView: View {
         return VStack(spacing: 16) {
             if let detachedTag = repositoryInfo.detachedTag {
                 BranchView(
+                    viewModel: viewModel,
                     name: "Detached tag \(detachedTag.tag.tag.name)",
                     selectableCommits: detachedTag.commits,
                     selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
@@ -231,6 +232,7 @@ struct RepositoryView: View {
                 )
             } else if let detachedCommit = repositoryInfo.detachedCommit {
                 BranchView(
+                    viewModel: viewModel,
                     name: "Detached Commit",
                     selectableCommits: detachedCommit.commits,
                     selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
@@ -241,11 +243,12 @@ struct RepositoryView: View {
             }
             ForEach(repositoryInfo.localBranchInfos) { branchInfo in
                 BranchView(
+                    viewModel: viewModel,
                     name: branchInfo.branch.name,
                     selectableCommits: branchInfo.commits,
                     selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
                     isCurrent: (repositoryInfo.detachedTag != nil || repositoryInfo.detachedCommit != nil) ? false :
-                        commitsViewModel.isCurrentBranch(branchInfo.branch, head: repositoryInfo.head),
+                        viewModel.isCurrentBranch(branchInfo.branch, head: repositoryInfo.head),
                     isDetached: false,
                     branchCount: repositoryInfo.localBranchInfos.count
                 )
@@ -281,9 +284,9 @@ struct RepositoryView: View {
                         }
                         .frame(width: 80, height: 80)
                         .onTapGesture {
-                            commitsViewModel.userTapped(item: tagInfo.tag)
+                            viewModel.userTapped(item: tagInfo.tag)
                         }
-                        if commitsViewModel.isSelected(item: tagInfo.tag) {
+                        if viewModel.isSelected(item: tagInfo.tag) {
                             SelectedItemOverlay(width: 80, height: 80)
                         }
                     }
@@ -317,9 +320,9 @@ struct RepositoryView: View {
                         }
                         .frame(width: 80, height: 80)
                         .onTapGesture {
-                            commitsViewModel.userTapped(item: selectableStash)
+                            viewModel.userTapped(item: selectableStash)
                         }
-                        if commitsViewModel.isSelected(item: selectableStash) {
+                        if viewModel.isSelected(item: selectableStash) {
                             SelectedItemOverlay(width: 80, height: 80)
                         }
                     }

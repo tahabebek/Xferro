@@ -41,7 +41,7 @@ extension CommitsViewModel {
         )
         Task {
             await MainActor.run {
-                currentWipCommits = WipCommits(commits: wipCommits, item: selectedItem)
+                currentWipCommits = WipCommits(commits: wipCommits, item: selectedItem, autoCommitEnabled: autoCommitEnabled)
             }
         }
     }

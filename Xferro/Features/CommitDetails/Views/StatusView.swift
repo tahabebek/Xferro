@@ -29,8 +29,9 @@ struct StatusView: View {
         // TODO:
 //        case addCustom = "Add Custom"
     }
-    @Environment(CommitsViewModel.self) var commitsViewModel
-    @Environment(StatusViewModel.self) var statusViewModel
+    let commitsViewModel: CommitsViewModel
+    let statusViewModel: StatusViewModel
+    
     @Environment(DiscardPopup.self) var discardPopup
     @Environment(\.windowSize) var windowSize
     @State private var commitSummary = Dictionary<OID, String>()

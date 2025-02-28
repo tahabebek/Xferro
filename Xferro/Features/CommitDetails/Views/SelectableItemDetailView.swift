@@ -8,10 +8,12 @@
 import SwiftUI
 
 struct SelectableItemDetailView: View {
-    @Environment(DetailsViewModel.self) var viewModel
+    let commitsViewModel: CommitsViewModel
+    let detailsViewModel: DetailsViewModel
+
     var body: some View {
         VStack(spacing: 0) {
-            switch viewModel.detailInfo.type {
+            switch detailsViewModel.detailInfo.type {
             case .empty:
                 VStack {
                     Spacer()
@@ -34,8 +36,7 @@ struct SelectableItemDetailView: View {
             case .stash(let stash):
                 StashView()
             case .status(let selectableStatus):
-                StatusView()
-                    .environment(StatusViewModel(selectableStatus: selectableStatus))
+                StatusView(commitsViewModel: commitsViewModel, statusViewModel: StatusViewModel(selectableStatus: selectableStatus))
             }
             Spacer(minLength: 0)
         }

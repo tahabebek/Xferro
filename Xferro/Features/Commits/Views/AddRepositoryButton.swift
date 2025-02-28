@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AddRepositoryButton: View {
-    @Environment(CommitsViewModel.self) var viewModel
+    let viewModel: CommitsViewModel
     @State private var showFolderSelector: Bool = false
     var body: some View {
         Image(systemName: "plus")

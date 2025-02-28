@@ -8,7 +8,6 @@
 import Foundation
 
 extension CommitsViewModel {
-
     func getRepositoryInfo(_ repository: Repository) async -> RepositoryInfo {
         let newRepositoryInfo: RepositoryInfo = RepositoryInfo(
             repository: repository

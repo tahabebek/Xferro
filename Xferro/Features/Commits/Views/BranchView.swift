@@ -13,7 +13,7 @@ protocol BranchItem: SelectableItem {
 
 struct BranchView: View {
     static let commitNodeSize: CGFloat = 54
-    @Environment(CommitsViewModel.self) var viewModel
+    let viewModel: CommitsViewModel
     let name: String
     let selectableCommits: [any BranchItem]
     let selectableStatus: SelectableStatus

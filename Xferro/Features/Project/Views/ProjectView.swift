@@ -9,7 +9,7 @@ import AppKit
 import SwiftUI
 
 struct ProjectView: View {
-    @Environment(CommitsViewModel.self) var commitsViewModel
+    let commitsViewModel: CommitsViewModel
     @State private var recentered: Bool = true
     @State private var currentOffset: CGPoint = .zero
     @State private var zoomScale: CGFloat = 1.0
@@ -17,10 +17,10 @@ struct ProjectView: View {
     var body: some View {
         VStack(spacing: 0) {
             HSplitView {
-                CommitsView()
+                CommitsView(commitsViewModel: commitsViewModel)
                     .frame(maxWidth: Dimensions.commitsViewMaxWidth)
                     .frame(minWidth: 0)
-                SelectableItemDetailView()
+                SelectableItemDetailView(commitsViewModel: commitsViewModel, detailsViewModel: commitsViewModel.detailsViewModel)
                     .frame(maxWidth: Dimensions.commitDetailsViewMaxWidth)
                     .frame(minWidth: 0)
                     .environment(commitsViewModel.detailsViewModel)
