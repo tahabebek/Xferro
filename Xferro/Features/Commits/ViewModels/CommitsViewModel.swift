@@ -121,7 +121,6 @@ import OrderedCollections
                     }
                 }
                 detailsViewModel.detailInfo = currentDetailInfo!
-                print("detailInfo: \(String(describing: currentDetailInfo))")
             }
         }
     }
@@ -157,7 +156,6 @@ import OrderedCollections
                         currentDeltaInfo = currentDeltaInfos[item.oid]
                     }
                 }
-                print("deltaInfo: \(String(describing: currentDeltaInfo))")
             }
         }
     }
