@@ -15,15 +15,14 @@ struct PeekView: View {
             ForEach(hunks) { hunk in
                 Section {
                     HunkView(parts: hunk.parts)
-                        .listRowInsets(EdgeInsets())  // Remove row insets
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
                 }
                 .listSectionSeparator(.hidden)
             }
         }
-        .listStyle(PlainListStyle()) // Use plain style to remove default styling
-        .padding(0) // Remove padding
-        .scrollContentBackground(.hidden) // Hide the default background
-        // The following modifiers remove insets and extra padding
+        .listStyle(PlainListStyle())
+        .padding(0)
+        .scrollContentBackground(.hidden)
         .environment(\.defaultMinListRowHeight, 0)
         .environment(\.defaultMinListHeaderHeight, 0)
     }

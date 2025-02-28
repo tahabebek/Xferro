@@ -13,14 +13,43 @@ struct LineView: View {
     private static let hoveredLineBackgroundOpacity: CGFloat = 0.7
     private static let hoveredPartBackgroundOpacity: CGFloat = 0.7
 
-    let line: DiffLine
-    let part: DiffHunkPart
-    let isFirst: Bool
     @State private var hoveredLine: Int?
     @State private var partIsHovered: Bool = false
+    @State var isAdditionOrDeletion: Bool
+    @State private var hasSomeSelected: Bool
+    @State private var isLineSelected: Bool
+    @State private var isPartSelected: Bool
+    private let isFirst: Bool
+    private let indexInPart: Int
+    private let newLine: Int
+    private let oldLine: Int
+    private let text: String
+    private let lineType: DiffLineType
+    private let onTogglePart: () -> Void
+    private let onToggleLine: () -> Void
+
+    init(
+        line: DiffLine,
+        part: DiffHunkPart,
+        isFirst: Bool,
+        onTogglePart: @escaping () -> Void,
+        onToggleLine: @escaping () -> Void
+    ) {
+        self._isAdditionOrDeletion = State(initialValue: line.isAdditionOrDeletion)
+        self._isPartSelected = State(initialValue: part.isSelected)
+        self._hasSomeSelected = State(initialValue: part.hasSomeSelected)
+        self._isLineSelected = State(initialValue: line.isSelected)
+        self.isFirst = isFirst
+        self.indexInPart = line.indexInPart
+        self.newLine = Int(line.newLine)
+        self.oldLine = Int(line.oldLine)
+        self.text = line.text
+        self.lineType = line.type
+        self.onToggleLine = onToggleLine
+        self.onTogglePart = onTogglePart
+    }
 
     var body: some View {
-        let _ = Self._printChanges()
         ZStack(alignment: .leading) {
             HStack(spacing: 0) {
                 HStack {
@@ -28,26 +57,26 @@ struct LineView: View {
                         // Select/Unselect all box
                         HStack(spacing: 0) {
                             Spacer(minLength: 0)
-                            checkmarkForPart(line: line)
+                            checkmarkForPart()
                             Spacer(minLength: 0)
                             Divider()
                         }
                         .frame(width: 20)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            if line.isAdditionOrDeletion {
-                                part.toggle()
+                            if isAdditionOrDeletion {
+                                onTogglePart()
                             }
                         }
                         .background {
-                            if line.isAdditionOrDeletion {
-                                if part.hasSomeSelected {
+                            if isAdditionOrDeletion {
+                                if hasSomeSelected {
                                     Color.accentColor.opacity(Self.hoveredPartBackgroundOpacity)
                                 } else {
-                                    if let hoveredLine, hoveredLine == line.indexInPart {
-                                        color(line: line).opacity(Self.hoveredPartBackgroundOpacity)
+                                    if let hoveredLine, hoveredLine == indexInPart {
+                                        color().opacity(Self.hoveredPartBackgroundOpacity)
                                     } else {
-                                        color(line: line).opacity(Self.backgroundOpacity)
+                                        color().opacity(Self.backgroundOpacity)
                                     }
                                 }
                             }
@@ -60,7 +89,7 @@ struct LineView: View {
                             // Select line box
                             HStack(spacing: 0) {
                                 Spacer(minLength: 0)
-                                checkmarkForLine(line: line)
+                                checkmarkForLine()
                                 Spacer(minLength: 0)
                                 Divider()
                             }
@@ -70,7 +99,7 @@ struct LineView: View {
                             // Old line number box
                             HStack(spacing: 0) {
                                 Spacer()
-                                Text(lineNumber(line.oldLine))
+                                Text(lineNumber(oldLine))
                                     .padding(.trailing, 2)
                                 Divider()
                             }
@@ -79,7 +108,7 @@ struct LineView: View {
                             // New line number box
                             HStack(spacing: 0) {
                                 Spacer()
-                                Text(lineNumber(line.newLine))
+                                Text(lineNumber(newLine))
                                     .padding(.trailing, 2)
                                 Divider()
                             }
@@ -87,18 +116,18 @@ struct LineView: View {
                         }
                         .onHover { flag in
                             if flag {
-                                hoveredLine = line.indexInPart
+                                hoveredLine = indexInPart
                             } else {
                                 hoveredLine = nil
                             }
                         }
                         .onTapGesture {
-                            if line.isAdditionOrDeletion {
-                                part.toggleLine(line: line)
+                            if isAdditionOrDeletion {
+                                onToggleLine()
                             }
                         }
                         .background {
-                            backgroundForSelectionBox(line: line)
+                            backgroundForSelectionBox()
                         }
                     }
                 }
@@ -107,10 +136,10 @@ struct LineView: View {
                 .frame(height: 20)
                 .minimumScaleFactor(0.75)
                 ZStack(alignment: .leading) {
-                    color(line: line).opacity(Self.backgroundOpacity)
+                    color().opacity(Self.backgroundOpacity)
                         .frame(maxWidth: .infinity)
                         .frame(height: 20)
-                    Text(line.text)
+                    Text(text)
                         .font(.body)
                         .frame(height: 20)
                         .padding(.leading, 8)
@@ -121,35 +150,35 @@ struct LineView: View {
         .frame(height: 20)
     }
 
-    func checkmarkForLine(line: DiffLine) -> some View {
-        Text(line.isSelected ? "✓" : " ")
+    func checkmarkForLine() -> some View {
+        Text(isLineSelected ? "✓" : " ")
             .monospaced()
-            .opacity(line.isAdditionOrDeletion ? 1 : 0)
+            .opacity(isAdditionOrDeletion ? 1 : 0)
     }
 
-    func backgroundForSelectionBox(line: DiffLine) -> some View {
-        if line.isSelected {
-            if (hoveredLine != nil && hoveredLine! == line.indexInPart) ||
+    func backgroundForSelectionBox() -> some View {
+        if isLineSelected {
+            if (hoveredLine != nil && hoveredLine! == indexInPart) ||
                 partIsHovered {
                 Color.accentColor.opacity(Self.hoveredLineBackgroundOpacity)
             } else {
                 Color.accentColor.opacity(Self.selectedLineBackgroundOpacity)
             }
         } else {
-            if (hoveredLine != nil && hoveredLine! == line.indexInPart) ||
+            if (hoveredLine != nil && hoveredLine! == indexInPart) ||
                 partIsHovered {
-                color(line: line).opacity(Self.hoveredLineBackgroundOpacity)
+                color().opacity(Self.hoveredLineBackgroundOpacity)
             } else {
-                color(line: line).opacity(Self.backgroundOpacity)
+                color().opacity(Self.backgroundOpacity)
             }
         }
     }
 
-    func checkmarkForPart(line: DiffLine) -> some View {
+    func checkmarkForPart() -> some View {
         let string: String = if isFirst {
-            if part.isSelected {
+            if isPartSelected {
                 "✓"
-            } else if part.hasSomeSelected {
+            } else if hasSomeSelected {
                 "-"
             } else {
                 " "
@@ -159,11 +188,11 @@ struct LineView: View {
         }
         return Text(string)
             .monospaced()
-            .opacity(line.isAdditionOrDeletion ? 1 : 0)
+            .opacity(isAdditionOrDeletion ? 1 : 0)
     }
 
-    func padding(for line: DiffLine) -> CGFloat {
-        switch line.type {
+    func padding() -> CGFloat {
+        switch lineType {
         case .addition, .deletion:
             2.0
         default:
@@ -171,12 +200,12 @@ struct LineView: View {
         }
     }
 
-    func lineNumber(_ line: Int32) -> String {
+    func lineNumber(_ line: Int) -> String {
         line == -1 ? "" : line.formatted()
     }
 
-    func color(line: DiffLine) -> Color {
-        switch line.type {
+    func color() -> Color {
+        switch lineType {
         case .addition:
             Color(hex: 0x28A745)
         case .deletion:

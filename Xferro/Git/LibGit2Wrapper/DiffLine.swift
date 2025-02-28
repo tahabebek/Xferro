@@ -11,7 +11,7 @@ import Observation
 @Observable class DiffLine: Identifiable, Equatable
 {
     var id: String {
-        type.rawValue.formatted() + "\(oldLine).\(newLine).\(isSelected)"
+        type.rawValue.formatted() + "\(oldLine).\(newLine).\(isSelected).\(indexInPart)"
     }
     static func == (lhs: DiffLine, rhs: DiffLine) -> Bool {
         lhs.id == rhs.id

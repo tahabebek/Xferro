@@ -10,12 +10,7 @@ import Foundation
 import Observation
 import OrderedCollections
 
-@Observable class CommitsViewModel {
-    struct CurrentWipCommits {
-        let commits: [SelectableWipCommit]
-        let item: SelectedItem
-    }
-    
+@Observable final class CommitsViewModel {
     var autoCommitEnabled: Bool {
         didSet {
             UserDefaults.standard.set(autoCommitEnabled, forKey: "autoCommitEnabled")
@@ -36,7 +31,7 @@ import OrderedCollections
         updateDetailInfoAndPeekInfo()
     }
     
-    var currentWipCommits: CurrentWipCommits?
+    var currentWipCommits: WipCommits?
     var currentDetailInfo: DetailInfo?
     var currentDeltaInfo: DeltaInfo?
     private(set) var currentDeltaInfos = Dictionary<OID, DeltaInfo>()

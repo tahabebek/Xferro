@@ -42,30 +42,33 @@ import Observation
         self.filePath = filePath
         let lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
         self.parts = []
-        var currentPart = DiffHunkPart.DiffHunkPartType.context([])
+        var currentLines: [DiffLine] = []
+        var currentPartType = DiffHunkPart.DiffHunkPartType.context
         var partIndex = 0
         for index in 0..<lineCount {
             let line = lineAtIndex(index)
-            switch currentPart {
-            case .context(let array):
+            switch currentPartType {
+            case .context:
                 if line.isAdditionOrDeletion {
-                    parts.append(DiffHunkPart(type: currentPart, indexInHunk: partIndex, filePath: filePath))
+                    parts.append(DiffHunkPart(type: currentPartType, lines: currentLines, indexInHunk: partIndex, filePath: filePath))
                     partIndex += 1
-                    currentPart = .additionOrDeletion([line])
+                    currentPartType = .additionOrDeletion
+                    currentLines = [line]
                 } else {
-                    currentPart = .context(array + [line])
+                    currentLines += [line]
                 }
-            case .additionOrDeletion(let array):
+            case .additionOrDeletion:
                 if line.isAdditionOrDeletion {
-                    currentPart = .additionOrDeletion(array + [line])
+                    currentLines += [line]
                 } else {
-                    parts.append(DiffHunkPart(type: currentPart, indexInHunk: partIndex, filePath: filePath))
+                    parts.append(DiffHunkPart(type: currentPartType, lines: currentLines, indexInHunk: partIndex, filePath: filePath))
                     partIndex += 1
-                    currentPart = .context([line])
+                    currentPartType = .context
+                    currentLines = [line]
                 }
             }
         }
-        parts.append(DiffHunkPart(type: currentPart, indexInHunk: partIndex, filePath: filePath))
+        parts.append(DiffHunkPart(type: currentPartType, lines: currentLines, indexInHunk: partIndex, filePath: filePath))
     }
 
     /// Applies just this hunk to the target text.

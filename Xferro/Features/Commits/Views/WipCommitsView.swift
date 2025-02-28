@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct WipCommitsView: View {
-    @Environment(CommitsViewModel.self) var viewModel
+    let wipCommits: WipCommits?
+    let onUserTapped: (SelectableWipCommit) -> Void
+    let isSelectedItem: (SelectableWipCommit) -> Bool
+
     let columns = [
         GridItem(.adaptive(minimum: 16, maximum: 16))
     ]
@@ -21,18 +24,18 @@ struct WipCommitsView: View {
         } content: {
             Group {
                 VStack(spacing: 8) {
-                    if let currentWipCommits = viewModel.currentWipCommits {
+                    if let wipCommits, wipCommits.isNotEmpty {
                         HStack {
-                            Text(currentWipCommits.item.selectableItem.wipDescription)
+                            Text(wipCommits.item.selectableItem.wipDescription)
                                 .lineLimit(2)
                             Spacer()
                         }
                         LazyVGrid(columns: columns) {
-                            ForEach(currentWipCommits.commits) { selectableWipCommit in
+                            ForEach(wipCommits.commits) { selectableWipCommit in
                                 wipRectangle(item: selectableWipCommit)
                             }
                         }
-                        .animation(.snappy, value: currentWipCommits.commits)
+                        .animation(.snappy, value: wipCommits.commits)
                     } else {
                         HStack {
                             Text("No history")
@@ -61,9 +64,9 @@ struct WipCommitsView: View {
                         .font(.system(size: 8))
                 )
                 .onTapGesture {
-                    viewModel.userTapped(item: item)
+                    onUserTapped(item)
                 }
-            if viewModel.isSelected(item: item) {
+            if isSelectedItem(item) {
                 SelectedItemOverlay(width: 16, height: 16, cornerRadius: 1)
             }
         }

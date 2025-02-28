@@ -27,14 +27,14 @@ import Foundation
                 "additionOrDeletion"
             }
         }
-        case context([DiffLine])
-        case additionOrDeletion([DiffLine])
+        case context
+        case additionOrDeletion
     }
     private var type: DiffHunkPartType
     let indexInHunk: Int
     let filePath: String
 
-    init(type: DiffHunkPartType, indexInHunk: Int, filePath: String) {
+    init(type: DiffHunkPartType, lines: [DiffLine], indexInHunk: Int, filePath: String) {
         self.type = type
         self.indexInHunk = indexInHunk
         let isSelected = switch type {
@@ -46,10 +46,7 @@ import Foundation
         self.isSelected = isSelected
         self.hasSomeSelected = isSelected
 
-        self.lines = switch type {
-        case .context(let lines), .additionOrDeletion(let lines):
-            lines
-        }
+        self.lines = lines
         self.filePath = filePath
         for i in self.lines.indices {
             self.lines[i].indexInPart = i
@@ -60,25 +57,18 @@ import Foundation
     var hasSomeSelected: Bool
 
     func toggleLine(line: DiffLine) {
-        switch type {
-        case .context:
-            break
-        case .additionOrDeletion(let lines):
-            let linesCopy = lines
-            guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
-            linesCopy[lineIndex].isSelected.toggle()
-            type = .additionOrDeletion(linesCopy)
-            refreshSelectedStatus()
+        if case .context = type {
+            fatalError(.invalid)
         }
+        line.isSelected.toggle()
+        refreshSelectedStatus()
     }
 
     private func selectLine(line: DiffLine, flag: Bool) {
-        if case .additionOrDeletion(let lines) = type {
-            let linesCopy = lines
-            guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
-            linesCopy[lineIndex].isSelected = flag
-            type = .additionOrDeletion(linesCopy)
+        if case .context = type {
+            fatalError(.invalid)
         }
+        line.isSelected = flag
     }
 
     func toggle() {
@@ -89,13 +79,10 @@ import Foundation
     }
 
     func refreshSelectedStatus() {
-        if case .additionOrDeletion(let lines) = type {
-            self.lines = lines
-            isSelected = lines.allSatisfy(\.isSelected)
-            hasSomeSelected = lines.contains(where: \.isSelected)
-            for i in self.lines.indices {
-                self.lines[i].indexInPart = i
-            }
+        if case .context = type {
+            fatalError(.invalid)
         }
+        hasSomeSelected = lines.contains(where: \.isSelected)
+        isSelected = lines.allSatisfy(\.isSelected)
     }
-    }
+}

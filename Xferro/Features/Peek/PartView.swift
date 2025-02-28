@@ -10,9 +10,18 @@ import SwiftUI
 struct PartView: View {
     let part: DiffHunkPart
     var body: some View {
-        ForEach(part.lines.indices, id: \.self) { index in
-            LineView(line: part.lines[index], part: part, isFirst: index == 0)
-                .padding(.horizontal, 4)
+        ForEach(part.lines) { line in
+            LineView(
+                line: line,
+                part: part,
+                isFirst: line.indexInPart == 0,
+                onTogglePart: {
+                    part.toggle()
+                }, onToggleLine: {
+                    part.toggleLine(line: line)
+                }
+            )
+            .padding(.horizontal, 4)
         }
     }
 }
