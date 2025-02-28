@@ -21,23 +21,26 @@ import OrderedCollections
     private(set) var currentSelectedItem: SelectedItem?
 
     func setCurrentSelectedItem(_ selectedItem: SelectedItem?) {
+        guard currentSelectedItem != selectedItem else { return }
         user.lastSelectedRepositoryPath = selectedItem?.repository.gitDir.path
         if let selectedItem {
             getWipCommits(selectedItem: selectedItem)
         } else {
             getWipCommits(selectedItem: nil)
         }
+        updateDetailInfo(selectedItem: selectedItem)
+        updateDeltaInfo(selectedItem: selectedItem)
         currentSelectedItem = selectedItem
-        updateDetailInfoAndPeekInfo()
     }
     
     var currentWipCommits: WipCommits?
     var currentDetailInfo: DetailInfo?
     var currentDeltaInfo: DeltaInfo?
     private(set) var currentDeltaInfos = Dictionary<OID, DeltaInfo>()
+
     func setCurrentDeltaInfo(oid: OID, deltaInfo: DeltaInfo) {
         currentDeltaInfos[oid] = deltaInfo
-        updateDetailInfoAndPeekInfo()
+        updateDeltaInfo(selectedItem: currentSelectedItem)
     }
 
     let detailsViewModel = DetailsViewModel(detailInfo: DetailInfo(type: .empty))
@@ -81,39 +84,32 @@ import OrderedCollections
         }
     }
 
-    func updateDetailInfoAndPeekInfo() {
+    func updateDetailInfo(selectedItem: SelectedItem?) {
+        guard selectedItem != currentSelectedItem else { return }
         Task {
             await MainActor.run {
-                guard let currentSelectedItem else {
+                guard let selectedItem else {
                     currentDetailInfo = nil
                     detailsViewModel.detailInfo = DetailInfo(type: .empty)
-                    currentDeltaInfo = nil
                     return
                 }
-                switch currentSelectedItem.selectedItemType {
+                switch selectedItem.selectedItemType {
                 case .regular(let type):
                     switch type {
                     case .stash(let item):
                         currentDetailInfo = DetailInfo(type: .stash(item))
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .status(let item):
                         currentDetailInfo = DetailInfo(type: .status(item))
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .commit(let item):
                         currentDetailInfo = DetailInfo(type: .commit(item))
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .detachedCommit(let item):
                         currentDetailInfo = DetailInfo(type: .detachedCommit(item))
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .detachedTag(let item):
                         currentDetailInfo = DetailInfo(type: .detachedTag(item))
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .tag(let item):
                         currentDetailInfo = DetailInfo(type: .tag(item))
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     case .historyCommit(let item):
                         currentDetailInfo = DetailInfo(type: .historyCommit(item))
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     }
                 case .wip(let wip):
                     switch wip {
@@ -122,10 +118,46 @@ import OrderedCollections
                             fatalError(.impossible)
                         }
                         currentDetailInfo = DetailInfo(type: .wipCommit(item, worktree))
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
                     }
                 }
                 detailsViewModel.detailInfo = currentDetailInfo!
+                print("detailInfo: \(String(describing: currentDetailInfo))")
+            }
+        }
+    }
+
+    func updateDeltaInfo(selectedItem: SelectedItem?) {
+        Task {
+            await MainActor.run {
+                guard let selectedItem else {
+                    currentDeltaInfo = nil
+                    return
+                }
+                switch selectedItem.selectedItemType {
+                case .regular(let type):
+                    switch type {
+                    case .stash(let item):
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
+                    case .status(let item):
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
+                    case .commit(let item):
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
+                    case .detachedCommit(let item):
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
+                    case .detachedTag(let item):
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
+                    case .tag(let item):
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
+                    case .historyCommit(let item):
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
+                    }
+                case .wip(let wip):
+                    switch wip {
+                    case .wipCommit(let item):
+                        currentDeltaInfo = currentDeltaInfos[item.oid]
+                    }
+                }
+                print("deltaInfo: \(String(describing: currentDeltaInfo))")
             }
         }
     }

@@ -8,8 +8,15 @@
 import SwiftUI
 
 struct SelectableItemDetailView: View {
-    let commitsViewModel: CommitsViewModel
     let detailsViewModel: DetailsViewModel
+    let getDeltaInfo: (OID) -> DeltaInfo?
+    let setDeltaInfo: (OID, DeltaInfo) -> Void
+    let discardTapped: (Repository, [URL]) -> Void
+    let commitTapped: (Repository, String) -> Void
+    let amendTapped: (Repository, String?) -> Void
+    let stageAllTapped: (Repository) -> Void
+    let stageOrUnstageTapped: (Bool, Repository, [DeltaInfo]) -> Void
+    let ignoreTapped: (Repository, DeltaInfo) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,7 +43,17 @@ struct SelectableItemDetailView: View {
             case .stash(let stash):
                 StashView()
             case .status(let selectableStatus):
-                StatusView(commitsViewModel: commitsViewModel, statusViewModel: StatusViewModel(selectableStatus: selectableStatus))
+                StatusView(
+                    statusViewModel: StatusViewModel(selectableStatus: selectableStatus),
+                    getDeltaInfo: getDeltaInfo,
+                    setDeltaInfo: setDeltaInfo,
+                    discardTapped: discardTapped,
+                    commitTapped: commitTapped,
+                    amendTapped: amendTapped,
+                    stageAllTapped: stageAllTapped,
+                    stageOrUnstageTapped: stageOrUnstageTapped,
+                    ignoreTapped: ignoreTapped
+                )
             }
             Spacer(minLength: 0)
         }

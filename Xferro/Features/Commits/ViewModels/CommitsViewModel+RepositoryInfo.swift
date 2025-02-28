@@ -31,8 +31,17 @@ extension CommitsViewModel {
                                 }
                             }
                         }
-                    case .index:
-                        self.updateDetailInfoAndPeekInfo()
+                    case .index(let repositoryInfo):
+                        if let currentSelectedItem {
+                            if case .regular(let item) = currentSelectedItem.selectedItemType {
+                                if case .status(let selectableStatus) = item {
+                                    if selectableStatus.repository.gitDir.path == repositoryInfo.repository.gitDir.path {
+                                        let selectedItem = SelectedItem(selectedItemType: .regular(.status(SelectableStatus(repositoryInfo: repositoryInfo))))
+                                        self.setCurrentSelectedItem(selectedItem)
+                                    }
+                                }
+                            }
+                        }
                     case .localBranches(let repositoryInfo):
                         repositoryInfo.localBranchInfos = self.localBranchInfos(of: repositoryInfo)
                     case .remoteBranches(let repositoryInfo):

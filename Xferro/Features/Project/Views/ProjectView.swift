@@ -20,7 +20,23 @@ struct ProjectView: View {
                 CommitsView(commitsViewModel: commitsViewModel)
                     .frame(maxWidth: Dimensions.commitsViewMaxWidth)
                     .frame(minWidth: 0)
-                SelectableItemDetailView(commitsViewModel: commitsViewModel, detailsViewModel: commitsViewModel.detailsViewModel)
+                SelectableItemDetailView(detailsViewModel: commitsViewModel.detailsViewModel) {
+                    commitsViewModel.currentDeltaInfos[$0]
+                } setDeltaInfo: { oid, deltaInfo in
+                    commitsViewModel.setCurrentDeltaInfo(oid: oid, deltaInfo: deltaInfo)
+                } discardTapped: { repository, fileURLs in
+                    commitsViewModel.discardFileButtonTapped(repository: repository, fileURLs: fileURLs)
+                } commitTapped: { repository, message in
+                    commitsViewModel.commitTapped(repository: repository, message: message)
+                } amendTapped: { Repository, message in
+                    commitsViewModel.amendTapped(repository: Repository, message: message)
+                } stageAllTapped: { repository in
+                    commitsViewModel.stageAllButtonTapped(repository: repository)
+                } stageOrUnstageTapped: { flag, repository, deltaInfos in
+                    commitsViewModel.stageOrUnstageButtonTapped(stage: flag, repository: repository, deltaInfos: deltaInfos)
+                } ignoreTapped: { repository, deltaInfo in
+                    commitsViewModel.ignoreButtonTapped(repository: repository, deltaInfo: deltaInfo)
+                }
                     .frame(maxWidth: Dimensions.commitDetailsViewMaxWidth)
                     .frame(minWidth: 0)
                     .environment(commitsViewModel.detailsViewModel)

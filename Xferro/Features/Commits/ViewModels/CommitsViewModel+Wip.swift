@@ -139,7 +139,6 @@ extension CommitsViewModel {
             if isHead {
                 Task {
                     await MainActor.run {
-                        updateDetailInfoAndPeekInfo()
                         getWipCommits(selectedItem: currentSelectedItem)
                     }
                 }
