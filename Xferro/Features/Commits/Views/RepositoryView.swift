@@ -19,9 +19,9 @@ struct RepositoryView: View {
     @Environment(CommitsViewModel.self) var commitsViewModel
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
-    @State var isMinimized: Bool = false
+    @State private var isMinimized: Bool = false
     @Namespace private var animation
-    @State var repositoryInfo: RepositoryInfo
+    let repositoryInfo: RepositoryInfo
 
     var body: some View {
         Group {

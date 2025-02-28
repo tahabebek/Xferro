@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct FolderPickerView: View {
+    let viewModel: FolderPickerViewModel
     @State private var showFolderSelector = false
-    @State var viewModel: FolderPickerViewModel
 
     var body: some View {
         VStack(spacing: 24) {

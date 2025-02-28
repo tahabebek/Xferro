@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ForgotPasswordView: View {
-    @State var viewModel: ForgotPasswordViewModel
+    @Bindable var viewModel: ForgotPasswordViewModel
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
 

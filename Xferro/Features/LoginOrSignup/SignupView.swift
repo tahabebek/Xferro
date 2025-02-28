@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SignupView: View {
-    @State var viewModel: SignupViewModel
+    @Bindable var viewModel: SignupViewModel
     @State private var isSecured = true
     @State private var triedSignup = false
     @FocusState private var isNameFocused: Bool

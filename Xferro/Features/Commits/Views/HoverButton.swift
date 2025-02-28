@@ -9,7 +9,7 @@ import SwiftUI
 
 struct HoverButton: ViewModifier {
     @State private var isHovering = false
-    @State var hoverTask: Task<Void, Never>?
+    @State private var hoverTask: Task<Void, Never>?
     let hoverText: String
     let action: (() -> Void)?
 

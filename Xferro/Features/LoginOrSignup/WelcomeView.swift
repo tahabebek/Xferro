@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct WelcomeView: View {
-    @State var viewModel: WelcomeViewModel
+    let viewModel: WelcomeViewModel
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {

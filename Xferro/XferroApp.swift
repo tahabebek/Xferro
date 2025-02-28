@@ -25,7 +25,7 @@ struct SwiftSpaceApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var welcomeViewModel = WelcomeViewModel()
     @State private var discardPopup = DiscardPopup()
-    @State var users: Users? = DataManager.load(Users.self, filename: DataManager.usersFileName)
+    @State private var users: Users? = DataManager.load(Users.self, filename: DataManager.usersFileName)
     private let screenDimensions = NSScreen.main?.visibleFrame.size
 
     var body: some Scene {

@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftUI
 
 struct LoginView: View {
-    @State var viewModel: LoginViewModel
+    @Bindable var viewModel: LoginViewModel
     @State private var isSecured = true
 
     var body: some View {

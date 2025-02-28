@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct IdentityView: View {
-    @State var viewModel: IdentityViewModel
+    @Bindable var viewModel: IdentityViewModel
     @FocusState private var isNameFocused: Bool
 
     var body: some View {

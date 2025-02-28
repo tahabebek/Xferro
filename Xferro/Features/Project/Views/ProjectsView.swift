@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct ProjectsView: View {
-    @State var viewModel: ProjectsViewModel
-    @State var folderPickerViewModel = FolderPickerViewModel()
+    let viewModel: ProjectsViewModel
+    let folderPickerViewModel = FolderPickerViewModel()
 
     var body: some View {
         VStack {

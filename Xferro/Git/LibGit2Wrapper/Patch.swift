@@ -132,13 +132,13 @@ final class Patch: Equatable, Identifiable
         return result
     }
 
-    func hunk(at index: Int) -> DiffHunk?
+    func hunk(at index: Int, filePath: String) -> DiffHunk?
     {
         guard let hunk: UnsafePointer<git_diff_hunk> = try? .from({
             git_patch_get_hunk(&$0, nil, patch, index)
         })
         else { return nil }
 
-        return .init(hunk: hunk.pointee, hunkIndex: index, patch: self)
+        return .init(hunk: hunk.pointee, hunkIndex: index, patch: self, filePath: filePath)
     }
 }

@@ -10,9 +10,9 @@ import SwiftUI
 
 struct ProjectView: View {
     @Environment(CommitsViewModel.self) var commitsViewModel
-    @State var recentered: Bool = true
-    @State var currentOffset: CGPoint = .zero
-    @State var zoomScale: CGFloat = 1.0
+    @State private var recentered: Bool = true
+    @State private var currentOffset: CGPoint = .zero
+    @State private var zoomScale: CGFloat = 1.0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,27 +24,10 @@ struct ProjectView: View {
                     .frame(maxWidth: Dimensions.commitDetailsViewMaxWidth)
                     .frame(minWidth: 0)
                     .environment(commitsViewModel.detailsViewModel)
-                Group {
-                    if let item = commitsViewModel.currentSelectedItem?.selectableItem,
-                       let delta = commitsViewModel.currentDeltaInfo {
-                        PeekView(peekViewModel: PeekViewModel(
-                            selectableItem: item,
-                            deltaInfo: delta)
-                        )
-                        .id("peekView-\(delta.id)")
-                    } else {
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Spacer()
-                                Text("No changes found")
-                                    .padding()
-                                Spacer()
-                            }
-                            Spacer()
-                        }
-                    }
-                }
+                PeekView(hunks: HunkFactory.makeHunks(
+                    selectableItem: commitsViewModel.currentSelectedItem?.selectableItem,
+                    deltaInfo: commitsViewModel.currentDeltaInfo)
+                )
                 .frame(idealWidth: .infinity)
             }
         }

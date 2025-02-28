@@ -33,19 +33,19 @@ struct StatusView: View {
     @Environment(StatusViewModel.self) var statusViewModel
     @Environment(DiscardPopup.self) var discardPopup
     @Environment(\.windowSize) var windowSize
-    @State var commitSummary = Dictionary<OID, String>()
-    @FocusState var isTextFieldFocused: Bool
-    @State var discardDeltaInfo: DeltaInfo? = nil
-    @State var horizontalAlignment: HorizontalAlignment = .leading
-    @State var verticalAlignment: VerticalAlignment = .top
-    @State var boxActions: [Action] = BoxActions.allCases.map(\.rawValue).map(Action.init)
+    @State private var commitSummary = Dictionary<OID, String>()
+    @FocusState private var isTextFieldFocused: Bool
+    @State private var discardDeltaInfo: DeltaInfo? = nil
+    @State private var horizontalAlignment: HorizontalAlignment = .leading
+    @State private var verticalAlignment: VerticalAlignment = .top
+    @State private var boxActions: [Action] = BoxActions.allCases.map(\.rawValue).map(Action.init)
     @State private var actionBoxHeight: CGFloat = 0
     @State private var messageBoxHeight: CGFloat = 0
 
-    static let actionBoxBottomPadding: CGFloat = 4
-    static let actionBoxVerticalInnerPadding: CGFloat = 16
+    private static let actionBoxBottomPadding: CGFloat = 4
+    private static let actionBoxVerticalInnerPadding: CGFloat = 16
 
-    static var totalVerticalPadding: CGFloat {
+    private static var totalVerticalPadding: CGFloat {
         Self.actionBoxBottomPadding * 2 + Self.actionBoxVerticalInnerPadding * 2
     }
     var body: some View {
@@ -332,8 +332,8 @@ struct StatusView: View {
     }
 
     @ViewBuilder private func rowForDeltaInfo(_ deltaInfo: DeltaInfo) -> some View {
-        let oldFileName = deltaInfo.oldFilePath
-        let newFileName = deltaInfo.newFilePath
+        let oldFileName = deltaInfo.oldFileURL?.lastPathComponent
+        let newFileName = deltaInfo.newFileURL?.lastPathComponent
         Group {
             switch deltaInfo.delta.status {
             case .unmodified:
@@ -447,3 +447,233 @@ struct StatusView: View {
         }
     }
 }
+
+// ActionBox
+extension StatusView {
+    func commitButton(_ title: String) -> some View {
+        AnyView.buttonWith(
+            title: title,
+            disabled: commitSummaryIsEmptyOrWhitespace || statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
+                guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                    fatalError(.impossible)
+                }
+                commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
+                commitSummary[statusViewModel.selectableStatus.oid] = nil
+                isTextFieldFocused = false
+            }
+    }
+    func splitAndCommitButton(_ title: String) -> some View {
+        AnyView.buttonWith(
+            title: title,
+            disabled: !hasChanges) {
+                guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                    fatalError(.impossible)
+                }
+                commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
+                commitSummary[statusViewModel.selectableStatus.oid] = nil
+                isTextFieldFocused = false
+            }
+    }
+    func amendButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
+            commitsViewModel.amendTapped(
+                repository: statusViewModel.repository,
+                message: commitSummary[statusViewModel.selectableStatus.oid]
+            )
+        }
+    }
+    func stageAllAndCommitButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges) {
+            guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                fatalError(.impossible)
+            }
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            isTextFieldFocused = false
+        }
+    }
+    func stageAllAndAmendButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.amendTapped(
+                repository: statusViewModel.repository,
+                message: commitSummary[statusViewModel.selectableStatus.oid]
+            )
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            isTextFieldFocused = false
+        }
+    }
+    func stageAllCommitAndPushButton(_ title: String) -> some View {
+        AnyView.buttonWith(
+            title: title,
+            disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges
+        ) {
+            guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                fatalError(.impossible)
+            }
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            isTextFieldFocused = false
+            fatalError(.unimplemented)
+        }
+    }
+    func stageAllCommitAndForcePushButton(_ title: String) -> some View {
+        AnyView.buttonWith(
+            title: title,
+            disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges,
+            dangerous: true
+        ) {
+            guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                fatalError(.impossible)
+            }
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.commitTapped(repository: statusViewModel.repository, message: message)
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            isTextFieldFocused = false
+            fatalError(.unimplemented)
+        }
+    }
+    func stageAllAmendAndPushButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.amendTapped(
+                repository: statusViewModel.repository,
+                message: commitSummary[statusViewModel.selectableStatus.oid]
+            )
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            isTextFieldFocused = false
+            fatalError(.unimplemented)
+        }
+    }
+    func stageAllAmendAndForcePushButton(_ title: String) -> some View {
+        AnyView.buttonWith(
+            title: title,
+            disabled: !hasChanges,
+            dangerous: true
+        ) {
+            commitsViewModel.stageAllButtonTapped(repository: statusViewModel.repository)
+            commitsViewModel.amendTapped(
+                repository: statusViewModel.repository,
+                message: commitSummary[statusViewModel.selectableStatus.oid]
+            )
+            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            isTextFieldFocused = false
+            fatalError(.unimplemented)
+        }
+    }
+    func pushStashButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
+            fatalError(.unimplemented)
+        }
+    }
+    func popStashButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
+            fatalError(.unimplemented)
+        }
+    }
+    func applyStashButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
+            fatalError(.unimplemented)
+        }
+    }
+    func addCustomButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges) {
+            fatalError(.unimplemented)
+        }
+    }
+}
+
+// All files
+extension StatusView {
+    func discardSelectedButton(deltaInfo: DeltaInfo) -> some View {
+        AnyView.buttonWith(title: "Discard", dangerous: true, isProminent: false, isSmall: true) {
+            discardDeltaInfo = deltaInfo
+        }
+    }
+}
+
+// Staged Files
+extension StatusView {
+    var unstageAllStagedButton: some View {
+        AnyView.buttonWith(title: "Unstage All") {
+            commitsViewModel.stageOrUnstageButtonTapped(
+                stage: false,
+                repository: statusViewModel.repository,
+                deltaInfos: statusViewModel.stagedDeltaInfos
+            )
+        }
+    }
+    func unstageSelectedStagedButton(deltaInfo: DeltaInfo) -> some View {
+        AnyView.buttonWith(title: "Unstage", isProminent: false, isSmall: true) {
+            commitsViewModel.stageOrUnstageButtonTapped(
+                stage: false,
+                repository: statusViewModel.repository,
+                deltaInfos: [deltaInfo]
+            )
+        }
+    }
+}
+
+// Unstaged Files
+extension StatusView {
+    var stageAllUnstagedButton: some View {
+        AnyView.buttonWith(title: "Stage All") {
+            commitsViewModel.stageOrUnstageButtonTapped(
+                stage: true,
+                repository: statusViewModel.repository,
+                deltaInfos: statusViewModel.unstagedDeltaInfos
+            )
+        }
+    }
+    func stageSelectedUnstagedButton(deltaInfo: DeltaInfo)-> some View {
+        AnyView.buttonWith(title: "Stage", isProminent: false, isSmall: true) {
+            commitsViewModel.stageOrUnstageButtonTapped(
+                stage: true,
+                repository: statusViewModel.repository,
+                deltaInfos: [deltaInfo]
+            )
+        }
+    }
+}
+
+// Untracked Files
+extension StatusView {
+    var stageAllUntrackedButton: some View {
+        AnyView.buttonWith(title: "Track all") {
+            commitsViewModel.stageOrUnstageButtonTapped(
+                stage: true,
+                repository: statusViewModel.repository,
+                deltaInfos: statusViewModel.untrackedDeltaInfos
+            )
+        }
+    }
+
+    func stageSelectedUntrackedButton(deltaInfo: DeltaInfo) -> some View {
+        AnyView.buttonWith(title: "Track", isProminent: false, isSmall: true) {
+            commitsViewModel.stageOrUnstageButtonTapped(
+                stage: true,
+                repository: statusViewModel.repository,
+                deltaInfos: [deltaInfo]
+            )
+        }
+    }
+
+    func ignoreSelectedUntrackedButton(deltaInfo: DeltaInfo) -> some View {
+        AnyView.buttonWith(title: "Ignore", isProminent: false, isSmall: true) {
+            commitsViewModel.ignoreButtonTapped(
+                repository: statusViewModel.repository,
+                deltaInfo: deltaInfo
+            )
+        }
+    }
+}
+
+// MARK: Helpers
+extension StatusView {
+    var commitSummaryIsEmptyOrWhitespace: Bool {
+        commitSummary[statusViewModel.selectableStatus.oid]?.isEmptyOrWhitespace ?? true
+    }
+}
+

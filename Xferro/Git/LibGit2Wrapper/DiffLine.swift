@@ -6,33 +6,27 @@
 //
 
 import Foundation
+import Observation
 
-struct DiffLine: Identifiable, Equatable
+@Observable class DiffLine: Identifiable, Equatable
 {
     var id: String {
-        type.rawValue.formatted() + "\(offset),\(text),\(oldLine),\(newLine),\(lineCount),\(byteCount),\(index)"
+        type.rawValue.formatted() + "\(oldLine).\(newLine).\(isSelected)"
     }
     static func == (lhs: DiffLine, rhs: DiffLine) -> Bool {
-        lhs.type == rhs.type
-        && lhs.oldLine == rhs.oldLine
-        && lhs.newLine == rhs.newLine
-        && lhs.lineCount == rhs.lineCount
-        && lhs.byteCount == rhs.byteCount
-        && lhs.offset == rhs.offset
-        && lhs.text == rhs.text
+        lhs.id == rhs.id
     }
+
+    let type: DiffLineType
     let gitDiffLine: git_diff_line
     var isSelected: Bool = false
-    let index: Int
+    var indexInPart: Int = 0
 
-    init(_ gitDiffLine: git_diff_line, index: Int) {
+    init(_ gitDiffLine: git_diff_line) {
         self.gitDiffLine = gitDiffLine
         self.type = DiffLineType(rawValue: UInt32(gitDiffLine.origin))
         self.oldLine = gitDiffLine.old_lineno
         self.newLine = gitDiffLine.new_lineno
-        self.lineCount = gitDiffLine.num_lines
-        self.byteCount = gitDiffLine.content_len
-        self.offset = gitDiffLine.content_offset
         self.isAdditionOrDeletion = self.type == .addition || self.type == .deletion
         self.text = if let text = NSString(
             bytes: gitDiffLine.content,
@@ -44,15 +38,10 @@ struct DiffLine: Identifiable, Equatable
             ""
         }
         self.isSelected = self.isAdditionOrDeletion
-        self.index = index
     }
 
-    let type: DiffLineType
     let oldLine: Int32
     let newLine: Int32
-    let lineCount: Int32
-    let byteCount: Int
-    let offset: Int64
     let isAdditionOrDeletion: Bool
     let text: String
 }

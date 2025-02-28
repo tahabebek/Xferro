@@ -15,99 +15,31 @@ import Observation
     }
 
     var id: String {
-        "\(patch.id).\(hunkIndex).\(parts.map(\.id).joined(separator: ","))"
-    }
-
-    @Observable final class DiffHunkPart: Equatable, Identifiable {
-        static func == (lhs: DiffHunkPart, rhs: DiffHunkPart) -> Bool {
-            lhs.type == rhs.type && lhs.index == rhs.index && lhs.isSelected == rhs.isSelected && lhs.hasSomeSelected == rhs.hasSomeSelected
-        }
-
-        var id: String { "\(type.id).\(index).\(isSelected).\(hasSomeSelected)" }
-
-        enum DiffHunkPartType: Equatable, Identifiable {
-            var id: String {
-                switch self {
-                case .context(let lines):
-                    return lines.map(\.id).joined(separator: ",") + ".context"
-                case .additionOrDeletion(let lines):
-                    return lines.map(\.id).joined(separator: ",") + ".additionOrDeletion"
-                }
-            }
-            case context([DiffLine])
-            case additionOrDeletion([DiffLine])
-        }
-        var type: DiffHunkPartType
-        let index: Int
-        init(type: DiffHunkPartType, index: Int) {
-            self.type = type
-            self.index = index
-            self.isSelected = switch type {
-            case .context:
-                false
-            case .additionOrDeletion(let array):
-                array.allSatisfy { $0.isSelected }
-            }
-        }
-        var lines: [DiffLine] {
-            get {
-                switch type {
-                case .context(let lines), .additionOrDeletion(let lines):
-                    lines
-                }
-            }
-        }
-
-        var isSelected: Bool
-        var hasSomeSelected: Bool {
-            lines.contains(where: \.isSelected)
-        }
-
-        func toggleLine(line: DiffLine) {
-            switch type {
-            case .context(let lines):
-                var linesCopy = lines
-                guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
-                linesCopy[lineIndex].isSelected.toggle()
-                type = .context(linesCopy)
-            case .additionOrDeletion(let lines):
-                var linesCopy = lines
-                guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
-                linesCopy[lineIndex].isSelected.toggle()
-                type = .additionOrDeletion(linesCopy)
-            }
-        }
-
-        func selectLine(line: DiffLine, flag: Bool) {
-            switch type {
-            case .context(let lines):
-                var linesCopy = lines
-                guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
-                linesCopy[lineIndex].isSelected = flag
-                type = .context(linesCopy)
-            case .additionOrDeletion(let lines):
-                var linesCopy = lines
-                guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
-                linesCopy[lineIndex].isSelected = flag
-                type = .additionOrDeletion(linesCopy)
-            }
-        }
-        func refreshSelectedStatus() {
-            isSelected = switch type {
-            case .context:
-                false
-            case .additionOrDeletion(let array):
-                array.allSatisfy { $0.isSelected }
-            }
-        }
+        "\(filePath)\(patch.id).\(hunkIndex)"
     }
 
     var parts: [DiffHunkPart]
+    let hunk: git_diff_hunk
+    let hunkIndex: Int
+    let patch: Patch
+    let filePath: String
 
-    init(hunk: git_diff_hunk, hunkIndex: Int, patch: Patch) {
+    var oldStart: Int32 { hunk.old_start }
+    var oldLines: Int32 { hunk.old_lines }
+    var newStart: Int32 { hunk.new_start }
+    var newLines: Int32 { hunk.new_lines }
+    var lineCount: Int { Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex)) }
+
+    init(
+        hunk: git_diff_hunk,
+        hunkIndex: Int,
+        patch: Patch,
+        filePath: String
+    ) {
         self.hunk = hunk
         self.hunkIndex = hunkIndex
         self.patch = patch
+        self.filePath = filePath
         let lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
         self.parts = []
         var currentPart = DiffHunkPart.DiffHunkPartType.context([])
@@ -117,7 +49,7 @@ import Observation
             switch currentPart {
             case .context(let array):
                 if line.isAdditionOrDeletion {
-                    parts.append(DiffHunkPart(type: currentPart, index: partIndex))
+                    parts.append(DiffHunkPart(type: currentPart, indexInHunk: partIndex, filePath: filePath))
                     partIndex += 1
                     currentPart = .additionOrDeletion([line])
                 } else {
@@ -127,13 +59,13 @@ import Observation
                 if line.isAdditionOrDeletion {
                     currentPart = .additionOrDeletion(array + [line])
                 } else {
-                    parts.append(DiffHunkPart(type: currentPart, index: partIndex))
+                    parts.append(DiffHunkPart(type: currentPart, indexInHunk: partIndex, filePath: filePath))
                     partIndex += 1
                     currentPart = .context([line])
                 }
             }
         }
-        parts.append(DiffHunkPart(type: currentPart, index: partIndex))
+        parts.append(DiffHunkPart(type: currentPart, indexInHunk: partIndex, filePath: filePath))
     }
 
     /// Applies just this hunk to the target text.
@@ -183,19 +115,6 @@ import Observation
         return lines.joined(separator: text.lineEndingStyle.string)
     }
 
-    func toggleSelected(line: DiffLine, part: DiffHunk.DiffHunkPart) {
-        part.toggleLine(line: line)
-        part.refreshSelectedStatus()
-    }
-
-    func toggleSelected(part: DiffHunkPart) {
-        let isSelected = part.isSelected
-        for line in part.lines {
-            part.selectLine(line: line, flag: !isSelected)
-        }
-        part.refreshSelectedStatus()
-    }
-
     /// Returns true if the hunk can be applied to the given text.
     /// - parameter lines: The target text. This is an array of strings rather
     /// than the raw text to more efficiently query multiple hunks on one file.
@@ -223,18 +142,6 @@ import Observation
         return oldText.elementsEqual(lines[replaceRange])
     }
 
-    let hunk: git_diff_hunk
-    let hunkIndex: Int
-    let patch: Patch
-
-    var oldStart: Int32 { hunk.old_start }
-    var oldLines: Int32 { hunk.old_lines }
-    var newStart: Int32 { hunk.new_start }
-    var newLines: Int32 { hunk.new_lines }
-    var lineCount: Int {
-        Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
-    }
-
     private func lineAtIndex(_ lineIndex: Int) -> DiffLine {
         var linePointer: UnsafePointer<git_diff_line>?
         let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex))
@@ -243,7 +150,7 @@ import Observation
             let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
             fatalError(err.localizedDescription)
         }
-        return DiffLine(linePointer.pointee, index: lineIndex)
+        return DiffLine(linePointer.pointee)
     }
 
     func enumerateLines(_ callback: (DiffLine) -> Void)
@@ -256,7 +163,7 @@ import Observation
             })
             else { continue }
 
-            callback(DiffLine(line.pointee, index: Int(lineIndex)))
+            callback(DiffLine(line.pointee))
         }
     }
 }
