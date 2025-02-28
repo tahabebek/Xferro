@@ -77,6 +77,8 @@ final class PatchMaker {
         if minimal {
             flags.insert(.minimal)
         }
+        flags.insert(.patience)
+        flags.insert(.indentHeuristic)
 
         var result = DiffOptions(flags: flags)
 

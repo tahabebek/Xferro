@@ -18,7 +18,7 @@ import Observation
         "\(patch.id).\(hunkIndex).\(parts.map(\.id).joined(separator: ","))"
     }
 
-    struct DiffHunkPart: Equatable, Identifiable {
+    @Observable final class DiffHunkPart: Equatable, Identifiable {
         static func == (lhs: DiffHunkPart, rhs: DiffHunkPart) -> Bool {
             lhs.type == rhs.type && lhs.index == rhs.index && lhs.isSelected == rhs.isSelected && lhs.hasSomeSelected == rhs.hasSomeSelected
         }
@@ -63,32 +63,36 @@ import Observation
             lines.contains(where: \.isSelected)
         }
 
-        mutating func toggleLine(lineIndex: Int) {
+        func toggleLine(line: DiffLine) {
             switch type {
             case .context(let lines):
                 var linesCopy = lines
+                guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
                 linesCopy[lineIndex].isSelected.toggle()
                 type = .context(linesCopy)
             case .additionOrDeletion(let lines):
                 var linesCopy = lines
+                guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
                 linesCopy[lineIndex].isSelected.toggle()
                 type = .additionOrDeletion(linesCopy)
             }
         }
 
-        mutating func selectLine(lineIndex: Int, flag: Bool) {
+        func selectLine(line: DiffLine, flag: Bool) {
             switch type {
             case .context(let lines):
                 var linesCopy = lines
+                guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
                 linesCopy[lineIndex].isSelected = flag
                 type = .context(linesCopy)
             case .additionOrDeletion(let lines):
                 var linesCopy = lines
+                guard let lineIndex = linesCopy.firstIndex(of: line) else { return }
                 linesCopy[lineIndex].isSelected = flag
                 type = .additionOrDeletion(linesCopy)
             }
         }
-        mutating func refreshSelectedStatus() {
+        func refreshSelectedStatus() {
             isSelected = switch type {
             case .context:
                 false
@@ -179,17 +183,17 @@ import Observation
         return lines.joined(separator: text.lineEndingStyle.string)
     }
 
-    func toggleSelected(lineIndex: Int, partIndex: Int) {
-        parts[partIndex].toggleLine(lineIndex: lineIndex)
-        parts[partIndex].refreshSelectedStatus()
+    func toggleSelected(line: DiffLine, part: DiffHunk.DiffHunkPart) {
+        part.toggleLine(line: line)
+        part.refreshSelectedStatus()
     }
 
-    func toggleSelected(partIndex: Int) {
-        let isSelected = parts[partIndex].isSelected
-        for lineIndex in 0..<parts[partIndex].lines.count {
-            parts[partIndex].selectLine(lineIndex: lineIndex, flag: !isSelected)
+    func toggleSelected(part: DiffHunkPart) {
+        let isSelected = part.isSelected
+        for line in part.lines {
+            part.selectLine(line: line, flag: !isSelected)
         }
-        parts[partIndex].refreshSelectedStatus()
+        part.refreshSelectedStatus()
     }
 
     /// Returns true if the hunk can be applied to the given text.

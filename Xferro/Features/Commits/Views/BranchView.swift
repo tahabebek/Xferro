@@ -83,66 +83,77 @@ struct BranchView: View {
         }
     }
 
-    #warning("menu is not working")
-    private var menu : some View {
-        Menu {
-            if !isCurrent {
-                Button {
-                    fatalError()
-                } label: {
-                    Text("Switch to \(name)")
-                }
-                if !isDetached {
-                    Button {
-                        viewModel.deleteBranchTapped(repository: selectableStatus.repository, branchName: name)
-                    } label: {
-                        Text("Delete \(name)")
+    // Using a regular button instead since Menu doesn't respond to clicks
+    @State private var showingBranchOptions = false
+    
+    private var menu: some View {
+        Button(action: {
+            print("Branch button tapped!")
+            showingBranchOptions = true
+        }) {
+            Label(name, systemImage: "arrowtriangle.down.fill")
+                .foregroundStyle(isCurrent ? Color.accentColor : Color.white)
+                .fixedSize()
+                .labelStyle(RightImageLabelStyle())
+        }
+        .buttonStyle(PlainButtonStyle())
+        .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+        .background(Color.clear)
+        .frame(minWidth: 40)
+        .popover(isPresented: $showingBranchOptions) {
+            VStack(alignment: .leading, spacing: 8) {
+                if !isCurrent {
+                    Button("Switch to \(name)") {
+                        print("Switch to branch")
+                        showingBranchOptions = false
+                    }
+                    .padding(.vertical, 4)
+                    
+                    if !isDetached {
+                        Button("Delete \(name)") {
+                            viewModel.deleteBranchTapped(repository: selectableStatus.repository, branchName: name)
+                            showingBranchOptions = false
+                        }
+                        .padding(.vertical, 4)
                     }
                 }
+                
+                Button("Create a new branch based on \(name)") {
+                    print("Create branch")
+                    showingBranchOptions = false
+                }
+                .padding(.vertical, 4)
+                
+                if !isDetached, branchCount > 1 {
+                    Divider()
+                    
+                    Button("Merge a branch into \(name)") {
+                        print("Merge into")
+                        showingBranchOptions = false
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Button("Rebase a branch into \(name)") {
+                        print("Rebase into")
+                        showingBranchOptions = false
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Button("Merge \(name) into another branch") {
+                        print("Merge to")
+                        showingBranchOptions = false
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Button("Rebase \(name) into another branch") {
+                        print("Rebase to")
+                        showingBranchOptions = false
+                    }
+                    .padding(.vertical, 4)
+                }
             }
-            Button {
-                fatalError()
-            } label: {
-                Text("Create a new branch based on \(name)")
-            }
-            if !isDetached, branchCount > 1 {
-                Button {
-                    fatalError()
-                } label: {
-                    Text("Merge a branch into \(name)")
-                }
-                Button {
-                    fatalError()
-                } label: {
-                    Text("Rebase a branch into \(name)")
-                }
-                Button {
-                    fatalError()
-                } label: {
-                    Text("Merge \(name) into another branch")
-                }
-                Button {
-                    fatalError()
-                } label: {
-                    Text("Rebase \(name) into another branch")
-                }
-            }
-        } label: {
-            Text(name)
-                .font(.caption)
-                .padding(.vertical, 2)
-                .padding(.horizontal, 4)
-                .cornerRadius(4)
-                .lineLimit(1)
-                .alignmentGuide(.verticalAlignment, computeValue: { d in
-                    d[VerticalAlignment.center] }
-                )
-        }
-        .truncationMode(.middle)
-        .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-        .overlay {
-            RoundedRectangle(cornerRadius: 4)
-                .stroke(Color.accentColor, lineWidth: isCurrent ? 1 : 0)
+            .padding()
+            .frame(minWidth: 250)
         }
     }
 }

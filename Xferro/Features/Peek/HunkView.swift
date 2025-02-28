@@ -31,7 +31,6 @@ struct HunkView: View {
             Color(hex: 0x15151A)
                 .cornerRadius(8)
         )
-        .animation(.default, value: hoveredLine)
     }
     
     func padding(for line: DiffLine) -> CGFloat {
@@ -104,7 +103,7 @@ struct HunkView: View {
                         .contentShape(Rectangle())
                         .onTapGesture {
                             if line.isAdditionOrDeletion {
-                                hunk.toggleSelected(partIndex: part.index)
+                                hunk.toggleSelected(part: part)
                             }
                         }
                         .background {
@@ -166,7 +165,7 @@ struct HunkView: View {
                         }
                         .onTapGesture {
                             if line.isAdditionOrDeletion {
-                                hunk.toggleSelected(lineIndex: line.index, partIndex: part.index)
+                                hunk.toggleSelected(line: line, part: part)
                             }
                         }
                         .background {
