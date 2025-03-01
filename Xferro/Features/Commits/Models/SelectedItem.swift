@@ -8,10 +8,10 @@
 import Foundation
 
 struct SelectedItem: Equatable {
-    let selectedItemType: SelectedItemType
+    let type: SelectedItemType
 
     var repositoryInfo: RepositoryInfo {
-        switch selectedItemType {
+        switch type {
         case .regular(let regularSelectedItem):
             regularSelectedItem.repositoryInfo
         case .wip(let wipSelectedItem):
@@ -24,7 +24,7 @@ struct SelectedItem: Equatable {
     }
 
     var wipWorktree: WipWorktree {
-        switch selectedItemType {
+        switch type {
         case .regular(let regularSelectedItem):
             regularSelectedItem.repositoryInfo.wipWorktree
         case .wip(let wipSelectedItem):
@@ -33,7 +33,7 @@ struct SelectedItem: Equatable {
     }
 
     var oid: OID {
-        switch selectedItemType {
+        switch type {
         case .regular(let regularSelectedItem):
             regularSelectedItem.selectableItem.oid
         case .wip(let wipSelectedItem):
@@ -45,7 +45,7 @@ struct SelectedItem: Equatable {
     }
 
     var selectableItem: any SelectableItem {
-        switch selectedItemType {
+        switch type {
         case .regular(let regularSelectedItem):
             regularSelectedItem.selectableItem
         case .wip(let wipSelectedItem):

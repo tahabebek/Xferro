@@ -60,7 +60,7 @@ struct RepositoryView: View {
         .animation(.default, value: selection)
         .animation(.default, value: isMinimized)
         .background(
-            Color(hex: 0x15151A)
+            Color(hexValue: 0x15151A)
                 .cornerRadius(8)
         )
     }
@@ -357,7 +357,7 @@ private struct PickerModifier: ViewModifier {
         content
             .labelsHidden()
             .padding(.trailing, 2)
-            .background(Color(hex: 0x0B0C10))
+            .background(Color(hexValue: 0x0B0C10))
             .clipShape(RoundedRectangle(cornerRadius: 5))
             .pickerStyle(SegmentedPickerStyle())
     }

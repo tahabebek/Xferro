@@ -6,9 +6,17 @@
 //
 
 import SwiftUI
+import RegexBuilder
 
 struct PartView: View {
     let part: DiffHunkPart
+    let fileExtension: String?
+    
+    init(part: DiffHunkPart, fileExtension: String? = nil) {
+        self.part = part
+        self.fileExtension = fileExtension
+    }
+    
     var body: some View {
         ForEach(part.lines) { line in
             LineView(
@@ -25,4 +33,3 @@ struct PartView: View {
         }
     }
 }
-

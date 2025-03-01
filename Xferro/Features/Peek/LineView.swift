@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import RegexBuilder
 
 struct LineView: View {
     private static let backgroundOpacity: CGFloat = 0.3
@@ -140,7 +141,7 @@ struct LineView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 20)
                     Text(text)
-                        .font(.body)
+                        .font(.body.monospaced())
                         .frame(height: 20)
                         .padding(.leading, 8)
                 }
@@ -207,9 +208,9 @@ struct LineView: View {
     func color() -> Color {
         switch lineType {
         case .addition:
-            Color(hex: 0x28A745)
+            Color(hexValue: 0x28A745)
         case .deletion:
-            Color(hex: 0xDC3545)
+            Color(hexValue: 0xDC3545)
         default:
             Color.clear
         }

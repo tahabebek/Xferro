@@ -22,10 +22,10 @@ extension CommitsViewModel {
                         repositoryInfo.detachedTag = self.detachedTag(of: repositoryInfo)
                         repositoryInfo.historyCommits = self.historyCommits(of: repositoryInfo)
                         if let currentSelectedItem {
-                            if case .regular(let item) = currentSelectedItem.selectedItemType {
+                            if case .regular(let item) = currentSelectedItem.type {
                                 if case .status(let selectableStatus) = item {
                                     if selectableStatus.repository.gitDir.path == repositoryInfo.repository.gitDir.path {
-                                        let selectedItem = SelectedItem(selectedItemType: .regular(.status(SelectableStatus(repositoryInfo: repositoryInfo))))
+                                        let selectedItem = SelectedItem(type: .regular(.status(SelectableStatus(repositoryInfo: repositoryInfo))))
                                         self.setCurrentSelectedItem(selectedItem)
                                     }
                                 }
@@ -33,10 +33,10 @@ extension CommitsViewModel {
                         }
                     case .index(let repositoryInfo):
                         if let currentSelectedItem {
-                            if case .regular(let item) = currentSelectedItem.selectedItemType {
+                            if case .regular(let item) = currentSelectedItem.type {
                                 if case .status(let selectableStatus) = item {
                                     if selectableStatus.repository.gitDir.path == repositoryInfo.repository.gitDir.path {
-                                        let selectedItem = SelectedItem(selectedItemType: .regular(.status(SelectableStatus(repositoryInfo: repositoryInfo))))
+                                        let selectedItem = SelectedItem(type: .regular(.status(SelectableStatus(repositoryInfo: repositoryInfo))))
                                         self.setCurrentSelectedItem(selectedItem)
                                     }
                                 }

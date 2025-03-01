@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import Observation
 
-struct DeltaInfo: Identifiable, Equatable, Hashable {
+@Observable final class DeltaInfo: Identifiable, Equatable {
     enum StatusType: Int, Identifiable, Hashable {
         var id: Int { rawValue }
 
@@ -15,7 +16,7 @@ struct DeltaInfo: Identifiable, Equatable, Hashable {
         case unstaged = 1
         case untracked = 2
     }
-    static func == (lhs: Self, rhs: Self) -> Bool {
+    static func == (lhs: DeltaInfo, rhs: DeltaInfo) -> Bool {
         lhs.id == rhs.id
     }
     var id: String {

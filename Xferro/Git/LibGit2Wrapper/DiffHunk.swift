@@ -29,6 +29,7 @@ import Observation
     var newStart: Int32 { hunk.new_start }
     var newLines: Int32 { hunk.new_lines }
     var lineCount: Int { Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex)) }
+    var insertionText: String = ""
 
     init(
         hunk: git_diff_hunk,
@@ -40,8 +41,9 @@ import Observation
         self.hunkIndex = hunkIndex
         self.patch = patch
         self.filePath = filePath
-        let lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
         self.parts = []
+        self.insertionText = getHunkHeader(hunk: hunk)
+        let lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
         var currentLines: [DiffLine] = []
         var currentPartType = DiffHunkPart.DiffHunkPartType.context
         var partIndex = 0
@@ -69,6 +71,22 @@ import Observation
             }
         }
         parts.append(DiffHunkPart(type: currentPartType, lines: currentLines, indexInHunk: partIndex, filePath: filePath))
+    }
+
+    private func getHunkHeader(hunk: git_diff_hunk) -> String {
+        // Create a temporary UnsafeBufferPointer to access the header values
+        return withUnsafePointer(to: hunk.header) { headerPtr in
+            headerPtr.withMemoryRebound(to: CChar.self, capacity: Int(GIT_DIFF_HUNK_HEADER_SIZE)) { charPtr in
+                // Find the length of the null-terminated string within the bounds of header_len
+                var length = 0
+                while length < Int(hunk.header_len) && charPtr[length] != 0 {
+                    length += 1
+                }
+
+                // Create a String from the buffer up to the determined length
+                return String(cString: charPtr)
+            }
+        }
     }
 
     /// Applies just this hunk to the target text.
@@ -170,3 +188,17 @@ import Observation
         }
     }
 }
+
+
+
+///////
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///

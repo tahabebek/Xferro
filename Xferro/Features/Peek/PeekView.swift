@@ -10,21 +10,38 @@ import SwiftUI
 struct PeekView: View {
     let hunks: [DiffHunk]
 
+    init(hunks: [DiffHunk]) {
+        self.hunks = hunks
+    }
+    
+    // Extract file extension from the path if available
+    private var fileExtension: String? {
+        guard let filePath = hunks.first?.filePath else { return nil }
+        let url = URL(fileURLWithPath: filePath)
+
+        // Get the file extension and ensure it's non-empty
+        let ext = url.pathExtension.lowercased()
+        return ext.isEmpty ? nil : ext
+    }
+
     var body: some View {
-        List {
-            ForEach(hunks) { hunk in
-                Section {
-                    HunkView(parts: hunk.parts)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+        VStack(spacing: 0) {
+            header
+                .background(Color.clear)
+                .padding(.horizontal, 8)
+
+                ForEach(hunks) { hunk in
+                    HunkView(
+                        parts: hunk.parts, 
+                        insertionText: hunk.insertionText, 
+                        fileExtension: fileExtension
+                    )
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
                 }
-                .listSectionSeparator(.hidden)
-            }
         }
-        .listStyle(PlainListStyle())
-        .padding(0)
-        .scrollContentBackground(.hidden)
-        .environment(\.defaultMinListRowHeight, 0)
-        .environment(\.defaultMinListHeaderHeight, 0)
+        .background(Color.clear)
     }
 
     var empty: some View {
@@ -32,7 +49,7 @@ struct PeekView: View {
             Color.clear
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
-                    Color(hex: 0x15151A)
+                    Color(hexValue: 0x15151A)
                         .cornerRadius(8)
                 )
             VStack {
@@ -46,5 +63,11 @@ struct PeekView: View {
                 Spacer()
             }
         }
+    }
+
+    var header: some View {
+        let fileName = hunks.first?.filePath.components(separatedBy: "/").last ?? "Changes"
+        return VerticalHeader(title: fileName, horizontalPadding: 0.0)
+            .frame(height: 36)
     }
 }

@@ -28,23 +28,10 @@ import OrderedCollections
         } else {
             getWipCommits(selectedItem: nil)
         }
-        updateDetailInfo(selectedItem: selectedItem)
-        updateDeltaInfo(selectedItem: selectedItem)
         currentSelectedItem = selectedItem
     }
     
     var currentWipCommits: WipCommits?
-    var currentDetailInfo: DetailInfo?
-    var currentDeltaInfo: DeltaInfo?
-    private(set) var currentDeltaInfos = Dictionary<OID, DeltaInfo>()
-
-    func setCurrentDeltaInfo(oid: OID, deltaInfo: DeltaInfo) {
-        currentDeltaInfos[oid] = deltaInfo
-        updateDeltaInfo(selectedItem: currentSelectedItem)
-    }
-
-    let detailsViewModel = DetailsViewModel(detailInfo: DetailInfo(type: .empty))
-
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
     private let userDidSelectFolder: (URL) -> Void
     private let user: User
@@ -84,82 +71,6 @@ import OrderedCollections
         }
     }
 
-    func updateDetailInfo(selectedItem: SelectedItem?) {
-        guard selectedItem != currentSelectedItem else { return }
-        Task {
-            await MainActor.run {
-                guard let selectedItem else {
-                    currentDetailInfo = nil
-                    detailsViewModel.detailInfo = DetailInfo(type: .empty)
-                    return
-                }
-                switch selectedItem.selectedItemType {
-                case .regular(let type):
-                    switch type {
-                    case .stash(let item):
-                        currentDetailInfo = DetailInfo(type: .stash(item))
-                    case .status(let item):
-                        currentDetailInfo = DetailInfo(type: .status(item))
-                    case .commit(let item):
-                        currentDetailInfo = DetailInfo(type: .commit(item))
-                    case .detachedCommit(let item):
-                        currentDetailInfo = DetailInfo(type: .detachedCommit(item))
-                    case .detachedTag(let item):
-                        currentDetailInfo = DetailInfo(type: .detachedTag(item))
-                    case .tag(let item):
-                        currentDetailInfo = DetailInfo(type: .tag(item))
-                    case .historyCommit(let item):
-                        currentDetailInfo = DetailInfo(type: .historyCommit(item))
-                    }
-                case .wip(let wip):
-                    switch wip {
-                    case .wipCommit(let item):
-                        guard let worktree = WipWorktree.get(for: item.repository) else {
-                            fatalError(.impossible)
-                        }
-                        currentDetailInfo = DetailInfo(type: .wipCommit(item, worktree))
-                    }
-                }
-                detailsViewModel.detailInfo = currentDetailInfo!
-            }
-        }
-    }
-
-    func updateDeltaInfo(selectedItem: SelectedItem?) {
-        Task {
-            await MainActor.run {
-                guard let selectedItem else {
-                    currentDeltaInfo = nil
-                    return
-                }
-                switch selectedItem.selectedItemType {
-                case .regular(let type):
-                    switch type {
-                    case .stash(let item):
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
-                    case .status(let item):
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
-                    case .commit(let item):
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
-                    case .detachedCommit(let item):
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
-                    case .detachedTag(let item):
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
-                    case .tag(let item):
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
-                    case .historyCommit(let item):
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
-                    }
-                case .wip(let wip):
-                    switch wip {
-                    case .wipCommit(let item):
-                        currentDeltaInfo = currentDeltaInfos[item.oid]
-                    }
-                }
-            }
-        }
-    }
-
     private func setupInitialCurrentSelectedItem() {
         Task {
             await MainActor.run {
@@ -180,7 +91,7 @@ import OrderedCollections
 
                     if let repositoryInfo {
                         let selectedItem = SelectedItem(
-                            selectedItemType: .regular(
+                            type: .regular(
                                 .status(SelectableStatus(repositoryInfo: repositoryInfo))
                             )
                         )
@@ -194,49 +105,49 @@ import OrderedCollections
     func isSelected(item: any SelectableItem) -> Bool {
         switch item {
         case let status as SelectableStatus:
-            if case .regular(.status(let currentStatus)) = currentSelectedItem?.selectedItemType {
+            if case .regular(.status(let currentStatus)) = currentSelectedItem?.type {
                 return status == currentStatus
             } else {
                 return false
             }
         case let commit as SelectableCommit:
-            if case .regular(.commit(let currentCommit)) = currentSelectedItem?.selectedItemType  {
+            if case .regular(.commit(let currentCommit)) = currentSelectedItem?.type  {
                 return commit == currentCommit
             } else {
                 return false
             }
         case let wipCommit as SelectableWipCommit:
-            if case .wip(.wipCommit(let currentWipCommit)) = currentSelectedItem?.selectedItemType  {
+            if case .wip(.wipCommit(let currentWipCommit)) = currentSelectedItem?.type  {
                 return wipCommit == currentWipCommit
             } else {
                 return false
             }
         case let historyCommit as SelectableHistoryCommit:
-            if case .regular(.historyCommit(let currentHistoryCommit)) = currentSelectedItem?.selectedItemType  {
+            if case .regular(.historyCommit(let currentHistoryCommit)) = currentSelectedItem?.type  {
                 return historyCommit == currentHistoryCommit
             } else {
                 return false
             }
         case let detachedCommit as SelectableDetachedCommit:
-            if case .regular(.detachedCommit(let currentDetachedCommit)) = currentSelectedItem?.selectedItemType  {
+            if case .regular(.detachedCommit(let currentDetachedCommit)) = currentSelectedItem?.type  {
                 return detachedCommit == currentDetachedCommit
             } else {
                 return false
             }
         case let detachedTag as SelectableDetachedTag:
-            if case .regular(.detachedTag(let currentDetachedTag)) = currentSelectedItem?.selectedItemType  {
+            if case .regular(.detachedTag(let currentDetachedTag)) = currentSelectedItem?.type  {
                 return detachedTag == currentDetachedTag
             } else {
                 return false
             }
         case let tag as SelectableTag:
-            if case .regular(.tag(let currentTag)) = currentSelectedItem?.selectedItemType  {
+            if case .regular(.tag(let currentTag)) = currentSelectedItem?.type  {
                 return tag == currentTag
             } else {
                 return false
             }
         case let stash as SelectableStash:
-            if case .regular(.stash(let currentStash)) = currentSelectedItem?.selectedItemType  {
+            if case .regular(.stash(let currentStash)) = currentSelectedItem?.type  {
                 return stash == currentStash
             } else {
                 return false
@@ -265,21 +176,21 @@ import OrderedCollections
                 let selectedItem: SelectedItem
                 switch item {
                 case let status as SelectableStatus:
-                    selectedItem = .init(selectedItemType: .regular(.status(status)))
+                    selectedItem = .init(type: .regular(.status(status)))
                 case let commit as SelectableCommit:
-                    selectedItem = .init(selectedItemType: .regular(.commit(commit)))
+                    selectedItem = .init(type: .regular(.commit(commit)))
                 case let wipCommit as SelectableWipCommit:
-                    selectedItem = .init(selectedItemType: .wip(.wipCommit(wipCommit)))
+                    selectedItem = .init(type: .wip(.wipCommit(wipCommit)))
                 case let historyCommit as SelectableHistoryCommit:
-                    selectedItem = .init(selectedItemType: .regular(.historyCommit(historyCommit)))
+                    selectedItem = .init(type: .regular(.historyCommit(historyCommit)))
                 case let detachedCommit as SelectableDetachedCommit:
-                    selectedItem = .init(selectedItemType: .regular(.detachedCommit(detachedCommit)))
+                    selectedItem = .init(type: .regular(.detachedCommit(detachedCommit)))
                 case let detachedTag as SelectableDetachedTag:
-                    selectedItem = .init(selectedItemType: .regular(.detachedTag(detachedTag)))
+                    selectedItem = .init(type: .regular(.detachedTag(detachedTag)))
                 case let tag as SelectableTag:
-                    selectedItem = .init(selectedItemType: .regular(.tag(tag)))
+                    selectedItem = .init(type: .regular(.tag(tag)))
                 case let stash as SelectableStash:
-                    selectedItem = .init(selectedItemType: .regular(.stash(stash)))
+                    selectedItem = .init(type: .regular(.stash(stash)))
                 default:
                     fatalError()
                 }

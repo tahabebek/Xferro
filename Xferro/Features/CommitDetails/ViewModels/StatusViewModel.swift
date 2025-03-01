@@ -16,6 +16,8 @@ import Observation
         selectableStatus.repository
     }
 
+    var currentDeltaInfo: DeltaInfo?
+
     init(selectableStatus: SelectableStatus) {
         self.selectableStatus = selectableStatus
 

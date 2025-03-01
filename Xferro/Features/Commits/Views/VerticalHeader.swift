@@ -10,11 +10,23 @@ import SwiftUI
 
 struct VerticalHeader<Content>: View where Content: View {
     let title: String
+    let titleColor: Color
+    let horizontalPadding: CGFloat
+    let verticalPadding: CGFloat
     let buttonsView: () -> Content
 
-    init(title: String, @ViewBuilder buttonsView: @escaping () -> Content = { EmptyView() }) {
+    init(
+        title: String,
+        titleColor: Color = .white,
+        horizontalPadding: CGFloat = 8.0,
+        verticalPadding: CGFloat = 0.0,
+        @ViewBuilder buttonsView: @escaping () -> Content = { EmptyView() }
+    ) {
         self.title = title
+        self.titleColor = titleColor
         self.buttonsView = buttonsView
+        self.horizontalPadding = horizontalPadding
+        self.verticalPadding = verticalPadding
     }
 
     var body: some View {
@@ -22,16 +34,18 @@ struct VerticalHeader<Content>: View where Content: View {
             HStack {
                 Text("\(title)")
                     .font(.title2)
-                Spacer(minLength: 8)
+                    .foregroundColor(titleColor)
+                Spacer(minLength: 0)
                 buttonsView()
             }
             HStack {
-                Spacer()
+                Spacer(minLength: 0)
                 buttonsView()
-                Spacer()
+                Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, verticalPadding)
     }
 }
 

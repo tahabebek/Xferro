@@ -31,8 +31,6 @@ struct StatusView: View {
     }
 
     let statusViewModel: StatusViewModel
-    let getDeltaInfo: (OID) -> DeltaInfo?
-    let setDeltaInfo: (OID, DeltaInfo) -> Void
     let discardTapped: (Repository, [URL]) -> Void
     let commitTapped: (Repository, String) -> Void
     let amendTapped: (Repository, String?) -> Void
@@ -50,6 +48,7 @@ struct StatusView: View {
     @State private var boxActions: [Action] = BoxActions.allCases.map(\.rawValue).map(Action.init)
     @State private var actionBoxHeight: CGFloat = 0
     @State private var messageBoxHeight: CGFloat = 0
+    @State private var scrollToFile: String? = nil
 
     private static let actionBoxBottomPadding: CGFloat = 4
     private static let actionBoxVerticalInnerPadding: CGFloat = 16
@@ -58,16 +57,64 @@ struct StatusView: View {
         Self.actionBoxBottomPadding * 2 + Self.actionBoxVerticalInnerPadding * 2
     }
     var body: some View {
-        VSplitView {
-            actionBox
-                .frame(height : actionBoxHeight + messageBoxHeight + Self.totalVerticalPadding)
-                .padding(.bottom, Self.actionBoxBottomPadding)
-            changeBox
-                .padding(.top, Self.actionBoxBottomPadding)
-                .frame(maxHeight: .infinity)
+        HSplitView {
+            VSplitView {
+                actionBox
+                    .frame(height : actionBoxHeight + messageBoxHeight + Self.totalVerticalPadding)
+                    .padding(.bottom, Self.actionBoxBottomPadding)
+                changeBox
+                    .padding(.top, Self.actionBoxBottomPadding)
+                    .frame(maxHeight: .infinity)
+            }
+            .frame(width: Dimensions.commitDetailsViewMaxWidth)
+            .padding(.trailing, 6)
+            ScrollViewReader { proxy in
+                List {
+                    Section {
+                        ForEach(statusViewModel.stagedDeltaInfos) { deltaInfo in
+                            PeekView(hunks: HunkFactory.makeHunks(
+                                selectableItem: statusViewModel.selectableStatus,
+                                deltaInfo: deltaInfo)
+                            )
+                            .id(deltaInfo.id)
+                        }
+                    }
+                    Section {
+                        ForEach(statusViewModel.unstagedDeltaInfos) { deltaInfo in
+                            PeekView(hunks: HunkFactory.makeHunks(
+                                selectableItem: statusViewModel.selectableStatus,
+                                deltaInfo: deltaInfo)
+                            )
+                            .id(deltaInfo.id)
+                        }
+                    }
+                    Section {
+                        ForEach(statusViewModel.untrackedDeltaInfos) { deltaInfo in
+                            PeekView(hunks: HunkFactory.makeHunks(
+                                selectableItem: statusViewModel.selectableStatus,
+                                deltaInfo: deltaInfo)
+                            )
+                            .id(deltaInfo.id)
+                        }
+                    }
+                }
+                .listSectionSeparator(.hidden)
+                .listStyle(PlainListStyle())
+                .scrollContentBackground(.hidden)
+                .environment(\.defaultMinListRowHeight, 0)
+                .onChange(of: scrollToFile) { _, id in
+                    if let id {
+                        withAnimation {
+                            proxy.scrollTo(id, anchor: .top)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
         }
         .onAppear {
             setInitialSelection()
+            isTextFieldFocused = true
         }
         .onChange(of: statusViewModel.selectableStatus) { oldValue, newValue in
             if oldValue.oid != newValue.oid {
@@ -94,7 +141,7 @@ struct StatusView: View {
     }
 
     private func setInitialSelection() {
-        if getDeltaInfo(statusViewModel.selectableStatus.oid) == nil {
+        if statusViewModel.currentDeltaInfo == nil {
             var item: DeltaInfo?
             if let firstItem = statusViewModel.stagedDeltaInfos.first {
                 item = firstItem
@@ -104,7 +151,7 @@ struct StatusView: View {
                 item = firstItem
             }
             if let item {
-                setDeltaInfo(statusViewModel.selectableStatus.oid, item)
+                statusViewModel.currentDeltaInfo = item
             }
         }
     }
@@ -117,9 +164,9 @@ struct StatusView: View {
 
     private var changeBox: some View {
         ZStack {
-            Color(hex: 0x15151A)
+            Color(hexValue: 0x15151A)
                 .cornerRadius(8)
-            ScrollView(showsIndicators: true) {
+            ScrollView(showsIndicators: false) {
                 if !hasChanges {
                     Text("No changes.")
                 }
@@ -176,7 +223,7 @@ struct StatusView: View {
 
     private var actionBox: some View {
         ZStack {
-            Color(hex: 0x15151A)
+            Color(hexValue: 0x15151A)
                 .cornerRadius(8)
             VStack(alignment: .leading) {
                 messageBoxView
@@ -433,7 +480,8 @@ struct StatusView: View {
         .frame(minHeight: 24)
         .frame(maxHeight: 48)
         .onTapGesture {
-            setDeltaInfo(statusViewModel.selectableStatus.oid, deltaInfo)
+            statusViewModel.currentDeltaInfo = deltaInfo
+            scrollToFile = deltaInfo.id
         }
     }
 
@@ -447,7 +495,7 @@ struct StatusView: View {
             Image(systemName: imageName).foregroundColor(color)
             Text(text)
                 .font(.body)
-                .foregroundStyle(getDeltaInfo(statusViewModel.selectableStatus.oid) == deltaInfo ? Color.accentColor : Color.fabulaFore1)
+                .foregroundStyle(statusViewModel.currentDeltaInfo == deltaInfo ? Color.accentColor : Color.fabulaFore1)
             Spacer()
         }
     }

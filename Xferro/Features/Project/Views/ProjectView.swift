@@ -18,13 +18,8 @@ struct ProjectView: View {
         VStack(spacing: 0) {
             HSplitView {
                 CommitsView(commitsViewModel: commitsViewModel)
-                    .frame(maxWidth: Dimensions.commitsViewMaxWidth)
-                    .frame(minWidth: 0)
-                SelectableItemDetailView(detailsViewModel: commitsViewModel.detailsViewModel) {
-                    commitsViewModel.currentDeltaInfos[$0]
-                } setDeltaInfo: { oid, deltaInfo in
-                    commitsViewModel.setCurrentDeltaInfo(oid: oid, deltaInfo: deltaInfo)
-                } discardTapped: { repository, fileURLs in
+                    .frame(width: Dimensions.commitsViewMaxWidth)
+                SelectableItemDetailView(selectedItem: commitsViewModel.currentSelectedItem) { repository, fileURLs in
                     commitsViewModel.discardFileButtonTapped(repository: repository, fileURLs: fileURLs)
                 } commitTapped: { repository, message in
                     commitsViewModel.commitTapped(repository: repository, message: message)
@@ -37,14 +32,7 @@ struct ProjectView: View {
                 } ignoreTapped: { repository, deltaInfo in
                     commitsViewModel.ignoreButtonTapped(repository: repository, deltaInfo: deltaInfo)
                 }
-                    .frame(maxWidth: Dimensions.commitDetailsViewMaxWidth)
-                    .frame(minWidth: 0)
-                    .environment(commitsViewModel.detailsViewModel)
-                PeekView(hunks: HunkFactory.makeHunks(
-                    selectableItem: commitsViewModel.currentSelectedItem?.selectableItem,
-                    deltaInfo: commitsViewModel.currentDeltaInfo)
-                )
-                .frame(idealWidth: .infinity)
+                .frame(maxWidth: .infinity)
             }
         }
     }

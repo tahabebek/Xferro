@@ -8,9 +8,7 @@
 import SwiftUI
 
 struct SelectableItemDetailView: View {
-    let detailsViewModel: DetailsViewModel
-    let getDeltaInfo: (OID) -> DeltaInfo?
-    let setDeltaInfo: (OID, DeltaInfo) -> Void
+    let selectedItem: SelectedItem?
     let discardTapped: (Repository, [URL]) -> Void
     let commitTapped: (Repository, String) -> Void
     let amendTapped: (Repository, String?) -> Void
@@ -20,40 +18,43 @@ struct SelectableItemDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            switch detailsViewModel.detailInfo.type {
-            case .empty:
+            if let selectedItem {
+                switch selectedItem.type {
+                case .regular(let regularSelectedItem):
+                    switch regularSelectedItem {
+                    case .status(let selectableStatus):
+                        StatusView(
+                            statusViewModel: StatusViewModel(selectableStatus: selectableStatus),
+                            discardTapped: discardTapped,
+                            commitTapped: commitTapped,
+                            amendTapped: amendTapped,
+                            stageAllTapped: stageAllTapped,
+                            stageOrUnstageTapped: stageOrUnstageTapped,
+                            ignoreTapped: ignoreTapped
+                        )
+                    case .commit(let selectableCommit):
+                        CommitView()
+                    case .historyCommit(let selectableHistoryCommit):
+                        HistoryCommitView()
+                    case .detachedCommit(let selectableDetachedCommit):
+                        DetachedCommitView()
+                    case .detachedTag(let selectableDetachedTag):
+                        DetachedTagView()
+                    case .tag(let selectableTag):
+                        TagView()
+                    case .stash(let selectableStash):
+                        StashView()
+                    }
+                case .wip(let wipSelectedItem):
+                    WipCommitView()
+                }
+            } else {
                 VStack {
                     Spacer()
                     Text("Nothing is selected.")
                         .font(.body)
                     Spacer()
                 }
-            case .commit(let commit):
-                CommitView()
-            case .detachedCommit(let commit):
-                DetachedCommitView()
-            case .historyCommit(let commit):
-                HistoryCommitView()
-            case .wipCommit(let commit, let worktree):
-                WipCommitView()
-            case .tag(let tag):
-                TagView()
-            case .detachedTag(let tag):
-                DetachedTagView()
-            case .stash(let stash):
-                StashView()
-            case .status(let selectableStatus):
-                StatusView(
-                    statusViewModel: StatusViewModel(selectableStatus: selectableStatus),
-                    getDeltaInfo: getDeltaInfo,
-                    setDeltaInfo: setDeltaInfo,
-                    discardTapped: discardTapped,
-                    commitTapped: commitTapped,
-                    amendTapped: amendTapped,
-                    stageAllTapped: stageAllTapped,
-                    stageOrUnstageTapped: stageOrUnstageTapped,
-                    ignoreTapped: ignoreTapped
-                )
             }
             Spacer(minLength: 0)
         }

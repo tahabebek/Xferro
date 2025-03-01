@@ -49,7 +49,7 @@ struct WipCommitsView: View {
                 .padding(.vertical, 8)
             }
             .background(
-                Color(hex: 0x15151A)
+                Color(hexValue: 0x15151A)
                     .cornerRadius(8)
             )
         }
@@ -92,7 +92,7 @@ struct WipCommitsView: View {
                     }
 
                     if let currentSelectedItem {
-                        if case .regular = currentSelectedItem.selectedItemType {
+                        if case .regular = currentSelectedItem.type {
                             if wipCommits.isNotEmpty {
                                 Image(systemName: "eraser")
                                     .contentShape(Rectangle())

@@ -19,7 +19,7 @@ extension CommitsViewModel {
         }
 
         var branchName: String?
-        switch selectedItem.selectedItemType {
+        switch selectedItem.type {
         case .regular(let type):
             switch type {
             case .status, .commit, .detachedCommit, .detachedTag:
@@ -104,7 +104,7 @@ extension CommitsViewModel {
         if let currentSelectedItem, repository.gitDir.path == currentSelectedItem.repository.gitDir.path {
             var isHead = false
             let headId = head.oid
-            switch currentSelectedItem.selectedItemType {
+            switch currentSelectedItem.type {
             case .regular(let type):
                 switch type {
                 case .status:

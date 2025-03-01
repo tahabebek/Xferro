@@ -145,7 +145,7 @@ final class WipWorktree {
         let branchNameOfItemInWorktreeRepository = WipWorktree.worktreeBranchName(item: item.selectableItem)
 
         var shouldDeleteBranch = true
-        switch item.selectedItemType {
+        switch item.type {
         case .regular(let type):
             switch type {
             case .commit:

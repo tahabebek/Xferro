@@ -37,7 +37,6 @@ import Observation
         } else {
             ""
         }
-        self.isSelected = self.isAdditionOrDeletion
     }
 
     let oldLine: Int32

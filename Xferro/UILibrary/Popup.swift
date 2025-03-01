@@ -40,7 +40,7 @@ struct Popup<Message>: ViewModifier where Message: View {
                     self.message()
                 }
                 .background(
-                    Color(hex: 0x15151A)
+                    Color(hexValue: 0x15151A)
                         .cornerRadius(8)
                 )
                 .cornerRadius(15)

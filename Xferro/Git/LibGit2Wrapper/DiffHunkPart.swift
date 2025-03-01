@@ -37,15 +37,6 @@ import Foundation
     init(type: DiffHunkPartType, lines: [DiffLine], indexInHunk: Int, filePath: String) {
         self.type = type
         self.indexInHunk = indexInHunk
-        let isSelected = switch type {
-        case .context:
-            false
-        case .additionOrDeletion:
-            true
-        }
-        self.isSelected = isSelected
-        self.hasSomeSelected = isSelected
-
         self.lines = lines
         self.filePath = filePath
         for i in self.lines.indices {
@@ -53,8 +44,8 @@ import Foundation
         }
     }
     var lines: [DiffLine]
-    var isSelected: Bool
-    var hasSomeSelected: Bool
+    var isSelected = false
+    var hasSomeSelected = false
 
     func toggleLine(line: DiffLine) {
         if case .context = type {

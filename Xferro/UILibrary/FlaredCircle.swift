@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct FlaredCircle<Content>: View where Content: View {
-    var backgroundColor: Color = Color(hex: 0x232834).opacity(0.8)
+    var backgroundColor: Color = Color(hexValue: 0x232834).opacity(0.8)
     var intensity: CGFloat = 0.5
     var gradient = Gradient(colors: [
         Color.white,
-        Color(hex: 0xA85F89),
-        Color(hex: 0xA85F89).opacity(0)
+        Color(hexValue: 0xA85F89),
+        Color(hexValue: 0xA85F89).opacity(0)
     ])
     @ViewBuilder var content: () -> Content
 
