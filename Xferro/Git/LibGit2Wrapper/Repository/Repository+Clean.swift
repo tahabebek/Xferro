@@ -28,7 +28,7 @@ extension Repository {
                         continue
                     }
                     let url = workDir.appendingPathComponent(path)
-                    try? FileManager.removeItem(atURL: url)
+                    try? FileManager.removeItem(url)
                 }
             }
             return .success(s)

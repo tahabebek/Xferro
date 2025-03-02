@@ -19,20 +19,8 @@ struct ProjectView: View {
             HSplitView {
                 CommitsView(commitsViewModel: commitsViewModel)
                     .frame(width: Dimensions.commitsViewMaxWidth)
-                SelectableItemDetailView(selectedItem: commitsViewModel.currentSelectedItem) { repository, fileURLs in
-                    commitsViewModel.discardFileButtonTapped(repository: repository, fileURLs: fileURLs)
-                } commitTapped: { repository, message in
-                    commitsViewModel.commitTapped(repository: repository, message: message)
-                } amendTapped: { Repository, message in
-                    commitsViewModel.amendTapped(repository: Repository, message: message)
-                } stageAllTapped: { repository in
-                    commitsViewModel.stageAllButtonTapped(repository: repository)
-                } stageOrUnstageTapped: { flag, repository, deltaInfos in
-                    commitsViewModel.stageOrUnstageButtonTapped(stage: flag, repository: repository, deltaInfos: deltaInfos)
-                } ignoreTapped: { repository, deltaInfo in
-                    commitsViewModel.ignoreButtonTapped(repository: repository, deltaInfo: deltaInfo)
-                }
-                .frame(maxWidth: .infinity)
+                SelectableItemDetailView(selectedItem: commitsViewModel.currentSelectedItem)
+                    .frame(maxWidth: .infinity)
             }
         }
     }

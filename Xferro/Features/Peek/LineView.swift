@@ -17,7 +17,7 @@ struct LineView: View {
     @State private var hoveredLine: Int?
     @State private var partIsHovered: Bool = false
     @State var isAdditionOrDeletion: Bool
-    @State private var hasSomeSelected: Bool
+    @State private var selectedLinesCount: Int
     @State private var isLineSelected: Bool
     @State private var isPartSelected: Bool
     private let isFirst: Bool
@@ -38,7 +38,7 @@ struct LineView: View {
     ) {
         self._isAdditionOrDeletion = State(initialValue: line.isAdditionOrDeletion)
         self._isPartSelected = State(initialValue: part.isSelected)
-        self._hasSomeSelected = State(initialValue: part.hasSomeSelected)
+        self._selectedLinesCount = State(initialValue: part.selectedLinesCount)
         self._isLineSelected = State(initialValue: line.isSelected)
         self.isFirst = isFirst
         self.indexInPart = line.indexInPart
@@ -71,7 +71,7 @@ struct LineView: View {
                         }
                         .background {
                             if isAdditionOrDeletion {
-                                if hasSomeSelected {
+                                if selectedLinesCount > 0 {
                                     Color.accentColor.opacity(Self.hoveredPartBackgroundOpacity)
                                 } else {
                                     if let hoveredLine, hoveredLine == indexInPart {
@@ -179,7 +179,7 @@ struct LineView: View {
         let string: String = if isFirst {
             if isPartSelected {
                 "✓"
-            } else if hasSomeSelected {
+            } else if selectedLinesCount > 0 {
                 "-"
             } else {
                 " "

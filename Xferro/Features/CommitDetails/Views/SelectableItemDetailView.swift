@@ -9,12 +9,6 @@ import SwiftUI
 
 struct SelectableItemDetailView: View {
     let selectedItem: SelectedItem?
-    let discardTapped: (Repository, [URL]) -> Void
-    let commitTapped: (Repository, String) -> Void
-    let amendTapped: (Repository, String?) -> Void
-    let stageAllTapped: (Repository) -> Void
-    let stageOrUnstageTapped: (Bool, Repository, [DeltaInfo]) -> Void
-    let ignoreTapped: (Repository, DeltaInfo) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,15 +17,7 @@ struct SelectableItemDetailView: View {
                 case .regular(let regularSelectedItem):
                     switch regularSelectedItem {
                     case .status(let selectableStatus):
-                        StatusView(
-                            statusViewModel: StatusViewModel(selectableStatus: selectableStatus),
-                            discardTapped: discardTapped,
-                            commitTapped: commitTapped,
-                            amendTapped: amendTapped,
-                            stageAllTapped: stageAllTapped,
-                            stageOrUnstageTapped: stageOrUnstageTapped,
-                            ignoreTapped: ignoreTapped
-                        )
+                        StatusView(statusViewModel: StatusViewModel(selectableStatus: selectableStatus))
                     case .commit(let selectableCommit):
                         CommitView()
                     case .historyCommit(let selectableHistoryCommit):

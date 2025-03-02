@@ -239,6 +239,7 @@ class Repository: Identifiable, Equatable, Hashable {
         }
         var opts = pointer.move()
         opts.flags = options.rawValue
+        opts.rename_threshold = 70
         pointer.deallocate()
 
         var unsafeStatus: OpaquePointer? = nil

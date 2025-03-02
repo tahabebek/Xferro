@@ -8,11 +8,11 @@
 import Foundation
 
 extension FileManager {
-    static func fileExists(at path: String) -> Bool {
+    static func fileExists(_ path: String) -> Bool {
         FileManager.default.fileExists(atPath: path)
     }
 
-    static func fileExists(at path: String, isDirectory: UnsafeMutablePointer<ObjCBool>?) -> Bool {
+    static func fileExists(_ path: String, isDirectory: UnsafeMutablePointer<ObjCBool>?) -> Bool {
         FileManager.default.fileExists(atPath: path, isDirectory: isDirectory)
     }
 
@@ -24,36 +24,39 @@ extension FileManager {
         try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: keys, options: mask)
     }
 
-    static func attributesOfItem(at path: String) throws -> [FileAttributeKey : Any] {
+    static func attributesOfItem(_ path: String) throws -> [FileAttributeKey : Any] {
         try FileManager.default.attributesOfItem(atPath: path)
     }
 
-    static func removeItem(at path: String) throws {
+    static func removeItem(_ path: String) throws {
         try FileManager.default.removeItem(atPath: path)
     }
 
-    static func createDirectory(at path: String, withIntermediateDirectories createIntermediates: Bool, attributes: [FileAttributeKey : Any]? = nil) throws {
+    static func moveItem(_ srcURL: URL, to dstURL: URL) throws {
+        try FileManager.default.moveItem(at: srcURL, to: dstURL)
+    }
+    static func createDirectory(_ path: String, withIntermediateDirectories createIntermediates: Bool, attributes: [FileAttributeKey : Any]? = nil) throws {
         try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: createIntermediates, attributes: attributes)
     }
 
-    static func createDirectory(atURL url: URL, withIntermediateDirectories createIntermediates: Bool, attributes: [FileAttributeKey : Any]? = nil) throws {
+    static func createDirectory(_ url: URL, withIntermediateDirectories createIntermediates: Bool, attributes: [FileAttributeKey : Any]? = nil) throws {
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: createIntermediates, attributes: attributes)
     }
 
     @discardableResult
-    static func createFile(at path: String, contents data: Data?, attributes attr: [FileAttributeKey : Any]? = nil) -> Bool {
+    static func createFile(_ path: String, contents data: Data?, attributes attr: [FileAttributeKey : Any]? = nil) -> Bool {
         FileManager.default.createFile(atPath: path, contents: data, attributes: attr)
     }
 
-    static func removeItem(atURL: URL) throws {
-        try FileManager.default.removeItem(at: atURL)
+    static func removeItem(_ url: URL) throws {
+        try FileManager.default.removeItem(at: url)
     }
 
     static var tempDirectory: URL {
         FileManager.default.temporaryDirectory
     }
 
-    static func urls(forDirectory directory: FileManager.SearchPathDirectory, in domainMask: FileManager.SearchPathDomainMask) -> [URL] {
+    static func urls(in directory: FileManager.SearchPathDirectory, in domainMask: FileManager.SearchPathDomainMask) -> [URL] {
         FileManager.default.urls(for: directory, in: domainMask)
     }
 }

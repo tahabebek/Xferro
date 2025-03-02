@@ -15,14 +15,16 @@ import Observation
     }
 
     var id: String {
-        "\(filePath)\(patch.id).\(hunkIndex)"
+        "\(delta.oldFilePath ?? "").\(delta.newFilePath ?? "").\(patch.id).\(hunkIndex).\(type)"
     }
 
     var parts: [DiffHunkPart]
     let hunk: git_diff_hunk
     let hunkIndex: Int
     let patch: Patch
-    let filePath: String
+    let delta: Diff.Delta
+    let type: StatusType
+    let repository: Repository
 
     var oldStart: Int32 { hunk.old_start }
     var oldLines: Int32 { hunk.old_lines }
@@ -31,17 +33,25 @@ import Observation
     var lineCount: Int { Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex)) }
     var insertionText: String = ""
 
+    var selectedLinesCount: Int {
+        parts.map { $0.selectedLinesCount }.reduce(0, +)
+    }
+
     init(
         hunk: git_diff_hunk,
         hunkIndex: Int,
         patch: Patch,
-        filePath: String
+        delta: Diff.Delta,
+        type: StatusType,
+        repostiory: Repository
     ) {
         self.hunk = hunk
         self.hunkIndex = hunkIndex
         self.patch = patch
-        self.filePath = filePath
+        self.delta = delta
+        self.type = type
         self.parts = []
+        self.repository = repostiory
         self.insertionText = getHunkHeader(hunk: hunk)
         let lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
         var currentLines: [DiffLine] = []
@@ -52,7 +62,13 @@ import Observation
             switch currentPartType {
             case .context:
                 if line.isAdditionOrDeletion {
-                    parts.append(DiffHunkPart(type: currentPartType, lines: currentLines, indexInHunk: partIndex, filePath: filePath))
+                    parts.append(DiffHunkPart(
+                        type: currentPartType,
+                        lines: currentLines,
+                        indexInHunk: partIndex,
+                        oldFilePath: delta.oldFilePath,
+                        newFilePath: delta.newFilePath
+                    ))
                     partIndex += 1
                     currentPartType = .additionOrDeletion
                     currentLines = [line]
@@ -63,14 +79,26 @@ import Observation
                 if line.isAdditionOrDeletion {
                     currentLines += [line]
                 } else {
-                    parts.append(DiffHunkPart(type: currentPartType, lines: currentLines, indexInHunk: partIndex, filePath: filePath))
+                    parts.append(DiffHunkPart(
+                        type: currentPartType,
+                        lines: currentLines,
+                        indexInHunk: partIndex,
+                        oldFilePath: delta.oldFilePath,
+                        newFilePath: delta.newFilePath
+                    ))
                     partIndex += 1
                     currentPartType = .context
                     currentLines = [line]
                 }
             }
         }
-        parts.append(DiffHunkPart(type: currentPartType, lines: currentLines, indexInHunk: partIndex, filePath: filePath))
+        parts.append(DiffHunkPart(
+            type: currentPartType,
+            lines: currentLines,
+            indexInHunk: partIndex,
+            oldFilePath: delta.oldFilePath,
+            newFilePath: delta.newFilePath
+        ))
     }
 
     private func getHunkHeader(hunk: git_diff_hunk) -> String {
@@ -161,6 +189,11 @@ import Observation
         let replaceRange = targetLineStart..<(targetLineStart+targetLineCount)
 
         return oldText.elementsEqual(lines[replaceRange])
+    }
+
+    func discard()
+    {
+        repository.discard(delta: delta, hunk: self)
     }
 
     private func lineAtIndex(_ lineIndex: Int) -> DiffLine {

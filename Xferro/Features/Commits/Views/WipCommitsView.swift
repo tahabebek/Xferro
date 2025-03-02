@@ -77,7 +77,7 @@ struct WipCommitsView: View {
     var header: some View {
         Group {
             if let wipCommits {
-                VerticalHeader(title: "History (Including WIP)") {
+                VerticalHeader(title: "Work in progress") {
                     Toggle("Auto", isOn: Binding<Bool>(
                         get: { wipCommits.autoCommitEnabled },
                         set: { wipCommits.autoCommitEnabled = $0 }

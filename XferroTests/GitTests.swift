@@ -25,7 +25,7 @@ final class GitTests: XCTestCase {
     func testInMemoryRepo() throws {
         let sourceRepo = Fixtures.simpleRepository
         let repo = try Repository(
-            sourcePath: sourceRepo.workDir!.path,
+            sourcePath: sourceRepo.workDir.path,
             shouldCopyFromSource: true,
             identity: .init(name: "test", email: "test@example.com")
         )

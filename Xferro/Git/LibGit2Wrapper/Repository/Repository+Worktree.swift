@@ -124,7 +124,7 @@ extension Repository {
             if valid {
                 // libgit2 have a bug, it does not check the worktree path exists.
                 var isDirectory: ObjCBool = false
-                if !FileManager.fileExists(at: path, isDirectory: &isDirectory) || !isDirectory.boolValue {
+                if !FileManager.fileExists(path, isDirectory: &isDirectory) || !isDirectory.boolValue {
                     options.pointee.flags = options.pointee.flags | GIT_WORKTREE_PRUNE_VALID.rawValue
                 }
             }

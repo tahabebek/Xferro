@@ -16,27 +16,22 @@ struct StatusView: View {
     enum BoxActions: String, CaseIterable {
         case splitAndCommit = "Split and Commit"
         case amend = "Amend"
-        case stageAll = "Stage All"
-        case stageAllAndCommit = "Stage All and Commit"
-        case stageAllAndAmend = "Stage All and Amend"
-        case stageAllCommitAndPush = "Stage All, Commit, and Push"
-        case stageAllAmendAndPush = "Stage All, Amend, and Push"
-        case stageAllCommitAndForcePush = "Stage All, Commit, and Force Push"
-        case stageAllAmendAndForcePush = "Stage All, Amend, and Force Push"
+        case stageAll = "Include All"
+        case stageAllAndCommit = "Include All and Commit"
+        case stageAllAndAmend = "Include All and Amend"
+        case stageAllCommitAndPush = "Include All, Commit, and Push"
+        case stageAllAmendAndPush = "Include All, Amend, and Push"
+        case stageAllCommitAndForcePush = "Include All, Commit, and Force Push"
+        case stageAllAmendAndForcePush = "Include All, Amend, and Force Push"
         case stash = "Stash"
         case popStash = "Pop Stash"
         case applyStash = "Apply Stash"
+        case discardAll = "Discard All"
         // TODO:
-//        case addCustom = "Add Custom"
+        case addCustom = "Add Custom"
     }
 
     let statusViewModel: StatusViewModel
-    let discardTapped: (Repository, [URL]) -> Void
-    let commitTapped: (Repository, String) -> Void
-    let amendTapped: (Repository, String?) -> Void
-    let stageAllTapped: (Repository) -> Void
-    let stageOrUnstageTapped: (Bool, Repository, [DeltaInfo]) -> Void
-    let ignoreTapped: (Repository, DeltaInfo) -> Void
 
     @Environment(DiscardPopup.self) var discardPopup
     @Environment(\.windowSize) var windowSize
@@ -56,6 +51,15 @@ struct StatusView: View {
     private static var totalVerticalPadding: CGFloat {
         Self.actionBoxBottomPadding * 2 + Self.actionBoxVerticalInnerPadding * 2
     }
+
+    private func peekView(for deltaInfo: DeltaInfo) -> some View {
+        let (hunks, addedLinesCount, deletedLinesCount) = HunkFactory.makeHunks(
+            selectableItem: statusViewModel.selectableStatus,
+            deltaInfo: deltaInfo
+        )
+        return PeekView(hunks: hunks, addedLinesCount: addedLinesCount, deletedLinesCount: deletedLinesCount)
+            .id(deltaInfo.id)
+    }
     var body: some View {
         HSplitView {
             VSplitView {
@@ -72,29 +76,17 @@ struct StatusView: View {
                 List {
                     Section {
                         ForEach(statusViewModel.stagedDeltaInfos) { deltaInfo in
-                            PeekView(hunks: HunkFactory.makeHunks(
-                                selectableItem: statusViewModel.selectableStatus,
-                                deltaInfo: deltaInfo)
-                            )
-                            .id(deltaInfo.id)
+                            peekView(for: deltaInfo)
                         }
                     }
                     Section {
                         ForEach(statusViewModel.unstagedDeltaInfos) { deltaInfo in
-                            PeekView(hunks: HunkFactory.makeHunks(
-                                selectableItem: statusViewModel.selectableStatus,
-                                deltaInfo: deltaInfo)
-                            )
-                            .id(deltaInfo.id)
+                            peekView(for: deltaInfo)
                         }
                     }
                     Section {
                         ForEach(statusViewModel.untrackedDeltaInfos) { deltaInfo in
-                            PeekView(hunks: HunkFactory.makeHunks(
-                                selectableItem: statusViewModel.selectableStatus,
-                                deltaInfo: deltaInfo)
-                            )
-                            .id(deltaInfo.id)
+                            peekView(for: deltaInfo)
                         }
                     }
                 }
@@ -218,7 +210,7 @@ struct StatusView: View {
                 fileURLs.append(newFileURL)
             }
         }
-        discardTapped(statusViewModel.repository, fileURLs)
+        statusViewModel.discardTapped(fileURLs: fileURLs)
     }
 
     private var actionBox: some View {
@@ -238,12 +230,12 @@ struct StatusView: View {
         HStack {
             Form {
                 TextField(
-                    "Message",
+                    "Summary",
                     text: Binding(
                         get: { commitSummary[statusViewModel.selectableStatus.oid] ?? "" },
                         set: { commitSummary[statusViewModel.selectableStatus.oid] = $0 }
                     ),
-                    prompt: Text("Message for commit, amend or stash"),
+                    prompt: Text("Summary for commit, amend or stash"),
                     axis: .vertical
                 )
                 .textFieldStyle(.roundedBorder)
@@ -312,6 +304,8 @@ struct StatusView: View {
                 popStashButton(boxAction.title)
             case BoxActions.applyStash.rawValue:
                 applyStashButton(boxAction.title)
+            case BoxActions.discardAll.rawValue:
+                discardAllButton(boxAction.title)
             default:
                 EmptyView()
             }
@@ -332,7 +326,7 @@ struct StatusView: View {
             }
         } header: {
             HStack {
-                Text("Untracked files")
+                Text("Untracked Changes")
                 Spacer()
                 stageAllUntrackedButton
             }
@@ -353,13 +347,12 @@ struct StatusView: View {
             }
         } header: {
             HStack {
-                Text("Unstaged changes")
+                Text("Excluded Changes")
                 Spacer()
                 stageAllUnstagedButton
             }
             .padding(.bottom, 4)
         }
-
     }
 
     private var stagedView: some View {
@@ -375,7 +368,7 @@ struct StatusView: View {
             }
         } header: {
             HStack {
-                Text("Staged changes")
+                Text("Included Changes")
                 Spacer()
                 unstageAllStagedButton
             }
@@ -510,7 +503,7 @@ extension StatusView {
                 guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                     fatalError(.impossible)
                 }
-                commitTapped(statusViewModel.repository, message)
+                statusViewModel.commitTapped(message: message)
                 commitSummary[statusViewModel.selectableStatus.oid] = nil
                 isTextFieldFocused = false
             }
@@ -522,14 +515,14 @@ extension StatusView {
                 guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                     fatalError(.impossible)
                 }
-                commitTapped(statusViewModel.repository, message)
+                statusViewModel.commitTapped(message: message)
                 commitSummary[statusViewModel.selectableStatus.oid] = nil
                 isTextFieldFocused = false
             }
     }
     func amendButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
-            amendTapped(statusViewModel.repository, commitSummary[statusViewModel.selectableStatus.oid])
+            statusViewModel.amendTapped(message: commitSummary[statusViewModel.selectableStatus.oid])
         }
     }
     func stageAllAndCommitButton(_ title: String) -> some View {
@@ -537,16 +530,16 @@ extension StatusView {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                 fatalError(.impossible)
             }
-            stageAllTapped(statusViewModel.repository)
-            commitTapped(statusViewModel.repository, message)
+            statusViewModel.stageAllTapped()
+            statusViewModel.commitTapped(message: message)
             commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
         }
     }
     func stageAllAndAmendButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: !hasChanges) {
-            stageAllTapped(statusViewModel.repository)
-            amendTapped(statusViewModel.repository, commitSummary[statusViewModel.selectableStatus.oid])
+            statusViewModel.stageAllTapped()
+            statusViewModel.amendTapped(message: commitSummary[statusViewModel.selectableStatus.oid])
             commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
         }
@@ -559,8 +552,8 @@ extension StatusView {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                 fatalError(.impossible)
             }
-            stageAllTapped(statusViewModel.repository)
-            commitTapped(statusViewModel.repository, message)
+            statusViewModel.stageAllTapped()
+            statusViewModel.commitTapped(message: message)
             commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
             fatalError(.unimplemented)
@@ -575,8 +568,8 @@ extension StatusView {
             guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
                 fatalError(.impossible)
             }
-            stageAllTapped(statusViewModel.repository)
-            commitTapped(statusViewModel.repository, message)
+            statusViewModel.stageAllTapped()
+            statusViewModel.commitTapped(message: message)
             commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
             fatalError(.unimplemented)
@@ -584,8 +577,8 @@ extension StatusView {
     }
     func stageAllAmendAndPushButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: !hasChanges) {
-            stageAllTapped(statusViewModel.repository)
-            amendTapped(statusViewModel.repository, commitSummary[statusViewModel.selectableStatus.oid])
+            statusViewModel.stageAllTapped()
+            statusViewModel.amendTapped(message: commitSummary[statusViewModel.selectableStatus.oid])
             commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
             fatalError(.unimplemented)
@@ -597,8 +590,8 @@ extension StatusView {
             disabled: !hasChanges,
             dangerous: true
         ) {
-            stageAllTapped(statusViewModel.repository)
-            amendTapped(statusViewModel.repository, commitSummary[statusViewModel.selectableStatus.oid])
+            statusViewModel.stageAllTapped()
+            statusViewModel.amendTapped(message: commitSummary[statusViewModel.selectableStatus.oid])
             commitSummary[statusViewModel.selectableStatus.oid] = nil
             isTextFieldFocused = false
             fatalError(.unimplemented)
@@ -617,6 +610,11 @@ extension StatusView {
     func applyStashButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: !hasChanges) {
             fatalError(.unimplemented)
+        }
+    }
+    func discardAllButton(_ title: String) -> some View {
+        AnyView.buttonWith(title: title, disabled: !hasChanges, dangerous: true) {
+            statusViewModel.discardAllTapped()
         }
     }
     func addCustomButton(_ title: String) -> some View {
@@ -638,13 +636,13 @@ extension StatusView {
 // Staged Files
 extension StatusView {
     var unstageAllStagedButton: some View {
-        AnyView.buttonWith(title: "Unstage All") {
-            stageOrUnstageTapped(false, statusViewModel.repository, statusViewModel.stagedDeltaInfos)
+        AnyView.buttonWith(title: "Exclude All") {
+            statusViewModel.stageOrUnstageTapped(stage: false)
         }
     }
     func unstageSelectedStagedButton(deltaInfo: DeltaInfo) -> some View {
-        AnyView.buttonWith(title: "Unstage", isProminent: false, isSmall: true) {
-            stageOrUnstageTapped(false, statusViewModel.repository, [deltaInfo])
+        AnyView.buttonWith(title: "Exclude", isProminent: false, isSmall: true) {
+            statusViewModel.stageOrUnstageTapped(stage: false, deltaInfos: [deltaInfo])
         }
     }
 }
@@ -652,13 +650,13 @@ extension StatusView {
 // Unstaged Files
 extension StatusView {
     var stageAllUnstagedButton: some View {
-        AnyView.buttonWith(title: "Stage All") {
-            stageOrUnstageTapped(true, statusViewModel.repository, statusViewModel.unstagedDeltaInfos)
+        AnyView.buttonWith(title: "Include All") {
+            statusViewModel.stageOrUnstageTapped(stage: true)
         }
     }
     func stageSelectedUnstagedButton(deltaInfo: DeltaInfo)-> some View {
-        AnyView.buttonWith(title: "Stage", isProminent: false, isSmall: true) {
-            stageOrUnstageTapped(true, statusViewModel.repository, [deltaInfo])
+        AnyView.buttonWith(title: "Include", isProminent: false, isSmall: true) {
+            statusViewModel.stageOrUnstageTapped(stage: true, deltaInfos: [deltaInfo])
         }
     }
 }
@@ -667,19 +665,19 @@ extension StatusView {
 extension StatusView {
     var stageAllUntrackedButton: some View {
         AnyView.buttonWith(title: "Track all") {
-            stageOrUnstageTapped(true, statusViewModel.repository, statusViewModel.untrackedDeltaInfos)
+            statusViewModel.stageOrUnstageTapped(stage: true)
         }
     }
 
     func stageSelectedUntrackedButton(deltaInfo: DeltaInfo) -> some View {
         AnyView.buttonWith(title: "Track", isProminent: false, isSmall: true) {
-            stageOrUnstageTapped(true, statusViewModel.repository, [deltaInfo])
+            statusViewModel.stageOrUnstageTapped(stage: true, deltaInfos: [deltaInfo])
         }
     }
 
     func ignoreSelectedUntrackedButton(deltaInfo: DeltaInfo) -> some View {
         AnyView.buttonWith(title: "Ignore", isProminent: false, isSmall: true) {
-            ignoreTapped(statusViewModel.repository, deltaInfo)
+            statusViewModel.ignoreTapped(deltaInfo: deltaInfo)
         }
     }
 }

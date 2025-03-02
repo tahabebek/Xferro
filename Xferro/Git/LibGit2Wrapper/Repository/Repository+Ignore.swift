@@ -40,7 +40,7 @@ extension Repository {
         lock.lock()
         defer { lock.unlock() }
         let ignoreURL = workDir.appendingPathComponent(".gitignore")
-        if !FileManager.fileExists(at: ignoreURL.path) {
+        if !FileManager.fileExists(ignoreURL.path) {
             try! "".write(to: ignoreURL, atomically: true, encoding: .utf8)
         }
         let content = try! String(contentsOfFile: ignoreURL.path, encoding: .utf8)
@@ -87,7 +87,7 @@ extension Repository {
         defer { lock.unlock() }
         let ignoreURL = workDir.appendingPathComponent(".gitignore")
 
-        guard FileManager.fileExists(at: ignoreURL.path) else {
+        guard FileManager.fileExists(ignoreURL.path) else {
             return []
         }
         let content = try! String(contentsOfFile: ignoreURL.path, encoding: .utf8)

@@ -27,7 +27,7 @@ extension URL {
     }
 
     func modificationDate() throws -> Date {
-        let attributes = try FileManager.attributesOfItem(at: path)
+        let attributes = try FileManager.attributesOfItem(path)
         return attributes[FileAttributeKey.modificationDate] as! Date
     }
 }

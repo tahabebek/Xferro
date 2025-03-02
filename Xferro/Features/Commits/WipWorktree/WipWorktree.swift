@@ -87,7 +87,7 @@ final class WipWorktree {
             .appendingPathComponent(String(originalRepositoryPath.dropFirst()))
             .appendingPathComponent("WipWorktree")
         try? FileManager.createDirectory(
-            atURL: worktreeRepositoryURL.deletingLastPathComponent(),
+            worktreeRepositoryURL.deletingLastPathComponent(),
             withIntermediateDirectories: true,
             attributes: nil
         )
@@ -126,8 +126,8 @@ final class WipWorktree {
         let worktreeName = WipWorktree.worktreeName(for: repository)
         let worktreePath = Self.worktreeRepositoryURL(originalRepository: repository).path
         repository.pruneWorkTree(worktreeName, force: true).mustSucceed()
-        if FileManager.fileExists(at: worktreePath) {
-            try! FileManager.removeItem(atURL: URL(filePath: worktreePath, directoryHint: .isDirectory))
+        if FileManager.fileExists(worktreePath) {
+            try! FileManager.removeItem(URL(filePath: worktreePath, directoryHint: .isDirectory))
         }
 
         let branchIterator = BranchIterator(repo: repository, type: .local)

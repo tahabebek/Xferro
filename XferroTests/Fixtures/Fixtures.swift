@@ -31,7 +31,7 @@ final class Fixtures {
     let directoryURL: URL
 
     func setUp() {
-        try! FileManager.createDirectory(atURL: directoryURL, withIntermediateDirectories: true, attributes: nil)
+        try! FileManager.createDirectory(directoryURL, withIntermediateDirectories: true, attributes: nil)
 
         let bundleIdentifier = String(format: "com.xferro.XferroTests")
         let bundle = Bundle(identifier: bundleIdentifier)!
@@ -44,7 +44,7 @@ final class Fixtures {
     }
 
     func tearDown() {
-        try? FileManager.removeItem(atURL: directoryURL)
+        try? FileManager.removeItem(directoryURL)
     }
 
     // MARK: - Helpers

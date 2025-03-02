@@ -9,17 +9,19 @@ import SwiftUI
 
 struct PeekView: View {
     let hunks: [DiffHunk]
+    let addedLinesCount: Int
+    let deletedLinesCount: Int
 
-    init(hunks: [DiffHunk]) {
+    init(hunks: [DiffHunk], addedLinesCount: Int, deletedLinesCount: Int) {
         self.hunks = hunks
+        self.addedLinesCount = addedLinesCount
+        self.deletedLinesCount = deletedLinesCount
     }
     
-    // Extract file extension from the path if available
     private var fileExtension: String? {
-        guard let filePath = hunks.first?.filePath else { return nil }
+        guard let filePath = hunks.first?.delta.oldFilePath ?? hunks.first?.delta.newFilePath else { return nil }
         let url = URL(fileURLWithPath: filePath)
 
-        // Get the file extension and ensure it's non-empty
         let ext = url.pathExtension.lowercased()
         return ext.isEmpty ? nil : ext
     }
@@ -31,11 +33,7 @@ struct PeekView: View {
                 .padding(.horizontal, 8)
 
                 ForEach(hunks) { hunk in
-                    HunkView(
-                        parts: hunk.parts, 
-                        insertionText: hunk.insertionText, 
-                        fileExtension: fileExtension
-                    )
+                    HunkView(hunk: hunk, fileExtension: fileExtension)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -65,9 +63,19 @@ struct PeekView: View {
         }
     }
 
+    var countString: String {
+        "\(hunks.count) \(hunks.count == 1 ? "chunk" : "chunks"), \(addedLinesCount) \(addedLinesCount == 1 ? "addition" : "additions"), \(deletedLinesCount) \(deletedLinesCount == 1 ? "deletion" : "deletions")"
+    }
+
     var header: some View {
-        let fileName = hunks.first?.filePath.components(separatedBy: "/").last ?? "Changes"
-        return VerticalHeader(title: fileName, horizontalPadding: 0.0)
-            .frame(height: 36)
+        let fileName = hunks.first?.delta.newFilePath ?? hunks.first?.delta.oldFilePath ?? "".components(separatedBy: "/").last ?? "Changes"
+        return HStack(spacing: 0) {
+            VerticalHeader(title: fileName, horizontalPadding: 0.0)
+                .frame(height: 36)
+            Spacer()
+            if hunks.count > 0 {
+                Text(countString)
+            }
+        }
     }
 }

@@ -101,7 +101,7 @@ final class GitWatcher {
     func checkIndex()
     {
         let indexPath = repository.gitDir.appendingPathComponent("index").path
-        guard let indexAttributes = try? FileManager.attributesOfItem(at: indexPath),
+        guard let indexAttributes = try? FileManager.attributesOfItem(indexPath),
               let newMod = indexAttributes[FileAttributeKey.modificationDate]
                 as? Date
         else {

@@ -9,9 +9,9 @@ import Foundation
 import Observation
 
 enum HunkFactory {
-    static func makeHunks(selectableItem: (any SelectableItem)?, deltaInfo: DeltaInfo?) -> [DiffHunk] {
+    static func makeHunks(selectableItem: (any SelectableItem)?, deltaInfo: DeltaInfo?) -> ([DiffHunk], Int, Int) {
         guard let selectableItem, let deltaInfo else {
-            return []
+            return ([], 0, 0)
         }
         let patchMaker: PatchMaker?
         let isStaged = deltaInfo.type == .staged
@@ -78,13 +78,18 @@ enum HunkFactory {
             var newHunks = [DiffHunk]()
             let hunkCount = patch.hunkCount
             for index in 0..<hunkCount {
-                if let hunk = patch.hunk(at: index, filePath: (deltaInfo.newFilePath ?? "") + (deltaInfo.oldFilePath ?? "" )) {
+                if let hunk = patch.hunk(
+                    at: index,
+                    delta: deltaInfo.delta,
+                    type: deltaInfo.type,
+                    repository: deltaInfo.repository
+                ) {
                     newHunks.append(hunk)
                 }
             }
-            return newHunks
+            return (newHunks, patch.addedLinesCount, patch.deletedLinesCount)
         } else {
-            return []
+            return ([], 0, 0)
         }
     }
 }

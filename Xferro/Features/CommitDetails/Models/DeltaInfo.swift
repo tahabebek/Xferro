@@ -8,14 +8,14 @@
 import Foundation
 import Observation
 
-@Observable final class DeltaInfo: Identifiable, Equatable {
-    enum StatusType: Int, Identifiable, Hashable {
-        var id: Int { rawValue }
+enum StatusType: Int, Identifiable, Hashable {
+    var id: Int { rawValue }
 
-        case staged = 0
-        case unstaged = 1
-        case untracked = 2
-    }
+    case staged = 0
+    case unstaged = 1
+    case untracked = 2
+}
+@Observable final class DeltaInfo: Identifiable, Equatable {
     static func == (lhs: DeltaInfo, rhs: DeltaInfo) -> Bool {
         lhs.id == rhs.id
     }

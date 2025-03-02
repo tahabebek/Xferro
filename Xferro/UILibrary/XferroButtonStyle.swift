@@ -76,8 +76,15 @@ extension AnyView {
                 Group {
                     if dangerous {
                         HStack(spacing: 4) {
-                            Image(systemName: "exclamationmark.octagon.fill")
-                                .foregroundStyle(Color(nsColor: .systemRed))
+                            ZStack {
+                                Image(systemName: "octagon.fill")
+                                    .foregroundStyle(.red)
+                                Image(systemName: "exclamationmark")
+                                    .resizable(resizingMode: .stretch)
+                                    .frame(width: 3, height: 6)
+                                    .aspectRatio(contentMode: .fit)
+                                    .scaledToFit()
+                            }
                             Text(title)
                         }
                     } else {

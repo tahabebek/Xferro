@@ -31,3 +31,4 @@ struct StatusOptions: OptionSet {
     static let includeUnreadable             = StatusOptions(rawValue: 1 << 14)
     static let includeUnreadableAsUntracked  = StatusOptions(rawValue: 1 << 15)
 }
+extension git_status_t: OptionSet {}

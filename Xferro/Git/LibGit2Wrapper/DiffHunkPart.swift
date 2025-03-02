@@ -9,14 +9,12 @@ import Foundation
 
 @Observable final class DiffHunkPart: Equatable, Identifiable {
     static func == (lhs: DiffHunkPart, rhs: DiffHunkPart) -> Bool {
-        lhs.type == rhs.type
-        && lhs.indexInHunk == rhs.indexInHunk
-        && lhs.isSelected == rhs.isSelected
-        && lhs.hasSomeSelected == rhs.hasSomeSelected
-        && lhs.filePath == rhs.filePath
+        lhs.id == rhs.id
     }
 
-    var id: String { "\(type.id).\(indexInHunk).\(isSelected).\(hasSomeSelected)" }
+    var id: String {
+        "\(type.id).\(indexInHunk).\(isSelected).\(selectedLinesCount).\(oldFilePath ?? "").\(newFilePath ?? "")"
+    }
 
     enum DiffHunkPartType: Equatable, Identifiable {
         var id: String {
@@ -32,20 +30,28 @@ import Foundation
     }
     private var type: DiffHunkPartType
     let indexInHunk: Int
-    let filePath: String
+    let oldFilePath: String?
+    let newFilePath: String?
 
-    init(type: DiffHunkPartType, lines: [DiffLine], indexInHunk: Int, filePath: String) {
+    init(
+        type: DiffHunkPartType,
+        lines: [DiffLine],
+        indexInHunk: Int,
+        oldFilePath: String?,
+        newFilePath: String?
+    ) {
         self.type = type
         self.indexInHunk = indexInHunk
         self.lines = lines
-        self.filePath = filePath
+        self.oldFilePath = oldFilePath
+        self.newFilePath = newFilePath
         for i in self.lines.indices {
             self.lines[i].indexInPart = i
         }
     }
     var lines: [DiffLine]
     var isSelected = false
-    var hasSomeSelected = false
+    var selectedLinesCount = 0
 
     func toggleLine(line: DiffLine) {
         if case .context = type {
@@ -73,7 +79,7 @@ import Foundation
         if case .context = type {
             fatalError(.invalid)
         }
-        hasSomeSelected = lines.contains(where: \.isSelected)
+        selectedLinesCount = lines.filter(\.isSelected).count
         isSelected = lines.allSatisfy(\.isSelected)
     }
 }
