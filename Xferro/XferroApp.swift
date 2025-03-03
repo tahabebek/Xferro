@@ -26,6 +26,7 @@ struct SwiftSpaceApp: App {
     @State private var welcomeViewModel = WelcomeViewModel()
     @State private var discardPopup = DiscardPopup()
     @State private var users: Users? = DataManager.load(Users.self, filename: DataManager.usersFileName)
+    @State private var projectsViewModel: ProjectsViewModel? = ProjectsViewModel(user: DataManager.load(Users.self, filename: DataManager.usersFileName)?.currentUser)
     private let screenDimensions = NSScreen.main?.visibleFrame.size
 
     var body: some Scene {
@@ -33,8 +34,8 @@ struct SwiftSpaceApp: App {
             Group {
                 GeometryReader { geometry in
                     Group {
-                        if let users, let currentUser = users.currentUser {
-                            ProjectsView(viewModel: ProjectsViewModel(user: currentUser))
+                        if let projectsViewModel {
+                            ProjectsView(viewModel: projectsViewModel)
                                 .environment(discardPopup)
                         } else {
                             WelcomeView(viewModel: welcomeViewModel)
@@ -43,6 +44,16 @@ struct SwiftSpaceApp: App {
                                     users = newValue
                                 }
                         }
+                    }
+                    .onChange(of: users) { oldValue, newValue in
+                        if let users: Users = newValue {
+                            if let currentUser: User = users.currentUser {
+                                projectsViewModel = ProjectsViewModel(user: currentUser)
+                            }
+                        }
+//                        if let newValue, let currentUser = newValue.currentUser {
+//                            projectsViewModel = ProjectsViewModel(user: newValue)
+//                        }
                     }
                     .environment(\.windowSize, geometry.size)
                 }

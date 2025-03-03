@@ -11,7 +11,8 @@ import Observation
 @Observable final class ProjectsViewModel {
     var user: User
 
-    init(user: User) {
+    init?(user: User?) {
+        guard let user else { return nil }
         print("init ProjectsViewModel")
         self.user = user
     }
@@ -19,6 +20,8 @@ import Observation
     deinit {
         print("deinit ProjectsViewModel")
     }
+
+    private var _commitsViewModel: CommitsViewModel?
 
     func userDidSelectFolder(_ url: URL, commitsViewModel: CommitsViewModel? = nil) {
         let isGit = isFolderGit(url: url)
@@ -33,6 +36,9 @@ import Observation
     }
 
     func commitsViewModel() -> CommitsViewModel? {
+        if let _commitsViewModel {
+            return _commitsViewModel
+        }
         guard user.projects.isNotEmpty else { return nil }
         var repositories: [Repository] = []
         for project in user.projects {
@@ -45,6 +51,7 @@ import Observation
             guard let self else { return }
             userDidSelectFolder(url, commitsViewModel: commitsViewModel)
         }
+        _commitsViewModel = commitsViewModel
         return commitsViewModel
     }
 

@@ -42,7 +42,7 @@ extension StatusViewModel {
                     newHunks.append(hunk)
                 }
             }
-            return PeekViewModel(type: .diff(PeekViewModel.DiffViewModel(
+            return PeekViewModel(type: .diff(DiffViewModel(
                 hunks: newHunks,
                 addedLinesCount: patch.addedLinesCount,
                 deletedLinesCount: patch.deletedLinesCount,
