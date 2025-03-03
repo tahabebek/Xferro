@@ -133,7 +133,7 @@ extension RepositoryViewModel {
                     }
                 }
                 if changes.isNotEmpty {
-                    self.onWorkDirChange(self, changes.count == 1 ? changes.first! : "Wip - \(changes.count) files are changed")
+                    self.onWorkDirChange?(self, changes.count == 1 ? changes.first! : "Wip - \(changes.count) files are changed")
                 }
             }
 

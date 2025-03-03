@@ -31,11 +31,10 @@ struct StatusView: View {
         case addCustom = "Add Custom"
     }
 
-    let statusViewModel: StatusViewModel
+    @Bindable var statusViewModel: StatusViewModel
 
     @Environment(DiscardPopup.self) var discardPopup
     @Environment(\.windowSize) var windowSize
-    @State private var commitSummary: String = ""
     @FocusState private var isTextFieldFocused: Bool
     @State private var discardDeltaInfo: DeltaInfo? = nil
     @State private var horizontalAlignment: HorizontalAlignment = .leading
@@ -56,7 +55,7 @@ struct StatusView: View {
                 Form {
                     TextField(
                         "Summary",
-                        text: $commitSummary,
+                        text: $statusViewModel.commitSummary,
                         prompt: Text("Summary for commit, amend or stash"),
                         axis: .vertical
                     )
@@ -76,36 +75,7 @@ struct StatusView: View {
     }
 
     var peekViews: some View {
-        ScrollViewReader { proxy in
-            List {
-                Section {
-                    ForEach(statusViewModel.stagedDeltaInfos) { deltaInfo in
-                        PeekView(peekInfo: statusViewModel.peekInfo(for: deltaInfo))
-                    }
-                }
-                Section {
-                    ForEach(statusViewModel.unstagedDeltaInfos) { deltaInfo in
-                        PeekView(peekInfo: statusViewModel.peekInfo(for: deltaInfo))
-                    }
-                }
-                Section {
-                    ForEach(statusViewModel.untrackedDeltaInfos) { deltaInfo in
-                        PeekView(peekInfo: statusViewModel.peekInfo(for: deltaInfo))
-                    }
-                }
-            }
-            .listSectionSeparator(.hidden)
-            .listStyle(PlainListStyle())
-            .scrollContentBackground(.hidden)
-            .environment(\.defaultMinListRowHeight, 0)
-            .onChange(of: scrollToFile) { _, id in
-                if let id {
-                    withAnimation {
-                        proxy.scrollTo(id, anchor: .top)
-                    }
-                }
-            }
-        }
+        PeekViewContainer(statusViewModel: statusViewModel, scrollToFile: $scrollToFile)
     }
 
     var body: some View {
@@ -145,7 +115,7 @@ struct StatusView: View {
         .animation(.default, value: statusViewModel.stagedDeltaInfos)
         .animation(.default, value: statusViewModel.unstagedDeltaInfos)
         .animation(.default, value: statusViewModel.untrackedDeltaInfos)
-        .animation(.default, value: commitSummary)
+        .animation(.default, value: statusViewModel.commitSummary)
         .padding(.horizontal, 6)
     }
 
@@ -354,8 +324,7 @@ extension StatusView {
                 guard !commitSummaryIsEmptyOrWhitespace else {
                     fatalError(.impossible)
                 }
-                statusViewModel.commitTapped(message: commitSummary)
-                commitSummary = ""
+                statusViewModel.commitTapped()
                 isTextFieldFocused = false
             }
     }
@@ -366,14 +335,13 @@ extension StatusView {
                 guard !commitSummaryIsEmptyOrWhitespace else {
                     fatalError(.impossible)
                 }
-                statusViewModel.commitTapped(message: commitSummary)
-                commitSummary = ""
+                statusViewModel.commitTapped()
                 isTextFieldFocused = false
             }
     }
     func amendButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
-            statusViewModel.amendTapped(message: commitSummary)
+            statusViewModel.amendTapped()
         }
     }
     func stageAllAndCommitButton(_ title: String) -> some View {
@@ -382,16 +350,14 @@ extension StatusView {
                 fatalError(.impossible)
             }
             statusViewModel.stageAllTapped()
-            statusViewModel.commitTapped(message: commitSummary)
-            commitSummary = ""
+            statusViewModel.commitTapped()
             isTextFieldFocused = false
         }
     }
     func stageAllAndAmendButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: !hasChanges) {
             statusViewModel.stageAllTapped()
-            statusViewModel.amendTapped(message: commitSummary)
-            commitSummary = ""
+            statusViewModel.amendTapped()
             isTextFieldFocused = false
         }
     }
@@ -404,8 +370,7 @@ extension StatusView {
                 fatalError(.impossible)
             }
             statusViewModel.stageAllTapped()
-            statusViewModel.commitTapped(message: commitSummary)
-            commitSummary = ""
+            statusViewModel.commitTapped()
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -420,8 +385,7 @@ extension StatusView {
                 fatalError(.impossible)
             }
             statusViewModel.stageAllTapped()
-            statusViewModel.commitTapped(message: commitSummary)
-            commitSummary = ""
+            statusViewModel.commitTapped()
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -429,8 +393,7 @@ extension StatusView {
     func stageAllAmendAndPushButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: !hasChanges) {
             statusViewModel.stageAllTapped()
-            statusViewModel.amendTapped(message: commitSummary)
-            commitSummary = ""
+            statusViewModel.amendTapped()
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -442,8 +405,7 @@ extension StatusView {
             dangerous: true
         ) {
             statusViewModel.stageAllTapped()
-            statusViewModel.amendTapped(message: commitSummary)
-            commitSummary = ""
+            statusViewModel.amendTapped()
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -536,7 +498,7 @@ extension StatusView {
 // MARK: Helpers
 extension StatusView {
     var commitSummaryIsEmptyOrWhitespace: Bool {
-        commitSummary.isEmptyOrWhitespace
+        statusViewModel.commitSummary.isEmptyOrWhitespace
     }
 }
 

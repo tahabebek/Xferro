@@ -9,29 +9,6 @@ import Foundation
 
 struct SelectedItem: Equatable {
     let type: SelectedItemType
-
-    var repositoryInfo: RepositoryViewModel {
-        switch type {
-        case .regular(let regularSelectedItem):
-            regularSelectedItem.repositoryInfo
-        case .wip(let wipSelectedItem):
-            wipSelectedItem.repositoryInfo
-        }
-    }
-
-    var repository: Repository {
-        repositoryInfo.repository
-    }
-
-    var wipWorktree: WipWorktree {
-        switch type {
-        case .regular(let regularSelectedItem):
-            regularSelectedItem.repositoryInfo.wipWorktree
-        case .wip(let wipSelectedItem):
-            wipSelectedItem.repositoryInfo.wipWorktree
-        }
-    }
-
     var oid: OID {
         switch type {
         case .regular(let regularSelectedItem):
@@ -60,24 +37,6 @@ struct SelectedItem: Equatable {
 
     enum WipSelectedItem: Equatable {
         case wipCommit(SelectableWipCommit)
-
-        var repositoryInfo: RepositoryViewModel {
-            switch self {
-            case .wipCommit(let selectableWipCommit):
-                selectableWipCommit.repositoryInfo
-            }
-        }
-        
-        var repository: Repository {
-            repositoryInfo.repository
-        }
-
-        var wipWorktree: WipWorktree {
-            switch self {
-            case .wipCommit(let selectableWipCommit):
-                selectableWipCommit.repositoryInfo.wipWorktree
-            }
-        }
         var selectableItem: any SelectableItem {
             switch self {
             case .wipCommit(let selectableWipCommit):
@@ -93,48 +52,6 @@ struct SelectedItem: Equatable {
         case detachedTag(SelectableDetachedTag)
         case tag(SelectableTag)
         case stash(SelectableStash)
-
-        var repositoryInfo: RepositoryViewModel {
-            switch self {
-            case .status(let selectableStatus):
-                selectableStatus.repositoryInfo
-            case .commit(let selectableCommit):
-                selectableCommit.repositoryInfo
-            case .historyCommit(let selectableHistoryCommit):
-                selectableHistoryCommit.repositoryInfo
-            case .detachedCommit(let selectableDetachedCommit):
-                selectableDetachedCommit.repositoryInfo
-            case .detachedTag(let selectableDetachedTag):
-                selectableDetachedTag.repositoryInfo
-            case .tag(let selectableTag):
-                selectableTag.repositoryInfo
-            case .stash(let selectableStash):
-                selectableStash.repositoryInfo
-            }
-        }
-
-        var repository: Repository {
-            repositoryInfo.repository
-        }
-
-        var wipWorktree: WipWorktree {
-            switch self {
-            case .status(let selectableStatus):
-                selectableStatus.repositoryInfo.wipWorktree
-            case .commit(let selectableCommit):
-                selectableCommit.repositoryInfo.wipWorktree
-            case .historyCommit(let selectableHistoryCommit):
-                selectableHistoryCommit.repositoryInfo.wipWorktree
-            case .detachedCommit(let selectableDetachedCommit):
-                selectableDetachedCommit.repositoryInfo.wipWorktree
-            case .detachedTag(let selectableDetachedTag):
-                selectableDetachedTag.repositoryInfo.wipWorktree
-            case .tag(let selectableTag):
-                selectableTag.repositoryInfo.wipWorktree
-            case .stash(let selectableStash):
-                selectableStash.repositoryInfo.wipWorktree
-            }
-        }
 
         var selectableItem: any SelectableItem {
             switch self {

@@ -16,18 +16,23 @@ import OrderedCollections
             UserDefaults.standard.set(autoCommitEnabled, forKey: "autoCommitEnabled")
         }
     }
-    
+
     // use the func setCurrentSelectedItem to set currentSelectedItem
     private(set) var currentSelectedItem: SelectedItem?
+    @ObservationIgnored private(set) var currentRepositoryInfo: RepositoryViewModel?
 
-    func setCurrentSelectedItem(_ selectedItem: SelectedItem?) {
+    func setCurrentSelectedItem(_ selectedItem: SelectedItem?, _ repositoryInfo: RepositoryViewModel?) {
         guard currentSelectedItem != selectedItem else { return }
-        user.lastSelectedRepositoryPath = selectedItem?.repository.gitDir.path
         if let selectedItem {
-            getWipCommits(selectedItem: selectedItem)
+            guard let repositoryInfo else {
+                fatalError(.invalid)
+            }
+            user.lastSelectedRepositoryPath = repositoryInfo.repository.gitDir.path
+            getWipCommits(selectedItem: selectedItem, repositoryInfo: repositoryInfo)
         } else {
-            getWipCommits(selectedItem: nil)
+            getWipCommits(selectedItem: nil, repositoryInfo: nil)
         }
+        currentRepositoryInfo = repositoryInfo
         currentSelectedItem = selectedItem
     }
     
@@ -42,7 +47,7 @@ import OrderedCollections
         user: User,
         userDidSelectFolder: @escaping (URL, CommitsViewModel) -> Void
     ) {
-        print("init CommitsViewModel")
+//        print("init CommitsViewModel")
         if UserDefaults.standard.object(forKey: "autoCommitEnabled") == nil {
             self.autoCommitEnabled = true
         } else {
@@ -62,7 +67,7 @@ import OrderedCollections
     }
 
     deinit {
-        print("deinit CommitsViewModel")
+//        print("deinit CommitsViewModel")
     }
 
     func addRepository(_ repository: Repository) async {
@@ -100,7 +105,7 @@ import OrderedCollections
                                 .status(SelectableStatus(repositoryInfo: repositoryInfo))
                             )
                         )
-                        setCurrentSelectedItem(selectedItem)
+                        setCurrentSelectedItem(selectedItem, repositoryInfo)
                     }
                 }
             }
@@ -175,7 +180,7 @@ import OrderedCollections
     }
 
     // MARK: User actions
-    func userTapped(item: any SelectableItem) {
+    func userTapped(item: any SelectableItem, repositoryInfo: RepositoryViewModel) {
         Task {
             await MainActor.run {
                 let selectedItem: SelectedItem
@@ -199,7 +204,7 @@ import OrderedCollections
                 default:
                     fatalError()
                 }
-                setCurrentSelectedItem(selectedItem)
+                setCurrentSelectedItem(selectedItem, repositoryInfo)
             }
         }
     }
@@ -235,8 +240,11 @@ import OrderedCollections
             await MainActor.run {
                 currentRepositoryInfos.removeValue(forKey: kRepositoryInfo(repository))
                 if let currentSelectedItem {
-                    if currentSelectedItem.repository.gitDir.path == repository.gitDir.path {
-                        setCurrentSelectedItem(nil)
+                    guard let currentRepositoryInfo else {
+                        fatalError(.invalid)
+                    }
+                    if currentRepositoryInfo.repository.gitDir.path == repository.gitDir.path {
+                        setCurrentSelectedItem(nil, nil)
                     }
                 }
                 user.removeProject(repository.gitDir.deletingLastPathComponent())

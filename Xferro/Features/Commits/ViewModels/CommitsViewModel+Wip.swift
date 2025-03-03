@@ -8,8 +8,8 @@
 import Foundation
 
 extension CommitsViewModel {
-    func getWipCommits(selectedItem: SelectedItem?) {
-        guard let selectedItem else {
+    func getWipCommits(selectedItem: SelectedItem?, repositoryInfo: RepositoryViewModel?) {
+        guard let selectedItem, let repositoryInfo else {
             Task {
                 await MainActor.run {
                     currentWipCommits = nil
@@ -32,16 +32,21 @@ extension CommitsViewModel {
         }
 
         guard let branchName else { return }
-        if selectedItem.wipWorktree.getBranch(branchName: branchName) == nil {
-            selectedItem.wipWorktree.createBranch(branchName: branchName, oid: selectedItem.oid)
+        if repositoryInfo.wipWorktree.getBranch(branchName: branchName) == nil {
+            repositoryInfo.wipWorktree.createBranch(branchName: branchName, oid: selectedItem.oid)
         }
-        let wipCommits =  selectedItem.wipWorktree.wipCommits(
-            repositoryInfo: selectedItem.repositoryInfo,
+        let wipCommits =  repositoryInfo.wipWorktree.wipCommits(
+            repositoryInfo: repositoryInfo,
             branchName: branchName
         )
         Task {
             await MainActor.run {
-                currentWipCommits = WipCommitsViewModel(commits: wipCommits, item: selectedItem, autoCommitEnabled: autoCommitEnabled)
+                currentWipCommits = WipCommitsViewModel(
+                    commits: wipCommits,
+                    item: selectedItem,
+                    repositoryInfo: repositoryInfo,
+                    autoCommitEnabled: autoCommitEnabled
+                )
             }
         }
     }
@@ -55,12 +60,12 @@ extension CommitsViewModel {
         currentWipCommits = nil
     }
 
-    func deleteAllWipCommitsTapped(for item: SelectedItem) {
-        deleteAllWipCommits(of: item)
+    func deleteAllWipCommitsTapped(for item: SelectedItem, repositoryInfo: RepositoryViewModel) {
+        deleteAllWipCommits(of: item, repositoryInfo: repositoryInfo)
     }
 
-    private func deleteAllWipCommits(of item: SelectedItem) {
-        WipWorktree.deleteAllWipCommits(of: item)
+    private func deleteAllWipCommits(of item: SelectedItem, repositoryInfo: RepositoryViewModel) {
+        WipWorktree.deleteAllWipCommits(item: item, repository: repositoryInfo.repository)
         Task {
             await MainActor.run {
                 currentWipCommits = nil
@@ -68,11 +73,12 @@ extension CommitsViewModel {
         }
     }
 
-    func addManualWipCommitTapped(for item: SelectedItem) {
-        addManualWipCommit(for: item)
+    func addManualWipCommitTapped() {
+        guard let currentRepositoryInfo else { return }
+        addManualWipCommit(repositoryInfo: currentRepositoryInfo)
     }
-    private func addManualWipCommit(for item: SelectedItem) {
-        addWipCommit(repositoryInfo: item.repositoryInfo)
+    private func addManualWipCommit(repositoryInfo: RepositoryViewModel) {
+        addWipCommit(repositoryInfo: repositoryInfo)
     }
 
     func addWipCommit(repositoryInfo: RepositoryViewModel, summary: String? = nil) {
@@ -101,7 +107,7 @@ extension CommitsViewModel {
     func reloadUIAfterAddingWipCommits(repositoryInfo: RepositoryViewModel) {
         let repository = repositoryInfo.repository
         let head = repositoryInfo.head
-        if let currentSelectedItem, repository.gitDir.path == currentSelectedItem.repository.gitDir.path {
+        if let currentSelectedItem, let currentRepositoryInfo, repository.gitDir.path == currentRepositoryInfo.repository.gitDir.path {
             var isHead = false
             let headId = head.oid
             switch currentSelectedItem.type {
@@ -139,7 +145,7 @@ extension CommitsViewModel {
             if isHead {
                 Task {
                     await MainActor.run {
-                        getWipCommits(selectedItem: currentSelectedItem)
+                        getWipCommits(selectedItem: currentSelectedItem, repositoryInfo: currentRepositoryInfo)
                     }
                 }
             }

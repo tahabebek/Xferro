@@ -8,21 +8,33 @@
 import Foundation
 import Observation
 
-@Observable final class PeekViewModel {
-    @Observable final class DiffViewModel {
+@Observable final class PeekViewModel: Equatable {
+    @Observable final class DiffViewModel: Equatable {
         let hunks: [DiffHunk]
         let addedLinesCount: Int
         let deletedLinesCount: Int
         let statusFileName: String
 
         init(hunks: [DiffHunk], addedLinesCount: Int, deletedLinesCount: Int, statusFileName: String) {
+//            print("init DiffViewModel")
             self.hunks = hunks
             self.addedLinesCount = addedLinesCount
             self.deletedLinesCount = deletedLinesCount
             self.statusFileName = statusFileName
         }
+
+        deinit {
+//            print("deinit DiffViewModel")
+        }
+        
+        static func == (lhs: PeekViewModel.DiffViewModel, rhs: PeekViewModel.DiffViewModel) -> Bool {
+            lhs.hunks == rhs.hunks &&
+            lhs.addedLinesCount == rhs.addedLinesCount &&
+            lhs.deletedLinesCount == rhs.deletedLinesCount &&
+            lhs.statusFileName == rhs.statusFileName
+        }
     }
-    enum PeekInfoType {
+    enum PeekInfoType: Equatable {
         case noDifference(statusFileName: String)
         case binary(statusFileName: String)
         case diff(DiffViewModel)
@@ -39,6 +51,15 @@ import Observation
     }
 
     init(type: PeekInfoType) {
+//        print("init PeekViewModel")
         self.type = type
+    }
+
+    deinit {
+//        print("deinit PeekViewModel")
+    }
+    
+    static func == (lhs: PeekViewModel, rhs: PeekViewModel) -> Bool {
+        lhs.type == rhs.type
     }
 }

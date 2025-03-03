@@ -9,15 +9,21 @@ import SwiftUI
 
 struct SelectableItemDetailView: View {
     let selectedItem: SelectedItem?
+    let repository: Repository?
+    let head: Head?
 
     var body: some View {
         VStack(spacing: 0) {
-            if let selectedItem {
+            if let selectedItem, let repository, let head {
                 switch selectedItem.type {
                 case .regular(let regularSelectedItem):
                     switch regularSelectedItem {
                     case .status(let selectableStatus):
-                        StatusView(statusViewModel: StatusViewModel(selectableStatus: selectableStatus))
+                        StatusView(statusViewModel: StatusViewModel(
+                            selectableStatus: selectableStatus,
+                            repository: repository,
+                            head: head
+                        ))
                     case .commit(let selectableCommit):
                         CommitView()
                     case .historyCommit(let selectableHistoryCommit):

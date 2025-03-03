@@ -18,7 +18,11 @@ struct ProjectView: View {
         HStack(spacing: 0) {
             CommitsView(commitsViewModel: commitsViewModel)
                 .frame(maxWidth: Dimensions.commitsViewMaxWidth)
-            SelectableItemDetailView(selectedItem: commitsViewModel.currentSelectedItem)
+            SelectableItemDetailView(
+                selectedItem: commitsViewModel.currentSelectedItem,
+                repository: commitsViewModel.currentRepositoryInfo?.repository,
+                head: commitsViewModel.currentRepositoryInfo?.head
+            )
                 .frame(maxWidth: .infinity)
         }
     }

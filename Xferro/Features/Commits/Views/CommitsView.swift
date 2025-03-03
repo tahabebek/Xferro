@@ -14,18 +14,18 @@ struct CommitsView: View {
             NormalCommitsView(viewModel: commitsViewModel)
                 .padding(.trailing, 6)
             WipCommitsView(
-                wipCommits: commitsViewModel.currentWipCommits,
+                viewModel: commitsViewModel.currentWipCommits,
                 currentSelectedItem: commitsViewModel.currentSelectedItem
             ) {
-                commitsViewModel.userTapped(item: $0)
+                commitsViewModel.userTapped(item: $0, repositoryInfo: $1)
             } isSelectedItem: {
                 commitsViewModel.isSelected(item: $0)
             } onAddManualWipCommitTapped: {
-                commitsViewModel.addManualWipCommitTapped(for: $0)
+                commitsViewModel.addManualWipCommitTapped()
             } onDeleteWipWorktreeTapped: {
                 commitsViewModel.deleteRepositoryTapped($0)
             } onDeleteAllWipCommitsTapped: {
-                commitsViewModel.deleteAllWipCommitsTapped(for: $0)
+                commitsViewModel.deleteAllWipCommitsTapped(for: $0, repositoryInfo: $1)
             }
             .padding(.trailing, 6)
         }

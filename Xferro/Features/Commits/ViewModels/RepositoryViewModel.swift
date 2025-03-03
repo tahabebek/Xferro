@@ -36,39 +36,23 @@ import Observation
     var stashChangeObserver: AnyCancellable?
     var workDirChangeObserver: AnyCancellable?
     
-    let onGitChange: (ChangeType) -> Void
-    let onWorkDirChange: (RepositoryViewModel, String?) -> Void
-    let onUserTapped: (any SelectableItem) -> Void
-    let onIsSelected: (any SelectableItem) -> Bool
-    let onDeleteRepositoryTapped: (Repository) -> Void
-    let onDeleteBranchTapped: (String) -> Void
-    let onIsCurrentBranch: (Branch, Head) -> Bool
+    var onGitChange: ((ChangeType) -> Void)?
+    var onWorkDirChange: ((RepositoryViewModel, String?) -> Void)?
+    var onUserTapped: ((any SelectableItem) -> Void)?
+    var onIsSelected: ((any SelectableItem) -> Bool)?
+    var onDeleteRepositoryTapped: ((Repository) -> Void)?
+    var onDeleteBranchTapped: ((String) -> Void)?
+    var onIsCurrentBranch: ((Branch, Head) -> Bool)?
 
     var wipWorktree: WipWorktree {
         WipWorktree.worktree(for: self)
     }
 
-    init(
-        repository: Repository,
-        onGitChange: @escaping (ChangeType) -> Void,
-        onWorkDirChange: @escaping (RepositoryViewModel, String?) -> Void,
-        onUserTapped: @escaping (any SelectableItem) -> Void,
-        onIsSelected: @escaping (any SelectableItem) -> Bool,
-        onDeleteRepositoryTapped: @escaping (Repository) -> Void,
-        onDeleteBranchTapped: @escaping (String) -> Void,
-        onIsCurrentBranch: @escaping (Branch, Head) -> Bool
-    ) {
-        print("init repository view model")
+    init(repository: Repository) {
+//        print("init repository view model")
         self.repository = repository
         let head = Head.of(repository)
         self.head = head
-        self.onGitChange = onGitChange
-        self.onWorkDirChange = onWorkDirChange
-        self.onUserTapped = onUserTapped
-        self.onIsSelected = onIsSelected
-        self.onDeleteRepositoryTapped = onDeleteRepositoryTapped
-        self.onDeleteBranchTapped = onDeleteBranchTapped
-        self.onIsCurrentBranch = onIsCurrentBranch
         self.status = StatusManager.shared.status(of: repository)
         self.queue = TaskQueue(id: Self.taskQueueID(path: repository.workDir.path))
         self.gitWatcher = self.setupGitWatcher()
@@ -77,11 +61,11 @@ import Observation
 
     func deleteRepositoryTapped()
     {
-        onDeleteRepositoryTapped(repository)
+        onDeleteRepositoryTapped?(repository)
     }
 
     deinit {
-        print("deinit repository view model")
+//        print("deinit repository view model")
         headChangeObserver?.cancel()
         indexChangeObserver?.cancel()
         localBranchesChangeObserver?.cancel()

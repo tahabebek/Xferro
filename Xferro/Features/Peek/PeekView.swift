@@ -7,7 +7,61 @@
 
 import SwiftUI
 
-struct PeekView: View {
+struct PeekViewContainer: View {
+    let statusViewModel: StatusViewModel
+    @Binding var scrollToFile: String?
+    
+    var body: some View {
+        ScrollViewReader { proxy in
+            List {
+                Section {
+                    ForEach(statusViewModel.stagedDeltaInfos) { deltaInfo in
+                        PeekView(peekInfo: statusViewModel.peekInfo(
+                            for: deltaInfo,
+                            repository: statusViewModel.repository,
+                            head: statusViewModel.head
+                        ))
+                    }
+                }
+                Section {
+                    ForEach(statusViewModel.unstagedDeltaInfos) { deltaInfo in
+                        PeekView(peekInfo: statusViewModel.peekInfo(
+                            for: deltaInfo,
+                            repository: statusViewModel.repository,
+                            head: statusViewModel.head
+                        ))
+                    }
+                }
+                Section {
+                    ForEach(statusViewModel.untrackedDeltaInfos) { deltaInfo in
+                        PeekView(peekInfo: statusViewModel.peekInfo(
+                            for: deltaInfo,
+                            repository: statusViewModel.repository,
+                            head: statusViewModel.head
+                        ))
+                    }
+                }
+            }
+            .listSectionSeparator(.hidden)
+            .listStyle(PlainListStyle())
+            .scrollContentBackground(.hidden)
+            .environment(\.defaultMinListRowHeight, 0)
+            .onChange(of: scrollToFile) { _, id in
+                if let id {
+                    withAnimation {
+                        proxy.scrollTo(id, anchor: .top)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct PeekView: View, Equatable {
+    static func == (lhs: PeekView, rhs: PeekView) -> Bool {
+        lhs.peekInfo == rhs.peekInfo
+    }
+    
     let peekInfo: PeekViewModel
 
     var body: some View {
@@ -57,7 +111,7 @@ struct PeekView: View {
 
     var countString: String {
         switch peekInfo.type {
-        case .noDifference(let statusFileString), .binary(let statusFileString):
+        case .noDifference, .binary:
             ""
         case .diff(let diff):
             "\(diff.hunks.count) \(diff.hunks.count == 1 ? "chunk" : "chunks"), \(diff.addedLinesCount) \(diff.addedLinesCount == 1 ? "addition" : "additions"), \(diff.deletedLinesCount) \(diff.deletedLinesCount == 1 ? "deletion" : "deletions")"

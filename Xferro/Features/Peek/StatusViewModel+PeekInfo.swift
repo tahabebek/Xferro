@@ -9,16 +9,16 @@ import Foundation
 import Observation
 
 extension StatusViewModel {
-    func peekInfo(for deltaInfo: DeltaInfo) -> PeekViewModel {
+    func peekInfo(for deltaInfo: DeltaInfo, repository: Repository, head: Head) -> PeekViewModel {
         let isStaged = deltaInfo.type == .staged
         let patchResult: PatchMaker.PatchResult = if isStaged {
-            selectableStatus.repository.stagedDiff(
-                head: selectableStatus.head,
+            repository.stagedDiff(
+                head: head,
                 deltaInfo: deltaInfo
             )
         } else {
-            selectableStatus.repository.unstagedDiff(
-                head: selectableStatus.head,
+            repository.unstagedDiff(
+                head: head,
                 deltaInfo: deltaInfo
             )
         }

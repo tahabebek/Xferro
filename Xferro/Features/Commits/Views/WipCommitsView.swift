@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct WipCommitsView: View {
-    let wipCommits: WipCommitsViewModel?
+    let viewModel: WipCommitsViewModel?
     let currentSelectedItem: SelectedItem?
-    let onUserTapped: (any SelectableItem) -> Void
+    let onUserTapped: (any SelectableItem, RepositoryViewModel) -> Void
     let isSelectedItem: (any SelectableItem) -> Bool
-    let onAddManualWipCommitTapped: (SelectedItem) -> Void
+    let onAddManualWipCommitTapped: () -> Void
     let onDeleteWipWorktreeTapped: (Repository) -> Void
-    let onDeleteAllWipCommitsTapped: (SelectedItem) -> Void
+    let onDeleteAllWipCommitsTapped: (SelectedItem, RepositoryViewModel) -> Void
 
     let columns = [GridItem(.adaptive(minimum: 16, maximum: 16))]
 
@@ -26,18 +26,18 @@ struct WipCommitsView: View {
         } content: {
             Group {
                 VStack(spacing: 8) {
-                    if let wipCommits, wipCommits.isNotEmpty {
+                    if let viewModel, viewModel.isNotEmpty {
                         HStack {
-                            Text(wipCommits.item.selectableItem.wipDescription)
+                            Text(viewModel.item.selectableItem.wipDescription)
                                 .lineLimit(2)
                             Spacer()
                         }
                         LazyVGrid(columns: columns) {
-                            ForEach(wipCommits.commits) { selectableWipCommit in
+                            ForEach(viewModel.commits) { selectableWipCommit in
                                 wipRectangle(item: selectableWipCommit)
                             }
                         }
-                        .animation(.snappy, value: wipCommits.commits)
+                        .animation(.snappy, value: viewModel.commits)
                     } else {
                         HStack {
                             Text("No history")
@@ -66,7 +66,9 @@ struct WipCommitsView: View {
                         .font(.system(size: 8))
                 )
                 .onTapGesture {
-                    onUserTapped(item)
+                    if let viewModel {
+                        onUserTapped(item, viewModel.repositoryInfo)
+                    }
                 }
             if isSelectedItem(item) {
                 SelectedItemOverlay(width: 16, height: 16, cornerRadius: 1)
@@ -76,40 +78,40 @@ struct WipCommitsView: View {
 
     var header: some View {
         Group {
-            if let wipCommits {
+            if let viewModel {
                 VerticalHeader(title: "Work in progress") {
                     Toggle("Auto", isOn: Binding<Bool>(
-                        get: { wipCommits.autoCommitEnabled },
-                        set: { wipCommits.autoCommitEnabled = $0 }
+                        get: { viewModel.autoCommitEnabled },
+                        set: { viewModel.autoCommitEnabled = $0 }
                     ))
                     .fixedSize()
-                    if !wipCommits.autoCommitEnabled {
+                    if !viewModel.autoCommitEnabled {
                         Image(systemName: "plus")
                             .contentShape(Rectangle())
                             .hoverableButton("Create wip commit") {
-                                onAddManualWipCommitTapped(wipCommits.item)
+                                onAddManualWipCommitTapped()
                             }
                     }
 
                     if let currentSelectedItem {
                         if case .regular = currentSelectedItem.type {
-                            if wipCommits.isNotEmpty {
+                            if viewModel.isNotEmpty {
                                 Image(systemName: "eraser")
                                     .contentShape(Rectangle())
-                                    .hoverableButton("Delete all the wip commits for the commit '\(wipCommits.item.oid.debugOID.prefix(4))'") {
-                                        onDeleteAllWipCommitsTapped(currentSelectedItem)
+                                    .hoverableButton("Delete all the wip commits for the commit '\(viewModel.item.oid.debugOID.prefix(4))'") {
+                                        onDeleteAllWipCommitsTapped(currentSelectedItem, viewModel.repositoryInfo)
                                     }
                             }
 
                             Image(systemName: "trash")
                                 .contentShape(Rectangle())
-                                .hoverableButton("Delete all the wip commits in '\(currentSelectedItem.repository.nameOfRepo)' repository") {
-                                    onDeleteWipWorktreeTapped(wipCommits.item.selectableItem.repository)
+                                .hoverableButton("Delete all the wip commits in '\(viewModel.repositoryInfo.repository.nameOfRepo)' repository") {
+                                    onDeleteWipWorktreeTapped(viewModel.repositoryInfo.repository)
                                 }
                         }
                     }
                 }
-                .animation(.default, value: wipCommits.autoCommitEnabled)
+                .animation(.default, value: viewModel.autoCommitEnabled)
             } else {
                 EmptyView()
             }

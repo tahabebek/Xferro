@@ -9,10 +9,10 @@ import Foundation
 
 extension CommitsViewModel {
     func getRepositoryInfo(_ repository: Repository) async -> RepositoryViewModel {
-        let newRepositoryInfo: RepositoryViewModel = RepositoryViewModel(
-            repository: repository
-        ) { [weak self] type in
-            guard let self else { return }
+        let newRepositoryInfo: RepositoryViewModel = RepositoryViewModel(repository: repository)
+
+        newRepositoryInfo.onGitChange = { [weak self, weak newRepositoryInfo] type in
+            guard let self, let newRepositoryInfo else { return }
             Task {
                 await MainActor.run { [weak self] in
                     guard let self else { return }
@@ -23,10 +23,11 @@ extension CommitsViewModel {
                         repositoryInfo.historyCommits = self.historyCommits(of: repositoryInfo)
                         if let currentSelectedItem {
                             if case .regular(let item) = currentSelectedItem.type {
-                                if case .status(let selectableStatus) = item {
-                                    if selectableStatus.repository.gitDir.path == repositoryInfo.repository.gitDir.path {
-                                        let selectedItem = SelectedItem(type: .regular(.status(SelectableStatus(repositoryInfo: repositoryInfo))))
-                                        self.setCurrentSelectedItem(selectedItem)
+                                if case .status = item {
+                                    if newRepositoryInfo.repository.gitDir.path == repositoryInfo.repository.gitDir.path {
+                                        let selectedItem = SelectedItem(type: .regular(.status(
+                                            SelectableStatus(repositoryInfo: repositoryInfo))))
+                                        self.setCurrentSelectedItem(selectedItem, repositoryInfo)
                                     }
                                 }
                             }
@@ -34,10 +35,12 @@ extension CommitsViewModel {
                     case .index(let repositoryInfo):
                         if let currentSelectedItem {
                             if case .regular(let item) = currentSelectedItem.type {
-                                if case .status(let selectableStatus) = item {
-                                    if selectableStatus.repository.gitDir.path == repositoryInfo.repository.gitDir.path {
-                                        let selectedItem = SelectedItem(type: .regular(.status(SelectableStatus(repositoryInfo: repositoryInfo))))
-                                        self.setCurrentSelectedItem(selectedItem)
+                                if case .status = item {
+                                    if repositoryInfo.repository.gitDir.path == newRepositoryInfo.repository.gitDir.path {
+                                        let selectedItem = SelectedItem(type: .regular(.status(SelectableStatus(
+                                            repositoryInfo: repositoryInfo
+                                        ))))
+                                        self.setCurrentSelectedItem(selectedItem, repositoryInfo)
                                     }
                                 }
                             }
@@ -56,23 +59,29 @@ extension CommitsViewModel {
                     }
                 }
             }
-        } onWorkDirChange: { [weak self] repositoryInfo, summary in
+        }
+        newRepositoryInfo.onWorkDirChange = { [weak self] repositoryInfo, summary in
             guard let self else { return }
             guard autoCommitEnabled else { return }
             addWipCommit(repositoryInfo: repositoryInfo, summary: summary)
-        } onUserTapped: { [weak self] in
-            guard let self else { return }
-            userTapped(item: $0)
-        } onIsSelected: { [weak self] in
+        }
+        newRepositoryInfo.onUserTapped = { [weak self, weak newRepositoryInfo] in
+            guard let self, let newRepositoryInfo else { return }
+            userTapped(item: $0, repositoryInfo: newRepositoryInfo)
+        }
+        newRepositoryInfo.onIsSelected = { [weak self] in
             guard let self else { return false }
             return isSelected(item: $0)
-        } onDeleteRepositoryTapped: { [weak self] in
+        }
+        newRepositoryInfo.onDeleteRepositoryTapped = { [weak self] in
             guard let self else { return }
             deleteRepositoryTapped($0)
-        } onDeleteBranchTapped: { [weak self] in
+        }
+        newRepositoryInfo.onDeleteBranchTapped = { [weak self] in
             guard let self else { return }
             deleteBranchTapped(repository: repository, branchName: $0)
-        } onIsCurrentBranch: { [weak self] in
+        }
+        newRepositoryInfo.onIsCurrentBranch = { [weak self] in
             guard let self else { return false }
             return isCurrentBranch($0, head: $1)
         }
@@ -98,7 +107,11 @@ extension CommitsViewModel {
         let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: owner.oid.oid)
         var counter = 0
         while counter < count, let commit = try? commitIterator.next()?.get() {
-            commits.append(SelectableDetachedCommit(repositoryInfo: repositoryInfo, commit: commit, owner: owner))
+            commits.append(SelectableDetachedCommit(
+                repositoryInfo: repositoryInfo,
+                commit: commit,
+                owner: owner
+            ))
             counter += 1
         }
         return commits
@@ -117,7 +130,13 @@ extension CommitsViewModel {
         let (localBranches, remoteBranches, wipBranches) = allBranches(of: repositoryInfo)
         let local = localBranches
             .map { [weak self] branch in
-                guard let self else { return RepositoryViewModel.BranchInfo(branch: branch, commits: [], repository: repositoryInfo.repository, head: repositoryInfo.head) }
+                guard let self else { return RepositoryViewModel.BranchInfo(
+                    branch: branch,
+                    commits: [],
+                    repository: repositoryInfo.repository,
+                    head: repositoryInfo.head
+                    )
+                }
                 let commits = commits(of: branch, in: repositoryInfo)
                 return RepositoryViewModel.BranchInfo(branch: branch, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
             }
@@ -189,9 +208,20 @@ extension CommitsViewModel {
     private func remoteBranchInfos(of repositoryInfo: RepositoryViewModel) -> [RepositoryViewModel.BranchInfo] {
         repositoryInfo.repository.remoteBranches().mustSucceed()
             .map { [weak self] branch in
-                guard let self else { return RepositoryViewModel.BranchInfo(branch: branch, commits: [], repository: repositoryInfo.repository, head: repositoryInfo.head) }
+                guard let self else { return RepositoryViewModel.BranchInfo(
+                    branch: branch,
+                    commits: [],
+                    repository: repositoryInfo.repository,
+                    head: repositoryInfo.head
+                    )
+                }
                 let commits = commits(of: branch, in: repositoryInfo)
-                return RepositoryViewModel.BranchInfo(branch: branch, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
+                return RepositoryViewModel.BranchInfo(
+                    branch: branch,
+                    commits: commits,
+                    repository: repositoryInfo.repository,
+                    head: repositoryInfo.head
+                )
             }
     }
 
@@ -200,15 +230,26 @@ extension CommitsViewModel {
         case .branch:
             return nil
         case .tag(let tagReference, _):
-            let detachedTag = SelectableDetachedTag(repositoryInfo: repositoryInfo, tag: tagReference)
+            let detachedTag = SelectableDetachedTag(
+                repositoryInfo: repositoryInfo,
+                tag: tagReference
+            )
             let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tagReference), in: repositoryInfo)
             return RepositoryViewModel.TagInfo(tag: detachedTag, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
         case .reference(let reference, _):
             if let tag = try? repositoryInfo.repository.tag(reference.oid).get() {
                 let tagReference = TagReference.annotated(tag.name, tag)
-                let detachedTag = SelectableDetachedTag(repositoryInfo: repositoryInfo, tag: tagReference)
+                let detachedTag = SelectableDetachedTag(
+                    repositoryInfo: repositoryInfo,
+                    tag: tagReference
+                )
                 let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tagReference), in: repositoryInfo)
-                return RepositoryViewModel.TagInfo(tag: detachedTag, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
+                return RepositoryViewModel.TagInfo(
+                    tag: detachedTag,
+                    commits: commits,
+                    repository: repositoryInfo.repository,
+                    head: repositoryInfo.head
+                )
             } else {
                 return nil
             }
@@ -221,7 +262,11 @@ extension CommitsViewModel {
         case .reference(let reference, _):
             if let commit = try? repositoryInfo.repository.commit(reference.oid).get() {
                 let owner = SelectableDetachedCommit.Owner.commit(commit)
-                let detachedCommit = SelectableDetachedCommit(repositoryInfo: repositoryInfo, commit: commit, owner: owner)
+                let detachedCommit = SelectableDetachedCommit(
+                    repositoryInfo: repositoryInfo,
+                    commit: commit,
+                    owner: owner
+                )
                 let commits = detachedAncestorCommitsOf(owner: owner, in: repositoryInfo)
                 return RepositoryViewModel.DetachedCommitInfo(detachedCommit: detachedCommit, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
             } else {
@@ -235,9 +280,17 @@ extension CommitsViewModel {
         try? repositoryInfo.repository.allTags().get()
             .sorted { $0.name > $1.name }
             .forEach { tag in
-                let selectableTag = SelectableDetachedTag(repositoryInfo: repositoryInfo, tag: tag)
+                let selectableTag = SelectableDetachedTag(
+                    repositoryInfo: repositoryInfo,
+                    tag: tag
+                )
                 let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tag), in: repositoryInfo)
-                tags.append(RepositoryViewModel.TagInfo(tag: selectableTag, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head))
+                tags.append(RepositoryViewModel.TagInfo(
+                    tag: selectableTag,
+                    commits: commits,
+                    repository: repositoryInfo.repository,
+                    head: repositoryInfo.head
+                ))
             }
         return tags
     }
@@ -250,7 +303,11 @@ extension CommitsViewModel {
             let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: branch.oid.oid)
             var counter = 0
             while counter < count, let commit = try? commitIterator.next()?.get() {
-                commits.append(SelectableCommit(repositoryInfo: repositoryInfo, branch: branch, commit: commit))
+                commits.append(SelectableCommit(
+                    repositoryInfo: repositoryInfo,
+                    branch: branch,
+                    commit: commit
+                ))
                 counter += 1
             }
             return commits
@@ -264,7 +321,11 @@ extension CommitsViewModel {
             let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: branch.oid.oid)
             var counter = 0
             while counter < count, let commit = try? commitIterator.next()?.get() {
-                commits.append(SelectableWipCommit(repositoryInfo: repositoryInfo, branch: branch, commit: commit))
+                commits.append(SelectableWipCommit(
+                    repositoryInfo: repositoryInfo,
+                    branch: branch,
+                    commit: commit
+                ))
                 counter += 1
             }
             return commits

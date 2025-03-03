@@ -8,7 +8,20 @@
 import SwiftUI
 import RegexBuilder
 
-struct LineView: View {
+struct LineView: View, Equatable {
+    static func == (lhs: LineView, rhs: LineView) -> Bool {
+        lhs.isAdditionOrDeletion == rhs.isAdditionOrDeletion &&
+        lhs.selectedLinesCount == rhs.selectedLinesCount &&
+        lhs.isLineSelected == rhs.isLineSelected &&
+        lhs.isPartSelected == rhs.isPartSelected &&
+        lhs.isFirst == rhs.isFirst &&
+        lhs.indexInPart == rhs.indexInPart &&
+        lhs.newLine == rhs.newLine &&
+        lhs.oldLine == rhs.oldLine &&
+        lhs.text == rhs.text &&
+        lhs.lineType == rhs.lineType
+    }
+    
     private static let backgroundOpacity: CGFloat = 0.3
     private static let selectedLineBackgroundOpacity: CGFloat = 0.5
     private static let hoveredLineBackgroundOpacity: CGFloat = 0.7

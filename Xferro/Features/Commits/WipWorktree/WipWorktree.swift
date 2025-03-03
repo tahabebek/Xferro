@@ -138,9 +138,9 @@ final class WipWorktree {
         }
     }
     
-    static func deleteAllWipCommits(of item: SelectedItem) {
-        let worktreeRepository = WipWorktree.worktreeRepository(of: item.repository)
-        let worktreeName = WipWorktree.worktreeName(for: item.repository)
+    static func deleteAllWipCommits(item: SelectedItem, repository: Repository) {
+        let worktreeRepository = WipWorktree.worktreeRepository(of: repository)
+        let worktreeName = WipWorktree.worktreeName(for: repository)
         let currentBranchNameOfWorktreeRepository = WipWorktree.currentBranchName(ofWorktreeRepository: worktreeRepository, name: worktreeName)
         let branchNameOfItemInWorktreeRepository = WipWorktree.worktreeBranchName(item: item.selectableItem)
 
@@ -162,7 +162,7 @@ final class WipWorktree {
         }
 
         if shouldDeleteBranch {
-            item.repository.deleteBranch(branchNameOfItemInWorktreeRepository).mustSucceed()
+            repository.deleteBranch(branchNameOfItemInWorktreeRepository).mustSucceed()
         } else {
             worktreeRepository.reset(oid: item.selectableItem.oid , type: .hard).mustSucceed()
         }

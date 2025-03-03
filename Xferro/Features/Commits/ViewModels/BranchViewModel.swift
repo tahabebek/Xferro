@@ -9,16 +9,16 @@ import Foundation
 import Observation
 
 @Observable final class BranchViewModel {
-    let onUserTapped: (any SelectableItem) -> Void
-    let onIsSelected: (any SelectableItem) -> Bool
-    let onDeleteBranchTapped: (String) -> Void
-    let onIsCurrentBranch: (Branch, Head) -> Bool
+    let onUserTapped: ((any SelectableItem) -> Void)?
+    let onIsSelected: ((any SelectableItem) -> Bool)?
+    let onDeleteBranchTapped: ((String) -> Void)?
+    let onIsCurrentBranch: ((Branch, Head) -> Bool)?
 
     init(
-        onUserTapped: @escaping (any SelectableItem) -> Void,
-        onIsSelected: @escaping (any SelectableItem) -> Bool,
-        onDeleteBranchTapped: @escaping (String) -> Void,
-        onIsCurrentBranch: @escaping (Branch, Head) -> Bool
+        onUserTapped: ((any SelectableItem) -> Void)?,
+        onIsSelected: ((any SelectableItem) -> Bool)?,
+        onDeleteBranchTapped: ((String) -> Void)?,
+        onIsCurrentBranch: ((Branch, Head) -> Bool)?
     )
     {
         self.onUserTapped = onUserTapped

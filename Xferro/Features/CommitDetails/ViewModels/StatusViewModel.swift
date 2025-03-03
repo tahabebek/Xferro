@@ -11,15 +11,17 @@ import Observation
     var stagedDeltaInfos: [DeltaInfo] = []
     var unstagedDeltaInfos: [DeltaInfo] = []
     var untrackedDeltaInfos: [DeltaInfo] = []
-    var selectableStatus: SelectableStatus
-    var repository: Repository {
-        selectableStatus.repository
-    }
-
     var currentDeltaInfo: DeltaInfo?
+    var commitSummary: String = ""
 
-    init(selectableStatus: SelectableStatus) {
+    let selectableStatus: SelectableStatus
+    let repository: Repository
+    let head: Head
+
+    init(selectableStatus: SelectableStatus, repository: Repository, head: Head) {
         self.selectableStatus = selectableStatus
+        self.repository = repository
+        self.head = head
 
         var stagedDeltaInfos: [DeltaInfo] = []
         var unstagedDeltaInfos: [DeltaInfo] = []
@@ -55,12 +57,12 @@ import Observation
             var handled: Bool = false
             if let stagedDelta = statusEntry.stagedDelta {
                 handled = true
-                handleDelta(selectableStatus.repository, stagedDelta, .staged)
+                handleDelta(repository, stagedDelta, .staged)
             }
 
             if let unstagedDelta = statusEntry.unstagedDelta {
                 handled = true
-                handleDelta(selectableStatus.repository,unstagedDelta, .unstaged)
+                handleDelta(repository,unstagedDelta, .unstaged)
             }
 
             guard handled else {
@@ -135,25 +137,28 @@ import Observation
     }
 
     @discardableResult
-    func commitTapped(message: String) -> Commit {
-        repository.commit(message: message).mustSucceed()
+    func commitTapped() -> Commit {
+        let commit: Commit = repository.commit(message: commitSummary).mustSucceed()
+        commitSummary = ""
+        return commit
     }
 
-    func splitAndCommitTapped( message: String) -> Commit {
+    func splitAndCommitTapped() -> Commit {
         fatalError(.unimplemented)
     }
 
-    func amendTapped( message: String?) {
+    func amendTapped() {
         let headCommit: Commit = repository.commit().mustSucceed()
-        var newMessage = message
-        if newMessage == nil || (newMessage ?? "").isEmptyOrWhitespace {
+        var newMessage = commitSummary
+        if newMessage.isEmptyOrWhitespace {
             newMessage = headCommit.summary
         }
 
-        guard let newMessage, !newMessage.isEmptyOrWhitespace else {
+        guard !newMessage.isEmptyOrWhitespace else {
             fatalError(.unsupported)
         }
         repository.amend(message: newMessage).mustSucceed()
+        commitSummary = ""
     }
 
     func ignoreTapped(deltaInfo: DeltaInfo) {
