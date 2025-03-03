@@ -68,14 +68,20 @@ struct SwiftSpaceApp: App {
                     Text(discardPopup.title)
                         .padding()
                     HStack {
-                        AnyView.buttonWith(title: "Cancel") {
-                            discardPopup.onCancel?()
-                            discardPopup.isPresented = false
-                        }
-                        AnyView.buttonWith(title: "Discard") {
-                            discardPopup.onConfirm?()
-                            discardPopup.isPresented = false
-                        }
+                        XFerroButton(
+                            title: "Cancel",
+                            onTap: {
+                                discardPopup.onCancel?()
+                                discardPopup.isPresented = false
+                            }
+                        )
+                        XFerroButton(
+                            title: "Discard",
+                            onTap: {
+                                discardPopup.onConfirm?()
+                                discardPopup.isPresented = false
+                            }
+                        )
                     }
                     .padding(.top)
                 }

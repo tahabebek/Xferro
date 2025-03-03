@@ -15,88 +15,85 @@ struct HunkView: View {
         case .staged:
             if hunk.selectedLinesCount > 0 {
                 HStack {
-                    AnyView.buttonWith(
+                    XFerroButton(
                         title: hunk.selectedLinesCount == 1 ? "Discard Line" : "Discard Lines",
-                        disabled: false,
                         dangerous: true,
                         isProminent: false,
-                        isSmall: true
-                    ) {
-
-                    }
-                    AnyView.buttonWith(
+                        isSmall: true,
+                        onTap: {
+                            fatalError(.unimplemented)
+                        }
+                    )
+                    XFerroButton(
                         title: hunk.selectedLinesCount == 1 ? "Exclude Line" : "Exclude Lines",
-                        disabled: false,
-                        dangerous: false,
                         isProminent: false,
-                        isSmall: true
-                    ) {
-
-                    }
+                        isSmall: true,
+                        onTap: {
+                            fatalError(.unimplemented)
+                        }
+                    )
                 }
             } else {
-                AnyView.buttonWith(
+                XFerroButton(
                     title: "Discard Chunk",
-                    disabled: false,
                     dangerous: true,
                     isProminent: false,
-                    isSmall: true
-                ) {
-                    hunk.discard()
-                }
-                HStack {
-                    AnyView.buttonWith(
-                        title: "Exclude Chunk",
-                        disabled: false,
-                        dangerous: false,
-                        isProminent: false,
-                        isSmall: true
-                    ) {
+                    isSmall: true,
+                    onTap: {
+                        hunk.discard()
                     }
-                }
+                )
+
+                XFerroButton(
+                    title: "Exclude Chunk",
+                    isProminent: false,
+                    isSmall: true,
+                    onTap: {
+                        fatalError(.unimplemented)
+                    }
+                )
             }
         case .unstaged, .untracked:
             if hunk.selectedLinesCount > 0 {
                 HStack {
-                    AnyView.buttonWith(
+                    XFerroButton(
                         title: hunk.selectedLinesCount == 1 ? "Discard Line" : "Discard Lines",
-                        disabled: false,
                         dangerous: true,
                         isProminent: false,
-                        isSmall: true
-                    ) {
-
-                    }
-                    AnyView.buttonWith(
+                        isSmall: true,
+                        onTap: {
+                            fatalError(.unimplemented)
+                        }
+                    )
+                    XFerroButton(
                         title: hunk.selectedLinesCount == 1 ? "Include Line" : "Include Lines",
-                        disabled: false,
-                        dangerous: false,
                         isProminent: false,
-                        isSmall: true)
-                    {
-
-                    }
+                        isSmall: true,
+                        onTap: {
+                            fatalError(.unimplemented)
+                        }
+                    )
                 }
             } else {
                 HStack {
-                    AnyView.buttonWith(
+                    XFerroButton(
                         title: "Discard Chunk",
-                        disabled: false,
                         dangerous: true,
                         isProminent: false,
-                        isSmall: true
-                    ) {
-                        hunk.discard()
-                    }
-                    AnyView.buttonWith(
-                        title: "Include Chunk",
-                        disabled: false,
-                        dangerous: false,
-                        isProminent: false,
-                        isSmall: true
-                    ) {
+                        isSmall: true,
+                        onTap: {
+                            hunk.discard()
+                        }
+                    )
 
-                    }
+                    XFerroButton(
+                        title: "Include Chunk",
+                        isProminent: false,
+                        isSmall: true,
+                        onTap: {
+                            fatalError(.unimplemented)
+                        }
+                    )
                 }
             }
         }

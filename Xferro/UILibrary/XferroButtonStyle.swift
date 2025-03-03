@@ -61,39 +61,3 @@ extension View {
         ))
     }
 }
-
-extension AnyView {
-    @ViewBuilder static func buttonWith(
-        title: String,
-        disabled: Bool = false,
-        dangerous: Bool = false,
-        isProminent: Bool = true,
-        isSmall: Bool = false,
-        action: @escaping () -> Void) -> some View {
-            Button {
-                action()
-            } label: {
-                Group {
-                    if dangerous {
-                        HStack(spacing: 4) {
-                            ZStack {
-                                Image(systemName: "octagon.fill")
-                                    .foregroundStyle(.red)
-                                Image(systemName: "exclamationmark")
-                                    .resizable(resizingMode: .stretch)
-                                    .frame(width: 3, height: 6)
-                                    .aspectRatio(contentMode: .fit)
-                                    .scaledToFit()
-                            }
-                            Text(title)
-                        }
-                    } else {
-                        Text(title)
-                    }
-                }
-            }
-            .disabled(disabled)
-            .style(isDisabled: disabled, isProminent: isProminent, isSmall: isSmall)
-        }
-}
-

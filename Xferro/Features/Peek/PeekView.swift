@@ -8,36 +8,36 @@
 import SwiftUI
 
 struct PeekViewContainer: View {
-    let statusViewModel: StatusViewModel
+    let viewModel: StatusViewModel
     @Binding var scrollToFile: String?
     
     var body: some View {
         ScrollViewReader { proxy in
             List {
                 Section {
-                    ForEach(statusViewModel.stagedDeltaInfos) { deltaInfo in
-                        PeekView(peekInfo: statusViewModel.peekInfo(
+                    ForEach(viewModel.stagedDeltaInfos) { deltaInfo in
+                        PeekView(peekInfo: viewModel.peekInfo(
                             for: deltaInfo,
-                            repository: statusViewModel.repository,
-                            head: statusViewModel.head
+                            repository: viewModel.repository,
+                            head: viewModel.head
                         ))
                     }
                 }
                 Section {
-                    ForEach(statusViewModel.unstagedDeltaInfos) { deltaInfo in
-                        PeekView(peekInfo: statusViewModel.peekInfo(
+                    ForEach(viewModel.unstagedDeltaInfos) { deltaInfo in
+                        PeekView(peekInfo: viewModel.peekInfo(
                             for: deltaInfo,
-                            repository: statusViewModel.repository,
-                            head: statusViewModel.head
+                            repository: viewModel.repository,
+                            head: viewModel.head
                         ))
                     }
                 }
                 Section {
-                    ForEach(statusViewModel.untrackedDeltaInfos) { deltaInfo in
-                        PeekView(peekInfo: statusViewModel.peekInfo(
+                    ForEach(viewModel.untrackedDeltaInfos) { deltaInfo in
+                        PeekView(peekInfo: viewModel.peekInfo(
                             for: deltaInfo,
-                            repository: statusViewModel.repository,
-                            head: statusViewModel.head
+                            repository: viewModel.repository,
+                            head: viewModel.head
                         ))
                     }
                 }

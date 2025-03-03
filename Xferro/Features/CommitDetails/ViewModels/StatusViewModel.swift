@@ -11,8 +11,15 @@ import Observation
     var stagedDeltaInfos: [DeltaInfo] = []
     var unstagedDeltaInfos: [DeltaInfo] = []
     var untrackedDeltaInfos: [DeltaInfo] = []
-    var currentDeltaInfo: DeltaInfo?
+    var currentDeltaInfo: DeltaInfo? {
+        willSet {
+            if let newValue {
+                scrollToFile = newValue.id
+            }
+        }
+    }
     var commitSummary: String = ""
+    var scrollToFile: String? = nil
 
     let selectableStatus: SelectableStatus
     let repository: Repository
@@ -73,6 +80,50 @@ import Observation
         self.stagedDeltaInfos = stagedDeltaInfos
         self.unstagedDeltaInfos = unstagedDeltaInfos
         self.untrackedDeltaInfos = untrackedDeltaInfos
+    }
+
+    func actionTapped(_ action: StatusActionButtonsView.BoxAction) {
+        switch action {
+        case .splitAndCommit:
+            commitTapped()
+            fatalError(.unimplemented)
+        case .amend:
+            amendTapped()
+        case .stageAll:
+            stageAllTapped()
+        case .stageAllAndCommit:
+            stageAllTapped()
+            commitTapped()
+        case .stageAllAndAmend:
+            stageAllTapped()
+            amendTapped()
+        case .stageAllCommitAndPush:
+            stageAllTapped()
+            commitTapped()
+            fatalError(.unimplemented)
+        case .stageAllAmendAndPush:
+            stageAllTapped()
+            amendTapped()
+            fatalError(.unimplemented)
+        case .stageAllCommitAndForcePush:
+            stageAllTapped()
+            commitTapped()
+            fatalError(.unimplemented)
+        case .stageAllAmendAndForcePush:
+            stageAllTapped()
+            amendTapped()
+            fatalError(.unimplemented)
+        case .stash:
+            fatalError(.unimplemented)
+        case .popStash:
+            fatalError(.unimplemented)
+        case .applyStash:
+            fatalError(.unimplemented)
+        case .discardAll:
+            discardAllTapped()
+        case .addCustom:
+            fatalError(.unimplemented)
+        }
     }
 
     func trackAllTapped() {
@@ -168,7 +219,21 @@ import Observation
         repository.ignore(path)
     }
 
-    func discardTapped(fileURLs: [URL]) {
+    func discardTapped(deltaInfo: DeltaInfo) {
+        let oldFileURL = deltaInfo.oldFileURL
+        let newFileURL = deltaInfo.newFileURL
+        var fileURLs = [URL]()
+
+        if let oldFileURL, let newFileURL, oldFileURL == newFileURL {
+            fileURLs.append(oldFileURL)
+        } else {
+            if let oldFileURL {
+                fileURLs.append(oldFileURL)
+            }
+            if let newFileURL {
+                fileURLs.append(newFileURL)
+            }
+        }
         for fileURL in fileURLs {
             if fileURL.isDirectory {
                 RepoManager().git(repository, ["restore", fileURL.appendingPathComponent("*").path])
@@ -177,9 +242,48 @@ import Observation
             }
         }
     }
+    
+    func discardAlertTitle(deltaInfo: DeltaInfo) -> String {
+        let oldFilePath = deltaInfo.oldFilePath
+        let newFilePath = deltaInfo.newFilePath
+        var title: String = "Are you sure you want to discard all the changes"
+
+        if let oldFilePath, let newFilePath, oldFilePath == newFilePath {
+            title += " to\n\(oldFilePath)?"
+        } else if let oldFilePath, let newFilePath {
+            title += " to\n\(oldFilePath), and\n\(newFilePath)?"
+        } else if let oldFilePath {
+            title += " to\n\(oldFilePath)?"
+        } else if let newFilePath {
+            title += " to\n\(newFilePath)?"
+        }
+        return title
+    }
 
     func discardAllTapped() {
         RepoManager().git(repository, ["add", "."])
         RepoManager().git(repository, ["reset", "--hard"])
+    }
+
+    func setInitialSelection() {
+        if currentDeltaInfo == nil {
+            var item: DeltaInfo?
+            if let firstItem = stagedDeltaInfos.first {
+                item = firstItem
+            } else if let firstItem = unstagedDeltaInfos.first {
+                item = firstItem
+            } else if let firstItem = untrackedDeltaInfos.first {
+                item = firstItem
+            }
+            if let item {
+                currentDeltaInfo = item
+            }
+        }
+    }
+
+    var hasChanges: Bool {
+        !stagedDeltaInfos.isEmpty ||
+        !unstagedDeltaInfos.isEmpty ||
+        !untrackedDeltaInfos.isEmpty
     }
 }

@@ -19,7 +19,7 @@ struct SelectableItemDetailView: View {
                 case .regular(let regularSelectedItem):
                     switch regularSelectedItem {
                     case .status(let selectableStatus):
-                        StatusView(statusViewModel: StatusViewModel(
+                        StatusView(viewModel: StatusViewModel(
                             selectableStatus: selectableStatus,
                             repository: repository,
                             head: head
