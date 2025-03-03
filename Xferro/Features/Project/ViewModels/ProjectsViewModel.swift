@@ -12,12 +12,12 @@ import Observation
     var user: User
 
     init(user: User) {
-//        print("init ProjectsViewModel")
+        print("init ProjectsViewModel")
         self.user = user
     }
 
     deinit {
-//        print("deinit ProjectsViewModel")
+        print("deinit ProjectsViewModel")
     }
 
     func userDidSelectFolder(_ url: URL, commitsViewModel: CommitsViewModel? = nil) {

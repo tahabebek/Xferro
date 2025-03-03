@@ -49,7 +49,7 @@ import Observation
     }
 
     init(repository: Repository) {
-//        print("init repository view model")
+        print("init repository view model")
         self.repository = repository
         let head = Head.of(repository)
         self.head = head
@@ -65,7 +65,7 @@ import Observation
     }
 
     deinit {
-//        print("deinit repository view model")
+        print("deinit repository view model")
         headChangeObserver?.cancel()
         indexChangeObserver?.cancel()
         localBranchesChangeObserver?.cancel()

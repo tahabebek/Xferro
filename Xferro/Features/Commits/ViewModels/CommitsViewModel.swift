@@ -47,7 +47,7 @@ import OrderedCollections
         user: User,
         userDidSelectFolder: @escaping (URL, CommitsViewModel) -> Void
     ) {
-//        print("init CommitsViewModel")
+        print("init CommitsViewModel")
         if UserDefaults.standard.object(forKey: "autoCommitEnabled") == nil {
             self.autoCommitEnabled = true
         } else {
@@ -67,7 +67,7 @@ import OrderedCollections
     }
 
     deinit {
-//        print("deinit CommitsViewModel")
+        print("deinit CommitsViewModel")
     }
 
     func addRepository(_ repository: Repository) async {

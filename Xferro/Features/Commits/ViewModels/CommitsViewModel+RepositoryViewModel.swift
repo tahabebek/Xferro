@@ -117,6 +117,7 @@ extension CommitsViewModel {
         return commits
     }
     private func stashes(of repositoryInfo: RepositoryViewModel) -> [SelectableStash] {
+        print("get stashes")
         var stashes = [SelectableStash]()
 
         try? repositoryInfo.repository.stashes().get().forEach { stash in
@@ -156,6 +157,7 @@ extension CommitsViewModel {
     }
 
     private func allBranches(of repositoryInfo: RepositoryViewModel) -> (local: [Branch], remote: [Branch], wip: [Branch]) {
+        print("get all branches")
         var localBranches: [Branch] = []
         var remoteBranches: [Branch] = []
         var wipBranches: [Branch] = []
@@ -192,6 +194,7 @@ extension CommitsViewModel {
     }
 
     private func localBranches(of repositoryInfo: RepositoryViewModel) -> [Branch] {
+        print("get local branches")
         var branches: [Branch] = []
         let branchIterator = BranchIterator(repo: repositoryInfo.repository, type: .local)
 
@@ -206,7 +209,8 @@ extension CommitsViewModel {
     }
 
     private func remoteBranchInfos(of repositoryInfo: RepositoryViewModel) -> [RepositoryViewModel.BranchInfo] {
-        repositoryInfo.repository.remoteBranches().mustSucceed()
+        print("get remote branches")
+        return repositoryInfo.repository.remoteBranches().mustSucceed()
             .map { [weak self] branch in
                 guard let self else { return RepositoryViewModel.BranchInfo(
                     branch: branch,
@@ -226,6 +230,7 @@ extension CommitsViewModel {
     }
 
     private func detachedTag(of repositoryInfo: RepositoryViewModel) -> RepositoryViewModel.TagInfo? {
+        print("get detached tag")
         switch repositoryInfo.head {
         case .branch:
             return nil
@@ -256,6 +261,7 @@ extension CommitsViewModel {
         }
     }
     private func detachedCommit(of repositoryInfo: RepositoryViewModel) -> RepositoryViewModel.DetachedCommitInfo? {
+        print("get detached commit")
         switch repositoryInfo.head {
         case .branch, .tag:
             return nil
@@ -275,6 +281,7 @@ extension CommitsViewModel {
         }
     }
     private func tags(of repositoryInfo: RepositoryViewModel) -> [RepositoryViewModel.TagInfo] {
+        print("get tags")
         var tags: [RepositoryViewModel.TagInfo] = []
 
         try? repositoryInfo.repository.allTags().get()
@@ -297,42 +304,47 @@ extension CommitsViewModel {
     private func commits(
         of branch: Branch,
         in repositoryInfo: RepositoryViewModel,
-        count: Int = RepositoryViewModel.commitCountLimit) -> [SelectableCommit] {
-            var commits: [SelectableCommit] = []
+        count: Int = RepositoryViewModel.commitCountLimit
+    ) -> [SelectableCommit] {
+        print("get commits")
+        var commits: [SelectableCommit] = []
 
-            let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: branch.oid.oid)
-            var counter = 0
-            while counter < count, let commit = try? commitIterator.next()?.get() {
-                commits.append(SelectableCommit(
-                    repositoryInfo: repositoryInfo,
-                    branch: branch,
-                    commit: commit
-                ))
-                counter += 1
-            }
-            return commits
+        let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: branch.oid.oid)
+        var counter = 0
+        while counter < count, let commit = try? commitIterator.next()?.get() {
+            commits.append(SelectableCommit(
+                repositoryInfo: repositoryInfo,
+                branch: branch,
+                commit: commit
+            ))
+            counter += 1
         }
+        return commits
+    }
     private func wipCommits(
         of branch: Branch,
         in repositoryInfo: RepositoryViewModel,
-        count: Int = RepositoryViewModel.commitCountLimit) -> [SelectableWipCommit] {
-            var commits: [SelectableWipCommit] = []
+        count: Int = RepositoryViewModel.commitCountLimit
+    ) -> [SelectableWipCommit] {
+        print("get wip commits")
+        var commits: [SelectableWipCommit] = []
 
-            let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: branch.oid.oid)
-            var counter = 0
-            while counter < count, let commit = try? commitIterator.next()?.get() {
-                commits.append(SelectableWipCommit(
-                    repositoryInfo: repositoryInfo,
-                    branch: branch,
-                    commit: commit
-                ))
-                counter += 1
-            }
-            return commits
+        let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: branch.oid.oid)
+        var counter = 0
+        while counter < count, let commit = try? commitIterator.next()?.get() {
+            commits.append(SelectableWipCommit(
+                repositoryInfo: repositoryInfo,
+                branch: branch,
+                commit: commit
+            ))
+            counter += 1
         }
+        return commits
+    }
 
 #warning("history not implemented")
     private func historyCommits(of repositoryInfo: RepositoryViewModel) -> [SelectableHistoryCommit] {
-        []
+        print("get history commits")
+        return []
     }
 }
