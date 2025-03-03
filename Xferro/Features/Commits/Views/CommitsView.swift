@@ -24,8 +24,6 @@ struct CommitsView: View {
                 commitsViewModel.addManualWipCommitTapped()
             } onDeleteWipWorktreeTapped: {
                 commitsViewModel.deleteRepositoryTapped($0)
-            } onDeleteAllWipCommitsTapped: {
-                commitsViewModel.deleteAllWipCommitsTapped(for: $0, repositoryInfo: $1)
             }
             .padding(.trailing, 6)
         }
