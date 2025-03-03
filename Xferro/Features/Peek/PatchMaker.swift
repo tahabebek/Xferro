@@ -94,7 +94,7 @@ final class PatchMaker {
         self.path = path
     }
 
-    func makePatch() -> Patch?
+    func makePatch() -> Patch
     {
         switch (fromSource, toSource) {
         case let (.blob(fromBlob), .blob(toBlob)):

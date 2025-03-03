@@ -15,13 +15,11 @@ struct ProjectView: View {
     @State private var zoomScale: CGFloat = 1.0
 
     var body: some View {
-        VStack(spacing: 0) {
-            HSplitView {
-                CommitsView(commitsViewModel: commitsViewModel)
-                    .frame(width: Dimensions.commitsViewMaxWidth)
-                SelectableItemDetailView(selectedItem: commitsViewModel.currentSelectedItem)
-                    .frame(maxWidth: .infinity)
-            }
+        HStack(spacing: 0) {
+            CommitsView(commitsViewModel: commitsViewModel)
+                .frame(maxWidth: Dimensions.commitsViewMaxWidth)
+            SelectableItemDetailView(selectedItem: commitsViewModel.currentSelectedItem)
+                .frame(maxWidth: .infinity)
         }
     }
 }

@@ -7,6 +7,7 @@
 
 import Foundation
 import Observation
+import SwiftUI
 
 enum StatusType: Int, Identifiable, Hashable {
     var id: Int { rawValue }
@@ -48,5 +49,72 @@ enum StatusType: Int, Identifiable, Hashable {
 
     var newFilePath: String? {
         delta.newFilePath
+    }
+
+    var statusFileName: String {
+        let oldFileName = oldFileURL?.lastPathComponent
+        let newFileName = newFileURL?.lastPathComponent
+        switch delta.status {
+        case .unmodified:
+            fatalError(.impossible)
+        case .added, .modified, .copied, .untracked:
+            if let newFileName {
+                return newFileName
+            } else {
+                fatalError(.impossible)
+            }
+        case .deleted:
+            if let oldFileName {
+                return oldFileName
+            } else {
+                fatalError(.impossible)
+            }
+        case .renamed, .typeChange:
+            if let oldFileName, let newFileName {
+                return "\(oldFileName) -> \(newFileName)"
+            } else {
+                fatalError(.impossible)
+            }
+        case .ignored, .unreadable, .conflicted:
+            fatalError(.unimplemented)
+        }
+    }
+
+    var statusImageName: String {
+        switch delta.status {
+        case .unmodified:
+            fatalError(.impossible)
+        case .added:
+            "a.square"
+        case .modified:
+            "m.square"
+        case .copied:
+            "c.square"
+        case .untracked:
+            "questionmark.square"
+        case .deleted:
+            "d.square"
+        case .renamed, .typeChange:
+            "r.square"
+        case .ignored, .unreadable, .conflicted:
+            fatalError(.unimplemented)
+        }
+    }
+
+    var statusColor: Color {
+        switch delta.status {
+        case .unmodified:
+            fatalError(.impossible)
+        case .added, .copied:
+            .green
+        case .modified:
+            .blue
+        case .untracked, .deleted:
+            .red
+        case .renamed, .typeChange:
+            .yellow
+        case .ignored, .unreadable, .conflicted:
+            fatalError(.unimplemented)
+        }
     }
 }

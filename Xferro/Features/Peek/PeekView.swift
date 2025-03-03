@@ -8,37 +8,29 @@
 import SwiftUI
 
 struct PeekView: View {
-    let hunks: [DiffHunk]
-    let addedLinesCount: Int
-    let deletedLinesCount: Int
-
-    init(hunks: [DiffHunk], addedLinesCount: Int, deletedLinesCount: Int) {
-        self.hunks = hunks
-        self.addedLinesCount = addedLinesCount
-        self.deletedLinesCount = deletedLinesCount
-    }
-    
-    private var fileExtension: String? {
-        guard let filePath = hunks.first?.delta.oldFilePath ?? hunks.first?.delta.newFilePath else { return nil }
-        let url = URL(fileURLWithPath: filePath)
-
-        let ext = url.pathExtension.lowercased()
-        return ext.isEmpty ? nil : ext
-    }
+    let peekInfo: PeekInfo
 
     var body: some View {
+        let _ = Self._printChanges()
         VStack(spacing: 0) {
             header
                 .background(Color.clear)
                 .padding(.horizontal, 8)
-
-                ForEach(hunks) { hunk in
-                    HunkView(hunk: hunk, fileExtension: fileExtension)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+            switch peekInfo.type {
+            case .noDifference:
+                Text("No difference")
+            case .binary:
+                Text("Binary")
+            case .diff(let diff):
+                ForEach(diff.hunks) { hunk in
+                    HunkView(hunk: hunk)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                 }
+            }
         }
+        .border(Color.random())
         .background(Color.clear)
     }
 
@@ -64,18 +56,20 @@ struct PeekView: View {
     }
 
     var countString: String {
-        "\(hunks.count) \(hunks.count == 1 ? "chunk" : "chunks"), \(addedLinesCount) \(addedLinesCount == 1 ? "addition" : "additions"), \(deletedLinesCount) \(deletedLinesCount == 1 ? "deletion" : "deletions")"
+        switch peekInfo.type {
+        case .noDifference(let statusFileString), .binary(let statusFileString):
+            ""
+        case .diff(let diff):
+            "\(diff.hunks.count) \(diff.hunks.count == 1 ? "chunk" : "chunks"), \(diff.addedLinesCount) \(diff.addedLinesCount == 1 ? "addition" : "additions"), \(diff.deletedLinesCount) \(diff.deletedLinesCount == 1 ? "deletion" : "deletions")"
+        }
     }
 
     var header: some View {
-        let fileName = hunks.first?.delta.newFilePath ?? hunks.first?.delta.oldFilePath ?? "".components(separatedBy: "/").last ?? "Changes"
-        return HStack(spacing: 0) {
-            VerticalHeader(title: fileName, horizontalPadding: 0.0)
+        HStack(spacing: 0) {
+            VerticalHeader(title: peekInfo.statusFileName, horizontalPadding: 0.0)
                 .frame(height: 36)
             Spacer()
-            if hunks.count > 0 {
-                Text(countString)
-            }
+            Text(countString)
         }
     }
 }

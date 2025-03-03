@@ -1,5 +1,5 @@
 //
-//  RepositoryInfo.swift
+//  RepositoryViewModel.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/10/25.
@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import Observation
 
-@Observable final class RepositoryInfo: Identifiable {
+@Observable final class RepositoryViewModel: Identifiable {
     let repository: Repository
     var head: Head
     var headOID: OID { head.oid }
@@ -36,7 +36,7 @@ import Observation
     var stashChangeObserver: AnyCancellable?
     var workDirChangeObserver: AnyCancellable?
     let onGitChange: (ChangeType) -> Void
-    let onWorkDirChange: (RepositoryInfo, String?) -> Void
+    let onWorkDirChange: (RepositoryViewModel, String?) -> Void
 
     var wipWorktree: WipWorktree {
         WipWorktree.worktree(for: self)
@@ -45,7 +45,7 @@ import Observation
     init(
         repository: Repository,
         onGitChange: @escaping (ChangeType) -> Void,
-        onWorkDirChange: @escaping (RepositoryInfo, String?) -> Void
+        onWorkDirChange: @escaping (RepositoryViewModel, String?) -> Void
     ) {
         self.repository = repository
         let head = Head.of(repository)
@@ -71,14 +71,14 @@ import Observation
 }
 
 // MARK: Equatable
-extension RepositoryInfo: Equatable {
-    static func == (lhs: RepositoryInfo, rhs: RepositoryInfo) -> Bool {
+extension RepositoryViewModel: Equatable {
+    static func == (lhs: RepositoryViewModel, rhs: RepositoryViewModel) -> Bool {
         lhs.id == rhs.id
     }
 }
 
 // MARK: Static
-extension RepositoryInfo {
+extension RepositoryViewModel {
     static let commitCountLimit: Int = 10
 #warning("check if git and workdir debounces are in sync, maybe do not use status if there is a risk of race condition")
     static let workDirDebounce = 5

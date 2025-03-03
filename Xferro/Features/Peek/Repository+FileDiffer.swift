@@ -107,7 +107,7 @@ extension Repository {
     }
 
     /// Returns a diff maker for a file in the index, compared to HEAD
-    func stagedDiff(head: Head, deltaInfo: DeltaInfo) -> PatchMaker.PatchResult?
+    func stagedDiff(head: Head, deltaInfo: DeltaInfo) -> PatchMaker.PatchResult
     {
         switch deltaInfo.delta.status {
         case .unmodified:
@@ -170,7 +170,7 @@ extension Repository {
                 path: newFile)
              )
         case .ignored, .unreadable:
-            return nil
+            fatalError(.invalid)
         case .conflicted:
             fatalError(.unimplemented)
         }
@@ -197,7 +197,7 @@ extension Repository {
     }
 
     /// Returns a diff maker for a file in the workspace, compared to the index.
-    func unstagedDiff(head: Head, deltaInfo: DeltaInfo) -> PatchMaker.PatchResult?
+    func unstagedDiff(head: Head, deltaInfo: DeltaInfo) -> PatchMaker.PatchResult
     {
         switch deltaInfo.delta.status {
         case .unmodified:
@@ -238,7 +238,7 @@ extension Repository {
                 return .binary
             }
             guard let newFileData = try? Data(contentsOf: deltaInfo.newFileURL!) else {
-                return nil
+                fatalError(.invalid)
             }
             let headBlob = fileBlob(head: head, path: newFile)
             return .diff(PatchMaker(
@@ -261,7 +261,7 @@ extension Repository {
                 path: newFile)
             )
         case .ignored, .unreadable:
-            return nil
+            fatalError(.invalid)
         case .conflicted:
             fatalError(.unimplemented)
         }

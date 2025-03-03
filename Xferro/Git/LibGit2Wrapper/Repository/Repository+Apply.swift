@@ -27,7 +27,7 @@ extension Repository {
             } else {
                 fatalError(.invalid)
             }
-        case .modified:
+        case .modified, .renamed:
             guard let url = delta.newFileURL else {
                 fatalError(.invalid)
             }
@@ -57,9 +57,6 @@ extension Repository {
             } else {
                 fatalError(.invalid)
             }
-
-        case .renamed:
-            break
         case .untracked:
             guard let url = delta.newFileURL else {
                 fatalError(.invalid)

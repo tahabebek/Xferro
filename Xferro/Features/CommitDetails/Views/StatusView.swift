@@ -35,14 +35,12 @@ struct StatusView: View {
 
     @Environment(DiscardPopup.self) var discardPopup
     @Environment(\.windowSize) var windowSize
-    @State private var commitSummary = Dictionary<OID, String>()
+    @State private var commitSummary: String = ""
     @FocusState private var isTextFieldFocused: Bool
     @State private var discardDeltaInfo: DeltaInfo? = nil
     @State private var horizontalAlignment: HorizontalAlignment = .leading
     @State private var verticalAlignment: VerticalAlignment = .top
     @State private var boxActions: [Action] = BoxActions.allCases.map(\.rawValue).map(Action.init)
-    @State private var actionBoxHeight: CGFloat = 0
-    @State private var messageBoxHeight: CGFloat = 0
     @State private var scrollToFile: String? = nil
 
     private static let actionBoxBottomPadding: CGFloat = 4
@@ -52,57 +50,76 @@ struct StatusView: View {
         Self.actionBoxBottomPadding * 2 + Self.actionBoxVerticalInnerPadding * 2
     }
 
-    private func peekView(for deltaInfo: DeltaInfo) -> some View {
-        let (hunks, addedLinesCount, deletedLinesCount) = HunkFactory.makeHunks(
-            selectableItem: statusViewModel.selectableStatus,
-            deltaInfo: deltaInfo
-        )
-        return PeekView(hunks: hunks, addedLinesCount: addedLinesCount, deletedLinesCount: deletedLinesCount)
-            .id(deltaInfo.id)
+    @ViewBuilder var actionView: some View {
+        VStack {
+            HStack {
+                Form {
+                    TextField(
+                        "Summary",
+                        text: $commitSummary,
+                        prompt: Text("Summary for commit, amend or stash"),
+                        axis: .vertical
+                    )
+                    .focused($isTextFieldFocused)
+                    .textFieldStyle(.roundedBorder)
+                }
+                commitButton("Commit")
+            }
+            .padding(.bottom, Self.actionBoxBottomPadding)
+            AnyLayout(FlowLayout(alignment:.init(horizontal: horizontalAlignment, vertical: verticalAlignment))) {
+                buttons
+            }
+            .animation(.default, value: horizontalAlignment)
+            .animation(.default, value: verticalAlignment)
+            .animation(.default, value: boxActions)
+        }
     }
+
+    var peekViews: some View {
+        ScrollViewReader { proxy in
+            List {
+                Section {
+                    ForEach(statusViewModel.stagedDeltaInfos) { deltaInfo in
+                        PeekView(peekInfo: statusViewModel.peekInfo(for: deltaInfo))
+                    }
+                }
+                Section {
+                    ForEach(statusViewModel.unstagedDeltaInfos) { deltaInfo in
+                        PeekView(peekInfo: statusViewModel.peekInfo(for: deltaInfo))
+                    }
+                }
+                Section {
+                    ForEach(statusViewModel.untrackedDeltaInfos) { deltaInfo in
+                        PeekView(peekInfo: statusViewModel.peekInfo(for: deltaInfo))
+                    }
+                }
+            }
+            .listSectionSeparator(.hidden)
+            .listStyle(PlainListStyle())
+            .scrollContentBackground(.hidden)
+            .environment(\.defaultMinListRowHeight, 0)
+            .onChange(of: scrollToFile) { _, id in
+                if let id {
+                    withAnimation {
+                        proxy.scrollTo(id, anchor: .top)
+                    }
+                }
+            }
+        }
+    }
+
     var body: some View {
-        HSplitView {
-            VSplitView {
-                actionBox
-                    .frame(height : actionBoxHeight + messageBoxHeight + Self.totalVerticalPadding)
-                    .padding(.bottom, Self.actionBoxBottomPadding)
+        let _ = Self._printChanges()
+        HStack(spacing: 0) {
+            VStack {
+                actionView
+                    .padding()
+                    .background(Color(hexValue: 0x15151A))
+                    .cornerRadius(8)
                 changeBox
-                    .padding(.top, Self.actionBoxBottomPadding)
-                    .frame(maxHeight: .infinity)
             }
             .frame(width: Dimensions.commitDetailsViewMaxWidth)
-            .padding(.trailing, 6)
-            ScrollViewReader { proxy in
-                List {
-                    Section {
-                        ForEach(statusViewModel.stagedDeltaInfos) { deltaInfo in
-                            peekView(for: deltaInfo)
-                        }
-                    }
-                    Section {
-                        ForEach(statusViewModel.unstagedDeltaInfos) { deltaInfo in
-                            peekView(for: deltaInfo)
-                        }
-                    }
-                    Section {
-                        ForEach(statusViewModel.untrackedDeltaInfos) { deltaInfo in
-                            peekView(for: deltaInfo)
-                        }
-                    }
-                }
-                .listSectionSeparator(.hidden)
-                .listStyle(PlainListStyle())
-                .scrollContentBackground(.hidden)
-                .environment(\.defaultMinListRowHeight, 0)
-                .onChange(of: scrollToFile) { _, id in
-                    if let id {
-                        withAnimation {
-                            proxy.scrollTo(id, anchor: .top)
-                        }
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity)
+            peekViews
         }
         .onAppear {
             setInitialSelection()
@@ -213,72 +230,6 @@ struct StatusView: View {
         statusViewModel.discardTapped(fileURLs: fileURLs)
     }
 
-    private var actionBox: some View {
-        ZStack {
-            Color(hexValue: 0x15151A)
-                .cornerRadius(8)
-            VStack(alignment: .leading) {
-                messageBoxView
-                flowActionsView
-                    .frame(height: actionBoxHeight)
-            }
-            .padding(Self.actionBoxVerticalInnerPadding)
-        }
-    }
-
-    private var messageBoxView: some View {
-        HStack {
-            Form {
-                TextField(
-                    "Summary",
-                    text: Binding(
-                        get: { commitSummary[statusViewModel.selectableStatus.oid] ?? "" },
-                        set: { commitSummary[statusViewModel.selectableStatus.oid] = $0 }
-                    ),
-                    prompt: Text("Summary for commit, amend or stash"),
-                    axis: .vertical
-                )
-                .textFieldStyle(.roundedBorder)
-                .focused($isTextFieldFocused)
-            }
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-                commitButton("Commit")
-                Spacer(minLength: 0)
-            }
-        }
-        .padding(.bottom, 8)
-        .background(
-            GeometryReader { geometry in
-                Color.clear
-                    .onChange(of: geometry.size) { _, newValue in
-                        self.messageBoxHeight = newValue.height
-                    }
-            }
-        )
-    }
-
-    private var flowActionsView: some View {
-        ScrollView(.vertical) {
-            VStack(spacing: 0) {
-                AnyLayout(FlowLayout(alignment:.init(horizontal: horizontalAlignment, vertical: verticalAlignment))) {
-                    buttons
-                }
-                .background(
-                    GeometryReader { geometry in
-                        Color.clear
-                            .onChange(of: geometry.size) { _, newValue in
-                                self.actionBoxHeight = newValue.height
-                            }
-                    }
-                )
-            }
-            .animation(.default, value: horizontalAlignment)
-            .animation(.default, value: verticalAlignment)
-            .animation(.default, value: boxActions)
-        }
-    }
-
     private var buttons: some View {
         ForEach(boxActions) { boxAction in
             switch boxAction.title {
@@ -376,98 +327,13 @@ struct StatusView: View {
         }
     }
 
-    @ViewBuilder private func rowForDeltaInfo(_ deltaInfo: DeltaInfo) -> some View {
-        let oldFileName = deltaInfo.oldFileURL?.lastPathComponent
-        let newFileName = deltaInfo.newFileURL?.lastPathComponent
-        Group {
-            switch deltaInfo.delta.status {
-            case .unmodified:
-                fatalError(.impossible)
-            case .added:
-                if let newFileName {
-                    fileView(
-                        deltaInfo: deltaInfo,
-                        text: newFileName,
-                        color: .green,
-                        imageName: "a.square"
-                    )
-                } else {
-                    fatalError(.impossible)
-                }
-            case .deleted:
-                if let oldFileName {
-                    fileView(
-                        deltaInfo: deltaInfo,
-                        text: oldFileName,
-                        color: .red,
-                        imageName: "d.square"
-                    )
-                } else {
-                    fatalError(.impossible)
-                }
-            case .modified:
-                if let newFileName {
-                    fileView(
-                        deltaInfo: deltaInfo,
-                        text: newFileName,
-                        color: .blue,
-                        imageName: "m.square"
-                    )
-                } else {
-                    fatalError(.impossible)
-                }
-            case .renamed:
-                if let oldFileName, let newFileName {
-                    fileView(
-                        deltaInfo: deltaInfo,
-                        text: "\(oldFileName) -> \(newFileName)",
-                        color: .yellow,
-                        imageName: "r.square"
-                    )
-                } else {
-                    fatalError(.impossible)
-                }
-            case .copied:
-                if let newFileName {
-                    fileView(
-                        deltaInfo: deltaInfo,
-                        text: newFileName,
-                        color: .green,
-                        imageName: "c.square"
-                    )
-                } else {
-                    fatalError(.impossible)
-                }
-            case .ignored:
-                fatalError(.unimplemented)
-            case .untracked:
-                if let newFileName {
-                    fileView(
-                        deltaInfo: deltaInfo,
-                        text: newFileName,
-                        color: .red,
-                        imageName: "questionmark.square"
-                    )
-                } else {
-                    fatalError(.impossible)
-                }
-            case .typeChange:
-                if let oldFileName, let newFileName {
-                    fileView(
-                        deltaInfo: deltaInfo,
-                        text: "\(oldFileName) -> \(newFileName)",
-                        color: .yellow,
-                        imageName: "r.square"
-                    )
-                } else {
-                    fatalError(.impossible)
-                }
-                fatalError(.unimplemented)
-            case .unreadable:
-                fatalError(.unimplemented)
-            case .conflicted:
-                fatalError(.unimplemented)
-            }
+    private func rowForDeltaInfo(_ deltaInfo: DeltaInfo) -> some View {
+        HStack {
+            Image(systemName: deltaInfo.statusImageName).foregroundColor(deltaInfo.statusColor)
+            Text(deltaInfo.statusFileName)
+                .font(.body)
+                .foregroundStyle(statusViewModel.currentDeltaInfo == deltaInfo ? Color.accentColor : Color.fabulaFore1)
+            Spacer()
         }
         .contentShape(Rectangle())
         .frame(minHeight: 24)
@@ -475,21 +341,6 @@ struct StatusView: View {
         .onTapGesture {
             statusViewModel.currentDeltaInfo = deltaInfo
             scrollToFile = deltaInfo.id
-        }
-    }
-
-    private func fileView(
-        deltaInfo: DeltaInfo,
-        text: String,
-        color: Color,
-        imageName: String
-    ) -> some View {
-        HStack {
-            Image(systemName: imageName).foregroundColor(color)
-            Text(text)
-                .font(.body)
-                .foregroundStyle(statusViewModel.currentDeltaInfo == deltaInfo ? Color.accentColor : Color.fabulaFore1)
-            Spacer()
         }
     }
 }
@@ -500,11 +351,11 @@ extension StatusView {
         AnyView.buttonWith(
             title: title,
             disabled: commitSummaryIsEmptyOrWhitespace || statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
-                guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                guard !commitSummaryIsEmptyOrWhitespace else {
                     fatalError(.impossible)
                 }
-                statusViewModel.commitTapped(message: message)
-                commitSummary[statusViewModel.selectableStatus.oid] = nil
+                statusViewModel.commitTapped(message: commitSummary)
+                commitSummary = ""
                 isTextFieldFocused = false
             }
     }
@@ -512,35 +363,35 @@ extension StatusView {
         AnyView.buttonWith(
             title: title,
             disabled: !hasChanges) {
-                guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+                guard !commitSummaryIsEmptyOrWhitespace else {
                     fatalError(.impossible)
                 }
-                statusViewModel.commitTapped(message: message)
-                commitSummary[statusViewModel.selectableStatus.oid] = nil
+                statusViewModel.commitTapped(message: commitSummary)
+                commitSummary = ""
                 isTextFieldFocused = false
             }
     }
     func amendButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: statusViewModel.stagedDeltaInfos.isEmpty || !hasChanges) {
-            statusViewModel.amendTapped(message: commitSummary[statusViewModel.selectableStatus.oid])
+            statusViewModel.amendTapped(message: commitSummary)
         }
     }
     func stageAllAndCommitButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges) {
-            guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+            guard !commitSummaryIsEmptyOrWhitespace else {
                 fatalError(.impossible)
             }
             statusViewModel.stageAllTapped()
-            statusViewModel.commitTapped(message: message)
-            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            statusViewModel.commitTapped(message: commitSummary)
+            commitSummary = ""
             isTextFieldFocused = false
         }
     }
     func stageAllAndAmendButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: !hasChanges) {
             statusViewModel.stageAllTapped()
-            statusViewModel.amendTapped(message: commitSummary[statusViewModel.selectableStatus.oid])
-            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            statusViewModel.amendTapped(message: commitSummary)
+            commitSummary = ""
             isTextFieldFocused = false
         }
     }
@@ -549,12 +400,12 @@ extension StatusView {
             title: title,
             disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges
         ) {
-            guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+            guard !commitSummaryIsEmptyOrWhitespace else {
                 fatalError(.impossible)
             }
             statusViewModel.stageAllTapped()
-            statusViewModel.commitTapped(message: message)
-            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            statusViewModel.commitTapped(message: commitSummary)
+            commitSummary = ""
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -565,12 +416,12 @@ extension StatusView {
             disabled: commitSummaryIsEmptyOrWhitespace || !hasChanges,
             dangerous: true
         ) {
-            guard let message = commitSummary[statusViewModel.selectableStatus.oid] else {
+            guard !commitSummaryIsEmptyOrWhitespace else {
                 fatalError(.impossible)
             }
             statusViewModel.stageAllTapped()
-            statusViewModel.commitTapped(message: message)
-            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            statusViewModel.commitTapped(message: commitSummary)
+            commitSummary = ""
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -578,8 +429,8 @@ extension StatusView {
     func stageAllAmendAndPushButton(_ title: String) -> some View {
         AnyView.buttonWith(title: title, disabled: !hasChanges) {
             statusViewModel.stageAllTapped()
-            statusViewModel.amendTapped(message: commitSummary[statusViewModel.selectableStatus.oid])
-            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            statusViewModel.amendTapped(message: commitSummary)
+            commitSummary = ""
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -591,8 +442,8 @@ extension StatusView {
             dangerous: true
         ) {
             statusViewModel.stageAllTapped()
-            statusViewModel.amendTapped(message: commitSummary[statusViewModel.selectableStatus.oid])
-            commitSummary[statusViewModel.selectableStatus.oid] = nil
+            statusViewModel.amendTapped(message: commitSummary)
+            commitSummary = ""
             isTextFieldFocused = false
             fatalError(.unimplemented)
         }
@@ -665,13 +516,13 @@ extension StatusView {
 extension StatusView {
     var stageAllUntrackedButton: some View {
         AnyView.buttonWith(title: "Track all") {
-            statusViewModel.stageOrUnstageTapped(stage: true)
+            statusViewModel.trackAllTapped()
         }
     }
 
     func stageSelectedUntrackedButton(deltaInfo: DeltaInfo) -> some View {
         AnyView.buttonWith(title: "Track", isProminent: false, isSmall: true) {
-            statusViewModel.stageOrUnstageTapped(stage: true, deltaInfos: [deltaInfo])
+            statusViewModel.trackTapped(stage: true, deltaInfos: [deltaInfo])
         }
     }
 
@@ -685,7 +536,20 @@ extension StatusView {
 // MARK: Helpers
 extension StatusView {
     var commitSummaryIsEmptyOrWhitespace: Bool {
-        commitSummary[statusViewModel.selectableStatus.oid]?.isEmptyOrWhitespace ?? true
+        commitSummary.isEmptyOrWhitespace
     }
 }
 
+struct ActionBoxHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+struct MessageBoxHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}

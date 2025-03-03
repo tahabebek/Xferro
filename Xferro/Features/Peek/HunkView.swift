@@ -5,16 +5,10 @@
 //  Created by Taha Bebek on 2/26/25.
 //
 
-import SwiftUI/////
+import SwiftUI
 
 struct HunkView: View {
     let hunk: DiffHunk
-    let fileExtension: String?
-    
-    init(hunk: DiffHunk, fileExtension: String? = nil) {
-        self.hunk = hunk
-        self.fileExtension = fileExtension
-    }
 
     @ViewBuilder var actions: some View {
         switch hunk.type {
@@ -123,7 +117,7 @@ struct HunkView: View {
             .padding(.horizontal)
             Divider()
             ForEach(hunk.parts) { part in
-                PartView(part: part, fileExtension: fileExtension)
+                PartView(part: part)
             }
         }
         .padding(.bottom)

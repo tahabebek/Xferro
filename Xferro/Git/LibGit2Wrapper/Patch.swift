@@ -26,7 +26,7 @@ final class Patch: Equatable, Identifiable
         self.newData = nil
     }
 
-    init?(repository: Repository, oldBlob: Blob, newBlob: Blob, options: DiffOptions? = nil)
+    init(repository: Repository, oldBlob: Blob, newBlob: Blob, options: DiffOptions? = nil)
     {
         var oldBlobPointer: OpaquePointer? = nil
         var newBlobPointer: OpaquePointer? = nil
@@ -40,18 +40,17 @@ final class Patch: Equatable, Identifiable
             fatalError(.unhandledError)
         }
 
-        let patch = try? OpaquePointer.from { patch in
+        let patch = try! OpaquePointer.from { patch in
             DiffOptions.unwrappingOptions(options) {
                 git_patch_from_blobs(&patch, oldBlobPointer, nil, newBlobPointer, nil, $0)
             }
         }
-        guard let patch else { return nil }
         self.patch = patch
         self.oldData = nil
         self.newData = nil
     }
 
-    init?(repository: Repository, oldBlob: Blob, newData: Data, options: DiffOptions? = nil)
+    init(repository: Repository, oldBlob: Blob, newData: Data, options: DiffOptions? = nil)
     {
         var oldBlobPointer: OpaquePointer? = nil
         var oldBlobOid = oldBlob.oid.oid
@@ -61,7 +60,7 @@ final class Patch: Equatable, Identifiable
             fatalError(.unhandledError)
         }
 
-        let patch = try? OpaquePointer.from { patch in
+        let patch = try! OpaquePointer.from { patch in
             DiffOptions.unwrappingOptions(options) { options in
                 newData.withUnsafeBytes { bytes in
                     git_patch_from_blob_and_buffer(
@@ -76,16 +75,15 @@ final class Patch: Equatable, Identifiable
                 }
             }
         }
-        guard let patch else { return nil }
-        
+
         self.patch = patch
         self.oldData = nil
         self.newData = newData
     }
 
-    init?(oldData: Data, newData: Data, options: DiffOptions? = nil)
+    init(oldData: Data, newData: Data, options: DiffOptions? = nil)
     {
-        guard let patch = try? OpaquePointer.from({
+        let patch = try! OpaquePointer.from({
             (patch) in
             DiffOptions.unwrappingOptions(options) {
                 (gitOptions) in
@@ -101,7 +99,6 @@ final class Patch: Equatable, Identifiable
                 }
             }
         })
-        else { return nil }
 
         self.patch = patch
         self.oldData = oldData

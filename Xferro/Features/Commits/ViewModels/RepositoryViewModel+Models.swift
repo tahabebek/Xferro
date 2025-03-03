@@ -1,5 +1,5 @@
 //
-//  RepositoryInfo+Models.swift
+//  RepositoryViewModel+Models.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/23/25.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension RepositoryInfo {
+extension RepositoryViewModel {
     struct BranchInfo: Identifiable, Equatable {
         var id: String {
             branch.name + branch.commit.oid.description
@@ -53,12 +53,12 @@ extension RepositoryInfo {
     }
 
     enum ChangeType {
-        case head(RepositoryInfo)
-        case index(RepositoryInfo)
-        case reflog(RepositoryInfo)
-        case localBranches(RepositoryInfo)
-        case remoteBranches(RepositoryInfo)
-        case tags(RepositoryInfo)
-        case stash(RepositoryInfo)
+        case head(RepositoryViewModel)
+        case index(RepositoryViewModel)
+        case reflog(RepositoryViewModel)
+        case localBranches(RepositoryViewModel)
+        case remoteBranches(RepositoryViewModel)
+        case tags(RepositoryViewModel)
+        case stash(RepositoryViewModel)
     }
 }

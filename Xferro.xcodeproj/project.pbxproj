@@ -47,6 +47,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7DA63F6A2D73DBB800AB1A1F /* Exceptions for "XferroTests" folder in "XferroTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				GitTests.html,
+			);
+			target = 7D38FB352D2F9581008BF288 /* XferroTests */;
+		};
 		7DD1396B2D39A0550076B23B /* Exceptions for "Xferro" folder in "Xferro" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -55,6 +62,16 @@
 			target = 7D38FB242D2F957F008BF288 /* Xferro */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		7DA63F6B2D73DBB800AB1A1F /* Exceptions for "XferroTests" folder in "Compile Sources" phase from "XferroTests" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 7D38FB322D2F9581008BF288 /* Sources */;
+			membershipExceptions = (
+				GitTests.html,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7D38FB272D2F957F008BF288 /* Xferro */ = {
@@ -67,6 +84,10 @@
 		};
 		7D38FB392D2F9581008BF288 /* XferroTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7DA63F6A2D73DBB800AB1A1F /* Exceptions for "XferroTests" folder in "XferroTests" target */,
+				7DA63F6B2D73DBB800AB1A1F /* Exceptions for "XferroTests" folder in "Compile Sources" phase from "XferroTests" target */,
+			);
 			path = XferroTests;
 			sourceTree = "<group>";
 		};

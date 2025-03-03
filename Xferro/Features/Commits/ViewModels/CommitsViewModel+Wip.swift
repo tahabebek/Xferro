@@ -75,7 +75,7 @@ extension CommitsViewModel {
         addWipCommit(repositoryInfo: item.repositoryInfo)
     }
 
-    func addWipCommit(repositoryInfo: RepositoryInfo, summary: String? = nil) {
+    func addWipCommit(repositoryInfo: RepositoryViewModel, summary: String? = nil) {
         wipCommitLock.lock()
         defer { wipCommitLock.unlock() }
         let worktree = repositoryInfo.wipWorktree
@@ -98,7 +98,7 @@ extension CommitsViewModel {
 
         self.reloadUIAfterAddingWipCommits(repositoryInfo: repositoryInfo)
     }
-    func reloadUIAfterAddingWipCommits(repositoryInfo: RepositoryInfo) {
+    func reloadUIAfterAddingWipCommits(repositoryInfo: RepositoryViewModel) {
         let repository = repositoryInfo.repository
         let head = repositoryInfo.head
         if let currentSelectedItem, repository.gitDir.path == currentSelectedItem.repository.gitDir.path {

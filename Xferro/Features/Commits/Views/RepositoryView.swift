@@ -16,8 +16,7 @@ struct RepositoryView: View {
         case history = 3
     }
 
-    let viewModel: CommitsViewModel
-    let repositoryInfo: RepositoryInfo
+    let repositoryInfo: RepositoryViewModel
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
     @State private var isMinimized: Bool = false
@@ -46,8 +45,6 @@ struct RepositoryView: View {
             .padding(.horizontal)
             .padding(.bottom, !isCollapsed ? 8 : 0)
         }
-        .animation(.default, value: viewModel.currentRepositoryInfos)
-        .animation(.default, value: viewModel.currentSelectedItem)
         .animation(.default, value: repositoryInfo.detachedCommit)
         .animation(.default, value: repositoryInfo.detachedTag)
         .animation(.default, value: repositoryInfo.localBranchInfos)
@@ -101,8 +98,7 @@ struct RepositoryView: View {
     }
 
     @ViewBuilder private var label: some View {
-        if let currentRepository = viewModel.currentSelectedItem?.repository.nameOfRepo,
-           currentRepository == repositoryInfo.repository.nameOfRepo
+        if repositoryInfo.isSelected
         {
             Label(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
                 .foregroundStyle(Color.accentColor)
@@ -114,8 +110,7 @@ struct RepositoryView: View {
     }
 
     @ViewBuilder private var smallLabel: some View {
-        if let currentRepository = viewModel.currentSelectedItem?.repository.nameOfRepo,
-           currentRepository == repositoryInfo.repository.nameOfRepo
+        if repositoryInfo.isSelected
         {
             Text(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
                 .foregroundStyle(Color.accentColor)
@@ -146,7 +141,7 @@ struct RepositoryView: View {
                 .contentShape(Rectangle())
                 .hoverableButton("Remove Repository") {
                     withAnimation(.easeInOut) {
-                        viewModel.deleteRepositoryButtonTapped(repositoryInfo.repository)
+                        repositoryInfo.deleteRepositoryButtonTapped(repositoryInfo.repository)
                     }
                 }
             Image(systemName: "chevron.down")

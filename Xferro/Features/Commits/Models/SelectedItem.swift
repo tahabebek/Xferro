@@ -10,7 +10,7 @@ import Foundation
 struct SelectedItem: Equatable {
     let type: SelectedItemType
 
-    var repositoryInfo: RepositoryInfo {
+    var repositoryInfo: RepositoryViewModel {
         switch type {
         case .regular(let regularSelectedItem):
             regularSelectedItem.repositoryInfo
@@ -61,7 +61,7 @@ struct SelectedItem: Equatable {
     enum WipSelectedItem: Equatable {
         case wipCommit(SelectableWipCommit)
 
-        var repositoryInfo: RepositoryInfo {
+        var repositoryInfo: RepositoryViewModel {
             switch self {
             case .wipCommit(let selectableWipCommit):
                 selectableWipCommit.repositoryInfo
@@ -94,7 +94,7 @@ struct SelectedItem: Equatable {
         case tag(SelectableTag)
         case stash(SelectableStash)
 
-        var repositoryInfo: RepositoryInfo {
+        var repositoryInfo: RepositoryViewModel {
             switch self {
             case .status(let selectableStatus):
                 selectableStatus.repositoryInfo

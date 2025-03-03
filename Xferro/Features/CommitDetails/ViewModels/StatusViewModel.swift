@@ -73,8 +73,20 @@ import Observation
         self.untrackedDeltaInfos = untrackedDeltaInfos
     }
 
+    func trackAllTapped() {
+        stageOrUnstageTapped(stage: true, deltaInfos: untrackedDeltaInfos)
+    }
+
+    func trackTapped(stage: Bool, deltaInfos: [DeltaInfo]) {
+        stageOrUnstageTapped(stage: true, deltaInfos: deltaInfos)
+    }
+
     func stageOrUnstageTapped(stage: Bool) {
-        stageOrUnstageTapped(stage: stage, deltaInfos: stagedDeltaInfos)
+        if stage {
+            stageOrUnstageTapped(stage: stage, deltaInfos: unstagedDeltaInfos)
+        } else {
+            stageOrUnstageTapped(stage: stage, deltaInfos: stagedDeltaInfos)
+        }
     }
     
     func stageOrUnstageTapped(stage: Bool, deltaInfos: [DeltaInfo]) {

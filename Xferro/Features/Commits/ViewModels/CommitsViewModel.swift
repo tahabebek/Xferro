@@ -32,7 +32,7 @@ import OrderedCollections
     }
     
     var currentWipCommits: WipCommits?
-    var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
+    var currentRepositoryInfos: OrderedDictionary<String, RepositoryViewModel> = [:]
     private let userDidSelectFolder: (URL) -> Void
     private let user: User
     let wipCommitLock = NSRecursiveLock()
@@ -76,7 +76,7 @@ import OrderedCollections
             await MainActor.run {
                 guard currentSelectedItem == nil else { return }
                 if !currentRepositoryInfos.isEmpty {
-                    var repositoryInfo: RepositoryInfo?
+                    var repositoryInfo: RepositoryViewModel?
                     if let lastSelectedRepositoryPath = user.lastSelectedRepositoryPath {
                         for (_, info) in currentRepositoryInfos {
                             if info.repository.gitDir.path == lastSelectedRepositoryPath {
