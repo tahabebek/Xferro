@@ -20,23 +20,14 @@ struct BranchGraphView: View {
             circleSize: BranchView.commitNodeSize,
             spacing: 12
         ) { index in
-            ZStack {
-                if isCurrent && index == 0 {
-                    BranchStatusCircleView(
-                        selectableStatus: selectableStatus,
-                        onIsSelected: onIsSelected,
-                        onUserTapped: onUserTapped
-                    )
-                } else {
-                    BranchCommitCircleView(
-                        onUserTapped: onUserTapped,
-                        onIsSelected: onIsSelected,
-                        selectableCommits: selectableCommits,
-                        isCurrent: isCurrent,
-                        index: index
-                    )
-                }
-            }
+            BranchGraphContentView(
+                index: index,
+                isCurrent: isCurrent,
+                selectableStatus: selectableStatus,
+                selectableCommits: selectableCommits,
+                onUserTapped: onUserTapped,
+                onIsSelected: onIsSelected
+            )
         }
     }
 }
