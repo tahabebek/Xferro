@@ -1,5 +1,5 @@
 //
-//  PeekInfo.swift
+//  PeekViewModel.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 3/2/25.
@@ -8,8 +8,8 @@
 import Foundation
 import Observation
 
-@Observable final class PeekInfo {
-    @Observable final class Diff {
+@Observable final class PeekViewModel {
+    @Observable final class DiffViewModel {
         let hunks: [DiffHunk]
         let addedLinesCount: Int
         let deletedLinesCount: Int
@@ -25,7 +25,7 @@ import Observation
     enum PeekInfoType {
         case noDifference(statusFileName: String)
         case binary(statusFileName: String)
-        case diff(Diff)
+        case diff(DiffViewModel)
     }
     var type: PeekInfoType
 

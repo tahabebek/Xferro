@@ -9,8 +9,7 @@ import Foundation
 import Observation
 
 extension StatusViewModel {
-    func peekInfo(for deltaInfo: DeltaInfo) -> PeekInfo {
-        let patchMaker: PatchMaker
+    func peekInfo(for deltaInfo: DeltaInfo) -> PeekViewModel {
         let isStaged = deltaInfo.type == .staged
         let patchResult: PatchMaker.PatchResult = if isStaged {
             selectableStatus.repository.stagedDiff(
@@ -26,9 +25,9 @@ extension StatusViewModel {
 
         switch patchResult {
         case .noDifference:
-            return PeekInfo(type: .noDifference(statusFileName: deltaInfo.statusFileName))
+            return PeekViewModel(type: .noDifference(statusFileName: deltaInfo.statusFileName))
         case .binary:
-            return PeekInfo(type: .binary(statusFileName: deltaInfo.statusFileName))
+            return PeekViewModel(type: .binary(statusFileName: deltaInfo.statusFileName))
         case .diff(let patchMaker):
             let patch = patchMaker.makePatch()
             var newHunks = [DiffHunk]()
@@ -43,7 +42,7 @@ extension StatusViewModel {
                     newHunks.append(hunk)
                 }
             }
-            return PeekInfo(type: .diff(PeekInfo.Diff(
+            return PeekViewModel(type: .diff(PeekViewModel.DiffViewModel(
                 hunks: newHunks,
                 addedLinesCount: patch.addedLinesCount,
                 deletedLinesCount: patch.deletedLinesCount,

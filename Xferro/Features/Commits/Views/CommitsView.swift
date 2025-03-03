@@ -23,7 +23,7 @@ struct CommitsView: View {
             } onAddManualWipCommitTapped: {
                 commitsViewModel.addManualWipCommitTapped(for: $0)
             } onDeleteWipWorktreeTapped: {
-                commitsViewModel.deleteRepositoryButtonTapped($0)
+                commitsViewModel.deleteRepositoryTapped($0)
             } onDeleteAllWipCommitsTapped: {
                 commitsViewModel.deleteAllWipCommitsTapped(for: $0)
             }

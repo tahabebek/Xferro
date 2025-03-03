@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PeekView: View {
-    let peekInfo: PeekInfo
+    let peekInfo: PeekViewModel
 
     var body: some View {
         let _ = Self._printChanges()

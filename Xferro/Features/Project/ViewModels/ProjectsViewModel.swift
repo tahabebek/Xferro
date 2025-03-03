@@ -11,28 +11,28 @@ import Observation
 @Observable final class ProjectsViewModel {
     var user: User
 
-    private var _commitsViewModel: CommitsViewModel?
-
     init(user: User) {
+        print("init ProjectsViewModel")
         self.user = user
     }
 
-    func userDidSelectFolder(_ url: URL) {
+    deinit {
+        print("deinit ProjectsViewModel")
+    }
+
+    func userDidSelectFolder(_ url: URL, commitsViewModel: CommitsViewModel? = nil) {
         let isGit = isFolderGit(url: url)
         let project = Project(isGit: isGit, url: url)
         if user.addProject(project) {
             if let repository = try? Repository.at(project.url).get() {
                 Task {
-                    await _commitsViewModel?.addRepository(repository)
+                    await commitsViewModel?.addRepository(repository)
                 }
             }
         }
     }
 
     func commitsViewModel() -> CommitsViewModel? {
-        if let _commitsViewModel {
-            return _commitsViewModel
-        }
         guard user.projects.isNotEmpty else { return nil }
         var repositories: [Repository] = []
         for project in user.projects {
@@ -41,11 +41,10 @@ import Observation
             }
         }
         guard repositories.isNotEmpty else { return nil }
-        let commitsViewModel = CommitsViewModel(repositories: repositories, user: user) { [weak self] url in
+        let commitsViewModel = CommitsViewModel(repositories: repositories, user: user) { [weak self] url, commitsViewModel in
             guard let self else { return }
-            userDidSelectFolder(url)
+            userDidSelectFolder(url, commitsViewModel: commitsViewModel)
         }
-        _commitsViewModel = commitsViewModel
         return commitsViewModel
     }
 

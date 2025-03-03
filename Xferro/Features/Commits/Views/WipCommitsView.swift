@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct WipCommitsView: View {
-    let wipCommits: WipCommits?
+    let wipCommits: WipCommitsViewModel?
     let currentSelectedItem: SelectedItem?
     let onUserTapped: (any SelectableItem) -> Void
     let isSelectedItem: (any SelectableItem) -> Bool

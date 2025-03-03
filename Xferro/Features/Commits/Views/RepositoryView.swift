@@ -63,62 +63,18 @@ struct RepositoryView: View {
     }
 
     private var menu: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack {
-                label
-                Spacer()
-                actionsView
-                Spacer()
-                navigationView
-            }
-            VStack(spacing: 6) {
-                smallLabel
-                HStack {
-                    actionsView
-                    navigationView
-                }
-            }
-            .onAppear {
-                isMinimized = true
-            }
-            .onDisappear {
-                isMinimized = false
-            }
-            VStack(spacing: 6) {
-                smallLabel
-                navigationView
-            }
-            .onAppear {
-                isMinimized = true
-            }
-            .onDisappear {
-                isMinimized = false
-            }
+        HStack {
+            label
+            Spacer()
+            actionsView
+            Spacer()
+            navigationView
         }
     }
 
     @ViewBuilder private var label: some View {
-        if repositoryInfo.isSelected
-        {
-            Label(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
-                .foregroundStyle(Color.accentColor)
-                .fixedSize()
-        } else {
-            Label(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
-                .fixedSize()
-        }
-    }
-
-    @ViewBuilder private var smallLabel: some View {
-        if repositoryInfo.isSelected
-        {
-            Text(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
-                .foregroundStyle(Color.accentColor)
-                .fixedSize()
-        } else {
-            Text(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent)
-                .fixedSize()
-        }
+        Label(repositoryInfo.repository.gitDir.deletingLastPathComponent().lastPathComponent, systemImage: "folder")
+            .fixedSize()
     }
 
     private var actionsView: some View {
@@ -141,7 +97,7 @@ struct RepositoryView: View {
                 .contentShape(Rectangle())
                 .hoverableButton("Remove Repository") {
                     withAnimation(.easeInOut) {
-                        repositoryInfo.deleteRepositoryButtonTapped(repositoryInfo.repository)
+                        repositoryInfo.deleteRepositoryTapped()
                     }
                 }
             Image(systemName: "chevron.down")
@@ -217,7 +173,12 @@ struct RepositoryView: View {
         return VStack(spacing: 16) {
             if let detachedTag = repositoryInfo.detachedTag {
                 BranchView(
-                    viewModel: viewModel,
+                    viewModel: BranchViewModel(
+                        onUserTapped: repositoryInfo.onUserTapped,
+                        onIsSelected: repositoryInfo.onIsSelected,
+                        onDeleteBranchTapped: repositoryInfo.onDeleteBranchTapped,
+                        onIsCurrentBranch: repositoryInfo.onIsCurrentBranch
+                    ),
                     name: "Detached tag \(detachedTag.tag.tag.name)",
                     selectableCommits: detachedTag.commits,
                     selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
@@ -227,7 +188,12 @@ struct RepositoryView: View {
                 )
             } else if let detachedCommit = repositoryInfo.detachedCommit {
                 BranchView(
-                    viewModel: viewModel,
+                    viewModel: BranchViewModel(
+                        onUserTapped: repositoryInfo.onUserTapped,
+                        onIsSelected: repositoryInfo.onIsSelected,
+                        onDeleteBranchTapped: repositoryInfo.onDeleteBranchTapped,
+                        onIsCurrentBranch: repositoryInfo.onIsCurrentBranch
+                    ),
                     name: "Detached Commit",
                     selectableCommits: detachedCommit.commits,
                     selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
@@ -238,12 +204,17 @@ struct RepositoryView: View {
             }
             ForEach(repositoryInfo.localBranchInfos) { branchInfo in
                 BranchView(
-                    viewModel: viewModel,
+                    viewModel: BranchViewModel(
+                        onUserTapped: repositoryInfo.onUserTapped,
+                        onIsSelected: repositoryInfo.onIsSelected,
+                        onDeleteBranchTapped: repositoryInfo.onDeleteBranchTapped,
+                        onIsCurrentBranch: repositoryInfo.onIsCurrentBranch
+                    ),
                     name: branchInfo.branch.name,
                     selectableCommits: branchInfo.commits,
                     selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
                     isCurrent: (repositoryInfo.detachedTag != nil || repositoryInfo.detachedCommit != nil) ? false :
-                        viewModel.isCurrentBranch(branchInfo.branch, head: repositoryInfo.head),
+                        repositoryInfo.onIsCurrentBranch(branchInfo.branch, repositoryInfo.head),
                     isDetached: false,
                     branchCount: repositoryInfo.localBranchInfos.count
                 )
@@ -279,9 +250,9 @@ struct RepositoryView: View {
                         }
                         .frame(width: 80, height: 80)
                         .onTapGesture {
-                            viewModel.userTapped(item: tagInfo.tag)
+                            repositoryInfo.onUserTapped(tagInfo.tag)
                         }
-                        if viewModel.isSelected(item: tagInfo.tag) {
+                        if repositoryInfo.onIsSelected(tagInfo.tag) {
                             SelectedItemOverlay(width: 80, height: 80)
                         }
                     }
@@ -315,9 +286,9 @@ struct RepositoryView: View {
                         }
                         .frame(width: 80, height: 80)
                         .onTapGesture {
-                            viewModel.userTapped(item: selectableStash)
+                            repositoryInfo.onUserTapped(selectableStash)
                         }
-                        if viewModel.isSelected(item: selectableStash) {
+                        if repositoryInfo.onIsSelected(selectableStash) {
                             SelectedItemOverlay(width: 80, height: 80)
                         }
                     }

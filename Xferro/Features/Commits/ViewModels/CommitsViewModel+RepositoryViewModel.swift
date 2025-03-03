@@ -60,6 +60,21 @@ extension CommitsViewModel {
             guard let self else { return }
             guard autoCommitEnabled else { return }
             addWipCommit(repositoryInfo: repositoryInfo, summary: summary)
+        } onUserTapped: { [weak self] in
+            guard let self else { return }
+            userTapped(item: $0)
+        } onIsSelected: { [weak self] in
+            guard let self else { return false }
+            return isSelected(item: $0)
+        } onDeleteRepositoryTapped: { [weak self] in
+            guard let self else { return }
+            deleteRepositoryTapped($0)
+        } onDeleteBranchTapped: { [weak self] in
+            guard let self else { return }
+            deleteBranchTapped(repository: repository, branchName: $0)
+        } onIsCurrentBranch: { [weak self] in
+            guard let self else { return false }
+            return isCurrentBranch($0, head: $1)
         }
         let (localBranches, remoteBranches, wipBranches) = branchInfos(of: newRepositoryInfo)
         newRepositoryInfo.localBranchInfos = localBranches

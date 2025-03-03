@@ -31,17 +31,18 @@ import OrderedCollections
         currentSelectedItem = selectedItem
     }
     
-    var currentWipCommits: WipCommits?
+    var currentWipCommits: WipCommitsViewModel?
     var currentRepositoryInfos: OrderedDictionary<String, RepositoryViewModel> = [:]
-    private let userDidSelectFolder: (URL) -> Void
+    private let userDidSelectFolder: (URL, CommitsViewModel) -> Void
     private let user: User
     let wipCommitLock = NSRecursiveLock()
 
     init(
         repositories: [Repository],
         user: User,
-        userDidSelectFolder: @escaping (URL) -> Void
+        userDidSelectFolder: @escaping (URL, CommitsViewModel) -> Void
     ) {
+        print("init CommitsViewModel")
         if UserDefaults.standard.object(forKey: "autoCommitEnabled") == nil {
             self.autoCommitEnabled = true
         } else {
@@ -58,6 +59,10 @@ import OrderedCollections
                 setupInitialCurrentSelectedItem()
             }
         }
+    }
+
+    deinit {
+        print("deinit CommitsViewModel")
     }
 
     func addRepository(_ repository: Repository) async {
@@ -219,10 +224,10 @@ import OrderedCollections
         }
 
         folder.stopAccessingSecurityScopedResource()
-        userDidSelectFolder(folder)
+        userDidSelectFolder(folder, self)
     }
 
-    func deleteRepositoryButtonTapped(_ repository: Repository) {
+    func deleteRepositoryTapped(_ repository: Repository) {
         guard currentRepositoryInfos[kRepositoryInfo(repository)] != nil else {
             fatalError(.unexpected)
         }

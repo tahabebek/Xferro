@@ -23,7 +23,7 @@ struct NormalCommitsView: View {
         } content: {
             VStack(alignment: .leading, spacing: 16) {
                 ForEach(viewModel.currentRepositoryInfos.values.elements) { repositoryInfo in
-                    RepositoryView(viewModel: viewModel, repositoryInfo: repositoryInfo)
+                    RepositoryView(repositoryInfo: repositoryInfo)
                 }
                 if viewModel.currentRepositoryInfos.count == 0 {
                     HStack {

@@ -50,10 +50,10 @@ struct BranchView: View {
                                 .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                         }
                         .onTapGesture {
-                            viewModel.userTapped(item: selectableStatus)
+                            viewModel.onUserTapped(selectableStatus)
                         }
                         .frame(width: Self.commitNodeSize, height: Self.commitNodeSize)
-                    if viewModel.isSelected(item: selectableStatus) {
+                    if viewModel.onIsSelected(selectableStatus) {
                         SelectedItemOverlay(width: Self.commitNodeSize, height: Self.commitNodeSize)
                     }
                 } else {
@@ -73,9 +73,9 @@ struct BranchView: View {
                         }
                     }
                     .onTapGesture {
-                        viewModel.userTapped(item: item)
+                        viewModel.onUserTapped(item)
                     }
-                    if viewModel.isSelected(item: item) {
+                    if viewModel.onIsSelected(item) {
                         SelectedItemOverlay(width: Self.commitNodeSize, height: Self.commitNodeSize)
                     }
                 }
@@ -111,7 +111,7 @@ struct BranchView: View {
                     
                     if !isDetached {
                         Button("Delete \(name)") {
-                            viewModel.deleteBranchTapped(repository: selectableStatus.repository, branchName: name)
+                            viewModel.onDeleteBranchTapped(name)
                             showingBranchOptions = false
                         }
                         .padding(.vertical, 4)

@@ -1,5 +1,5 @@
 //
-//  WipCommits.swift
+//  WipCommitsViewModel.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/28/25.
@@ -7,7 +7,7 @@
 
 import Observation
 
-@Observable final class WipCommits {
+@Observable final class WipCommitsViewModel {
     var commits: [SelectableWipCommit]
     var item: SelectedItem
     var autoCommitEnabled: Bool
