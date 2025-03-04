@@ -52,7 +52,6 @@ import Observation
         self.repository = repository
         let head = Head.of(repository)
         self.head = head
-        self.status = StatusManager.shared.status(of: repository)
         self.queue = TaskQueue(id: Self.taskQueueID(path: repository.workDir.path))
         self.gitWatcher = self.setupGitWatcher()
         self.workDirWatcher = setupWorkDirWatcher()

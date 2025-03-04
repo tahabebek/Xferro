@@ -29,8 +29,10 @@ extension RepositoryViewModel {
             .sink { [weak self] in
                 guard let self else { return }
 //                print("index changed for repository \(repository.nameOfRepo)")
-                self.status = StatusManager.shared.status(of: self.repository)
-                self.onGitChange?(.index(self))
+                Task {
+                    self.status = await StatusManager.shared.status(of: self.repository)
+                    self.onGitChange?(.index(self))
+                }
             }
 
         self.localBranchesChangeObserver = localBranchesChangeSubject

@@ -13,10 +13,9 @@ final class StatusManager {
 
     private init() {}
 
-    func status(of repository: Repository) -> [StatusEntry] {
-        lock.lock()
-        defer { lock.unlock() }
-        return repository.status(options: [
+#warning("Fix locked repo crashes ( rm /Users/tahabebek/Projects/Xferro/.git/index.lock fixes it)")
+    func status(of repository: Repository) async -> [StatusEntry] {
+        repository.status(options: [
             .includeUntracked,
             .renamesFromRewrites,
             .renamesHeadToIndex,
@@ -24,7 +23,6 @@ final class StatusManager {
             .sortCaseSensitively,
             .updateIndex
         ]).mustSucceed()
-        #warning("Fix locked repo crashes ( rm /Users/tahabebek/Projects/Xferro/.git/index.lock fixes it)")
     }
 
     func isUntracked(relativePath: String, statusEntries: [StatusEntry]) -> Bool {

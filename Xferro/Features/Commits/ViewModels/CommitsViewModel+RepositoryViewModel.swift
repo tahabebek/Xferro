@@ -94,7 +94,9 @@ extension CommitsViewModel {
         newRepositoryInfo.detachedTag = detachedTag(of: newRepositoryInfo)
         newRepositoryInfo.detachedCommit = detachedCommit(of: newRepositoryInfo)
         newRepositoryInfo.historyCommits = historyCommits(of: newRepositoryInfo)
-        newRepositoryInfo.status = StatusManager.shared.status(of: newRepositoryInfo.repository)
+        Task {
+            newRepositoryInfo.status = await StatusManager.shared.status(of: newRepositoryInfo.repository)
+        }
         return newRepositoryInfo
     }
     private func stashes(of repositoryInfo: RepositoryViewModel) -> [SelectableStash] {
