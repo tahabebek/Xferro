@@ -28,7 +28,9 @@ struct StatusView: View {
                     stagedDeltaInfosIsEmpty: viewModel.stagedDeltaInfos.isEmpty,
                     hasChanges: viewModel.hasChanges,
                     onCommitTapped: {
-                        viewModel.commitTapped()
+                        Task {
+                            await viewModel.commitTapped()
+                        }
                     },
                     onBoxActionTapped: { action in
                         viewModel.actionTapped(action)
@@ -43,20 +45,34 @@ struct StatusView: View {
                     unstagedDeltaInfos: viewModel.unstagedDeltaInfos,
                     untrackedDeltaInfos: viewModel.untrackedDeltaInfos,
                     hasChanges: viewModel.hasChanges,
-                    onTapExclude: {
-                        viewModel.stageOrUnstageTapped(stage: false, deltaInfos: $0)
+                    onTapExclude: { deltaInfos in
+                        Task {
+                            await viewModel.stageOrUnstageTapped(stage: false, deltaInfos: deltaInfos)
+                        }
                     }, onTapExcludeAll: {
-                        viewModel.stageOrUnstageTapped(stage: false)
-                    }, onTapInclude: {
-                        viewModel.stageOrUnstageTapped(stage: true, deltaInfos: $0)
+                        Task {
+                            await viewModel.stageOrUnstageTapped(stage: false)
+                        }
+                    }, onTapInclude: { deltaInfos in
+                        Task {
+                            await viewModel.stageOrUnstageTapped(stage: true, deltaInfos: deltaInfos)
+                        }
                     }, onTapIncludeAll: {
-                        viewModel.stageOrUnstageTapped(stage: true)
-                    }, onTapTrack: {
-                        viewModel.trackTapped(stage: true, deltaInfos: $0)
+                        Task {
+                            await viewModel.stageOrUnstageTapped(stage: true)
+                        }
+                    }, onTapTrack: { deltaInfos in
+                        Task {
+                            await viewModel.trackTapped(stage: true, deltaInfos: deltaInfos)
+                        }
                     }, onTapTrackAll: {
-                        viewModel.trackAllTapped()
-                    }, onTapIgnore: {
-                        viewModel.ignoreTapped(deltaInfo: $0)
+                        Task {
+                            await viewModel.trackAllTapped()
+                        }
+                    }, onTapIgnore: { deltaInfos in
+                        Task {
+                            await viewModel.ignoreTapped(deltaInfo: deltaInfos)
+                        }
                     }, onTapDiscard: {
                         discardDeltaInfo = $0
                     }
@@ -89,7 +105,9 @@ struct StatusView: View {
     }
 
     func discard(deltaInfo: DeltaInfo) {
-        viewModel.discardTapped(deltaInfo: deltaInfo)
+        Task {
+            await viewModel.discardTapped(deltaInfo: deltaInfo)
+        }
     }
 }
 

@@ -83,66 +83,68 @@ import Observation
     }
 
     func actionTapped(_ action: StatusActionButtonsView.BoxAction) {
-        switch action {
-        case .splitAndCommit:
-            commitTapped()
-            fatalError(.unimplemented)
-        case .amend:
-            amendTapped()
-        case .stageAll:
-            stageAllTapped()
-        case .stageAllAndCommit:
-            stageAllTapped()
-            commitTapped()
-        case .stageAllAndAmend:
-            stageAllTapped()
-            amendTapped()
-        case .stageAllCommitAndPush:
-            stageAllTapped()
-            commitTapped()
-            fatalError(.unimplemented)
-        case .stageAllAmendAndPush:
-            stageAllTapped()
-            amendTapped()
-            fatalError(.unimplemented)
-        case .stageAllCommitAndForcePush:
-            stageAllTapped()
-            commitTapped()
-            fatalError(.unimplemented)
-        case .stageAllAmendAndForcePush:
-            stageAllTapped()
-            amendTapped()
-            fatalError(.unimplemented)
-        case .stash:
-            fatalError(.unimplemented)
-        case .popStash:
-            fatalError(.unimplemented)
-        case .applyStash:
-            fatalError(.unimplemented)
-        case .discardAll:
-            discardAllTapped()
-        case .addCustom:
-            fatalError(.unimplemented)
+        Task {
+            switch action {
+            case .splitAndCommit:
+                await commitTapped()
+                fatalError(.unimplemented)
+            case .amend:
+                await amendTapped()
+            case .stageAll:
+                await stageAllTapped()
+            case .stageAllAndCommit:
+                await stageAllTapped()
+                await commitTapped()
+            case .stageAllAndAmend:
+                await stageAllTapped()
+                await amendTapped()
+            case .stageAllCommitAndPush:
+                await stageAllTapped()
+                await commitTapped()
+                fatalError(.unimplemented)
+            case .stageAllAmendAndPush:
+                await stageAllTapped()
+                await amendTapped()
+                fatalError(.unimplemented)
+            case .stageAllCommitAndForcePush:
+                await stageAllTapped()
+                await commitTapped()
+                fatalError(.unimplemented)
+            case .stageAllAmendAndForcePush:
+                await stageAllTapped()
+                await amendTapped()
+                fatalError(.unimplemented)
+            case .stash:
+                fatalError(.unimplemented)
+            case .popStash:
+                fatalError(.unimplemented)
+            case .applyStash:
+                fatalError(.unimplemented)
+            case .discardAll:
+                await discardAllTapped()
+            case .addCustom:
+                fatalError(.unimplemented)
+            }
         }
     }
 
-    func trackAllTapped() {
-        stageOrUnstageTapped(stage: true, deltaInfos: untrackedDeltaInfos)
+    func trackAllTapped() async {
+        await stageOrUnstageTapped(stage: true, deltaInfos: untrackedDeltaInfos)
     }
 
-    func trackTapped(stage: Bool, deltaInfos: [DeltaInfo]) {
-        stageOrUnstageTapped(stage: true, deltaInfos: deltaInfos)
+    func trackTapped(stage: Bool, deltaInfos: [DeltaInfo]) async {
+        await stageOrUnstageTapped(stage: true, deltaInfos: deltaInfos)
     }
 
-    func stageOrUnstageTapped(stage: Bool) {
+    func stageOrUnstageTapped(stage: Bool) async {
         if stage {
-            stageOrUnstageTapped(stage: stage, deltaInfos: unstagedDeltaInfos)
+            await stageOrUnstageTapped(stage: stage, deltaInfos: unstagedDeltaInfos)
         } else {
-            stageOrUnstageTapped(stage: stage, deltaInfos: stagedDeltaInfos)
+            await stageOrUnstageTapped(stage: stage, deltaInfos: stagedDeltaInfos)
         }
     }
     
-    func stageOrUnstageTapped(stage: Bool, deltaInfos: [DeltaInfo]) {
+    func stageOrUnstageTapped(stage: Bool, deltaInfos: [DeltaInfo]) async {
         for deltaInfo in deltaInfos {
             switch deltaInfo.delta.status {
             case .unmodified:
@@ -183,22 +185,22 @@ import Observation
         }
     }
 
-    func stageAllTapped() {
+    func stageAllTapped() async {
         repository.stage(path: ".").mustSucceed()
     }
 
     @discardableResult
-    func commitTapped() -> Commit {
+    func commitTapped() async -> Commit {
         let commit: Commit = repository.commit(message: commitSummary).mustSucceed()
         commitSummary = ""
         return commit
     }
 
-    func splitAndCommitTapped() -> Commit {
+    func splitAndCommitTapped() async -> Commit {
         fatalError(.unimplemented)
     }
 
-    func amendTapped() {
+    func amendTapped() async {
         let headCommit: Commit = repository.commit().mustSucceed()
         var newMessage = commitSummary
         if newMessage.isEmptyOrWhitespace {
@@ -212,14 +214,14 @@ import Observation
         commitSummary = ""
     }
 
-    func ignoreTapped(deltaInfo: DeltaInfo) {
+    func ignoreTapped(deltaInfo: DeltaInfo) async {
         guard let path = deltaInfo.newFilePath else {
             fatalError(.illegal)
         }
         repository.ignore(path)
     }
 
-    func discardTapped(deltaInfo: DeltaInfo) {
+    func discardTapped(deltaInfo: DeltaInfo) async {
         let oldFileURL = deltaInfo.oldFileURL
         let newFileURL = deltaInfo.newFileURL
         var fileURLs = [URL]()
@@ -260,7 +262,7 @@ import Observation
         return title
     }
 
-    func discardAllTapped() {
+    func discardAllTapped() async {
         RepoManager().git(repository, ["add", "."])
         RepoManager().git(repository, ["reset", "--hard"])
     }
