@@ -12,30 +12,49 @@ struct PeekView: View, Equatable {
         lhs.peekInfo == rhs.peekInfo
     }
     
-    let peekInfo: PeekViewModel
+    @State var peekInfo: PeekViewModel?
+    let viewModel: StatusViewModel
+    let deltaInfo: DeltaInfo
 
     var body: some View {
         let _ = Self._printChanges()
-        VStack(spacing: 0) {
-            PeekViewHeader(statusFileName: peekInfo.statusFileName, countString: countString)
+        Group {
+            if let peekInfo {
+                VStack(spacing: 0) {
+                    PeekViewHeader(statusFileName: peekInfo.statusFileName, countString: countString)
+                        .background(Color.clear)
+                        .padding(.horizontal, 8)
+                    switch peekInfo.type {
+                    case .noDifference:
+                        Text("No difference")
+                    case .binary:
+                        Text("Binary")
+                    case .diff(let diff):
+                        ForEach(diff.hunks) { hunk in
+                            HunkView(hunk: hunk)
+                                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                        }
+                    }
+                }
+                .border(Color.random())
                 .background(Color.clear)
-                .padding(.horizontal, 8)
-            switch peekInfo.type {
-            case .noDifference:
-                Text("No difference")
-            case .binary:
-                Text("Binary")
-            case .diff(let diff):
-                ForEach(diff.hunks) { hunk in
-                    HunkView(hunk: hunk)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
+            } else {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    Spacer()
                 }
             }
         }
-        .border(Color.random())
-        .background(Color.clear)
+        .task {
+            peekInfo = await viewModel.peekInfo(for: deltaInfo, repository: viewModel.repository, head: viewModel.head)
+        }
     }
 
     var empty: some View {
@@ -60,11 +79,15 @@ struct PeekView: View, Equatable {
     }
 
     var countString: String {
-        switch peekInfo.type {
-        case .noDifference, .binary:
+        if let peekInfo {
+            switch peekInfo.type {
+            case .noDifference, .binary:
+                ""
+            case .diff(let diff):
+                "\(diff.hunks.count) \(diff.hunks.count == 1 ? "chunk" : "chunks"), \(diff.addedLinesCount) \(diff.addedLinesCount == 1 ? "addition" : "additions"), \(diff.deletedLinesCount) \(diff.deletedLinesCount == 1 ? "deletion" : "deletions")"
+            }
+        } else {
             ""
-        case .diff(let diff):
-            "\(diff.hunks.count) \(diff.hunks.count == 1 ? "chunk" : "chunks"), \(diff.addedLinesCount) \(diff.addedLinesCount == 1 ? "addition" : "additions"), \(diff.deletedLinesCount) \(diff.deletedLinesCount == 1 ? "deletion" : "deletions")"
         }
     }
 }

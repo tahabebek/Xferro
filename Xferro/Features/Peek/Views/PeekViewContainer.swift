@@ -16,29 +16,17 @@ struct PeekViewContainer: View {
             List {
                 Section {
                     ForEach(viewModel.stagedDeltaInfos) { deltaInfo in
-                        PeekView(peekInfo: viewModel.peekInfo(
-                            for: deltaInfo,
-                            repository: viewModel.repository,
-                            head: viewModel.head
-                        ))
+                        PeekView(viewModel: viewModel, deltaInfo: deltaInfo)
                     }
                 }
                 Section {
                     ForEach(viewModel.unstagedDeltaInfos) { deltaInfo in
-                        PeekView(peekInfo: viewModel.peekInfo(
-                            for: deltaInfo,
-                            repository: viewModel.repository,
-                            head: viewModel.head
-                        ))
+                        PeekView(viewModel: viewModel, deltaInfo: deltaInfo)
                     }
                 }
                 Section {
                     ForEach(viewModel.untrackedDeltaInfos) { deltaInfo in
-                        PeekView(peekInfo: viewModel.peekInfo(
-                            for: deltaInfo,
-                            repository: viewModel.repository,
-                            head: viewModel.head
-                        ))
+                        PeekView(viewModel: viewModel, deltaInfo: deltaInfo)
                     }
                 }
             }
