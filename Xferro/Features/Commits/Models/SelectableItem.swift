@@ -115,6 +115,15 @@ struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
         self.branch = branch
         self.commit = commit
     }
+
+    init(repositoryGitDir: String, repositoryName: String, repositoryId: String, branch: Branch, commit: Commit) {
+        self.repositoryGitDir = repositoryGitDir
+        self.repositoryName = repositoryName
+        self.repositoryId = repositoryId
+        self.branch = branch
+        self.commit = commit
+    }
+    
     var id: String { repositoryId + branch.id + commit.id }
     let repositoryGitDir: String
     let repositoryName: String
@@ -187,6 +196,14 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
         self.commit = commit
         self.owner = owner
     }
+
+    init(repositoryId: String, repositoryName: String, repositoryGitDir: String, commit: Commit, owner: Owner) {
+        self.repositoryId = repositoryId
+        self.repositoryName = repositoryName
+        self.repositoryGitDir = repositoryGitDir
+        self.commit = commit
+        self.owner = owner
+    }
 }
 
 struct SelectableDetachedTag: SelectableItem, Identifiable {
@@ -205,6 +222,13 @@ struct SelectableDetachedTag: SelectableItem, Identifiable {
         self.repositoryId = repositoryInfo.repository.idOfRepo
         self.repositoryName = repositoryInfo.repository.nameOfRepo
         self.repositoryGitDir = repositoryInfo.repository.gitDir.path
+        self.tag = tag
+    }
+
+    init(repositoryId: String, repositoryName: String, repositoryGitDir: String, tag: TagReference) {
+        self.repositoryId = repositoryId
+        self.repositoryName = repositoryName
+        self.repositoryGitDir = repositoryGitDir
         self.tag = tag
     }
 }

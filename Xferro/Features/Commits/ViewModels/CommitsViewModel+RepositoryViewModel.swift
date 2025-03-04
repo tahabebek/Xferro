@@ -12,6 +12,7 @@ extension CommitsViewModel {
         let newRepositoryInfo: RepositoryViewModel = RepositoryViewModel(repository: repository)
 
         newRepositoryInfo.onGitChange = { [weak self, weak newRepositoryInfo] type in
+            print("on git change called, type: \(type)")
             guard let self, let newRepositoryInfo else { return }
             Task {
                 await MainActor.run { [weak self] in
@@ -85,10 +86,9 @@ extension CommitsViewModel {
             guard let self else { return false }
             return isCurrentBranch($0, head: $1)
         }
-        let (localBranches, remoteBranches, wipBranches) = branchInfos(of: newRepositoryInfo)
+        let (localBranches, remoteBranches) = branchInfos(of: newRepositoryInfo)
         newRepositoryInfo.localBranchInfos = localBranches
         newRepositoryInfo.remoteBranchInfos = remoteBranches
-        newRepositoryInfo.wipBranchInfos = wipBranches
         newRepositoryInfo.tags = tags(of: newRepositoryInfo)
         newRepositoryInfo.stashes = stashes(of: newRepositoryInfo)
         newRepositoryInfo.detachedTag = detachedTag(of: newRepositoryInfo)
@@ -96,25 +96,6 @@ extension CommitsViewModel {
         newRepositoryInfo.historyCommits = historyCommits(of: newRepositoryInfo)
         newRepositoryInfo.status = StatusManager.shared.status(of: newRepositoryInfo.repository)
         return newRepositoryInfo
-    }
-    private func detachedAncestorCommitsOf(
-        owner: SelectableDetachedCommit.Owner,
-        in repositoryInfo: RepositoryViewModel,
-        count: Int = RepositoryViewModel.commitCountLimit) -> [SelectableDetachedCommit]
-    {
-        var commits: [SelectableDetachedCommit] = []
-
-        let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: owner.oid.oid)
-        var counter = 0
-        while counter < count, let commit = try? commitIterator.next()?.get() {
-            commits.append(SelectableDetachedCommit(
-                repositoryInfo: repositoryInfo,
-                commit: commit,
-                owner: owner
-            ))
-            counter += 1
-        }
-        return commits
     }
     private func stashes(of repositoryInfo: RepositoryViewModel) -> [SelectableStash] {
         print("get stashes")
@@ -127,45 +108,28 @@ extension CommitsViewModel {
     }
 
     private func branchInfos(of repositoryInfo: RepositoryViewModel) ->
-    (local: [RepositoryViewModel.BranchInfo], remote: [RepositoryViewModel.BranchInfo], wip: [RepositoryViewModel.WipBranchInfo]) {
-        let (localBranches, remoteBranches, wipBranches) = allBranches(of: repositoryInfo)
+    (local: [BranchInfo], remote: [BranchInfo]) {
+        let (localBranches, remoteBranches) = allBranches(of: repositoryInfo)
         let local = localBranches
-            .map { [weak self] branch in
-                guard let self else { return RepositoryViewModel.BranchInfo(
-                    branch: branch,
-                    commits: [],
-                    repository: repositoryInfo.repository,
-                    head: repositoryInfo.head
-                    )
-                }
-                let commits = commits(of: branch, in: repositoryInfo)
-                return RepositoryViewModel.BranchInfo(branch: branch, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
+            .map {
+                BranchInfo(branch: $0, repository: repositoryInfo.repository, head: repositoryInfo.head)
             }
         let remote = remoteBranches
-            .map { [weak self] branch in
-                guard let self else { return RepositoryViewModel.BranchInfo(branch: branch, commits: [], repository: repositoryInfo.repository, head: repositoryInfo.head) }
-                let commits = commits(of: branch, in: repositoryInfo)
-                return RepositoryViewModel.BranchInfo(branch: branch, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
+            .map {
+                BranchInfo(branch: $0, repository: repositoryInfo.repository, head: repositoryInfo.head)
             }
-        let wip = wipBranches
-            .map { [weak self] branch in
-                guard let self else { return RepositoryViewModel.WipBranchInfo(branch: branch, commits: [], repository: repositoryInfo.repository, head: repositoryInfo.head) }
-                let commits = wipCommits(of: branch, in: repositoryInfo)
-                return RepositoryViewModel.WipBranchInfo(branch: branch, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
-            }
-        return (local, remote, wip)
+        return (local, remote)
     }
 
-    private func allBranches(of repositoryInfo: RepositoryViewModel) -> (local: [Branch], remote: [Branch], wip: [Branch]) {
+    private func allBranches(of repositoryInfo: RepositoryViewModel) -> (local: [Branch], remote: [Branch]) {
         print("get all branches")
         var localBranches: [Branch] = []
         var remoteBranches: [Branch] = []
-        var wipBranches: [Branch] = []
         let branchIterator = BranchIterator(repo: repositoryInfo.repository, type: .all)
 
         while let branch = try? branchIterator.next()?.get() {
             if branch.isWip {
-                wipBranches.append(branch)
+                continue
             } else if branch.isLocal {
                 if isCurrentBranch(branch, head: repositoryInfo.head) {
                     localBranches.insert(branch, at: 0)
@@ -178,18 +142,16 @@ extension CommitsViewModel {
                 fatalError(.illegal)
             }
         }
-        return (localBranches, remoteBranches, wipBranches)
+        return (localBranches, remoteBranches)
     }
 
-    private func localBranchInfos(of repositoryInfo: RepositoryViewModel) -> [RepositoryViewModel.BranchInfo] {
+    private func localBranchInfos(of repositoryInfo: RepositoryViewModel) -> [BranchInfo] {
         localBranches(of: repositoryInfo)
             .filter {
                 !$0.isWip
             }
-            .map { [weak self] branch in
-                guard let self else { return RepositoryViewModel.BranchInfo(branch: branch, commits: [], repository: repositoryInfo.repository, head: repositoryInfo.head) }
-                let commits = commits(of: branch, in: repositoryInfo)
-                return RepositoryViewModel.BranchInfo(branch: branch, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
+            .map {
+                BranchInfo(branch: $0, repository: repositoryInfo.repository, head: repositoryInfo.head)
             }
     }
 
@@ -208,28 +170,18 @@ extension CommitsViewModel {
         return branches
     }
 
-    private func remoteBranchInfos(of repositoryInfo: RepositoryViewModel) -> [RepositoryViewModel.BranchInfo] {
-        print("get remote branches")
-        return repositoryInfo.repository.remoteBranches().mustSucceed()
-            .map { [weak self] branch in
-                guard let self else { return RepositoryViewModel.BranchInfo(
-                    branch: branch,
-                    commits: [],
-                    repository: repositoryInfo.repository,
-                    head: repositoryInfo.head
-                    )
-                }
-                let commits = commits(of: branch, in: repositoryInfo)
-                return RepositoryViewModel.BranchInfo(
-                    branch: branch,
-                    commits: commits,
+    private func remoteBranchInfos(of repositoryInfo: RepositoryViewModel) -> [BranchInfo] {
+        repositoryInfo.repository.remoteBranches().mustSucceed()
+            .map {
+                BranchInfo(
+                    branch: $0,
                     repository: repositoryInfo.repository,
                     head: repositoryInfo.head
                 )
             }
     }
 
-    private func detachedTag(of repositoryInfo: RepositoryViewModel) -> RepositoryViewModel.TagInfo? {
+    private func detachedTag(of repositoryInfo: RepositoryViewModel) -> TagInfo? {
         print("get detached tag")
         switch repositoryInfo.head {
         case .branch:
@@ -239,8 +191,7 @@ extension CommitsViewModel {
                 repositoryInfo: repositoryInfo,
                 tag: tagReference
             )
-            let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tagReference), in: repositoryInfo)
-            return RepositoryViewModel.TagInfo(tag: detachedTag, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
+            return TagInfo(tag: detachedTag, repository: repositoryInfo.repository, head: repositoryInfo.head)
         case .reference(let reference, _):
             if let tag = try? repositoryInfo.repository.tag(reference.oid).get() {
                 let tagReference = TagReference.annotated(tag.name, tag)
@@ -248,10 +199,8 @@ extension CommitsViewModel {
                     repositoryInfo: repositoryInfo,
                     tag: tagReference
                 )
-                let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tagReference), in: repositoryInfo)
-                return RepositoryViewModel.TagInfo(
+                return TagInfo(
                     tag: detachedTag,
-                    commits: commits,
                     repository: repositoryInfo.repository,
                     head: repositoryInfo.head
                 )
@@ -260,7 +209,7 @@ extension CommitsViewModel {
             }
         }
     }
-    private func detachedCommit(of repositoryInfo: RepositoryViewModel) -> RepositoryViewModel.DetachedCommitInfo? {
+    private func detachedCommit(of repositoryInfo: RepositoryViewModel) -> DetachedCommitInfo? {
         print("get detached commit")
         switch repositoryInfo.head {
         case .branch, .tag:
@@ -273,16 +222,15 @@ extension CommitsViewModel {
                     commit: commit,
                     owner: owner
                 )
-                let commits = detachedAncestorCommitsOf(owner: owner, in: repositoryInfo)
-                return RepositoryViewModel.DetachedCommitInfo(detachedCommit: detachedCommit, commits: commits, repository: repositoryInfo.repository, head: repositoryInfo.head)
+                return DetachedCommitInfo(detachedCommit: detachedCommit, owner: owner, repository: repositoryInfo.repository, head: repositoryInfo.head)
             } else {
                 return nil
             }
         }
     }
-    private func tags(of repositoryInfo: RepositoryViewModel) -> [RepositoryViewModel.TagInfo] {
+    private func tags(of repositoryInfo: RepositoryViewModel) -> [TagInfo] {
         print("get tags")
-        var tags: [RepositoryViewModel.TagInfo] = []
+        var tags: [TagInfo] = []
 
         try? repositoryInfo.repository.allTags().get()
             .sorted { $0.name > $1.name }
@@ -291,36 +239,15 @@ extension CommitsViewModel {
                     repositoryInfo: repositoryInfo,
                     tag: tag
                 )
-                let commits = detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tag), in: repositoryInfo)
-                tags.append(RepositoryViewModel.TagInfo(
+                tags.append(TagInfo(
                     tag: selectableTag,
-                    commits: commits,
                     repository: repositoryInfo.repository,
                     head: repositoryInfo.head
                 ))
             }
         return tags
     }
-    private func commits(
-        of branch: Branch,
-        in repositoryInfo: RepositoryViewModel,
-        count: Int = RepositoryViewModel.commitCountLimit
-    ) -> [SelectableCommit] {
-        print("get commits")
-        var commits: [SelectableCommit] = []
 
-        let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: branch.oid.oid)
-        var counter = 0
-        while counter < count, let commit = try? commitIterator.next()?.get() {
-            commits.append(SelectableCommit(
-                repositoryInfo: repositoryInfo,
-                branch: branch,
-                commit: commit
-            ))
-            counter += 1
-        }
-        return commits
-    }
     private func wipCommits(
         of branch: Branch,
         in repositoryInfo: RepositoryViewModel,

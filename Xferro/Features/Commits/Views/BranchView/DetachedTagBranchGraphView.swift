@@ -1,16 +1,15 @@
 //
-//  BranchGraphView.swift
+//  DetachedTagBranchGraphView.swift
 //  Xferro
 //
-//  Created by Taha Bebek on 3/3/25.
+//  Created by Taha Bebek on 3/4/25.
 //
 
 import SwiftUI
 
-struct BranchGraphView: View {
-    @State var selectableCommits: [SelectableCommit]?
-    let isCurrent: Bool
-    let branchInfo: BranchInfo
+struct DetachedTagBranchGraphView: View {
+    @State var selectableCommits: [SelectableDetachedCommit]?
+    let detachedTagInfo: TagInfo
     let selectableStatus: SelectableStatus
     let onUserTapped: ((any SelectableItem) -> Void)?
     let onIsSelected: ((any SelectableItem) -> Bool)?
@@ -19,13 +18,13 @@ struct BranchGraphView: View {
         Group {
             if let selectableCommits {
                 CirclesWithArrows(
-                    numberOfCircles: isCurrent ? selectableCommits.count + 1 : selectableCommits.count,
+                    numberOfCircles: selectableCommits.count + 1,
                     circleSize: BranchView.commitNodeSize,
                     spacing: 12
                 ) { index in
                     BranchGraphContentView(
                         index: index,
-                        isCurrent: isCurrent,
+                        isCurrent: true,
                         selectableStatus: selectableStatus,
                         selectableCommits: selectableCommits,
                         onUserTapped: onUserTapped,
@@ -37,7 +36,7 @@ struct BranchGraphView: View {
             }
         }
         .task {
-            selectableCommits = await branchInfo.commits()
+            selectableCommits = await detachedTagInfo.commits()
         }
     }
 }

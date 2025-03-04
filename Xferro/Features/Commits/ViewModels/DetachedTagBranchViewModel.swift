@@ -1,29 +1,28 @@
 //
-//  BranchViewModel.swift
+//  DetachedTagBranchViewModel.swift
 //  Xferro
 //
-//  Created by Taha Bebek on 3/2/25.
+//  Created by Taha Bebek on 3/4/25.
 //
 
 import Foundation
+import Observation
 
-struct BranchViewModel {
+@Observable final class DetachedTagBranchViewModel {
     let onUserTapped: ((any SelectableItem) -> Void)?
     let onIsSelected: ((any SelectableItem) -> Bool)?
     let onDeleteBranchTapped: ((String) -> Void)?
     let onIsCurrentBranch: ((Branch, Head) -> Bool)?
-    let branchInfo: BranchInfo
-    let selectableStatus: SelectableStatus
-    let isCurrent: Bool
+    let tagInfo: TagInfo
     let branchCount: Int
+    let selectableStatus: SelectableStatus
 
     init(
         onUserTapped: ((any SelectableItem) -> Void)?,
         onIsSelected: ((any SelectableItem) -> Bool)?,
         onDeleteBranchTapped: ((String) -> Void)?,
         onIsCurrentBranch: ((Branch, Head) -> Bool)?,
-        branchInfo: BranchInfo,
-        isCurrent: Bool,
+        tagInfo: TagInfo,
         branchCount: Int,
         selectableStatus: SelectableStatus
     )
@@ -32,8 +31,7 @@ struct BranchViewModel {
         self.onIsSelected = onIsSelected
         self.onDeleteBranchTapped = onDeleteBranchTapped
         self.onIsCurrentBranch = onIsCurrentBranch
-        self.branchInfo = branchInfo
-        self.isCurrent = isCurrent
+        self.tagInfo = tagInfo
         self.branchCount = branchCount
         self.selectableStatus = selectableStatus
     }

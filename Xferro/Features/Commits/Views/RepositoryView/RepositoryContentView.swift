@@ -11,12 +11,12 @@ struct RepositoryContentView: View {
     let selection: RepositoryView.Section
     @Namespace private var animation
 
-    let tags: [RepositoryViewModel.TagInfo]
+    let tags: [TagInfo]
     let stashes: [SelectableStash]
     let historyCommits: [SelectableHistoryCommit]
-    let detachedTag: RepositoryViewModel.TagInfo?
-    let detachedCommit: RepositoryViewModel.DetachedCommitInfo?
-    let localBranches: [RepositoryViewModel.BranchInfo]
+    let detachedTag: TagInfo?
+    let detachedCommit: DetachedCommitInfo?
+    let localBranches: [BranchInfo]
     let onUserTapped: (((any SelectableItem)) -> Void)?
     let onIsSelected: (((any SelectableItem)) -> Bool)?
     let onDeleteBranchTapped: ((String) -> Void)?

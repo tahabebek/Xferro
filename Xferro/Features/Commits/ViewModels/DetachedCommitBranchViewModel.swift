@@ -1,29 +1,27 @@
 //
-//  BranchViewModel.swift
+//  DetachedCommitBranchViewModel.swift
 //  Xferro
 //
-//  Created by Taha Bebek on 3/2/25.
+//  Created by Taha Bebek on 3/4/25.
 //
 
 import Foundation
 
-struct BranchViewModel {
+struct DetachedCommitBranchViewModel {
     let onUserTapped: ((any SelectableItem) -> Void)?
     let onIsSelected: ((any SelectableItem) -> Bool)?
     let onDeleteBranchTapped: ((String) -> Void)?
     let onIsCurrentBranch: ((Branch, Head) -> Bool)?
-    let branchInfo: BranchInfo
+    let detachedCommitInfo: DetachedCommitInfo
     let selectableStatus: SelectableStatus
-    let isCurrent: Bool
     let branchCount: Int
-
+    
     init(
         onUserTapped: ((any SelectableItem) -> Void)?,
         onIsSelected: ((any SelectableItem) -> Bool)?,
         onDeleteBranchTapped: ((String) -> Void)?,
         onIsCurrentBranch: ((Branch, Head) -> Bool)?,
-        branchInfo: BranchInfo,
-        isCurrent: Bool,
+        detachedCommitInfo: DetachedCommitInfo,
         branchCount: Int,
         selectableStatus: SelectableStatus
     )
@@ -32,8 +30,7 @@ struct BranchViewModel {
         self.onIsSelected = onIsSelected
         self.onDeleteBranchTapped = onDeleteBranchTapped
         self.onIsCurrentBranch = onIsCurrentBranch
-        self.branchInfo = branchInfo
-        self.isCurrent = isCurrent
+        self.detachedCommitInfo = detachedCommitInfo
         self.branchCount = branchCount
         self.selectableStatus = selectableStatus
     }

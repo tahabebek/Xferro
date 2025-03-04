@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RepositoryTagsView: View {
-    let tags: [RepositoryViewModel.TagInfo]
+    let tags: [TagInfo]
     let onUserTapped: (((any SelectableItem)) -> Void)?
     let onIsSelected: (((any SelectableItem)) -> Bool)?
 

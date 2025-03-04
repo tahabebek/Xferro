@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct RepositoryCommitsView: View {
-    let detachedTag: RepositoryViewModel.TagInfo?
-    let detachedCommit: RepositoryViewModel.DetachedCommitInfo?
-    let localBranches: [RepositoryViewModel.BranchInfo]
+    let detachedTag: TagInfo?
+    let detachedCommit: DetachedCommitInfo?
+    let localBranches: [BranchInfo]
     let onUserTapped: (((any SelectableItem)) -> Void)?
     let onIsSelected: (((any SelectableItem)) -> Bool)?
     let onDeleteBranchTapped: ((String) -> Void)?
@@ -23,55 +23,41 @@ struct RepositoryCommitsView: View {
             fatalError(.impossible)
         }
         return VStack(spacing: 16) {
-            if let detachedTag {
-                BranchView(
-                    viewModel: BranchViewModel(
-                        onUserTapped: onUserTapped,
-                        onIsSelected: onIsSelected,
-                        onDeleteBranchTapped: onDeleteBranchTapped,
-                        onIsCurrentBranch: onIsCurrentBranch
-                    ),
-                    name: "Detached tag \(detachedTag.tag.tag.name)",
-                    selectableCommits: detachedTag.commits,
-                    selectableStatus: selectableStatus,
-                    isCurrent: true,
-                    isDetached: true,
-                    branchCount: localBranches.count
-                )
+            if var detachedTag {
+                DetachedTagBranchView(viewModel: DetachedTagBranchViewModel(
+                    onUserTapped: onUserTapped,
+                    onIsSelected: onIsSelected,
+                    onDeleteBranchTapped: onDeleteBranchTapped,
+                    onIsCurrentBranch: onIsCurrentBranch,
+                    tagInfo: detachedTag,
+                    branchCount: localBranches.count,
+                    selectableStatus: selectableStatus
+                ))
                 .animation(.default, value: detachedTag)
-            } else if let detachedCommit {
-                BranchView(
-                    viewModel: BranchViewModel(
-                        onUserTapped: onUserTapped,
-                        onIsSelected: onIsSelected,
-                        onDeleteBranchTapped: onDeleteBranchTapped,
-                        onIsCurrentBranch: onIsCurrentBranch
-                    ),
-                    name: "Detached Commit",
-                    selectableCommits: detachedCommit.commits,
-                    selectableStatus: selectableStatus,
-                    isCurrent: true,
-                    isDetached: true,
-                    branchCount: localBranches.count
-                )
+            } else if var detachedCommit {
+                DetachedCommitBranchView(viewModel: DetachedCommitBranchViewModel(
+                    onUserTapped: onUserTapped,
+                    onIsSelected: onIsSelected,
+                    onDeleteBranchTapped: onDeleteBranchTapped,
+                    onIsCurrentBranch: onIsCurrentBranch,
+                    detachedCommitInfo: detachedCommit,
+                    branchCount: localBranches.count,
+                    selectableStatus: selectableStatus
+                ))
                 .animation(.default, value: detachedCommit)
             }
             ForEach(localBranches) { branchInfo in
-                BranchView(
-                    viewModel: BranchViewModel(
-                        onUserTapped: onUserTapped,
-                        onIsSelected: onIsSelected,
-                        onDeleteBranchTapped: onDeleteBranchTapped,
-                        onIsCurrentBranch: onIsCurrentBranch
-                    ),
-                    name: branchInfo.branch.name,
-                    selectableCommits: branchInfo.commits,
-                    selectableStatus: selectableStatus,
+                BranchView(viewModel: BranchViewModel(
+                    onUserTapped: onUserTapped,
+                    onIsSelected: onIsSelected,
+                    onDeleteBranchTapped: onDeleteBranchTapped,
+                    onIsCurrentBranch: onIsCurrentBranch,
+                    branchInfo: branchInfo,
                     isCurrent: (detachedTag != nil || detachedCommit != nil) ? false :
                         onIsCurrentBranch?(branchInfo.branch, head) ?? false,
-                    isDetached: false,
-                    branchCount: localBranches.count
-                )
+                    branchCount: localBranches.count,
+                    selectableStatus: selectableStatus
+                ))
                 .animation(.default, value: localBranches)
             }
         }
