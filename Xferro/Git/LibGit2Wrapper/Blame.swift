@@ -106,14 +106,14 @@ public final class Blame
             args.insert(contentsOf: [sha.rawValue, "--"], at: 2)
         }
 
-        let output = RepoManager().git(repository, args)
+        let output = GitCLI.executeGit(repository, args)
         guard read(text: output, from: repository) else { return nil }
     }
 
     init?(repository: Repository, path: String, data: Data, to endOID: OID?)
     {
         let args = ["blame", "-p", "--contents", "-", path]
-        let output = RepoManager().git(repository, args)
+        let output = GitCLI.executeGit(repository, args)
         guard read(text: output, from: repository) else { return nil }
     }
 }

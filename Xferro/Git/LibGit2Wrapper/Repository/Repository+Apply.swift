@@ -18,9 +18,9 @@ extension Repository {
             }
             if FileManager.fileExists(url.path) {
                 if url.isDirectory {
-                    RepoManager().git(self, ["restore", url.appendingPathComponent("*").path])
+                    GitCLI.executeGit(self, ["restore", url.appendingPathComponent("*").path])
                 } else {
-                    RepoManager().git(self, ["restore", url.path])
+                    GitCLI.executeGit(self, ["restore", url.path])
                 }
                 try? FileManager.removeItem(url.path)
                 stage(path: delta.newFilePath!).mustSucceed()
@@ -50,9 +50,9 @@ extension Repository {
             }
             if !FileManager.fileExists(url.path) {
                 if url.isDirectory {
-                    RepoManager().git(self, ["restore", url.appendingPathComponent("*").path])
+                    GitCLI.executeGit(self, ["restore", url.appendingPathComponent("*").path])
                 } else {
-                    RepoManager().git(self, ["restore", url.path])
+                    GitCLI.executeGit(self, ["restore", url.path])
                 }
             } else {
                 fatalError(.invalid)
@@ -128,6 +128,294 @@ extension Repository {
         }
         
         return (unstagedChange, stagedChange)
+    }
+
+
+    /*
+     The --cached flag is important in these commands for different reasons:
+     For git diff:
+
+     With --cached: Shows changes between the index and HEAD (staged changes)
+     Without --cached: Shows changes between the working directory and the index (unstaged changes)
+
+     For git apply:
+
+     With --cached: Applies changes to the index (staging area) without modifying the working directory files
+     Without --cached: Applies changes to files in the working directory
+
+     So when implementing line-level operations:
+
+     In stageSelectedLines:
+
+     We use git diff without --cached to get the unstaged changes
+     We use git apply --cached to apply the selected lines to the index (staging them)
+
+     In unstageSelectedLines:
+
+     We use git diff --cached to get the staged changes
+     We use git apply --cached --reverse to unapply the selected lines from the index (unstaging them)
+
+     The --cached flag is essential for making sure these operations affect the staging area (index) rather than your working files. This allows you to stage/unstage changes without modifying the actual content of your files.
+
+     The trailing dash (-) in the command git apply --cached - is a special character that tells Git to read the patch content from standard input (stdin) rather than from a file.
+     */
+    // Define a diff line type to identify addition vs deletion
+    enum StageDiffLineType {
+        case addition  // + line
+        case deletion  // - line
+        case context   // space line
+    }
+    
+    // Structure to represent a line selection with its type
+    struct StageDiffLine {
+        let lineNumber: Int
+        let type: DiffLineType
+    }
+    
+    func stageSelectedLines(filePath: String, selectedLines: [StageDiffLine]) async throws {
+        print("Staging selected lines: \(selectedLines.map { "line \($0.lineNumber) (\($0.type))" })")
+        
+        // Get the diff for the file
+        let diffOutput = GitCLI.executeGit(self, ["diff", "--no-color", "--no-ext-diff", filePath])
+        
+        if diffOutput.isEmpty {
+            print("No unstaged changes found in \(filePath)")
+            return
+        }
+        
+        // Create a temporary patch file with just the desired changed line
+        let tempPatchFile = DataManager.appDir.appendingPathComponent("temp_patch_\(UUID().uuidString)")
+        
+        // Parse the diff to find the exact line position
+        let diffLines = diffOutput.split(separator: "\n").map(String.init)
+        
+        // Variables to keep track of current line numbers and hunk context
+        var currentLineNumber = 0
+        var oldStart = 0
+        var newStart = 0
+        var inHunk = false
+        var targetLinePosition = -1
+        var selectedLineContent = ""
+        var contextLineBefore = ""
+        var contextLineAfter = ""
+        var fileHeader = [String]()
+        var targetHunkLines = [String]()
+        
+        for (index, line) in diffLines.enumerated() {
+            if line.starts(with: "diff ") || line.starts(with: "index ") || 
+               line.starts(with: "--- ") || line.starts(with: "+++ ") {
+                // Collect file header information
+                fileHeader.append(line)
+            } else if line.starts(with: "@@ ") {
+                // Parse hunk header
+                if let match = line.range(of: #"@@ -(\d+),(\d+) \+(\d+),(\d+) @@"#, options: .regularExpression) {
+                    let parts = line[match].components(separatedBy: CharacterSet(charactersIn: "-+, @"))
+                                          .filter { !$0.isEmpty }
+                    
+                    if parts.count >= 4 {
+                        oldStart = Int(parts[0]) ?? 0
+                        newStart = Int(parts[2]) ?? 0
+
+                        // Reset line tracking for this hunk
+                        currentLineNumber = newStart - 1  // Will be incremented with the first context/add line
+                        inHunk = true
+                        
+                        // Start a new target hunk if containing selected lines
+                        targetHunkLines = [line]
+                    }
+                }
+            } else if inHunk {
+                if line.starts(with: " ") {
+                    // Context line
+                    currentLineNumber += 1
+                    targetHunkLines.append(line)
+                    
+                    // Check if this line is a context line for our selected lines
+                    for selected in selectedLines {
+                        if currentLineNumber + 1 == selected.lineNumber {
+                            contextLineBefore = line
+                            print("Found context line before selected line \(selected.lineNumber): \(line)")
+                        }
+                        else if currentLineNumber - 1 == selected.lineNumber {
+                            contextLineAfter = line
+                            print("Found context line after selected line \(selected.lineNumber): \(line)")
+                        }
+                    }
+                } else if line.starts(with: "+") {
+                    // Added line
+                    currentLineNumber += 1
+                    targetHunkLines.append(line)
+                    
+                    // Check if this is our selected line - using new DiffLine type
+                    // Look for a line with this number and type 'addition'
+                    if selectedLines.contains(where: { $0.lineNumber == currentLineNumber && $0.type == .addition }) {
+                        targetLinePosition = targetHunkLines.count - 1
+                        selectedLineContent = line
+                        print("Found selected ADDITION line at position \(targetLinePosition): \(line)")
+                    }
+                } else if line.starts(with: "-") {
+                    // Removed line (don't increment currentLineNumber)
+                    targetHunkLines.append(line)
+                    
+                            // For removed lines, we need to properly track old file line numbers
+                    // Calculate the line number in the original file
+                    var oldLineNumber = oldStart
+                    if targetHunkLines.count > 1 {
+                        // Count context and deletion lines up to current position (excluding current line)
+                        var contextAndDeletionCount = 0
+                        for i in 1..<(targetHunkLines.count-1) { // Skip header and exclude current line
+                            let prevLine = targetHunkLines[i]
+                            if prevLine.starts(with: " ") || prevLine.starts(with: "-") {
+                                contextAndDeletionCount += 1
+                            }
+                        }
+                        oldLineNumber = oldStart + contextAndDeletionCount
+                    }
+                    // Check if this is our selected line with 'deletion' type
+                    if selectedLines.contains(where: { $0.lineNumber == oldLineNumber && $0.type == .deletion }) {
+                        targetLinePosition = targetHunkLines.count - 1
+                        selectedLineContent = line
+                        print("Found selected DELETION line \(oldLineNumber) at position \(targetLinePosition): \(line)")
+                    }
+                }
+            }
+        }
+        
+        // If we found our target line, create a minimal patch with just that change
+        if targetLinePosition >= 0 {
+            print("Creating patch for line at position \(targetLinePosition): \(selectedLineContent)")
+            
+            // Build a minimal patch with the file headers and just the selected change with necessary context
+            var patchContent = fileHeader.joined(separator: "\n") + "\n"
+            
+            // For correct line numbers, we need to calculate the exact position where the selected line
+            // should be applied, taking into account the context lines
+            var effectiveOldStart = 0
+            var effectiveNewStart = 0
+            
+            if selectedLineContent.starts(with: "-") {
+                // For removed lines, we need to track where in the file this line was
+                // We need to count all the context and removed lines up to our target position
+                var oldLineOffset = 0
+                var targetPos = 0
+                
+                // First find the position of our line in the targetHunkLines array
+                if let linePos = targetHunkLines.firstIndex(of: selectedLineContent) {
+                    targetPos = linePos
+                    
+                    // Now count all the lines that affect old file line numbers
+                    for i in 1..<targetPos {
+                        let line = targetHunkLines[i]
+                        if line.starts(with: " ") || line.starts(with: "-") {
+                            oldLineOffset += 1
+                        }
+                    }
+                }
+                
+                // Calculate the effective start positions
+                effectiveOldStart = oldStart + oldLineOffset
+                effectiveNewStart = effectiveOldStart
+                
+                print("Deletion at oldStart: \(effectiveOldStart), offset: \(oldLineOffset)")
+            } else if selectedLineContent.starts(with: "+") {
+                // For added lines, we use the new file line number
+                // Find the current new file line number
+                let linePosition = targetHunkLines.firstIndex(of: selectedLineContent) ?? 0
+                
+                // Count context and add lines before this position to get correct offset
+                var contextAndAddCount = 0
+                if linePosition > 1 {  // Make sure we have valid range
+                    for i in 1..<linePosition {
+                        let line = targetHunkLines[i]
+                        if line.starts(with: " ") || line.starts(with: "+") {
+                            contextAndAddCount += 1
+                        }
+                    }
+                }
+                
+                effectiveNewStart = newStart + contextAndAddCount
+                effectiveOldStart = effectiveNewStart // Same for old start
+                
+                print("Addition at newStart: \(effectiveNewStart)")
+            }
+            
+            // Create a minimal hunk with just our change
+            var minimalHunk = [String]()
+            
+            // Calculate the number of context lines we have
+            let beforeLineCount = contextLineBefore.isEmpty ? 0 : 1
+            let afterLineCount = contextLineAfter.isEmpty ? 0 : 1
+            let contextLineCount = beforeLineCount + afterLineCount
+            
+            // Select the correct hunk header format based on line type
+            if selectedLineContent.starts(with: "-") {
+                // For a deletion, we need to tell git that we're removing a line
+                let oldLineCount = 1 + contextLineCount  // Deleted line + context lines
+                let newLineCount = contextLineCount      // Just context lines in new version
+                
+                minimalHunk.append("@@ -\(effectiveOldStart),\(oldLineCount) +\(effectiveNewStart),\(newLineCount) @@")
+                print("Using deletion header: @@ -\(effectiveOldStart),\(oldLineCount) +\(effectiveNewStart),\(newLineCount) @@")
+            } else if selectedLineContent.starts(with: "+") {
+                // For an addition, we're adding a line that doesn't exist in the old file
+                let oldLineCount = contextLineCount      // Just context lines in old version
+                let newLineCount = 1 + contextLineCount  // Added line + context lines
+                
+                minimalHunk.append("@@ -\(effectiveOldStart),\(oldLineCount) +\(effectiveNewStart),\(newLineCount) @@")
+                print("Using addition header: @@ -\(effectiveOldStart),\(oldLineCount) +\(effectiveNewStart),\(newLineCount) @@")
+            }
+            
+            // We need at least one context line for git apply to work properly
+            if !contextLineBefore.isEmpty {
+                minimalHunk.append(contextLineBefore)
+            }
+            
+            minimalHunk.append(selectedLineContent)
+            
+            if !contextLineAfter.isEmpty {
+                minimalHunk.append(contextLineAfter)
+            }
+            
+            // Ensure we end the patch with a newline to avoid corrupt patch errors
+            patchContent += minimalHunk.joined(separator: "\n") + "\n"
+            
+            print("Generated minimal patch:\n\(patchContent)")
+            
+            // Write the patch to a temporary file
+            do {
+                try patchContent.write(to: tempPatchFile, atomically: true, encoding: .utf8)
+                
+                // Apply the patch to the index
+                GitCLI.executeGit(self, ["apply", "--cached", tempPatchFile.path])
+                
+                // Clean up
+                try FileManager.default.removeItem(at: tempPatchFile)
+            } catch {
+                // Clean up on error
+                try? FileManager.default.removeItem(at: tempPatchFile)
+                throw error
+            }
+        } else {
+            print("Selected line \(selectedLines) not found in diff")
+            throw NSError(domain: "GitError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Selected line not found in changes"])
+        }
+    }
+
+    func unstageSelectedLines(filePath: String, selectedLines: [StageDiffLine]) async throws {
+        print("Unstaging selected lines: \(selectedLines.map { "line \($0.lineNumber) (\($0.type))" })")
+        
+        // Get the staged diff for the file
+        let diffOutput = GitCLI.executeGit(self, ["diff", "--cached", "--no-color", "--no-ext-diff", filePath])
+        
+        if diffOutput.isEmpty {
+            print("No staged changes found in \(filePath)")
+            return
+        }
+        
+        // The rest of the implementation follows the same pattern as stageSelectedLines
+        // but using reverse application and looking at staged changes
+        
+        // We'll implement this fully later as needed
+        throw NSError(domain: "GitError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unstaging is not yet implemented for the new DiffLine type"])
     }
     
     func stageHunk(filePath: String, hunkIndex: Int) async throws
@@ -244,7 +532,7 @@ extension Repository {
     }
     
     // Unstage a specific hunk from a file
-    func unstageHunk(filePath: String, hunkIndex: Int) throws {
+    func unstageHunk(filePath: String, hunkIndex: Int) async throws {
         var index: OpaquePointer?
         var diff: OpaquePointer?
         var patch: OpaquePointer?

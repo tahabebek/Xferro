@@ -29,7 +29,7 @@ struct HunkActionsView: View {
                         isProminent: false,
                         isSmall: true,
                         onTap: {
-                            fatalError(.unimplemented)
+                            hunk.stageLines(false)
                         }
                     )
                 }
@@ -70,7 +70,7 @@ struct HunkActionsView: View {
                         isProminent: false,
                         isSmall: true,
                         onTap: {
-                            fatalError(.unimplemented)
+                            hunk.stageLines(true)
                         }
                     )
                 }

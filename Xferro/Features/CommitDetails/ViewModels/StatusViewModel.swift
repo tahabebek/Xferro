@@ -236,9 +236,9 @@ import Observation
         }
         for fileURL in fileURLs {
             if fileURL.isDirectory {
-                RepoManager().git(repository, ["restore", fileURL.appendingPathComponent("*").path])
+                GitCLI.executeGit(repository, ["restore", fileURL.appendingPathComponent("*").path])
             } else {
-                RepoManager().git(repository, ["restore", fileURL.path])
+                GitCLI.executeGit(repository, ["restore", fileURL.path])
             }
         }
     }
@@ -261,8 +261,8 @@ import Observation
     }
 
     func discardAllTapped() async {
-        RepoManager().git(repository, ["add", "."])
-        RepoManager().git(repository, ["reset", "--hard"])
+        GitCLI.executeGit(repository, ["add", "."])
+        GitCLI.executeGit(repository, ["reset", "--hard"])
     }
 
     func setInitialSelection() {

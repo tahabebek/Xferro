@@ -229,6 +229,56 @@ import Observation
         }
     }
 
+    func stageLines(_ flag: Bool) {
+        Task {
+            let lines: [Repository.StageDiffLine] = selectedLines().compactMap { line in
+                switch line.type {
+                case .addition:
+                    Repository.StageDiffLine(lineNumber: Int(line.newLine), type: .addition)
+                case .deletion:
+                    Repository.StageDiffLine(lineNumber: Int(line.oldLine), type: .deletion)
+                case .context:
+                    Repository.StageDiffLine(lineNumber: Int(line.newLine), type: .context)
+                default: nil
+                }
+
+            }
+            guard lines.isNotEmpty else { return }
+            do {
+                switch delta.status {
+                case .added, .modified, .copied, .renamed, .typeChange, .untracked:
+                    guard let newFilePath = delta.newFile?.path else {
+                        fatalError(.invalid)
+                    }
+                    if flag {
+                        try await repository.stageSelectedLines(filePath: newFilePath, selectedLines: lines)
+                    } else {
+                        try await repository.unstageSelectedLines(filePath: newFilePath, selectedLines: lines)
+                    }
+                case .deleted:
+                    guard let oldFilePath = delta.oldFile?.path else {
+                        fatalError(.invalid)
+                    }
+                    if flag {
+                        try await repository.stageSelectedLines(filePath: oldFilePath, selectedLines: lines)
+                    } else {
+                        try await repository.unstageSelectedLines(filePath: oldFilePath, selectedLines: lines)
+                    }
+                case .ignored, .unreadable, .unmodified:
+                    fatalError(.invalid)
+                case .conflicted:
+                    fatalError(.unimplemented)
+                }
+            } catch {
+                fatalError(error.localizedDescription)
+            }
+        }
+    }
+
+    private func selectedLines() -> [DiffLine] {
+        parts.flatMap { $0.lines }.filter { $0.isSelected }
+    }
+
     private func lineAtIndex(_ lineIndex: Int) -> DiffLine {
         var linePointer: UnsafePointer<git_diff_line>?
         let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex))
@@ -254,17 +304,3 @@ import Observation
         }
     }
 }
-
-
-
-///////
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///

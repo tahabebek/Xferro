@@ -109,7 +109,7 @@ extension Repository {
     func unstage(path: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        RepoManager().git(self, ["reset", "-q", "HEAD", path])
+        GitCLI.executeGit(self, ["reset", "-q", "HEAD", path])
         return .success(())
     }
 
