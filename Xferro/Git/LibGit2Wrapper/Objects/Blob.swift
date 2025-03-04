@@ -19,6 +19,7 @@ struct Blob: ObjectType, Hashable {
 
     let dataSize: UInt
     let isBinary: Bool
+    let pointer: OpaquePointer
 
     /// Create an instance with a libgit2 `git_blob`.
     init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
@@ -29,5 +30,16 @@ struct Blob: ObjectType, Hashable {
         data = Data(bytes: git_blob_rawcontent(pointer), count: length)
         dataSize = UInt(git_blob_rawsize(pointer))
         isBinary =  (git_blob_is_binary(pointer) != 0)
+        self.pointer = pointer
+    }
+
+    func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R
+    {
+        try body(.init(
+            start: git_blob_rawcontent(pointer),
+            count: Int(git_blob_rawsize(pointer)
+                      )))
     }
 }
+
+////

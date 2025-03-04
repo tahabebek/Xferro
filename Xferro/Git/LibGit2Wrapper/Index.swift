@@ -35,10 +35,12 @@ class Index {
 
     var git_index: OpaquePointer
     private var lock: NSRecursiveLock
+    private let pointer: OpaquePointer
 
     init(git_index: OpaquePointer, lock: NSRecursiveLock) {
         self.git_index = git_index
         self.lock = lock
+        self.pointer = git_index
     }
 
     var entryCount: Int {
@@ -93,6 +95,26 @@ class Index {
         return .failure(NSError(gitError: result, pointOfFailure: "git_index_add"))
     }
 
+    func add(data: Data, path: String)
+    {
+        let result = data.withUnsafeBytes {
+            (bytes: UnsafeRawBufferPointer) -> Int32 in
+            var entry = git_index_entry()
+
+            return path.withCString {
+                (path) in
+                entry.path = path
+                entry.mode = GIT_FILEMODE_BLOB.rawValue
+                return git_index_add_frombuffer(pointer, &entry, bytes.baseAddress, data.count)
+            }
+        }
+
+        guard result == GIT_OK.rawValue else {
+            fatalError()
+        }
+    }
+
+    @discardableResult
     func save() -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }

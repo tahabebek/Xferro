@@ -196,6 +196,39 @@ import Observation
         repository.discard(delta: delta, hunk: self)
     }
 
+    func stage(_ flag: Bool) {
+        Task {
+            do {
+                switch delta.status {
+                case .added, .modified, .copied, .renamed, .typeChange, .untracked:
+                    guard let newFilePath = delta.newFile?.path else {
+                        fatalError(.invalid)
+                    }
+                    if flag {
+                        try await repository.stageHunk(filePath: newFilePath, hunkIndex: hunkIndex)
+                    } else {
+                        try await repository.unstageHunk(filePath: newFilePath, hunkIndex: hunkIndex)
+                    }
+                case .deleted:
+                    guard let oldFilePath = delta.oldFile?.path else {
+                        fatalError(.invalid)
+                    }
+                    if flag {
+                        try await repository.stageHunk(filePath: oldFilePath, hunkIndex: hunkIndex)
+                    } else {
+                        try await repository.unstageHunk(filePath: oldFilePath, hunkIndex: hunkIndex)
+                    }
+                case .ignored, .unreadable, .unmodified:
+                    fatalError(.invalid)
+                case .conflicted:
+                    fatalError(.unimplemented)
+                }
+            } catch {
+                fatalError(error.localizedDescription)
+            }
+        }
+    }
+
     private func lineAtIndex(_ lineIndex: Int) -> DiffLine {
         var linePointer: UnsafePointer<git_diff_line>?
         let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex))
