@@ -28,9 +28,13 @@ import OrderedCollections
                 fatalError(.invalid)
             }
             user.lastSelectedRepositoryPath = repositoryInfo.repository.gitDir.path
-            getWipCommits(selectedItem: selectedItem, repositoryInfo: repositoryInfo)
+            Task {
+                await getWipCommits(selectedItem: selectedItem, repositoryInfo: repositoryInfo)
+            }
         } else {
-            getWipCommits(selectedItem: nil, repositoryInfo: nil)
+            Task {
+                await getWipCommits(selectedItem: nil, repositoryInfo: nil)
+            }
         }
         currentRepositoryInfo = repositoryInfo
         currentSelectedItem = selectedItem

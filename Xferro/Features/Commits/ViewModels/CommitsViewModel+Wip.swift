@@ -8,7 +8,7 @@
 import Foundation
 
 extension CommitsViewModel {
-    func getWipCommits(selectedItem: SelectedItem?, repositoryInfo: RepositoryViewModel?) {
+    func getWipCommits(selectedItem: SelectedItem?, repositoryInfo: RepositoryViewModel?) async {
         guard let selectedItem, let repositoryInfo else {
             Task {
                 await MainActor.run {
@@ -144,9 +144,7 @@ extension CommitsViewModel {
 
             if isHead {
                 Task {
-                    await MainActor.run {
-                        getWipCommits(selectedItem: currentSelectedItem, repositoryInfo: currentRepositoryInfo)
-                    }
+                    await getWipCommits(selectedItem: currentSelectedItem, repositoryInfo: currentRepositoryInfo)
                 }
             }
         }

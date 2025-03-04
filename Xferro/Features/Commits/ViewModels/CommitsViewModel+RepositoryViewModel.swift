@@ -248,27 +248,6 @@ extension CommitsViewModel {
         return tags
     }
 
-    private func wipCommits(
-        of branch: Branch,
-        in repositoryInfo: RepositoryViewModel,
-        count: Int = RepositoryViewModel.commitCountLimit
-    ) -> [SelectableWipCommit] {
-        print("get wip commits")
-        var commits: [SelectableWipCommit] = []
-
-        let commitIterator = CommitIterator(repo: repositoryInfo.repository, root: branch.oid.oid)
-        var counter = 0
-        while counter < count, let commit = try? commitIterator.next()?.get() {
-            commits.append(SelectableWipCommit(
-                repositoryInfo: repositoryInfo,
-                branch: branch,
-                commit: commit
-            ))
-            counter += 1
-        }
-        return commits
-    }
-
 #warning("history not implemented")
     private func historyCommits(of repositoryInfo: RepositoryViewModel) -> [SelectableHistoryCommit] {
         print("get history commits")
