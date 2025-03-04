@@ -33,7 +33,7 @@ struct StatusView: View {
                         }
                     },
                     onBoxActionTapped: { action in
-                        viewModel.actionTapped(action)
+                        await viewModel.actionTapped(action)
                     }
                 )
                 .padding()

@@ -82,49 +82,47 @@ import Observation
         self.untrackedDeltaInfos = untrackedDeltaInfos
     }
 
-    func actionTapped(_ action: StatusActionButtonsView.BoxAction) {
-        Task {
-            switch action {
-            case .splitAndCommit:
-                await commitTapped()
-                fatalError(.unimplemented)
-            case .amend:
-                await amendTapped()
-            case .stageAll:
-                await stageAllTapped()
-            case .stageAllAndCommit:
-                await stageAllTapped()
-                await commitTapped()
-            case .stageAllAndAmend:
-                await stageAllTapped()
-                await amendTapped()
-            case .stageAllCommitAndPush:
-                await stageAllTapped()
-                await commitTapped()
-                fatalError(.unimplemented)
-            case .stageAllAmendAndPush:
-                await stageAllTapped()
-                await amendTapped()
-                fatalError(.unimplemented)
-            case .stageAllCommitAndForcePush:
-                await stageAllTapped()
-                await commitTapped()
-                fatalError(.unimplemented)
-            case .stageAllAmendAndForcePush:
-                await stageAllTapped()
-                await amendTapped()
-                fatalError(.unimplemented)
-            case .stash:
-                fatalError(.unimplemented)
-            case .popStash:
-                fatalError(.unimplemented)
-            case .applyStash:
-                fatalError(.unimplemented)
-            case .discardAll:
-                await discardAllTapped()
-            case .addCustom:
-                fatalError(.unimplemented)
-            }
+    func actionTapped(_ action: StatusActionButtonsView.BoxAction) async {
+        switch action {
+        case .splitAndCommit:
+            await commitTapped()
+            fatalError(.unimplemented)
+        case .amend:
+            await amendTapped()
+        case .stageAll:
+            await stageAllTapped()
+        case .stageAllAndCommit:
+            await stageAllTapped()
+            await commitTapped()
+        case .stageAllAndAmend:
+            await stageAllTapped()
+            await amendTapped()
+        case .stageAllCommitAndPush:
+            await stageAllTapped()
+            await commitTapped()
+            fatalError(.unimplemented)
+        case .stageAllAmendAndPush:
+            await stageAllTapped()
+            await amendTapped()
+            fatalError(.unimplemented)
+        case .stageAllCommitAndForcePush:
+            await stageAllTapped()
+            await commitTapped()
+            fatalError(.unimplemented)
+        case .stageAllAmendAndForcePush:
+            await stageAllTapped()
+            await amendTapped()
+            fatalError(.unimplemented)
+        case .stash:
+            fatalError(.unimplemented)
+        case .popStash:
+            fatalError(.unimplemented)
+        case .applyStash:
+            fatalError(.unimplemented)
+        case .discardAll:
+            await discardAllTapped()
+        case .addCustom:
+            fatalError(.unimplemented)
         }
     }
 
