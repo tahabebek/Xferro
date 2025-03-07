@@ -216,12 +216,12 @@ enum SelectedLinesDiffMaker {
                 currentLineIndex += 1
             }
         }
-        if currentLineIndex < currentFileLines.count {
-            fatalError(.invalid)
+        if currentLineIndex < currentFileLines.count - 1 {
+            fatalError(.unexpected)
         }
 
-        if headLineIndex < headFileLines.count {
-            fatalError(.invalid)
+        if headLineIndex < headFileLines.count - 1 {
+            fatalError(.unexpected)
         }
         return try await getDiff(repository: repository, result: result, headFileLines: headFileLines)
     }
