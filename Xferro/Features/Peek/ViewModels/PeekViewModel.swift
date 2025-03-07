@@ -25,9 +25,17 @@ import Observation
         }
     }
 
+    var allHunks: () -> [DiffHunk] = { [] }
+
     init(type: PeekInfoType) {
         print("init PeekViewModel")
         self.type = type
+        self.allHunks = {
+            guard case .diff(let diff) = type else {
+                return []
+            }
+            return diff.hunks
+        }
     }
 
     deinit {

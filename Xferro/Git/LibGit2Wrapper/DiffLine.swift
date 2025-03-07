@@ -11,7 +11,7 @@ import Observation
 @Observable class DiffLine: Identifiable, Equatable
 {
     var id: String {
-        type.rawValue.formatted() + "\(oldLine).\(newLine).\(isSelected).\(indexInPart)"
+        "\(type.id).\(oldLine).\(newLine).\(isSelected).\(indexInPart)"
     }
     static func == (lhs: DiffLine, rhs: DiffLine) -> Bool {
         lhs.id == rhs.id
@@ -24,7 +24,7 @@ import Observation
 
     init(_ gitDiffLine: git_diff_line) {
         self.gitDiffLine = gitDiffLine
-        self.type = DiffLineType(rawValue: UInt32(gitDiffLine.origin))
+        self.type = DiffLineType(origin: gitDiffLine.origin)
         self.oldLine = gitDiffLine.old_lineno
         self.newLine = gitDiffLine.new_lineno
         self.isAdditionOrDeletion = self.type == .addition || self.type == .deletion
@@ -45,33 +45,112 @@ import Observation
     let text: String
 }
 
-struct DiffLineType: Equatable {
-    static let context = DiffLineType(GIT_DIFF_LINE_CONTEXT)
-    static let addition = DiffLineType(GIT_DIFF_LINE_ADDITION)
-    static let deletion = DiffLineType(GIT_DIFF_LINE_DELETION)
-    static let bothFilesHaveNoLineFeed = DiffLineType(GIT_DIFF_LINE_CONTEXT_EOFNL)
-    static let oldHasNoLineFeed = DiffLineType(GIT_DIFF_LINE_ADD_EOFNL)
-    static let newHasNoLineFeed = DiffLineType(GIT_DIFF_LINE_DEL_EOFNL)
-    static let fileHeader = DiffLineType(GIT_DIFF_LINE_FILE_HDR)
-    static let hunkHeader = DiffLineType(GIT_DIFF_LINE_HUNK_HDR)
-    static let binary = DiffLineType(GIT_DIFF_LINE_BINARY)
+enum DiffLineType: Equatable, Hashable {
+    var id: String {
+        switch self {
+        case .addition:
+            "+"
+        case .deletion:
+            "-"
+        case .context:
+            " "
+        case .bothFilesHaveNoLineFeed:
+            "="
+        case .oldHasNoLineFeed:
+            "<"
+        case .newHasNoLineFeed:
+            ">"
+        case .fileHeader:
+            "F"
+        case .hunkHeader:
+            "H"
+        case .binary:
+            "B"
+        }
+    }
+    case context
+    case addition
+    case deletion
+    case bothFilesHaveNoLineFeed
+    case oldHasNoLineFeed
+    case newHasNoLineFeed
+    case fileHeader
+    case hunkHeader
+    case binary
 
-    private let value: UInt32
-
-    init(rawValue value: UInt32) {
-        self.value = value
+    init(origin: CChar) {
+        switch origin {
+        case Int8(GIT_DIFF_LINE_CONTEXT.rawValue):
+            self = .context
+        case Int8(GIT_DIFF_LINE_ADDITION.rawValue):
+            self = .addition
+        case Int8(GIT_DIFF_LINE_DELETION.rawValue):
+            self = .deletion
+        case Int8(GIT_DIFF_LINE_CONTEXT_EOFNL.rawValue):
+            self = .bothFilesHaveNoLineFeed
+        case Int8(GIT_DIFF_LINE_ADD_EOFNL.rawValue):
+            self = .oldHasNoLineFeed
+        case Int8(GIT_DIFF_LINE_DEL_EOFNL.rawValue):
+            self = .newHasNoLineFeed
+        case Int8(GIT_DIFF_LINE_FILE_HDR.rawValue):
+            self = .fileHeader
+        case Int8(GIT_DIFF_LINE_HUNK_HDR.rawValue):
+            self = .hunkHeader
+        case Int8(GIT_DIFF_LINE_BINARY.rawValue):
+            self = .binary
+        default:
+            fatalError(.invalid)
+        }
     }
 
     init(_ lineType: git_diff_line_t) {
-        self.value = UInt32(lineType.rawValue)
-    }
-
-    var rawValue: UInt32 {
-        return value
-    }
-
-    var gitDiffLineType: git_diff_line_t {
-        return git_diff_line_t(self.value)
+        switch lineType {
+        case GIT_DIFF_LINE_CONTEXT:
+            self = .context
+        case GIT_DIFF_LINE_ADDITION:
+            self = .addition
+        case GIT_DIFF_LINE_DELETION:
+            self = .deletion
+        case GIT_DIFF_LINE_CONTEXT_EOFNL:
+            self = .bothFilesHaveNoLineFeed
+        case GIT_DIFF_LINE_ADD_EOFNL:
+            self = .oldHasNoLineFeed
+        case GIT_DIFF_LINE_DEL_EOFNL:
+            self = .newHasNoLineFeed
+        case GIT_DIFF_LINE_FILE_HDR:
+            self = .fileHeader
+        case GIT_DIFF_LINE_HUNK_HDR:
+            self = .hunkHeader
+        case GIT_DIFF_LINE_BINARY:
+            self = .binary
+        default:
+            fatalError("Invalid git_diff_line_t value: \(lineType.rawValue)")
+        }
     }
 }
 
+
+extension DiffLineType: CustomDebugStringConvertible {
+    var debugDescription: String {
+        switch self {
+        case .context:
+            return "Context Line"
+        case .addition:
+            return "Addition Line (+)"
+        case .deletion:
+            return "Deletion Line (-)"
+        case .bothFilesHaveNoLineFeed:
+            return "Both Files Have No Line Feed"
+        case .oldHasNoLineFeed:
+            return "Old File Has No Line Feed"
+        case .newHasNoLineFeed:
+            return "New File Has No Line Feed"
+        case .fileHeader:
+            return "File Header"
+        case .hunkHeader:
+            return "Hunk Header"
+        case .binary:
+            return "Binary Content"
+        }
+    }
+}

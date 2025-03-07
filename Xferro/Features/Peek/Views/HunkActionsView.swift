@@ -9,7 +9,8 @@ import SwiftUI
 
 struct HunkActionsView: View {
     let hunk: DiffHunk
-    
+    let allHunks: () -> [DiffHunk]
+
     var body: some View {
         switch hunk.type {
         case .staged:
@@ -29,7 +30,7 @@ struct HunkActionsView: View {
                         isProminent: false,
                         isSmall: true,
                         onTap: {
-                            hunk.stageLines(false)
+                            hunk.stageLines(false, allHunks: allHunks())
                         }
                     )
                 }
@@ -70,7 +71,7 @@ struct HunkActionsView: View {
                         isProminent: false,
                         isSmall: true,
                         onTap: {
-                            hunk.stageLines(true)
+                            hunk.stageLines(true, allHunks: allHunks())
                         }
                     )
                 }

@@ -1,8 +1,5 @@
 //
-//  DiffHunk.swift
-//  Xferro
-//
-//  Created by Taha Bebek on 2/25/25.
+//  Created by Taha Bebeks on 2/25/25.
 //
 
 import Foundation
@@ -31,7 +28,7 @@ import Observation
     var newStart: Int32 { hunk.new_start }
     var newLines: Int32 { hunk.new_lines }
     var lineCount: Int { Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex)) }
-    var insertionText: String = ""
+    var hunkHeader: String = ""
 
     var selectedLinesCount: Int {
         parts.map { $0.selectedLinesCount }.reduce(0, +)
@@ -52,7 +49,7 @@ import Observation
         self.type = type
         self.parts = []
         self.repository = repostiory
-        self.insertionText = getHunkHeader(hunk: hunk)
+        self.hunkHeader = getHunkHeader(hunk: hunk)
         let lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
         var currentLines: [DiffLine] = []
         var currentPartType = DiffHunkPart.DiffHunkPartType.context
@@ -229,21 +226,8 @@ import Observation
         }
     }
 
-    func stageLines(_ flag: Bool) {
+    func stageLines(_ flag: Bool, allHunks: [DiffHunk]) {
         Task {
-            let lines: [Repository.StageDiffLine] = selectedLines().compactMap { line in
-                switch line.type {
-                case .addition:
-                    Repository.StageDiffLine(lineNumber: Int(line.newLine), type: .addition)
-                case .deletion:
-                    Repository.StageDiffLine(lineNumber: Int(line.oldLine), type: .deletion)
-                case .context:
-                    Repository.StageDiffLine(lineNumber: Int(line.newLine), type: .context)
-                default: nil
-                }
-
-            }
-            guard lines.isNotEmpty else { return }
             do {
                 switch delta.status {
                 case .added, .modified, .copied, .renamed, .typeChange, .untracked:
@@ -251,18 +235,34 @@ import Observation
                         fatalError(.invalid)
                     }
                     if flag {
-                        try await repository.stageSelectedLines(filePath: newFilePath, selectedLines: lines)
+                        try await repository.stageSelectedLines(
+                            filePath: newFilePath,
+                            hunk: self,
+                            allHunks: allHunks
+                        )
                     } else {
-                        try await repository.unstageSelectedLines(filePath: newFilePath, selectedLines: lines)
+                        try await repository.unstageSelectedLines(
+                            filePath: newFilePath,
+                            hunk: self,
+                            allHunks: allHunks
+                        )
                     }
                 case .deleted:
                     guard let oldFilePath = delta.oldFile?.path else {
                         fatalError(.invalid)
                     }
                     if flag {
-                        try await repository.stageSelectedLines(filePath: oldFilePath, selectedLines: lines)
+                        try await repository.stageSelectedLines(
+                            filePath: oldFilePath,
+                            hunk: self,
+                            allHunks: allHunks
+                        )
                     } else {
-                        try await repository.unstageSelectedLines(filePath: oldFilePath, selectedLines: lines)
+                        try await repository.unstageSelectedLines(
+                            filePath: oldFilePath,
+                            hunk: self,
+                            allHunks: allHunks
+                        )
                     }
                 case .ignored, .unreadable, .unmodified:
                     fatalError(.invalid)
@@ -292,6 +292,7 @@ import Observation
 
     func enumerateLines(_ callback: (DiffLine) -> Void)
     {
+        print("enumerate DiffHunk.enumerateLines")
         let lineCount = git_patch_num_lines_in_hunk(patch.patch, hunkIndex)
 
         for lineIndex in 0..<lineCount {

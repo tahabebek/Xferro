@@ -31,7 +31,7 @@ struct PeekView: View, Equatable {
                         Text("Binary")
                     case .diff(let diff):
                         ForEach(diff.hunks) { hunk in
-                            HunkView(hunk: hunk)
+                            HunkView(hunk: hunk, allHunks: peekInfo.allHunks)
                                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
                                 .listRowSeparator(.hidden)
                                 .listRowBackground(Color.clear)
