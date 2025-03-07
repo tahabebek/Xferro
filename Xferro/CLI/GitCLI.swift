@@ -75,14 +75,13 @@ enum GitCLI {
         _ args: [String],
         reverse: Bool = false,
         output: String? = nil
-    ) -> String {
+    ) -> Result<String, DiffError> {
         var fullArgs = ["diff", "-u", "--no-color", "--no-ext-diff"]
         if reverse {
             fullArgs.append("-R")
         }
 
         let process = gitProcess(repository, fullArgs + args)
-        // To capture output if needed
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
@@ -99,19 +98,20 @@ enum GitCLI {
              Exit status 1: Differences found
              Exit status >1: Actual error occurred
              */
-            if process.terminationStatus > 1 {
-                print("Diff command failed with status \(process.terminationStatus)")
+            switch process.terminationStatus {
+            case 0:
+                return .failure(.noDifferencesFound)
+            case 1:
+                // This means file exists on disk, but not in 'HEAD'
+                return .success(output)
+            default:
+                print("Git command failed with status \(process.terminationStatus)")
                 print("Command output: \(output)")
-                let error = NSError(domain: "DiffError",
-                                    code: Int(process.terminationStatus),
-                                    userInfo: [NSLocalizedDescriptionKey: "Diff failed: \(output)"])
-                print(error.localizedDescription)
-                fatalError(error.localizedDescription)
+                return .failure(.actualError(code: Int(process.terminationStatus), localizedDescription: "Git diff failed \(output)"))
             }
-            return output
         } catch {
             print("Failed to run diff: \(error)")
-            fatalError(.unhandledError)
+            return .failure(.actualError(code: Int(process.terminationStatus), localizedDescription: "Git diff failed \(error.localizedDescription)"))
         }
     }
 
@@ -129,7 +129,6 @@ enum GitCLI {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             let output = String(data: data, encoding: .utf8) ?? ""
 
-            print(process.terminationStatus)
             switch process.terminationStatus {
             case 0:
                 return .success(output)
@@ -139,16 +138,21 @@ enum GitCLI {
             default:
                 print("Git command failed with status \(process.terminationStatus)")
                 print("Command output: \(output)")
-                return .failure(.other(code: Int(process.terminationStatus), localizedDescription: "Git failed \(output)"))
+                return .failure(.actualError(code: Int(process.terminationStatus), localizedDescription: "Git show head failed \(output)"))
             }
         } catch {
             print("Failed to run git: \(error)")
-            fatalError(.unhandledError)
+            return .failure(.actualError(code: Int(process.terminationStatus), localizedDescription: "Git show head failed \(error.localizedDescription)"))
         }
     }
 
     enum ShowHeadError: Error {
         case fileNotInHead
-        case other(code: Int, localizedDescription: String)
+        case actualError(code: Int, localizedDescription: String)
+    }
+
+    enum DiffError: Error {
+        case noDifferencesFound
+        case actualError(code: Int, localizedDescription: String)
     }
 }

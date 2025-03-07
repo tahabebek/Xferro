@@ -53,7 +53,7 @@ enum SelectedLinesDiffMaker {
                 } else {
                     fatalError(.invalid)
                 }
-            case .other:
+            case .actualError:
                 throw error
             }
         }
@@ -241,14 +241,36 @@ enum SelectedLinesDiffMaker {
             }
             try result.joined(separator: "\n").write(toFile: tempResultFilePath, atomically: true, encoding: .utf8)
             try headFileLines.joined(separator: "\n").write(toFile: tempHeadFilePath, atomically: true, encoding: .utf8)
-            return GitCLI.getDiff(repository, [tempHeadFilePath, tempResultFilePath], reverse: reverse)
+            let diffResult = GitCLI.getDiff(repository, [tempHeadFilePath, tempResultFilePath], reverse: reverse)
+            switch diffResult {
+            case .success(let diff):
+                return diff
+            case .failure(let error):
+                switch error {
+                case .noDifferencesFound:
+                    return ""
+                case .actualError:
+                    throw error
+                }
+            }
         } else {
             let tempResultFilePath = DataManager.appDirPath + "/" + UUID().uuidString
             defer {
                 try! FileManager.removeItem(tempResultFilePath)
             }
             try result.joined(separator: "\n").write(toFile: tempResultFilePath, atomically: true, encoding: .utf8)
-            return GitCLI.getDiff(repository, [tempResultFilePath], reverse: reverse)
+            let diffResult = GitCLI.getDiff(repository, [tempResultFilePath], reverse: reverse)
+            switch diffResult {
+            case .success(let diff):
+                return diff
+            case .failure(let error):
+                switch error {
+                case .noDifferencesFound:
+                    return ""
+                case .actualError:
+                    throw error
+                }
+            }
         }
     }
 }
