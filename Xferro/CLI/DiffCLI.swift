@@ -8,17 +8,21 @@
 import Foundation
 
 enum DiffCLI {
-    static func diffProcess(_ repository: Repository, _ args: [String]) -> Process {
+    static func diffProcess(_ repository: Repository, _ args: [String], reverse: Bool = false) -> Process {
         let process = Process()
         process.currentDirectoryURL = URL(fileURLWithPath: repository.workDir.path)
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
 
+        var fullArgs = ["diff", "-u"]
+        if reverse {
+            fullArgs.append("-R")
+        }
         process.arguments = ["diff", "-u"] + args
         return process
     }
 
     @discardableResult
-    static func executeDiff(_ repository: Repository, _ args: [String]) -> String {
+    static func executeDiff(_ repository: Repository, _ args: [String], reverse: Bool = false) -> String {
         let process = diffProcess(repository, args)
         // To capture output if needed
         let pipe = Pipe()

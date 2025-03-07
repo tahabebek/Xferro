@@ -14,8 +14,7 @@ enum SelectedLinesDiffMaker {
         hunk: DiffHunk,
         allHunks: [DiffHunk]
     ) async throws -> String {
-        let headFileContent = GitCLI.executeGit(repository, ["show", "HEAD:\(filePath)"])
-        let headFileLines = headFileContent.lines
+        let headFileLines = GitCLI.executeGit(repository, ["show", "HEAD:\(filePath)"]).lines
         let selectedLines = hunk.parts.flatMap(\.lines).filter(\.isSelected)
         let allLinesInHunk = allHunks.flatMap(\.parts).flatMap((\.lines)).filter(\.isAdditionOrDeletion)
 
@@ -145,36 +144,63 @@ enum SelectedLinesDiffMaker {
                     currentLineIndex += 1
                 }
             }
-            return try await getDiff(repository: repository, result: result, headFileContent: headFileContent)
+            return try await getDiff(repository: repository, result: result, headFileLines: headFileLines)
         }
         else {
-            // this means that the file deleted
+            // This means that the file is deleted.
             let selectedLines = hunk.parts.flatMap(\.lines).filter(\.isSelected)
             if selectedLines.isEmpty {
                 fatalError(.invalid)
             }
             var result = [String]()
 
-            for selectedLine in selectedLines {
-                if case .deletion = selectedLine.type {
-                    result.append(selectedLine.text)
-                } else {
-                    fatalError(.invalid)
+            for headLineIndex in 0..<headFileLines.count  {
+                let headLine = headFileLines[headLineIndex]
+                var selected = false
+                for selectedLine in selectedLines {
+                    if case .deletion = selectedLine.type {
+                        let deletionLineNumber = Int(selectedLine.oldLine)
+                        if deletionLineNumber == headLineIndex + 1 {
+                            // we found the deleted change, and it is part of selected lines
+                            // this line should not be added to the result
+                            selected = true
+                            break
+                        }
+                    } else {
+                        fatalError(.invalid)
+                    }
+                }
+                if !selected {
+                    result.append(headLine)
                 }
             }
-            return try await getDiff(repository: repository, result: result, headFileContent: headFileContent)
+
+            return try await getDiff(
+                repository: repository,
+                result: result,
+                headFileLines: headFileLines
+            )
         }
     }
 
-    private static func getDiff(repository: Repository, result: [String], headFileContent: String) async throws -> String {
+    private static func getDiff(
+        repository: Repository,
+        result: [String],
+        headFileLines: [String],
+        reverse: Bool = false
+    ) async throws -> String {
         let tempResultFilePath = DataManager.appDirPath + "/" + UUID().uuidString
         let tempHeadFilePath = DataManager.appDirPath + "/" + UUID().uuidString
+        print("cat \(tempResultFilePath)")
+        print("cat \(tempHeadFilePath)")
+        print("git diff -u \(tempHeadFilePath) \(tempResultFilePath)")
+        print("git diff -u -R \(tempHeadFilePath) \(tempResultFilePath)")
         defer {
             try! FileManager.removeItem(tempResultFilePath)
             try! FileManager.removeItem(tempHeadFilePath)
         }
         try result.joined(separator: "\n").write(toFile: tempResultFilePath, atomically: true, encoding: .utf8)
-        try headFileContent.write(toFile: tempHeadFilePath, atomically: true, encoding: .utf8)
-        return DiffCLI.executeDiff(repository, [tempHeadFilePath, tempResultFilePath])
+        try headFileLines.joined(separator: "\n").write(toFile: tempHeadFilePath, atomically: true, encoding: .utf8)
+        return DiffCLI.executeDiff(repository, [tempHeadFilePath, tempResultFilePath], reverse: reverse)
     }
 }
