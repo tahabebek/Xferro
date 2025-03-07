@@ -34,54 +34,15 @@ final class PatchMaker {
         }
     }
     
-    enum WhitespaceMode: String, CaseIterable
-    {
-        case showAll
-        case ignoreEOL
-        case ignoreAll
-
-        var displayName: String
-        {
-            switch self {
-            case .showAll: return "Show whitespace changes"
-            case .ignoreEOL: return "Ignore end of line whitespace"
-            case .ignoreAll: return "Ignore all whitespace"
-            }
-        }
-    }
-
     let repository: Repository
     let path: String
     let fromSource: SourceType
     let toSource: SourceType
 
     let contextLines: Int = 3
-    var whitespace: WhitespaceMode = .showAll
-    var usePatience = false
-    var minimal = false
 
     private var options: DiffOptions {
-        var flags: DiffOption = []
-
-        switch whitespace {
-        case .showAll:
-            break
-        case .ignoreEOL:
-            flags = .ignoreWhitespaceEOL
-        case .ignoreAll:
-            flags = .ignoreWhitespace
-        }
-        if usePatience {
-            flags.insert(.patience)
-        }
-        if minimal {
-            flags.insert(.minimal)
-        }
-        flags.insert(.patience)
-        flags.insert(.indentHeuristic)
-
-        var result = DiffOptions(flags: flags)
-
+        var result = DiffOptions(flags: [])
         result.contextLines = UInt32(contextLines)
         return result
     }
