@@ -161,6 +161,7 @@ extension Repository {
 
         print(selectedLinesDiff)
         // Use git apply --cached --reverse to unapply the selected lines from the index (unstaging them)
+        // The trailing dash (-) in the command git apply --cached - is a special character that tells Git to read the patch content from standard input (stdin) rather than from a file.
     }
     
     func stageHunk(filePath: String, hunkIndex: Int) async throws

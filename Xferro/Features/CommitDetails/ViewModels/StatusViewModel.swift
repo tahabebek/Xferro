@@ -8,8 +8,7 @@
 import Observation
 
 @Observable final class StatusViewModel {
-    var stagedDeltaInfos: [DeltaInfo] = []
-    var unstagedDeltaInfos: [DeltaInfo] = []
+    var trackedDeltaInfos: [DeltaInfo] = []
     var untrackedDeltaInfos: [DeltaInfo] = []
     var currentDeltaInfo: DeltaInfo? {
         willSet {
@@ -20,6 +19,7 @@ import Observation
     }
     var commitSummary: String = ""
     var scrollToFile: String? = nil
+    var canCommit: Bool = false
 
     let selectableStatus: SelectableStatus
     let repository: Repository
@@ -30,8 +30,7 @@ import Observation
         self.repository = repository
         self.head = head
 
-        var stagedDeltaInfos: [DeltaInfo] = []
-        var unstagedDeltaInfos: [DeltaInfo] = []
+        var trackedDeltaInfos: [DeltaInfo] = []
         var untrackedDeltaInfos: [DeltaInfo] = []
         let handleDelta: (Repository, Diff.Delta, StatusType) -> Void = { repository, delta, type in
             switch delta.status {
@@ -40,11 +39,11 @@ import Observation
             case .added, .deleted, .modified, .renamed, .copied, .typeChange:
                 switch type {
                 case .staged:
-                    stagedDeltaInfos.append(
+                    trackedDeltaInfos.append(
                         DeltaInfo(delta: delta, type: type, repository: repository)
                     )
                 case .unstaged:
-                    unstagedDeltaInfos.append(
+                    trackedDeltaInfos.append(
                         DeltaInfo(delta: delta, type: type, repository: repository)
                     )
                 case .untracked:
@@ -77,16 +76,15 @@ import Observation
             }
         }
 
-        self.stagedDeltaInfos = stagedDeltaInfos
-        self.unstagedDeltaInfos = unstagedDeltaInfos
+        self.trackedDeltaInfos = trackedDeltaInfos
         self.untrackedDeltaInfos = untrackedDeltaInfos
     }
 
     func actionTapped(_ action: StatusActionButtonsView.BoxAction) async {
         switch action {
-        case .splitAndCommit:
-            await commitTapped()
-            fatalError(.unimplemented)
+//        case .splitAndCommit:
+//            await commitTapped()
+//            fatalError(.unimplemented)
         case .amend:
             await amendTapped()
         case .stageAll:
@@ -136,9 +134,9 @@ import Observation
 
     func stageOrUnstageTapped(stage: Bool) async {
         if stage {
-            await stageOrUnstageTapped(stage: stage, deltaInfos: unstagedDeltaInfos)
+            await stageOrUnstageTapped(stage: stage, deltaInfos: untrackedDeltaInfos)
         } else {
-            await stageOrUnstageTapped(stage: stage, deltaInfos: stagedDeltaInfos)
+            await stageOrUnstageTapped(stage: stage, deltaInfos: trackedDeltaInfos)
         }
     }
     
@@ -268,9 +266,7 @@ import Observation
     func setInitialSelection() {
         if currentDeltaInfo == nil {
             var item: DeltaInfo?
-            if let firstItem = stagedDeltaInfos.first {
-                item = firstItem
-            } else if let firstItem = unstagedDeltaInfos.first {
+            if let firstItem = trackedDeltaInfos.first {
                 item = firstItem
             } else if let firstItem = untrackedDeltaInfos.first {
                 item = firstItem
@@ -282,8 +278,6 @@ import Observation
     }
 
     var hasChanges: Bool {
-        !stagedDeltaInfos.isEmpty ||
-        !unstagedDeltaInfos.isEmpty ||
-        !untrackedDeltaInfos.isEmpty
+        !trackedDeltaInfos.isEmpty || !untrackedDeltaInfos.isEmpty
     }
 }

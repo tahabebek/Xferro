@@ -25,7 +25,7 @@ struct StatusView: View {
                 StatusActionView(
                     commitSummary: $viewModel.commitSummary,
                     commitSummaryIsEmptyOrWhitespace: commitSummaryIsEmptyOrWhitespace,
-                    stagedDeltaInfosIsEmpty: viewModel.stagedDeltaInfos.isEmpty,
+                    canCommit: viewModel.canCommit,
                     hasChanges: viewModel.hasChanges,
                     onCommitTapped: {
                         Task {
@@ -41,37 +41,36 @@ struct StatusView: View {
                 .cornerRadius(8)
                 StatusViewChangeView(
                     currentDeltaInfo: $viewModel.currentDeltaInfo,
-                    stagedDeltaInfos: viewModel.stagedDeltaInfos,
-                    unstagedDeltaInfos: viewModel.unstagedDeltaInfos,
-                    untrackedDeltaInfos: viewModel.untrackedDeltaInfos,
+                    trackedDeltaInfos: $viewModel.trackedDeltaInfos,
+                    untrackedDeltaInfos: $viewModel.untrackedDeltaInfos,
                     hasChanges: viewModel.hasChanges,
-                    onTapExclude: { deltaInfos in
+                    onTapExclude: { deltaInfo in
                         Task {
-                            await viewModel.stageOrUnstageTapped(stage: false, deltaInfos: deltaInfos)
+                            await viewModel.stageOrUnstageTapped(stage: false, deltaInfos: [deltaInfo])
                         }
                     }, onTapExcludeAll: {
                         Task {
                             await viewModel.stageOrUnstageTapped(stage: false)
                         }
-                    }, onTapInclude: { deltaInfos in
+                    }, onTapInclude: { deltaInfo in
                         Task {
-                            await viewModel.stageOrUnstageTapped(stage: true, deltaInfos: deltaInfos)
+                            await viewModel.stageOrUnstageTapped(stage: true, deltaInfos: [deltaInfo])
                         }
                     }, onTapIncludeAll: {
                         Task {
                             await viewModel.stageOrUnstageTapped(stage: true)
                         }
-                    }, onTapTrack: { deltaInfos in
+                    }, onTapTrack: { deltaInfo in
                         Task {
-                            await viewModel.trackTapped(stage: true, deltaInfos: deltaInfos)
+                            await viewModel.trackTapped(stage: true, deltaInfos: [deltaInfo])
                         }
                     }, onTapTrackAll: {
                         Task {
                             await viewModel.trackAllTapped()
                         }
-                    }, onTapIgnore: { deltaInfos in
+                    }, onTapIgnore: { deltaInfo in
                         Task {
-                            await viewModel.ignoreTapped(deltaInfo: deltaInfos)
+                            await viewModel.ignoreTapped(deltaInfo: deltaInfo)
                         }
                     }, onTapDiscard: {
                         discardDeltaInfo = $0
@@ -79,7 +78,12 @@ struct StatusView: View {
                 )
             }
             .frame(width: Dimensions.commitDetailsViewMaxWidth)
-            PeekViewContainer(viewModel: viewModel, scrollToFile: $viewModel.scrollToFile)
+            PeekViewContainer(
+                scrollToFile: $viewModel.scrollToFile,
+                trackedDeltaInfos: $viewModel.trackedDeltaInfos,
+                untrackedDeltaInfos: $viewModel.untrackedDeltaInfos,
+                head: viewModel.head
+            )
         }
         .task {
             viewModel.setInitialSelection()

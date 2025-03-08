@@ -28,7 +28,7 @@ import Foundation
         case context
         case additionOrDeletion
     }
-    private var type: DiffHunkPartType
+    var type: DiffHunkPartType
     let indexInHunk: Int
     let oldFilePath: String?
     let newFilePath: String?
@@ -50,15 +50,23 @@ import Foundation
         }
     }
     var lines: [DiffLine]
-    var isSelected = false
-    var selectedLinesCount = 0
+    var isSelected: Bool {
+        if case .context = type {
+            return false
+        } else {
+            return lines.allSatisfy(\.isSelected)
+        }
+    }
+    var selectedLinesCount: Int {
+        lines.filter(\.isSelected).count
+    }
 
     func toggleLine(line: DiffLine) {
         if case .context = type {
             fatalError(.invalid)
         }
         line.isSelected.toggle()
-        refreshSelectedStatus()
+//        refreshSelectedStatus()
     }
 
     private func selectLine(line: DiffLine, flag: Bool) {
@@ -72,14 +80,12 @@ import Foundation
         for line in lines {
             selectLine(line: line, flag: !isSelected)
         }
-        refreshSelectedStatus()
+//        refreshSelectedStatus()
     }
 
-    func refreshSelectedStatus() {
-        if case .context = type {
-            fatalError(.invalid)
-        }
-        selectedLinesCount = lines.filter(\.isSelected).count
-        isSelected = lines.allSatisfy(\.isSelected)
-    }
+//    func refreshSelectedStatus() {
+//        if case .context = type {
+//            fatalError(.invalid)
+//        }
+//    }
 }

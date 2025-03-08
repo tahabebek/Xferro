@@ -18,16 +18,18 @@ import Observation
     }
 
     let type: DiffLineType
+    let isTracked: Bool
     let gitDiffLine: git_diff_line
-    var isSelected: Bool = false
+    var isSelected: Bool
     var indexInPart: Int = 0
 
-    init(_ gitDiffLine: git_diff_line) {
+    init(_ gitDiffLine: git_diff_line, isTracked: Bool) {
         self.gitDiffLine = gitDiffLine
         self.type = DiffLineType(origin: gitDiffLine.origin)
         self.oldLine = gitDiffLine.old_lineno
         self.newLine = gitDiffLine.new_lineno
         self.isAdditionOrDeletion = self.type == .addition || self.type == .deletion
+        self.isTracked = isTracked
         self.text = if let text = NSString(
             bytes: gitDiffLine.content,
             length: gitDiffLine.content_len,
@@ -36,6 +38,13 @@ import Observation
             text.trimmingCharacters(in: .newlines)
         } else {
             ""
+        }
+        if case .context = type {
+            self.isSelected = false
+        } else if !isTracked {
+            self.isSelected = false
+        } else {
+            self.isSelected = true
         }
     }
 

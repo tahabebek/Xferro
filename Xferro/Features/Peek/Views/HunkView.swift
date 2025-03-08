@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct HunkView: View {
-    let hunk: DiffHunk
+    @Binding var hunk: DiffHunk
     let allHunks: () -> [DiffHunk]
 
     var body: some View {
@@ -25,7 +25,7 @@ struct HunkView: View {
             .padding(.vertical, 8)
             .padding(.horizontal)
             Divider()
-            ForEach(hunk.parts) { part in
+            ForEach($hunk.parts) { part in
                 PartView(part: part)
             }
         }

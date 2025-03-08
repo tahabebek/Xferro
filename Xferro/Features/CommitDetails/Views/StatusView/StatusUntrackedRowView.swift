@@ -1,15 +1,19 @@
 //
-//  StatusRowView.swift
+//  StatusUntrackedRowView.swift
 //  Xferro
 //
-//  Created by Taha Bebek on 3/3/25.
+//  Created by Taha Bebek on 3/8/25.
 //
 
 import SwiftUI
 
-struct StatusRowView: View {
+struct StatusUntrackedRowView: View {
     @Binding var currentDeltaInfo: DeltaInfo?
-    let deltaInfo: DeltaInfo
+    @Binding var deltaInfo: DeltaInfo
+    let onTapTrack: (DeltaInfo) -> Void
+    let onTapIgnore: (DeltaInfo) -> Void
+    let onTapDiscard: (DeltaInfo) -> Void
+
 
     var isCurrent: Bool {
         if let currentDeltaInfoId = currentDeltaInfo?.id {
@@ -23,8 +27,7 @@ struct StatusRowView: View {
         HStack {
             Image(systemName: deltaInfo.statusImageName).foregroundColor(deltaInfo.statusColor)
             Text(deltaInfo.statusFileName)
-                .font(.body)
-                .foregroundStyle(isCurrent ? Color.accentColor : Color.fabulaFore1)
+                .statusRowText(isCurrent: isCurrent)
             Spacer()
         }
         .contentShape(Rectangle())

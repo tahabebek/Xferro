@@ -287,7 +287,7 @@ import Observation
             let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
             fatalError(err.localizedDescription)
         }
-        return DiffLine(linePointer.pointee)
+        return DiffLine(linePointer.pointee, isTracked: type != .untracked)
     }
 
     func enumerateLines(_ callback: (DiffLine) -> Void)
@@ -301,7 +301,7 @@ import Observation
             })
             else { continue }
 
-            callback(DiffLine(line.pointee))
+            callback(DiffLine(line.pointee, isTracked: type != .untracked))
         }
     }
 }

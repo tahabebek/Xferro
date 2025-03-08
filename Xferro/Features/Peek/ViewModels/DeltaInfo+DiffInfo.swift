@@ -1,5 +1,5 @@
 //
-//  PeekViewModel.swift
+//  DeltaInfo+DiffInfo.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/21/25.
@@ -8,26 +8,26 @@
 import Foundation
 import Observation
 
-extension StatusViewModel {
-    func peekInfo(for deltaInfo: DeltaInfo, repository: Repository, head: Head) async -> PeekViewModel {
-        let isStaged = deltaInfo.type == .staged
+extension DeltaInfo {
+    func setDiffInfo(head: Head) async {
+        let isStaged = type == .staged
         let patchResult: PatchMaker.PatchResult = if isStaged {
             repository.stagedDiff(
                 head: head,
-                deltaInfo: deltaInfo
+                deltaInfo: self
             )
         } else {
             repository.unstagedDiff(
                 head: head,
-                deltaInfo: deltaInfo
+                deltaInfo: self
             )
         }
 
         switch patchResult {
         case .noDifference:
-            return PeekViewModel(type: .noDifference(statusFileName: deltaInfo.statusFileName))
+            diffInfo = NoDiffInfo(statusFileName: statusFileName)
         case .binary:
-            return PeekViewModel(type: .binary(statusFileName: deltaInfo.statusFileName))
+            diffInfo = BinaryDiffInfo(statusFileName: statusFileName)
         case .diff(let patchMaker):
             let patch = patchMaker.makePatch()
             var newHunks = [DiffHunk]()
@@ -35,19 +35,18 @@ extension StatusViewModel {
             for index in 0..<hunkCount {
                 if let hunk = patch.hunk(
                     at: index,
-                    delta: deltaInfo.delta,
-                    type: deltaInfo.type,
-                    repository: deltaInfo.repository
+                    delta: delta,
+                    type: type,
+                    repository: repository
                 ) {
                     newHunks.append(hunk)
                 }
             }
-            return PeekViewModel(type: .diff(DiffViewModel(
+            diffInfo = DiffInfo(
                 hunks: newHunks,
                 addedLinesCount: patch.addedLinesCount,
                 deletedLinesCount: patch.deletedLinesCount,
-                statusFileName: deltaInfo.statusFileName)
-            ))
+                statusFileName: statusFileName)
         }
     }
 }

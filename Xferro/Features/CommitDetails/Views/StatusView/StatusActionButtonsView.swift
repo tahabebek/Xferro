@@ -10,7 +10,7 @@ import SwiftUI
 struct StatusActionButtonsView: View {
     enum BoxAction: String, CaseIterable, Identifiable, Equatable {
         var id: String { rawValue }
-        case splitAndCommit = "Split and Commit"
+//        case splitAndCommit = "Split and Commit"
         case amend = "Amend"
         case stageAll = "Include All"
         case stageAllAndCommit = "Include All and Commit"
@@ -29,7 +29,7 @@ struct StatusActionButtonsView: View {
     @State private var boxActions: [BoxAction] = BoxAction.allCases
 
     let hasChanges: Bool
-    let stagedDeltaInfosIsEmpty: Bool
+    let canCommit: Bool
     let commitSummaryIsEmptyOrWhitespace: Bool
     let onTap: (BoxAction) -> Void
 
@@ -39,10 +39,10 @@ struct StatusActionButtonsView: View {
             var dangerous = false
 
             switch boxAction {
-            case .splitAndCommit:
-                disabled = !hasChanges
+//            case .splitAndCommit:
+//                disabled = !hasChanges
             case .amend:
-                disabled = stagedDeltaInfosIsEmpty || !hasChanges
+                disabled = canCommit || !hasChanges
             case .stageAll:
                 disabled = !hasChanges
             case .stageAllAndCommit:

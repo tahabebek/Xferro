@@ -12,15 +12,15 @@ struct StatusActionView: View {
     @FocusState private var isTextFieldFocused: Bool
     @State private var horizontalAlignment: HorizontalAlignment = .leading
     @State private var verticalAlignment: VerticalAlignment = .top
-    
+
     let commitSummaryIsEmptyOrWhitespace: Bool
-    let stagedDeltaInfosIsEmpty: Bool
+    let canCommit: Bool
     let hasChanges: Bool
     let onCommitTapped: () -> Void
     let onBoxActionTapped: (StatusActionButtonsView.BoxAction) async -> Void
-    
+
     var body: some View {
-        
+
         VStack {
             HStack {
                 Form {
@@ -35,7 +35,7 @@ struct StatusActionView: View {
                 }
                 XFerroButton(
                     title: "Commit",
-                    disabled: commitSummaryIsEmptyOrWhitespace || stagedDeltaInfosIsEmpty || !hasChanges,
+                    disabled: commitSummaryIsEmptyOrWhitespace || canCommit || !hasChanges,
                     dangerous: false,
                     isProminent: true,
                     onTap: {
@@ -48,7 +48,7 @@ struct StatusActionView: View {
             AnyLayout(FlowLayout(alignment:.init(horizontal: horizontalAlignment, vertical: verticalAlignment))) {
                 StatusActionButtonsView(
                     hasChanges: hasChanges,
-                    stagedDeltaInfosIsEmpty: stagedDeltaInfosIsEmpty,
+                    canCommit: canCommit,
                     commitSummaryIsEmptyOrWhitespace: commitSummaryIsEmptyOrWhitespace,
                     onTap: { action in
                         isTextFieldFocused = false

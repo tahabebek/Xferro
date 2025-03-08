@@ -111,16 +111,20 @@ extension RepositoryViewModel {
                                 if FileManager.fileExists(path) {
                                     try? FileManager.createDirectory(destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
                                     if !sourceURL.isDirectory {
-                                        let contents = try! String(contentsOfFile: path, encoding: .utf8)
-                                        let hash = contents.hash
-                                        if fileHashes[path] == nil {
-                                            fileHashes[path] = hash
-                                        } else if fileHashes[path] != hash {
-                                            fileHashes[path] = hash
-                                        } else {
+                                        do {
+                                            let contents = try String(contentsOfFile: path, encoding: .utf8)
+                                            let hash = contents.hash
+                                            if fileHashes[path] == nil {
+                                                fileHashes[path] = hash
+                                            } else if fileHashes[path] != hash {
+                                                fileHashes[path] = hash
+                                            } else {
+                                                continue
+                                            }
+                                            FileManager.createFile(destinationPath, contents: contents.data(using: .utf8))
+                                        } catch {
                                             continue
                                         }
-                                        FileManager.createFile(destinationPath, contents: contents.data(using: .utf8))
                                     }
                                     changes.insert("Wip - \(changeFileName) is modified")
                                     //                                print("file (which is not in the index) added or modified", relativePath)

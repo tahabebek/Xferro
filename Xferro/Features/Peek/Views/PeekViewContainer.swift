@@ -8,25 +8,22 @@
 import SwiftUI
 
 struct PeekViewContainer: View {
-    let viewModel: StatusViewModel
     @Binding var scrollToFile: String?
-    
+    @Binding var trackedDeltaInfos: [DeltaInfo]
+    @Binding var untrackedDeltaInfos: [DeltaInfo]
+    let head: Head
+
     var body: some View {
         ScrollViewReader { proxy in
             List {
                 Section {
-                    ForEach(viewModel.stagedDeltaInfos) { deltaInfo in
-                        PeekView(viewModel: viewModel, deltaInfo: deltaInfo)
+                    ForEach($trackedDeltaInfos) { deltaInfo in
+                        PeekView(deltaInfo: deltaInfo, head: head)
                     }
                 }
                 Section {
-                    ForEach(viewModel.unstagedDeltaInfos) { deltaInfo in
-                        PeekView(viewModel: viewModel, deltaInfo: deltaInfo)
-                    }
-                }
-                Section {
-                    ForEach(viewModel.untrackedDeltaInfos) { deltaInfo in
-                        PeekView(viewModel: viewModel, deltaInfo: deltaInfo)
+                    ForEach($untrackedDeltaInfos) { deltaInfo in
+                        PeekView(deltaInfo: deltaInfo, head: head)
                     }
                 }
             }

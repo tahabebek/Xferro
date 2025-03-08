@@ -9,9 +9,9 @@ import SwiftUI
 
 struct StatusUntrackedView: View {
     @Binding var currentDeltaInfo: DeltaInfo?
-    let untrackedDeltaInfos: [DeltaInfo]
+    @Binding var untrackedDeltaInfos: [DeltaInfo]
 
-    let onTapTrack: ([DeltaInfo]) -> Void
+    let onTapTrack: (DeltaInfo) -> Void
     let onTapTrackAll: () -> Void
     let onTapIgnore: (DeltaInfo) -> Void
     let onTapDiscard: (DeltaInfo) -> Void
@@ -19,23 +19,21 @@ struct StatusUntrackedView: View {
     var body: some View {
         Section {
             Group {
-                ForEach(untrackedDeltaInfos) { deltaInfo in
+                ForEach($untrackedDeltaInfos) { deltaInfo in
                     HStack {
-                        StatusRowView(currentDeltaInfo: $currentDeltaInfo, deltaInfo: deltaInfo)
-                        XFerroButton(
-                            title: "Track",
-                            isProminent: false,
-                            isSmall: true,
-                            onTap: {
-                                onTapTrack([deltaInfo])
-                            }
+                        StatusUntrackedRowView(
+                            currentDeltaInfo: $currentDeltaInfo,
+                            deltaInfo: deltaInfo,
+                            onTapTrack: onTapTrack,
+                            onTapIgnore: onTapIgnore,
+                            onTapDiscard: onTapDiscard
                         )
                         XFerroButton(
                             title: "Ignore",
                             isProminent: false,
                             isSmall: true,
                             onTap: {
-                                onTapIgnore(deltaInfo)
+                                onTapIgnore(deltaInfo.wrappedValue)
                             }
                         )
                         XFerroButton(
@@ -44,7 +42,7 @@ struct StatusUntrackedView: View {
                             isProminent: false,
                             isSmall: true,
                             onTap: {
-                                onTapDiscard(deltaInfo)
+                                onTapDiscard(deltaInfo.wrappedValue)
                             }
                         )
                     }
@@ -52,7 +50,7 @@ struct StatusUntrackedView: View {
             }
         } header: {
             HStack {
-                Text("Untracked Changes")
+                Text("\(untrackedDeltaInfos.count) untracked \(untrackedDeltaInfos.count == 1 ? "file" : "files")")
                 Spacer()
                 XFerroButton(
                     title: "Track All",

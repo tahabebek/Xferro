@@ -9,7 +9,7 @@ import SwiftUI
 import RegexBuilder
 
 struct PartView: View {
-    let part: DiffHunkPart
+    @Binding var part: DiffHunkPart
 
     var body: some View {
         ForEach(part.lines) { line in

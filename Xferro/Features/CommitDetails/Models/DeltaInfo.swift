@@ -16,17 +16,19 @@ enum StatusType: Int, Identifiable, Hashable {
     case unstaged = 1
     case untracked = 2
 }
+
 @Observable final class DeltaInfo: Identifiable, Equatable {
     static func == (lhs: DeltaInfo, rhs: DeltaInfo) -> Bool {
         lhs.id == rhs.id
     }
     var id: String {
-        delta.id + type.id.formatted() + (oldFileURL?.path ?? "") + (newFileURL?.path ?? "") + repository.workDir.path
+        "\(delta.id).\(type.id.formatted()).\(oldFileURL?.path ?? "").\(newFileURL?.path ?? "").\(repository.workDir.path).\(diffInfo?.id ?? "")"
     }
 
     let delta: Diff.Delta
     let type: StatusType
     let repository: Repository
+    var diffInfo: (any DiffInformation)?
 
     init(delta: Diff.Delta, type: StatusType, repository: Repository) {
         self.delta = delta
@@ -49,6 +51,17 @@ enum StatusType: Int, Identifiable, Hashable {
 
     var newFilePath: String? {
         delta.newFilePath
+    }
+
+    var checkState: CheckboxState {
+        get {
+            return diffInfo?.checkState ?? .unchecked
+        } set {
+            guard diffInfo != nil else {
+                fatalError(.invalid)
+            }
+            diffInfo!.checkState = newValue
+        }
     }
 
     var statusFileName: String {
