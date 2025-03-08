@@ -25,8 +25,6 @@ enum GitCLI {
         process.environment = environment
 
         var fullArgs = [
-            "-c", "user.name=Temporary",
-            "-c", "user.email=temporary@example.com",
             "-c", "core.autocrlf=false",
             "-c", "core.editor=true",
             "-c", "filter.lfs.clean=true",
