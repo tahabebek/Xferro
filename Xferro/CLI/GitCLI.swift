@@ -74,7 +74,7 @@ enum GitCLI {
         reverse: Bool = false,
         output: String? = nil
     ) -> Result<String, DiffError> {
-        var fullArgs = ["diff", "-u", "--no-color", "--no-ext-diff"]
+        var fullArgs = ["diff", "--no-index", "-u", "--no-color", "--no-ext-diff"]
         if reverse {
             fullArgs.append("-R")
         }

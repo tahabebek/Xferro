@@ -259,7 +259,7 @@ enum SelectedLinesDiffMaker {
                 try! FileManager.removeItem(tempResultFilePath)
             }
             try result.joined(separator: "\n").write(toFile: tempResultFilePath, atomically: true, encoding: .utf8)
-            let diffResult = GitCLI.getDiff(repository, [tempResultFilePath], reverse: reverse)
+            let diffResult = GitCLI.getDiff(repository, ["/dev/null", tempResultFilePath], reverse: reverse)
             switch diffResult {
             case .success(let diff):
                 return diff
