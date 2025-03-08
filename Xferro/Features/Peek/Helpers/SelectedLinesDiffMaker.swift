@@ -210,20 +210,16 @@ enum SelectedLinesDiffMaker {
                         }
                     }
                 }
-                // If we came all the way here, it means this line was handled by
-                // the coincidence of currentLine and headLine being the same in
-                // different locations. We can move on to the next line.
-                currentLineIndex += 1
+                // If we came all the way here, it means that the file is done
+                break whileLoop
             }
         }
-        if currentLineIndex < currentFileLines.count - 1 {
-            fatalError(.unexpected)
-        }
-
-        if headLineIndex < headFileLines.count - 1 {
-            fatalError(.unexpected)
-        }
-        return try await getDiff(repository: repository, result: result, headFileLines: headFileLines)
+        
+        return try await getDiff(
+            repository: repository,
+            result: result,
+            headFileLines: headFileLines
+        )
     }
 
     private static func getDiff(
@@ -241,7 +237,11 @@ enum SelectedLinesDiffMaker {
             }
             try result.joined(separator: "\n").write(toFile: tempResultFilePath, atomically: true, encoding: .utf8)
             try headFileLines.joined(separator: "\n").write(toFile: tempHeadFilePath, atomically: true, encoding: .utf8)
-            let diffResult = GitCLI.getDiff(repository, [tempHeadFilePath, tempResultFilePath], reverse: reverse)
+            let diffResult = GitCLI.getDiff(
+                repository,
+                [tempHeadFilePath, tempResultFilePath],
+                reverse: reverse
+            )
             switch diffResult {
             case .success(let diff):
                 return diff
@@ -259,7 +259,11 @@ enum SelectedLinesDiffMaker {
                 try! FileManager.removeItem(tempResultFilePath)
             }
             try result.joined(separator: "\n").write(toFile: tempResultFilePath, atomically: true, encoding: .utf8)
-            let diffResult = GitCLI.getDiff(repository, ["/dev/null", tempResultFilePath], reverse: reverse)
+            let diffResult = GitCLI.getDiff(
+                repository,
+                ["/dev/null", tempResultFilePath],
+                reverse: reverse
+            )
             switch diffResult {
             case .success(let diff):
                 return diff

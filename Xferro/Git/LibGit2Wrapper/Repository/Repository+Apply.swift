@@ -130,43 +130,20 @@ extension Repository {
         return (unstagedChange, stagedChange)
     }
 
-
-    /*
-     The --cached flag is important in these commands for different reasons:
-     For git diff:
-
-     With --cached: Shows changes between the index and HEAD (staged changes)
-     Without --cached: Shows changes between the working directory and the index (unstaged changes)
-
-     For git apply:
-
-     With --cached: Applies changes to the index (staging area) without modifying the working directory files
-     Without --cached: Applies changes to files in the working directory
-
-     So when implementing line-level operations:
-
-     In stageSelectedLines:
-
-     We use git diff without --cached to get the unstaged changes
-     We use git apply --cached to apply the selected lines to the index (staging them)
-
-     In unstageSelectedLines:
-
-     We use git diff --cached to get the staged changes
-     We use git apply --cached --reverse to unapply the selected lines from the index (unstaging them)
-
-     The --cached flag is essential for making sure these operations affect the staging area (index) rather than your working files. This allows you to stage/unstage changes without modifying the actual content of your files.
-
-     The trailing dash (-) in the command git apply --cached - is a special character that tells Git to read the patch content from standard input (stdin) rather than from a file.
-     */
-
     func stageSelectedLines(
         filePath: String,
         hunk: DiffHunk,
         allHunks: [DiffHunk]
     ) async throws {
-        let selectedLinesDiff = try await SelectedLinesDiffMaker.makeDiff(repository: self, filePath: filePath, hunk: hunk, allHunks: allHunks)
+        let selectedLinesDiff = try await SelectedLinesDiffMaker.makeDiff(
+            repository: self,
+            filePath: filePath,
+            hunk: hunk,
+            allHunks: allHunks
+        )
         print(selectedLinesDiff)
+        // Use git apply --cached to apply the selected lines to the index (staging them)
+        // The trailing dash (-) in the command git apply --cached - is a special character that tells Git to read the patch content from standard input (stdin) rather than from a file.
     }
 
     func unstageSelectedLines(
@@ -175,18 +152,15 @@ extension Repository {
         allHunks: [DiffHunk]
     ) async throws {
         // Get the staged diff for the file
-        let diffOutput = GitCLI.executeGit(self, ["diff", "--cached", "--no-color", "--no-ext-diff", filePath])
-        
-        if diffOutput.isEmpty {
-            print("No staged changes found in \(filePath)")
-            return
-        }
-        
-        // The rest of the implementation follows the same pattern as stageSelectedLines
-        // but using reverse application and looking at staged changes
-        
-        // We'll implement this fully later as needed
-        throw NSError(domain: "GitError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unstaging is not yet implemented for the new DiffLine type"])
+        let selectedLinesDiff = try await SelectedLinesDiffMaker.makeDiff(
+            repository: self,
+            filePath: filePath,
+            hunk: hunk,
+            allHunks: allHunks
+        )
+
+        print(selectedLinesDiff)
+        // Use git apply --cached --reverse to unapply the selected lines from the index (unstaging them)
     }
     
     func stageHunk(filePath: String, hunkIndex: Int) async throws
