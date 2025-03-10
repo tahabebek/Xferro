@@ -47,6 +47,7 @@ import Foundation
         self.newFilePath = newFilePath
         for i in self.lines.indices {
             self.lines[i].indexInPart = i
+            self.lines[i].numberOfLinesInPart = lines.count
         }
     }
     var lines: [DiffLine]

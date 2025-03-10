@@ -5,7 +5,7 @@
 import Foundation
 import Observation
 
-@Observable final class DiffHunk: Identifiable, Equatable
+@Observable final class DiffHunk: Identifiable, Equatable, Copyable
 {
     static func == (lhs: DiffHunk, rhs: DiffHunk) -> Bool {
         lhs.id == rhs.id
@@ -27,6 +27,7 @@ import Observation
     var oldLines: Int32 { hunk.old_lines }
     var newStart: Int32 { hunk.new_start }
     var newLines: Int32 { hunk.new_lines }
+    #warning("is this causing a performance issue?")
     var lineCount: Int { Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex)) }
     var hunkHeader: String = ""
 
@@ -303,5 +304,16 @@ import Observation
 
             callback(DiffLine(line.pointee, isTracked: type != .untracked))
         }
+    }
+
+    func copy() -> Self {
+        Self(
+            hunk: hunk,
+            hunkIndex: hunkIndex,
+            patch: patch,
+            delta: delta,
+            type: type,
+            repostiory: repository
+        )
     }
 }

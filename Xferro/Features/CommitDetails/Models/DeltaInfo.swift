@@ -164,7 +164,7 @@ enum StatusType: Int, Identifiable, Hashable {
                 allHunks: hunks,
                 reverse: true
             )
-            PatchCLI.executePatch(
+            try PatchCLI.executePatch(
                 diff: diff,
                 inputFilePath: nil,
                 outputFilePath: repository.workDir.path + "/" + newFilePath,
@@ -181,7 +181,7 @@ enum StatusType: Int, Identifiable, Hashable {
                 allHunks: hunks,
                 reverse: true
             )
-            PatchCLI.executePatch(
+            try PatchCLI.executePatch(
                 diff: diff,
                 inputFilePath: repository.workDir.path + "/" + oldFilePath,
                 outputFilePath: repository.workDir.path + "/" + newFilePath,
@@ -198,7 +198,7 @@ enum StatusType: Int, Identifiable, Hashable {
                 allHunks: hunks,
                 reverse: true
             )
-            PatchCLI.executePatch(
+            try PatchCLI.executePatch(
                 diff: diff,
                 inputFilePath: repository.workDir.path + "/" + oldFilePath,
                 outputFilePath: nil,
@@ -212,27 +212,47 @@ enum StatusType: Int, Identifiable, Hashable {
     }
 
     func discardLine(_ line: DiffLine) {
-//        switch delta.status {
-//        case .added, .copied, .renamed, .typeChange:
-//            guard let newFilePath = delta.newFile?.path else {
-//                fatalError(.invalid)
-//            }
-//            switch line.type {
-//            case .addition:
-//
-//            case .deletion:
-//            default:
-//                fatalError("Line cannot be discarded, type: \(line.type)")
-//            }
-//        case .modified:
-//            guard let newFilePath = delta.newFile?.path else {
-//                fatalError(.invalid)
-//            }
-//        case .deleted:
-//        case .ignored, .unreadable, .unmodified, .untracked:
-//            fatalError(.invalid)
-//        case .conflicted:
-//            fatalError(.unimplemented)
-//        }
+        guard line.isAdditionOrDeletion else {
+            fatalError(.invalid)
+        }
+        guard let diffInfo else {
+            fatalError(.invalid)
+        }
+
+        Task {
+            let hunkCopies = diffInfo.hunks().map { $0.copy() }
+            let lines = hunkCopies.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
+            for hunkline in lines {
+                if hunkline == line {
+                    hunkline.isSelected = false
+                } else {
+                    hunkline.isSelected = true
+                }
+            }
+
+            let selectedLines = lines.filter(\.isSelected)
+
+            do {
+                switch delta.status {
+                case .added, .copied, .renamed, .typeChange, .modified, .deleted:
+                    guard let newFilePath = delta.newFile?.path else {
+                        fatalError(.invalid)
+                    }
+                    let result = try await SelectedLinesDiffMaker.makeFileWithSelectedLines(
+                        repository: repository,
+                        filePath: newFilePath,
+                        selectedLines: selectedLines,
+                        allHunks: hunkCopies
+                    )
+                    try result.resultingFileLines.joined(separator: "\n").write(toFile: repository.workDir.path + "/" + newFilePath, atomically: true, encoding: .utf8)
+                case .ignored, .unreadable, .unmodified, .untracked:
+                    fatalError(.invalid)
+                case .conflicted:
+                    fatalError(.unimplemented)
+                }
+            } catch {
+                fatalError(error.localizedDescription)
+            }
+        }
     }
 }

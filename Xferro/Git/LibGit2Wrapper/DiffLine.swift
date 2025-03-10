@@ -20,6 +20,7 @@ import Observation
     let type: DiffLineType
     let isTracked: Bool
     let gitDiffLine: git_diff_line
+    var numberOfLinesInPart: Int = 0
     var isSelected: Bool
     var indexInPart: Int = 0
 
