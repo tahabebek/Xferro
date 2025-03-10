@@ -29,6 +29,14 @@ struct StatusUntrackedView: View {
                             onTapDiscard: onTapDiscard
                         )
                         XFerroButton(
+                            title: "Track",
+                            isProminent: false,
+                            isSmall: true,
+                            onTap: {
+                                onTapTrack(deltaInfo.wrappedValue)
+                            }
+                        )
+                        XFerroButton(
                             title: "Ignore",
                             isProminent: false,
                             isSmall: true,
@@ -50,7 +58,7 @@ struct StatusUntrackedView: View {
             }
         } header: {
             HStack {
-                Text("\(untrackedDeltaInfos.count) untracked \(untrackedDeltaInfos.count == 1 ? "file" : "files")")
+                Text("\(untrackedDeltaInfos.count) untracked \(untrackedDeltaInfos.count == 1 ? "item" : "items")")
                 Spacer()
                 XFerroButton(
                     title: "Track All",
@@ -59,7 +67,7 @@ struct StatusUntrackedView: View {
                     }
                 )
             }
-            .padding(.bottom, 4)
+            .padding(.vertical, 4)
         }
         .animation(.default, value: untrackedDeltaInfos)
     }

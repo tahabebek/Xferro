@@ -10,15 +10,8 @@ import Observation
 @Observable final class StatusViewModel {
     var trackedDeltaInfos: [DeltaInfo] = []
     var untrackedDeltaInfos: [DeltaInfo] = []
-    var currentDeltaInfo: DeltaInfo? {
-        willSet {
-            if let newValue {
-                scrollToFile = newValue.id
-            }
-        }
-    }
+    var currentDeltaInfo: DeltaInfo?
     var commitSummary: String = ""
-    var scrollToFile: String? = nil
     var canCommit: Bool = false
 
     let selectableStatus: SelectableStatus

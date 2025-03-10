@@ -79,10 +79,23 @@ struct StatusView: View {
             }
             .frame(width: Dimensions.commitDetailsViewMaxWidth)
             PeekViewContainer(
-                scrollToFile: $viewModel.scrollToFile,
+                currentDeltaInfo: $viewModel.currentDeltaInfo,
                 trackedDeltaInfos: $viewModel.trackedDeltaInfos,
                 untrackedDeltaInfos: $viewModel.untrackedDeltaInfos,
-                head: viewModel.head
+                head: viewModel.head,
+                onTapTrack: { deltaInfo in
+                    Task {
+                        await viewModel.trackTapped(stage: true, deltaInfos: [deltaInfo])
+                    }
+                },
+                onTapIgnore: { deltaInfo in
+                    Task {
+                        await viewModel.ignoreTapped(deltaInfo: deltaInfo)
+                    }
+                },
+                onTapDiscard: {
+                    discardDeltaInfo = $0
+                }
             )
         }
         .task {

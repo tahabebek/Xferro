@@ -10,18 +10,11 @@ import SwiftUI
 struct StatusTrackedRowView: View {
     @Binding var currentDeltaInfo: DeltaInfo?
     @Binding var deltaInfo: DeltaInfo
+    @State var isCurrent: Bool = false
+
     let onTapInclude: (DeltaInfo) -> Void
     let onTapExclude: (DeltaInfo) -> Void
     let onTapDiscard: (DeltaInfo) -> Void
-
-
-    var isCurrent: Bool {
-        if let currentDeltaInfoId = currentDeltaInfo?.id {
-            currentDeltaInfoId == deltaInfo.id
-        } else {
-            false
-        }
-    }
 
     var body: some View {
         HStack {
@@ -36,7 +29,7 @@ struct StatusTrackedRowView: View {
             .frame(width: 16, height: 16)
             .padding(.trailing, 4)
             Text(deltaInfo.statusFileName)
-                .statusRowText(isCurrent: isCurrent)
+                .statusRowText(isCurrent: $isCurrent)
             Spacer()
             Image(systemName: deltaInfo.statusImageName).foregroundColor(deltaInfo.statusColor)
                 .frame(width: 24, height: 24)
@@ -46,6 +39,20 @@ struct StatusTrackedRowView: View {
         .frame(maxHeight: 48)
         .onTapGesture {
             currentDeltaInfo = deltaInfo
+        }
+        .onAppear {
+            updateIsCurrent()
+        }
+        .onChange(of: currentDeltaInfo) {
+            updateIsCurrent()
+        }
+    }
+
+    private func updateIsCurrent() {
+        if let currentDeltaInfoId = currentDeltaInfo?.id, currentDeltaInfoId == deltaInfo.id {
+            isCurrent = true
+        } else {
+            isCurrent = false
         }
     }
 }

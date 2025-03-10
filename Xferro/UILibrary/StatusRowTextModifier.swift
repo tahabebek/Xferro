@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct StatusRowTextModifier: ViewModifier {
-    @State var isCurrent: Bool
+    @Binding var isCurrent: Bool
 
     func body(content: Content) -> some View {
         content
@@ -19,7 +19,7 @@ struct StatusRowTextModifier: ViewModifier {
 }
 
 extension View {
-    public func statusRowText(isCurrent: Bool) -> some View {
+    func statusRowText(isCurrent: Binding<Bool>) -> some View {
         modifier(StatusRowTextModifier(isCurrent: isCurrent))
     }
 }

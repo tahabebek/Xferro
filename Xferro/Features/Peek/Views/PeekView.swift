@@ -7,22 +7,17 @@
 
 import SwiftUI
 
-struct PeekView: View, Equatable {
-    static func == (lhs: PeekView, rhs: PeekView) -> Bool {
-        lhs.deltaInfo == rhs.deltaInfo
-    }
-
+struct PeekView: View {
     @Binding var deltaInfo: DeltaInfo
-    let head: Head
 
     var body: some View {
-        let _ = Self._printChanges()
         Group {
             if let diffInfo = deltaInfo.diffInfo {
                 VStack(spacing: 0) {
-                    PeekViewHeader(statusFileName: diffInfo.statusFileName, countString: countString)
+                    PeekViewHeader(statusFileName: deltaInfo.statusFileName, countString: countString)
                         .background(Color.clear)
                         .padding(.horizontal, 8)
+                    Divider()
                     switch diffInfo {
                     case _ as NoDiffInfo:
                         Text("No difference")
@@ -32,13 +27,18 @@ struct PeekView: View, Equatable {
                             .padding()
                     case _ as DiffInfo:
                         ForEach(diffInfo.hunks()) { hunk in
-                            HunkView(hunk: Binding<DiffHunk>(
-                                get: { hunk },
-                                set: { _ in }
-                            ), allHunks: diffInfo.hunks)
-                                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
+                            HunkView(
+                                hunk: Binding<DiffHunk>(
+                                    get: { hunk },
+                                    set: { _ in }
+                                ),
+                                onDiscardPart: {
+                                    deltaInfo.discardPart($0)
+                                },
+                                onDiscardLine: {
+                                    deltaInfo.discardLine($0)
+                                }
+                            )
                         }
                     default:
                         fatalError(.invalid)
@@ -46,7 +46,11 @@ struct PeekView: View, Equatable {
                 }
                 .background(Color.clear)
             } else {
-                VStack {
+                VStack(spacing: 0) {
+                    PeekViewHeader(statusFileName: deltaInfo.statusFileName, countString: countString)
+                        .background(Color.clear)
+                        .padding(.horizontal, 8)
+                    Divider()
                     Spacer()
                     HStack {
                         Spacer()
@@ -57,32 +61,17 @@ struct PeekView: View, Equatable {
                 }
             }
         }
-        .task {
-            if deltaInfo.diffInfo == nil {
-                await deltaInfo.setDiffInfo(head: head)
-            }
-        }
-    }
-
-    var empty: some View {
-        ZStack {
-            Color.clear
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(
-                    Color(hexValue: 0x15151A)
-                        .cornerRadius(8)
-                )
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Text("No changes found")
-                        .padding()
-                    Spacer()
-                }
-                Spacer()
-            }
-        }
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(
+            color: Color.black.opacity(0.3),
+            radius: 5,
+            x: 0,
+            y: 3
+        )
     }
 
     var countString: String {

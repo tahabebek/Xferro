@@ -16,7 +16,6 @@ import Observation
     let statusFileName: String
 
     init(hunks: [DiffHunk], addedLinesCount: Int, deletedLinesCount: Int, statusFileName: String) {
-        print("init DiffInfo")
         self.allHunks = hunks
         self.addedLinesCount = addedLinesCount
         self.deletedLinesCount = deletedLinesCount
@@ -25,10 +24,6 @@ import Observation
             guard let self else { return [] }
             return allHunks
         }
-    }
-
-    deinit {
-        print("deinit DiffInfo")
     }
 
     var checkState: CheckboxState {

@@ -130,4 +130,84 @@ enum StatusType: Int, Identifiable, Hashable {
             fatalError(.unimplemented)
         }
     }
+
+    func discardPart(_ part: DiffHunkPart) {
+        guard let diffInfo else {
+            fatalError(.invalid)
+        }
+
+        guard case .additionOrDeletion = part.type else {
+            fatalError(.invalid)
+        }
+
+        Task {
+            do {
+                let selectedLines = part.lines.filter(\.isSelected)
+                let hunks = diffInfo.hunks()
+
+                switch delta.status {
+                case .added, .copied, .renamed, .typeChange:
+                    guard let newFilePath = delta.newFile?.path else {
+                        fatalError(.invalid)
+                    }
+                    let diff = try await SelectedLinesDiffMaker.makeDiff(
+                        repository: repository,
+                        filePath: newFilePath,
+                        selectedLines: selectedLines,
+                        allHunks: hunks,
+                        reverse: true
+                    )
+                    PatchCLI.executePatch(
+                        diff: diff,
+                        inputFilePath: nil,
+                        outputFilePath: repository.workDir.path + "/" + newFilePath,
+                        operation: .create
+                    )
+                case .modified:
+                    guard let oldFilePath = delta.oldFile?.path, let newFilePath = delta.newFile?.path else {
+                        fatalError(.invalid)
+                    }
+                    let diff = try await SelectedLinesDiffMaker.makeDiff(
+                        repository: repository,
+                        filePath: newFilePath,
+                        selectedLines: selectedLines,
+                        allHunks: hunks,
+                        reverse: true
+                    )
+                    PatchCLI.executePatch(
+                        diff: diff,
+                        inputFilePath: repository.workDir.path + "/" + oldFilePath,
+                        outputFilePath: repository.workDir.path + "/" + newFilePath,
+                        operation: .modify
+                    )
+                case .deleted:
+                    guard let oldFilePath = delta.oldFile?.path else {
+                        fatalError(.invalid)
+                    }
+                    let diff = try await SelectedLinesDiffMaker.makeDiff(
+                        repository: repository,
+                        filePath: oldFilePath,
+                        selectedLines: selectedLines,
+                        allHunks: hunks,
+                        reverse: true
+                    )
+                    PatchCLI.executePatch(
+                        diff: diff,
+                        inputFilePath: repository.workDir.path + "/" + oldFilePath,
+                        outputFilePath: nil,
+                        operation: .delete
+                    )
+                case .ignored, .unreadable, .unmodified, .untracked:
+                    fatalError(.invalid)
+                case .conflicted:
+                    fatalError(.unimplemented)
+                }
+            } catch {
+                fatalError(error.localizedDescription)
+            }
+        }
+    }
+
+    func discardLine(_ line: DiffLine) {
+    }
 }

@@ -8,48 +8,65 @@
 import Foundation
 
 enum SelectedLinesDiffMaker {
-    static func makeDiff(
+    enum Result {
+        case modified(resultingFileLines: [String], headFileLines: [String])
+        case added(resultingFileLines: [String])
+        case deleted(resultingFileLines: [String], headFileLines: [String])
+
+        var resultingFileLines: [String] {
+            switch self {
+            case .modified(resultingFileLines: let lines, headFileLines: _),
+                    .added(resultingFileLines: let lines),
+                    .deleted(resultingFileLines: let lines, headFileLines: _):
+                return lines
+            }
+        }
+    }
+
+    static func makeFileWithSelectedLines(
         repository: Repository,
         filePath: String,
-        hunk: DiffHunk,
+        selectedLines: [DiffLine],
         allHunks: [DiffHunk]
-    ) async throws -> String {
+    ) async throws -> Result {
+        guard selectedLines.isNotEmpty else {
+            fatalError(.invalid)
+        }
+
         let headFileResult = GitCLI.showHead(repository, filePath)
         switch headFileResult {
         case .success(let headFileContent):
+            let headFileLines = headFileContent.lines
             let path = repository.workDir.appendingPathComponent(filePath).path
-            let selectedLines = hunk.parts.flatMap(\.lines).filter(\.isSelected)
-            if selectedLines.isEmpty {
-                fatalError(.invalid)
-            }
-
             if FileManager.fileExists(path) {
                 let currentFileLines = try String(contentsOfFile: path, encoding: .utf8).lines
                 let allLinesInHunk = allHunks.flatMap(\.parts).flatMap((\.lines)).filter(\.isAdditionOrDeletion)
-                return try await getDiffForModifiedFile(
+                let result = try await makeFileWithSelectedLinesForModifiedFile(
                     repository: repository,
-                    headFileLines: headFileContent.lines,
+                    headFileLines: headFileLines,
                     currentFileLines: currentFileLines,
                     selectedLines: selectedLines,
                     allLinesInHunk: allLinesInHunk
                 )
+                return .modified(resultingFileLines: result, headFileLines: headFileLines)
             } else {
-                return try await getDiffForDeletedFile(
+                let result = try await makeFileWithSelectedLinesForDeletedFile(
                     repository: repository,
-                    headFileLines: headFileContent.lines,
+                    headFileLines: headFileLines,
                     selectedLines: selectedLines
                 )
+                return .deleted(resultingFileLines: result, headFileLines: headFileLines)
             }
         case .failure(let error):
             switch error {
             case .fileNotInHead:
                 let path = repository.workDir.appendingPathComponent(filePath).path
-                let selectedLines = hunk.parts.flatMap(\.lines).filter(\.isSelected)
                 if FileManager.fileExists(path) {
-                    return try await getDiffForAddedFile(
+                    let result = try await makeFileWithSelectedLinesForAddedFile(
                         repository: repository,
                         selectedLines: selectedLines
                     )
+                    return .added(resultingFileLines: result)
                 } else {
                     fatalError(.invalid)
                 }
@@ -59,10 +76,68 @@ enum SelectedLinesDiffMaker {
         }
     }
 
-    private static func getDiffForAddedFile(
+    static func makeFileWithSelectedLinesInTheHunk(
+        repository: Repository,
+        filePath: String,
+        hunk: DiffHunk,
+        allHunks: [DiffHunk]
+    ) async throws -> Result {
+        let selectedLines = hunk.parts.flatMap(\.lines).filter(\.isSelected)
+        return try await makeFileWithSelectedLines(repository: repository, filePath: filePath, selectedLines: selectedLines, allHunks: allHunks)
+    }
+
+    static func makeDiff(
+        repository: Repository,
+        filePath: String,
+        hunk: DiffHunk,
+        allHunks: [DiffHunk]
+    ) async throws -> String {
+        let selectedLines = hunk.parts.flatMap(\.lines).filter(\.isSelected)
+        return try await makeDiff(repository: repository, filePath: filePath, selectedLines: selectedLines, allHunks: allHunks)
+    }
+
+    static func makeDiff(
+        repository: Repository,
+        filePath: String,
+        selectedLines: [DiffLine],
+        allHunks: [DiffHunk],
+        reverse: Bool = false
+    ) async throws -> String {
+        let result = try await makeFileWithSelectedLines(
+            repository: repository,
+            filePath: filePath,
+            selectedLines: selectedLines,
+            allHunks: allHunks
+        )
+        switch result {
+        case .modified(let resultingFileLines, let headFileLines):
+            return try await getDiff(
+                repository: repository,
+                result: resultingFileLines,
+                headFileLines: headFileLines,
+                reverse: reverse
+            )
+        case .added(let resultingFileLines):
+            return try await getDiff(
+                repository: repository,
+                result: resultingFileLines,
+                headFileLines: nil,
+                reverse: reverse
+            )
+        case .deleted(let resultingFileLines, let headFileLines):
+            return try await getDiff(
+                repository: repository,
+                result: resultingFileLines,
+                headFileLines: headFileLines,
+                reverse: reverse
+            )
+        }
+    }
+
+    private static func makeFileWithSelectedLinesForAddedFile(
         repository: Repository,
         selectedLines: [DiffLine]
-    ) async throws -> String {
+    ) async throws -> [String] {
         var result = [String]()
         for selectedLine in selectedLines {
             if case .addition = selectedLine.type {
@@ -71,18 +146,14 @@ enum SelectedLinesDiffMaker {
                 fatalError(.invalid)
             }
         }
-        return try await getDiff(
-            repository: repository,
-            result: result,
-            headFileLines: nil
-        )  
+        return result
     }
 
-    private static func getDiffForDeletedFile(
+    private static func makeFileWithSelectedLinesForDeletedFile(
         repository: Repository,
         headFileLines: [String],
         selectedLines: [DiffLine]
-    ) async throws -> String {
+    ) async throws -> [String] {
         var result = [String]()
         for headLineIndex in 0..<headFileLines.count  {
             let headLine = headFileLines[headLineIndex]
@@ -104,21 +175,16 @@ enum SelectedLinesDiffMaker {
                 result.append(headLine)
             }
         }
-
-        return try await getDiff(
-            repository: repository,
-            result: result,
-            headFileLines: headFileLines
-        )
+        return result
     }
 
-    private static func getDiffForModifiedFile(
+    private static func makeFileWithSelectedLinesForModifiedFile(
         repository: Repository,
         headFileLines: [String],
         currentFileLines: [String],
         selectedLines: [DiffLine],
         allLinesInHunk: [DiffLine]
-    ) async throws -> String {
+    ) async throws -> [String] {
         var result: [String] = []
         var headLineIndex: Int = 0
         var currentLineIndex: Int = 0
@@ -214,12 +280,7 @@ enum SelectedLinesDiffMaker {
                 break whileLoop
             }
         }
-        
-        return try await getDiff(
-            repository: repository,
-            result: result,
-            headFileLines: headFileLines
-        )
+        return result
     }
 
     private static func getDiff(

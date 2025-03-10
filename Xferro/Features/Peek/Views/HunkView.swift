@@ -9,7 +9,8 @@ import SwiftUI
 
 struct HunkView: View {
     @Binding var hunk: DiffHunk
-    let allHunks: () -> [DiffHunk]
+    let onDiscardPart: (DiffHunkPart) -> Void
+    let onDiscardLine: (DiffLine) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -18,16 +19,26 @@ struct HunkView: View {
                     Text(hunk.hunkHeader.replacingOccurrences(of: "\n", with: " "))
                         .foregroundColor(Color(hexValue: 0xADBD42))
                     Spacer()
-                    HunkActionsView(hunk: hunk, allHunks: allHunks)
+                    XFerroButton(
+                        title: "Discard Hunk",
+                        dangerous: true,
+                        isProminent: false,
+                        onTap: {
+                            hunk.discard()
+                        }
+                    )
                 }
                 .font(.caption)
             }
             .padding(.vertical, 8)
             .padding(.horizontal)
             Divider()
-            ForEach($hunk.parts) { part in
-                PartView(part: part)
-            }
+            PartsView(
+                parts: $hunk.parts,
+                onDiscardPart: onDiscardPart,
+                onDiscardLine: onDiscardLine
+            )
+            Divider()
         }
         .padding(.bottom)
     }

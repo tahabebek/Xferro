@@ -25,9 +25,13 @@ extension DeltaInfo {
 
         switch patchResult {
         case .noDifference:
-            diffInfo = NoDiffInfo(statusFileName: statusFileName)
+            await MainActor.run {
+                diffInfo = NoDiffInfo(statusFileName: statusFileName)
+            }
         case .binary:
-            diffInfo = BinaryDiffInfo(statusFileName: statusFileName)
+            await MainActor.run {
+                diffInfo = BinaryDiffInfo(statusFileName: statusFileName)
+            }
         case .diff(let patchMaker):
             let patch = patchMaker.makePatch()
             var newHunks = [DiffHunk]()
@@ -42,11 +46,14 @@ extension DeltaInfo {
                     newHunks.append(hunk)
                 }
             }
-            diffInfo = DiffInfo(
-                hunks: newHunks,
-                addedLinesCount: patch.addedLinesCount,
-                deletedLinesCount: patch.deletedLinesCount,
-                statusFileName: statusFileName)
+            await MainActor.run { [newHunks] in
+                diffInfo = DiffInfo(
+                    hunks: newHunks,
+                    addedLinesCount: patch.addedLinesCount,
+                    deletedLinesCount: patch.deletedLinesCount,
+                    statusFileName: statusFileName
+                )
+            }
         }
     }
 }

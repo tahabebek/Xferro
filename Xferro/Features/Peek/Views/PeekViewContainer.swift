@@ -8,34 +8,52 @@
 import SwiftUI
 
 struct PeekViewContainer: View {
-    @Binding var scrollToFile: String?
+    @Binding var currentDeltaInfo: DeltaInfo?
     @Binding var trackedDeltaInfos: [DeltaInfo]
     @Binding var untrackedDeltaInfos: [DeltaInfo]
+
     let head: Head
+    let onTapTrack: (DeltaInfo) -> Void
+    let onTapIgnore: (DeltaInfo) -> Void
+    let onTapDiscard: (DeltaInfo) -> Void
 
     var body: some View {
         ScrollViewReader { proxy in
-            List {
-                Section {
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: 12) {
                     ForEach($trackedDeltaInfos) { deltaInfo in
-                        PeekView(deltaInfo: deltaInfo, head: head)
+                        PeekView(deltaInfo: deltaInfo)
                     }
-                }
-                Section {
                     ForEach($untrackedDeltaInfos) { deltaInfo in
-                        PeekView(deltaInfo: deltaInfo, head: head)
+                        UntrackedPeekView(
+                            deltaInfo: deltaInfo,
+                            onTapTrack: onTapTrack,
+                            onTapIgnore: onTapIgnore,
+                            onTapDiscard: onTapDiscard
+                        )
                     }
                 }
             }
-            .listSectionSeparator(.hidden)
-            .listStyle(PlainListStyle())
-            .scrollContentBackground(.hidden)
-            .environment(\.defaultMinListRowHeight, 0)
-            .onChange(of: scrollToFile) { _, id in
-                if let id {
+            .onChange(of: currentDeltaInfo) { _, deltaInfo in
+                if let id = deltaInfo?.id {
                     withAnimation {
                         proxy.scrollTo(id, anchor: .top)
                     }
+                }
+            }
+            .padding(.leading, 12)
+        }
+        .onChange(of: trackedDeltaInfos) { oldValue, newValue in
+            for deltaInfo in trackedDeltaInfos {
+                Task.detached {
+                    await deltaInfo.setDiffInfo(head: head)
+                }
+            }
+        }
+        .task {
+            for deltaInfo in trackedDeltaInfos {
+                Task.detached {
+                    await deltaInfo.setDiffInfo(head: head)
                 }
             }
         }

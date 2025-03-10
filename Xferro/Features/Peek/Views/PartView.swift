@@ -10,6 +10,9 @@ import RegexBuilder
 
 struct PartView: View {
     @Binding var part: DiffHunkPart
+    @State var isHovered: Bool = false
+    let onDiscardPart: () -> Void
+    let onDiscardLine: (DiffLine) -> Void
 
     var body: some View {
         ForEach(part.lines) { line in
@@ -21,8 +24,15 @@ struct PartView: View {
                     part.toggle()
                 }, onToggleLine: {
                     part.toggleLine(line: line)
+                }, onDiscardPart: {
+                    onDiscardPart()
+                }, onDiscardLine: {
+                    onDiscardLine(line)
+                }, onHoverPart: {
+                    isHovered = $0
                 }
             )
+            .environment(\.partIsHovered, isHovered)
             .padding(.horizontal, 4)
         }
     }

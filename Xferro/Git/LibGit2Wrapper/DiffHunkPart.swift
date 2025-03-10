@@ -66,7 +66,6 @@ import Foundation
             fatalError(.invalid)
         }
         line.isSelected.toggle()
-//        refreshSelectedStatus()
     }
 
     private func selectLine(line: DiffLine, flag: Bool) {
@@ -77,15 +76,9 @@ import Foundation
     }
 
     func toggle() {
+        let flag = !isSelected
         for line in lines {
-            selectLine(line: line, flag: !isSelected)
+            selectLine(line: line, flag: flag)
         }
-//        refreshSelectedStatus()
     }
-
-//    func refreshSelectedStatus() {
-//        if case .context = type {
-//            fatalError(.invalid)
-//        }
-//    }
 }
