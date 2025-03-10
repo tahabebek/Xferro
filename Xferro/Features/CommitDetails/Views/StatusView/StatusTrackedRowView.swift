@@ -12,9 +12,9 @@ struct StatusTrackedRowView: View {
     @Binding var deltaInfo: DeltaInfo
     @State var isCurrent: Bool = false
 
-    let onTapInclude: (DeltaInfo) -> Void
-    let onTapExclude: (DeltaInfo) -> Void
-    let onTapDiscard: (DeltaInfo) -> Void
+    let onTapInclude: () -> Void
+    let onTapExclude: () -> Void
+    let onTapDiscard: () -> Void
 
     var body: some View {
         HStack {
@@ -45,6 +45,11 @@ struct StatusTrackedRowView: View {
         }
         .onChange(of: currentDeltaInfo) {
             updateIsCurrent()
+        }
+        .contextMenu {
+            Button("Discard changes in \(deltaInfo.statusFileName)") {
+                onTapDiscard()
+            }
         }
     }
 

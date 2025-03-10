@@ -24,9 +24,9 @@ struct StatusUntrackedView: View {
                         StatusUntrackedRowView(
                             currentDeltaInfo: $currentDeltaInfo,
                             deltaInfo: deltaInfo,
-                            onTapTrack: onTapTrack,
-                            onTapIgnore: onTapIgnore,
-                            onTapDiscard: onTapDiscard
+                            onTapTrack: { onTapTrack(deltaInfo.wrappedValue) },
+                            onTapIgnore: { onTapIgnore(deltaInfo.wrappedValue) },
+                            onTapDiscard: { onTapDiscard(deltaInfo.wrappedValue) }
                         )
                         XFerroButton(
                             title: "Track",

@@ -15,7 +15,7 @@ struct UntrackedPeekView: View {
     let onTapDiscard: (DeltaInfo) -> Void
 
     var body: some View {
-        let _ = Self._printChanges()
+//        let _ = Self._printChanges()
         Group {
             VStack(spacing: 0) {
                 PeekViewHeader(statusFileName: deltaInfo.statusFileName, countString: "")

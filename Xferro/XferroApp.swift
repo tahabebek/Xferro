@@ -72,7 +72,7 @@ struct SwiftSpaceApp: App {
             .background(Color.fabulaBack2)
             .popup(
                 isPresented: $discardPopup.isPresented,
-                backgroundStyle: .dimmed,
+                backgroundStyle: .blur,
                 isDestructive: true
             ) {
                 VStack {

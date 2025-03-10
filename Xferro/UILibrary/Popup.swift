@@ -26,7 +26,7 @@ struct Popup<Message>: ViewModifier where Message: View {
             .blur(radius: backgroundStyle == .blur ? (isPresented ? 6 : 0) : 0)
             .overlay(
                 Rectangle()
-                    .fill(Color.black.opacity(backgroundStyle == .dimmed ? (isPresented ? 0.3 : 0) : 0))
+                    .fill(Color.black.opacity(isPresented ? 0.9 : 0))
             )
             .overlay(popupContent)
             .animation(.easeInOut(duration: 0.26), value: isPresented)

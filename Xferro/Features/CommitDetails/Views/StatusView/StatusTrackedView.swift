@@ -25,9 +25,9 @@ struct StatusTrackedView: View {
                         StatusTrackedRowView(
                             currentDeltaInfo: $currentDeltaInfo,
                             deltaInfo: deltaInfo,
-                            onTapInclude: onTapInclude,
-                            onTapExclude: onTapExclude,
-                            onTapDiscard: onTapDiscard
+                            onTapInclude: { onTapInclude(deltaInfo.wrappedValue) },
+                            onTapExclude: { onTapExclude(deltaInfo.wrappedValue) },
+                            onTapDiscard: { onTapDiscard(deltaInfo.wrappedValue) }
                         )
                     }
                 }
@@ -38,27 +38,27 @@ struct StatusTrackedView: View {
                 Spacer()
                 if deltaInfos.allSatisfy({ $0.checkState == CheckboxState.checked }) {
                     XFerroButton(
-                        title: "Exclude All",
+                        title: "Unselect All",
                         onTap: {
                             onTapExcludeAll()
                         }
                     )
                 } else if deltaInfos.allSatisfy({ $0.checkState == CheckboxState.unchecked }) {
                     XFerroButton(
-                        title: "Include All",
+                        title: "Select All",
                         onTap: {
                             onTapIncludeAll()
                         }
                     )
                 } else {
                     XFerroButton(
-                        title: "Include All",
+                        title: "Select All",
                         onTap: {
                             onTapIncludeAll()
                         }
                     )
                     XFerroButton(
-                        title: "Exclude All",
+                        title: "Unselect All",
                         onTap: {
                             onTapExcludeAll()
                         }

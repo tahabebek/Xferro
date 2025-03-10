@@ -226,10 +226,19 @@ import Observation
             }
         }
         for fileURL in fileURLs {
-            if fileURL.isDirectory {
-                GitCLI.executeGit(repository, ["restore", fileURL.appendingPathComponent("*").path])
-            } else {
-                GitCLI.executeGit(repository, ["restore", fileURL.path])
+            switch deltaInfo.delta.status {
+            case .unmodified, .ignored:
+                fatalError(.invalid)
+            case .added, .copied, .untracked:
+                try! FileManager.removeItem(fileURL)
+            case .deleted, .modified, .renamed, .typeChange:
+                if fileURL.isDirectory {
+                    GitCLI.executeGit(repository, ["restore", fileURL.appendingPathComponent("*").path])
+                } else {
+                    GitCLI.executeGit(repository, ["restore", fileURL.path])
+                }
+            case .conflicted, .unreadable:
+                fatalError(.unimplemented)
             }
         }
     }

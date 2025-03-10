@@ -243,7 +243,7 @@ import OrderedCollections
         Task {
             await MainActor.run {
                 currentRepositoryInfos.removeValue(forKey: kRepositoryInfo(repository))
-                if let currentSelectedItem {
+                if currentSelectedItem != nil {
                     guard let currentRepositoryInfo else {
                         fatalError(.invalid)
                     }

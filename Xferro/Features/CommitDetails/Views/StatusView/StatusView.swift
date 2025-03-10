@@ -14,12 +14,10 @@ struct StatusView: View {
         Self.actionBoxBottomPadding * 2 + Self.actionBoxVerticalInnerPadding * 2
     }
 
-    @Environment(DiscardPopup.self) var discardPopup
     @Bindable var viewModel: StatusViewModel
-    @State private var discardDeltaInfo: DeltaInfo? = nil
 
     var body: some View {
-        let _ = Self._printChanges()
+//        let _ = Self._printChanges()
         HStack(spacing: 0) {
             VStack {
                 StatusActionView(
@@ -72,8 +70,10 @@ struct StatusView: View {
                         Task {
                             await viewModel.ignoreTapped(deltaInfo: deltaInfo)
                         }
-                    }, onTapDiscard: {
-                        discardDeltaInfo = $0
+                    }, onTapDiscard: { deltaInfo in
+                        Task {
+                            await viewModel.discardTapped(deltaInfo: deltaInfo)
+                        }
                     }
                 )
             }
@@ -93,8 +93,10 @@ struct StatusView: View {
                         await viewModel.ignoreTapped(deltaInfo: deltaInfo)
                     }
                 },
-                onTapDiscard: {
-                    discardDeltaInfo = $0
+                onTapDiscard: { deltaInfo in
+                    Task {
+                        await viewModel.discardTapped(deltaInfo: deltaInfo)
+                    }
                 }
             )
         }
@@ -106,25 +108,9 @@ struct StatusView: View {
                 viewModel.setInitialSelection()
             }
         }
-        .onChange(of: discardDeltaInfo) { _, newValue in
-            if let newValue, discardPopup.isPresented == false {
-                discardPopup.show(title: viewModel.discardAlertTitle(deltaInfo: newValue)) {
-                    discard(deltaInfo: newValue)
-                    self.discardDeltaInfo = nil
-                } onCancel: {
-                    self.discardDeltaInfo = nil
-                }
-            }
-        }
         .animation(.default, value: viewModel.selectableStatus)
         .animation(.default, value: viewModel.commitSummary)
         .padding(.horizontal, 6)
-    }
-
-    func discard(deltaInfo: DeltaInfo) {
-        Task {
-            await viewModel.discardTapped(deltaInfo: deltaInfo)
-        }
     }
 }
 
