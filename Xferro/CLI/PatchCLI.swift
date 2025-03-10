@@ -21,14 +21,18 @@ enum PatchCLI {
         outputFilePath: String? = nil,
         operation: PatchOperation
     ) -> String {
+        print(diff)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/patch")
 
         var arguments = ["-p1", "-i", "-"]
-        // Disable backup files completely
+        // Disable backup files
         arguments.append("-V")
         arguments.append("none")
-        
+        // Disable reject files
+        arguments.append("-r")
+        arguments.append("/dev/null")
+
         if let inputPath = inputFilePath {
             arguments.append(inputPath)
         }
@@ -64,7 +68,7 @@ enum PatchCLI {
                 let error = NSError(domain: "PatchError", code: Int(process.terminationStatus),
                               userInfo: [NSLocalizedDescriptionKey: errorMessage])
                 print(error)
-                fatalError(.unhandledError)
+//                fatalError(.unhandledError)
             }
 
             let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()

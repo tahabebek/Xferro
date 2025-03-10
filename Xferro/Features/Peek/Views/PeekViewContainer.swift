@@ -45,15 +45,17 @@ struct PeekViewContainer: View {
         }
         .onChange(of: trackedDeltaInfos) { oldValue, newValue in
             for deltaInfo in trackedDeltaInfos {
-                Task.detached {
+                Task {
                     await deltaInfo.setDiffInfo(head: head)
+                    await Task.yield()
                 }
             }
         }
         .task {
             for deltaInfo in trackedDeltaInfos {
-                Task.detached {
+                Task {
                     await deltaInfo.setDiffInfo(head: head)
+                    await Task.yield()
                 }
             }
         }

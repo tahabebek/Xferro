@@ -46,7 +46,7 @@ struct SelectAllBox: View {
         .contentShape(Rectangle())
         .contextMenu {
             if isAdditionOrDeletion {
-                Button("Discard \(numberOfLinesInPart) \(numberOfLinesInPart == 1 ? "line" : "lines")") {
+                Button("Discard \(numberOfLinesInPart == 1 ? "line" : "lines")") {
                     onDiscardPart()
                 }
             }
