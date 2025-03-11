@@ -232,19 +232,19 @@ class Repository: Identifiable, Equatable, Hashable {
         var returnArray = [StatusEntry]()
 
         // Do this because GIT_STATUS_OPTIONS_INIT is unavailable in swift
-        let pointer = UnsafeMutablePointer<git_status_options>.allocate(capacity: 1)
-        let optionsResult = git_status_options_init(pointer, UInt32(GIT_STATUS_OPTIONS_VERSION))
+        let statusOptionsPointer = UnsafeMutablePointer<git_status_options>.allocate(capacity: 1)
+        let optionsResult = git_status_options_init(statusOptionsPointer, UInt32(GIT_STATUS_OPTIONS_VERSION))
         guard optionsResult == GIT_OK.rawValue else {
             return .failure(NSError(gitError: optionsResult, pointOfFailure: "git_status_init_options"))
         }
-        var opts = pointer.move()
+        var opts = statusOptionsPointer.move()
         opts.flags = options.rawValue
         opts.rename_threshold = 50
-        pointer.deallocate()
+        statusOptionsPointer.deallocate()
 
         var unsafeStatus: OpaquePointer? = nil
         defer { git_status_list_free(unsafeStatus) }
-        let statusResult = git_status_list_new(&unsafeStatus, self.pointer, &opts)
+        let statusResult = git_status_list_new(&unsafeStatus, pointer, &opts)
         guard statusResult == GIT_OK.rawValue, let unwrapStatusResult = unsafeStatus else {
             return .failure(NSError(gitError: statusResult, pointOfFailure: "git_status_list_new"))
         }

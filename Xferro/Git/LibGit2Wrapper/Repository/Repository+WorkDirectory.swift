@@ -43,38 +43,6 @@ extension Repository {
         return .success(index!)
     }
 
-    func duplicateIndex(originalIndex: OpaquePointer) -> (copiedIndex: OpaquePointer, paths: [String]) {
-        var newIndex: OpaquePointer?
-
-        // Create a new in-memory index
-        if git_index_new(&newIndex) != 0 || newIndex == nil {
-            fatalError(GitError.getLastErrorMessage())
-        }
-
-        let unwrappedNewIndex = newIndex!
-        var paths: [String] = []
-
-        // Copy all entries from original to new index
-        let entryCount = git_index_entrycount(originalIndex)
-        for i in 0..<entryCount {
-            guard let entry = git_index_get_byindex(originalIndex, i) else {
-                fatalError(GitError.getLastErrorMessage())
-            }
-
-            guard git_index_add(unwrappedNewIndex, entry) == 0 else {
-                fatalError(GitError.getLastErrorMessage())
-            }
-
-            guard let cPath = entry.pointee.path else {
-                fatalError(GitError.getLastErrorMessage())
-            }
-
-            paths.append(String(cString: cPath))
-        }
-
-        return (unwrappedNewIndex, paths)
-    }
-
     func stage(path: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }

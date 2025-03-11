@@ -1,11 +1,3 @@
-//
-//  Index.swift
-//  SwiftGit2-OSX
-//
-//  Created by Whirlwind on 2020/3/14.
-//  Copyright © 2020 GitHub, Inc. All rights reserved.
-//
-
 import Foundation
 
 class Index {
