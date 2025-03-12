@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct WipBranchInfo: Identifiable, Equatable {
+struct WipBranchInfo: Identifiable {
     var id: String {
         branch.name + branch.commit.oid.description
     }

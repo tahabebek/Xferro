@@ -5,72 +5,135 @@
 //  Created by Taha Bebek on 2/15/25.
 //
 
+import SwiftUI
 import Observation
+import OrderedCollections
 
 @Observable final class StatusViewModel {
-    var trackedDeltaInfos: [DeltaInfo] = []
-    var untrackedDeltaInfos: [DeltaInfo] = []
-    var currentDeltaInfo: DeltaInfo?
+    var trackedFiles: OrderedDictionary<String, OldNewFile> = [:]
+    var untrackedFiles: OrderedDictionary<String, OldNewFile> = [:]
+    var currentFile: OldNewFile? = nil
+
     var commitSummary: String = ""
     var canCommit: Bool = false
 
-    let selectableStatus: SelectableStatus
-    let repository: Repository
-    let head: Head
+    var repository: Repository?
+    var selectableStatus: SelectableStatus?
 
-    init(selectableStatus: SelectableStatus, repository: Repository, head: Head) {
-        self.selectableStatus = selectableStatus
-        self.repository = repository
-        self.head = head
+    func updateStatus(newSelectableStatus: SelectableStatus, repository: Repository?) async {
+        guard let repository else {
+            return
+        }
+        guard newSelectableStatus.repositoryId == repository.idOfRepo else {
+            fatalError(.invalid)
+        }
 
-        var trackedDeltaInfos: [DeltaInfo] = []
-        var untrackedDeltaInfos: [DeltaInfo] = []
-        let handleDelta: (Repository, Diff.Delta, StatusType) -> Void = { repository, delta, type in
+        let (newTrackedFiles, newUntrackedFiles) = getTrackedAndUntrackedFiles(repository: repository, newSelectableStatus: newSelectableStatus)
+
+        if selectableStatus != nil {
+            let oldKeys = Set(trackedFiles.values.elements.map(\.key))
+            let newKeys =  Set(newTrackedFiles.values.elements.map(\.key))
+            let intersectionKeys = oldKeys.intersection(newKeys)
+            let missingKeys = oldKeys.subtracting(intersectionKeys)
+            let remainingKeys = newKeys.subtracting(intersectionKeys)
+
+            for key in intersectionKeys {
+                let oldFile = trackedFiles[key]!
+                let newFile = newTrackedFiles[key]!
+                if oldFile.status != newFile.status {
+                    trackedFiles[key] = newFile
+                }
+                if case .deleted = newFile.status {
+                    // do nothing
+                } else {
+                    let modifiedDate = FileManager.lastModificationDate(of: newFile.workDirNew!)!
+                    if let cachedModificationDate = await lastModifiedCache[newFile.workDirNew!] {
+                        if cachedModificationDate != modifiedDate {
+                            print("updated tracked file for \(newFile.workDirNew!)")
+                            trackedFiles[key] = newFile
+                        } else {
+                            // do nothing
+                        }
+                    } else {
+                        print("updated uncached tracked file for \(newFile.workDirNew!)")
+                        trackedFiles[key] = newFile
+                        await lastModifiedCache.set(key: newFile.workDirNew!, value: modifiedDate)
+                    }
+                }
+            }
+            for key in missingKeys {
+                trackedFiles.removeValue(forKey: key)
+            }
+            for key in remainingKeys {
+                trackedFiles[key] = newTrackedFiles[key]!
+            }
+            untrackedFiles = newUntrackedFiles
+            self.repository = repository
+            self.selectableStatus = newSelectableStatus
+        } else {
+            self.trackedFiles = newTrackedFiles
+            self.untrackedFiles = newUntrackedFiles
+            self.repository = repository
+            self.selectableStatus = newSelectableStatus
+        }
+    }
+
+    private func getTrackedAndUntrackedFiles(
+        repository: Repository,
+        newSelectableStatus: SelectableStatus
+    ) -> (OrderedDictionary<String, OldNewFile>, OrderedDictionary<String, OldNewFile>) {
+        var addedFiles: Set<String> = []
+
+        var trackedFiles: OrderedDictionary<String, OldNewFile> = [:]
+        var untrackedFiles: OrderedDictionary<String, OldNewFile> = [:]
+        let handleDelta: (Repository, Diff.Delta) -> Void = { repository, delta in
+            let key = (delta.oldFilePath ?? "") + (delta.newFilePath ?? "")
+            if addedFiles.contains(key) {
+                return
+            }
+            addedFiles.insert(key)
             switch delta.status {
             case .unmodified, .ignored:
                 break
-            case .added, .deleted, .modified, .renamed, .copied, .typeChange:
-                switch type {
-                case .staged:
-                    trackedDeltaInfos.append(
-                        DeltaInfo(delta: delta, type: type, repository: repository)
-                    )
-                case .unstaged:
-                    trackedDeltaInfos.append(
-                        DeltaInfo(delta: delta, type: type, repository: repository)
-                    )
-                case .untracked:
-                    fatalError(.impossible)
-               }
             case .untracked:
-                untrackedDeltaInfos.append(
-                    DeltaInfo(delta: delta, type: .untracked, repository: repository)
-                )
+                untrackedFiles[key] = OldNewFile(
+                        old: delta.oldFilePath,
+                        new: delta.newFilePath,
+                        status: delta.status,
+                        repository: repository,
+                        key: key
+                    )
             case .unreadable:
                 fatalError(.unimplemented)
             case .conflicted:
                 fatalError(.unimplemented)
+            default:
+                trackedFiles[key] = OldNewFile(
+                        old: delta.oldFilePath,
+                        new: delta.newFilePath,
+                        status: delta.status,
+                        repository: repository,
+                        key: key
+                    )
             }
         }
-        for statusEntry in selectableStatus.statusEntries {
+        for statusEntry in newSelectableStatus.statusEntries {
             var handled: Bool = false
             if let stagedDelta = statusEntry.stagedDelta {
                 handled = true
-                handleDelta(repository, stagedDelta, .staged)
+                handleDelta(repository, stagedDelta)
             }
 
             if let unstagedDelta = statusEntry.unstagedDelta {
                 handled = true
-                handleDelta(repository,unstagedDelta, .unstaged)
+                handleDelta(repository,unstagedDelta)
             }
 
             guard handled else {
                 fatalError(.unimplemented)
             }
         }
-
-        self.trackedDeltaInfos = trackedDeltaInfos
-        self.untrackedDeltaInfos = untrackedDeltaInfos
+        return (trackedFiles, untrackedFiles)
     }
 
     func actionTapped(_ action: StatusActionButtonsView.BoxAction) async {
@@ -80,28 +143,16 @@ import Observation
 //            fatalError(.unimplemented)
         case .amend:
             await amendTapped()
-        case .stageAll:
-            await stageAllTapped()
-        case .stageAllAndCommit:
-            await stageAllTapped()
-            await commitTapped()
-        case .stageAllAndAmend:
-            await stageAllTapped()
-            await amendTapped()
-        case .stageAllCommitAndPush:
-            await stageAllTapped()
+        case .commitAndPush:
             await commitTapped()
             fatalError(.unimplemented)
-        case .stageAllAmendAndPush:
-            await stageAllTapped()
+        case .amendAndPush:
             await amendTapped()
             fatalError(.unimplemented)
-        case .stageAllCommitAndForcePush:
-            await stageAllTapped()
+        case .commitAndForcePush:
             await commitTapped()
             fatalError(.unimplemented)
-        case .stageAllAmendAndForcePush:
-            await stageAllTapped()
+        case .amendAndForcePush:
             await amendTapped()
             fatalError(.unimplemented)
         case .stash:
@@ -110,76 +161,33 @@ import Observation
             fatalError(.unimplemented)
         case .applyStash:
             fatalError(.unimplemented)
-        case .discardAll:
-            await discardAllTapped()
         case .addCustom:
             fatalError(.unimplemented)
         }
     }
 
     func trackAllTapped() async {
-        await stageOrUnstageTapped(stage: true, deltaInfos: untrackedDeltaInfos)
+        for file in untrackedFiles.values {
+            await trackTapped(flag: true, file: file)
+        }
     }
 
-    func trackTapped(stage: Bool, deltaInfos: [DeltaInfo]) async {
-        await stageOrUnstageTapped(stage: true, deltaInfos: deltaInfos)
-    }
-
-    func stageOrUnstageTapped(stage: Bool) async {
-        if stage {
-            await stageOrUnstageTapped(stage: stage, deltaInfos: untrackedDeltaInfos)
+    func trackTapped(flag: Bool, file: OldNewFile) async {
+        guard let repository, let path = file.new else {
+            fatalError(.invalid)
+        }
+        if flag {
+            repository.stage(path: path).mustSucceed()
         } else {
-            await stageOrUnstageTapped(stage: stage, deltaInfos: trackedDeltaInfos)
+            repository.unstage(path: path).mustSucceed()
         }
-    }
-    
-    func stageOrUnstageTapped(stage: Bool, deltaInfos: [DeltaInfo]) async {
-        for deltaInfo in deltaInfos {
-            switch deltaInfo.delta.status {
-            case .unmodified:
-                fatalError(.unexpected)
-            case .added, .modified, .copied, .untracked:
-                guard let newFilePath = deltaInfo.delta.newFile?.path else {
-                    fatalError(.invalid)
-                }
-                if stage {
-                    repository.stage(path: newFilePath).mustSucceed()
-                } else {
-                    repository.unstage(path: newFilePath).mustSucceed()
-                }
-            case .deleted:
-                guard let oldFilePath = deltaInfo.delta.oldFile?.path else {
-                    fatalError(.invalid)
-                }
-                if stage {
-                    repository.stage(path: oldFilePath).mustSucceed()
-                } else {
-                    repository.unstage(path: oldFilePath).mustSucceed()
-                }
-            case .renamed, .typeChange:
-                guard let oldFilePath = deltaInfo.delta.oldFile?.path,
-                      let newFilePath = deltaInfo.delta.newFile?.path else {
-                    fatalError(.invalid)
-                }
-                if stage {
-                    repository.stage(path: oldFilePath).mustSucceed()
-                    repository.stage(path: newFilePath).mustSucceed()
-                } else {
-                    repository.unstage(path: oldFilePath).mustSucceed()
-                    repository.unstage(path: newFilePath).mustSucceed()
-                }
-            case .ignored, .unreadable, .conflicted:
-                fatalError(.unimplemented)
-            }
-        }
-    }
-
-    func stageAllTapped() async {
-        repository.stage(path: ".").mustSucceed()
     }
 
     @discardableResult
     func commitTapped() async -> Commit {
+        guard let repository else {
+            fatalError(.invalid)
+        }
         let commit: Commit = repository.commit(message: commitSummary).mustSucceed()
         commitSummary = ""
         return commit
@@ -190,6 +198,9 @@ import Observation
     }
 
     func amendTapped() async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
         let headCommit: Commit = repository.commit().mustSucceed()
         var newMessage = commitSummary
         if newMessage.isEmptyOrWhitespace {
@@ -203,30 +214,36 @@ import Observation
         commitSummary = ""
     }
 
-    func ignoreTapped(deltaInfo: DeltaInfo) async {
-        guard let path = deltaInfo.newFilePath else {
+    func ignoreTapped(file: OldNewFile) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+        guard let path = file.new else {
             fatalError(.illegal)
         }
         repository.ignore(path)
     }
 
-    func discardTapped(deltaInfo: DeltaInfo) async {
-        let oldFileURL = deltaInfo.oldFileURL
-        let newFileURL = deltaInfo.newFileURL
+    func discardTapped(file: OldNewFile) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+        let oldFile = file.old
+        let newFile = file.new
         var fileURLs = [URL]()
 
-        if let oldFileURL, let newFileURL, oldFileURL == newFileURL {
-            fileURLs.append(oldFileURL)
+        if let oldFile, let newFile, oldFile == newFile {
+            fileURLs.append(URL(filePath: oldFile))
         } else {
-            if let oldFileURL {
-                fileURLs.append(oldFileURL)
+            if let oldFile {
+                fileURLs.append(URL(filePath: oldFile))
             }
-            if let newFileURL {
-                fileURLs.append(newFileURL)
+            if let newFile {
+                fileURLs.append(URL(filePath: newFile))
             }
         }
         for fileURL in fileURLs {
-            switch deltaInfo.delta.status {
+            switch file.status {
             case .unmodified, .ignored:
                 fatalError(.invalid)
             case .added, .copied, .untracked:
@@ -242,10 +259,10 @@ import Observation
             }
         }
     }
-    
-    func discardAlertTitle(deltaInfo: DeltaInfo) -> String {
-        let oldFilePath = deltaInfo.oldFilePath
-        let newFilePath = deltaInfo.newFilePath
+
+    func discardAlertTitle(file: OldNewFile) -> String {
+        let oldFilePath = file.old
+        let newFilePath = file.new
         var title: String = "Are you sure you want to discard all the changes"
 
         if let oldFilePath, let newFilePath, oldFilePath == newFilePath {
@@ -261,25 +278,28 @@ import Observation
     }
 
     func discardAllTapped() async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
         GitCLI.executeGit(repository, ["add", "."])
         GitCLI.executeGit(repository, ["reset", "--hard"])
     }
 
     func setInitialSelection() {
-        if currentDeltaInfo == nil {
-            var item: DeltaInfo?
-            if let firstItem = trackedDeltaInfos.first {
+        if currentFile == nil {
+            var item: OldNewFile?
+            if let firstItem = trackedFiles.values.first {
                 item = firstItem
-            } else if let firstItem = untrackedDeltaInfos.first {
+            } else if let firstItem = untrackedFiles.values.first {
                 item = firstItem
             }
             if let item {
-                currentDeltaInfo = item
+                currentFile = item
             }
         }
     }
 
     var hasChanges: Bool {
-        !trackedDeltaInfos.isEmpty || !untrackedDeltaInfos.isEmpty
+        !trackedFiles.isEmpty || !untrackedFiles.isEmpty
     }
 }

@@ -7,14 +7,11 @@
 
 import Foundation
 
-class BranchInfo: Identifiable, Equatable {
+class BranchInfo: Identifiable {
     var id: String {
         "\(branch.name).\(branch.commit.oid.description)"
     }
-    static func == (lhs: BranchInfo, rhs: BranchInfo) -> Bool {
-        lhs.id == rhs.id
-    }
-    
+
     let branch: Branch
     let repository: Repository
     let head: Head
@@ -25,7 +22,6 @@ class BranchInfo: Identifiable, Equatable {
             return _commits
         }
 
-        print("get commits")
         var commits: [SelectableCommit] = []
 
         let commitIterator = CommitIterator(repo: repository, root: branch.oid.oid)

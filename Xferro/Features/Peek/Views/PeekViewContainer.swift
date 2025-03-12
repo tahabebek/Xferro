@@ -8,25 +8,26 @@
 import SwiftUI
 
 struct PeekViewContainer: View {
-    @Binding var currentDeltaInfo: DeltaInfo?
-    @Binding var trackedDeltaInfos: [DeltaInfo]
-    @Binding var untrackedDeltaInfos: [DeltaInfo]
+    @Binding var currentFile: OldNewFile?
+    @Binding var trackedFiles: [OldNewFile]
+    @Binding var untrackedFiles: [OldNewFile]
+    @Binding var timeStamp: Date
+    @State var intitalDiffLoadIsComplete: Bool = false
 
-    let head: Head
-    let onTapTrack: (DeltaInfo) -> Void
-    let onTapIgnore: (DeltaInfo) -> Void
-    let onTapDiscard: (DeltaInfo) -> Void
+    let onTapTrack: (OldNewFile) -> Void
+    let onTapIgnore: (OldNewFile) -> Void
+    let onTapDiscard: (OldNewFile) -> Void
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: 12) {
-                    ForEach($trackedDeltaInfos) { deltaInfo in
-                        PeekView(deltaInfo: deltaInfo)
+                    ForEach($trackedFiles) { file in
+                        PeekView(file: file, timeStamp: $timeStamp)
                     }
-                    ForEach($untrackedDeltaInfos) { deltaInfo in
+                    ForEach($untrackedFiles) { file in
                         UntrackedPeekView(
-                            deltaInfo: deltaInfo,
+                            file: file,
                             onTapTrack: onTapTrack,
                             onTapIgnore: onTapIgnore,
                             onTapDiscard: onTapDiscard
@@ -34,30 +35,22 @@ struct PeekViewContainer: View {
                     }
                 }
             }
-            .onChange(of: currentDeltaInfo) { _, deltaInfo in
-                if let id = deltaInfo?.id {
-                    withAnimation {
+            .onChange(of: currentFile?.id) { _, id in
+                withAnimation {
+                    if let id {
                         proxy.scrollTo(id, anchor: .top)
                     }
                 }
             }
+            .task(id: timeStamp) {
+                if !intitalDiffLoadIsComplete {
+                    intitalDiffLoadIsComplete = true
+                    for file in trackedFiles {
+                        await file.setDiffInfo()
+                    }
+                }
+            }
             .padding(.leading, 12)
-        }
-        .onChange(of: trackedDeltaInfos) { oldValue, newValue in
-            for deltaInfo in trackedDeltaInfos {
-                Task {
-                    await deltaInfo.setDiffInfo(head: head)
-                    await Task.yield()
-                }
-            }
-        }
-        .task {
-            for deltaInfo in trackedDeltaInfos {
-                Task {
-                    await deltaInfo.setDiffInfo(head: head)
-                    await Task.yield()
-                }
-            }
         }
     }
 }

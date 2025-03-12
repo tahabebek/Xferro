@@ -20,7 +20,6 @@ struct StatusActionView: View {
     let onBoxActionTapped: (StatusActionButtonsView.BoxAction) async -> Void
 
     var body: some View {
-
         VStack {
             HStack {
                 Form {

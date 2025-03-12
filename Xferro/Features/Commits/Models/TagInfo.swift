@@ -8,13 +8,9 @@
 
 import Foundation
 
-class TagInfo: Identifiable, Equatable {
+class TagInfo: Identifiable {
     var id: String {
         "\(tag.id)"
-    }
-
-    static func == (lhs: TagInfo, rhs: TagInfo) -> Bool {
-        lhs.id == rhs.id
     }
 
     init(tag: SelectableDetachedTag, repository: Repository, head: Head, _commits: [SelectableDetachedCommit]? = nil) {
@@ -33,7 +29,6 @@ class TagInfo: Identifiable, Equatable {
         if let _commits {
             return _commits
         }
-        print("get commits")
         let commits = await detachedAncestorCommitsOf(owner: SelectableDetachedCommit.Owner.tag(tag.tag))
         _commits = commits
         return commits

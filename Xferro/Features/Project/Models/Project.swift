@@ -37,7 +37,7 @@ import Observation
     }
 }
 
-extension Project: Identifiable, Hashable, Equatable {
+extension Project: Identifiable, Hashable {
     var id: URL { url }
     static func == (lhs: Project, rhs: Project) -> Bool {
         lhs.url == rhs.url

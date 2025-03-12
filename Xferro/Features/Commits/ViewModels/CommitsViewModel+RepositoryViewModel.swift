@@ -12,7 +12,6 @@ extension CommitsViewModel {
         let newRepositoryInfo: RepositoryViewModel = RepositoryViewModel(repository: repository)
 
         newRepositoryInfo.onGitChange = { [weak self, weak newRepositoryInfo] type in
-            print("on git change called, type: \(type)")
             guard let self, let newRepositoryInfo else { return }
             Task {
                 await MainActor.run { [weak self] in
@@ -100,7 +99,6 @@ extension CommitsViewModel {
         return newRepositoryInfo
     }
     private func stashes(of repositoryInfo: RepositoryViewModel) -> [SelectableStash] {
-        print("get stashes")
         var stashes = [SelectableStash]()
 
         try? repositoryInfo.repository.stashes().get().forEach { stash in
@@ -124,7 +122,6 @@ extension CommitsViewModel {
     }
 
     private func allBranches(of repositoryInfo: RepositoryViewModel) -> (local: [Branch], remote: [Branch]) {
-        print("get all branches")
         var localBranches: [Branch] = []
         var remoteBranches: [Branch] = []
         let branchIterator = BranchIterator(repo: repositoryInfo.repository, type: .all)
@@ -158,7 +155,6 @@ extension CommitsViewModel {
     }
 
     private func localBranches(of repositoryInfo: RepositoryViewModel) -> [Branch] {
-        print("get local branches")
         var branches: [Branch] = []
         let branchIterator = BranchIterator(repo: repositoryInfo.repository, type: .local)
 
@@ -184,7 +180,6 @@ extension CommitsViewModel {
     }
 
     private func detachedTag(of repositoryInfo: RepositoryViewModel) -> TagInfo? {
-        print("get detached tag")
         switch repositoryInfo.head {
         case .branch:
             return nil
@@ -212,7 +207,6 @@ extension CommitsViewModel {
         }
     }
     private func detachedCommit(of repositoryInfo: RepositoryViewModel) -> DetachedCommitInfo? {
-        print("get detached commit")
         switch repositoryInfo.head {
         case .branch, .tag:
             return nil
@@ -231,7 +225,6 @@ extension CommitsViewModel {
         }
     }
     private func tags(of repositoryInfo: RepositoryViewModel) -> [TagInfo] {
-        print("get tags")
         var tags: [TagInfo] = []
 
         try? repositoryInfo.repository.allTags().get()
@@ -252,7 +245,6 @@ extension CommitsViewModel {
 
 #warning("history not implemented")
     private func historyCommits(of repositoryInfo: RepositoryViewModel) -> [SelectableHistoryCommit] {
-        print("get history commits")
         return []
     }
 }

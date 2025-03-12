@@ -7,13 +7,8 @@
 
 import Foundation
 
-final class Patch: Equatable, Identifiable
+final class Patch
 {
-    static func == (lhs: Patch, rhs: Patch) -> Bool
-    {
-        lhs.patch == rhs.patch && lhs.oldData == rhs.oldData && lhs.newData == rhs.newData
-    }
-
     let patch: OpaquePointer // git_patch
 
     // Data buffers need to be kept because the patch references them
@@ -132,7 +127,6 @@ final class Patch: Equatable, Identifiable
     func hunk(
         at index: Int,
         delta: Diff.Delta,
-        type: StatusType,
         repository: Repository
     ) -> DiffHunk?
     {
@@ -146,7 +140,6 @@ final class Patch: Equatable, Identifiable
             hunkIndex: index,
             patch: self,
             delta: delta,
-            type: type,
             repostiory: repository
         )
     }

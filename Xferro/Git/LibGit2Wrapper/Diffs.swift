@@ -48,7 +48,7 @@ struct Diff {
     struct Delta: CustomDebugStringConvertible, Identifiable, Hashable, Equatable {
         var id: String { statusName + flags.debugDescription + (oldFile?.path ?? "") + (newFile?.path ?? "") }
 
-        enum Status: UInt32, CustomDebugStringConvertible, Hashable {
+        enum Status: UInt32, CustomDebugStringConvertible, Hashable, Equatable {
             case unmodified     = 0     /**< no changes */
             case added          = 1     /**< entry does not exist in old version */
             case deleted        = 2     /**< entry does not exist in new version */

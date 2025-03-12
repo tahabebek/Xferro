@@ -79,6 +79,7 @@ struct SelectableStatus: SelectableItem, Identifiable {
     let repositoryId: String
     let repositoryName: String
     let repositoryGitDir: String
+    var timestamp: Date
 
     init(repositoryInfo: RepositoryViewModel) {
         self.repositoryName = repositoryInfo.repository.nameOfRepo
@@ -86,6 +87,7 @@ struct SelectableStatus: SelectableItem, Identifiable {
         self.repositoryGitDir = repositoryInfo.repository.gitDir.path
         self.type = StatusType.of(gitDir: repositoryInfo.repository.gitDir.path, head: repositoryInfo.head)
         self.statusEntries = repositoryInfo.status
+        self.timestamp = Date()
     }
 
     init(
@@ -100,6 +102,7 @@ struct SelectableStatus: SelectableItem, Identifiable {
         self.repositoryGitDir = repositoryGitDir
         self.type = type
         self.statusEntries = statusEntries
+        self.timestamp = Date()
     }
 }
 

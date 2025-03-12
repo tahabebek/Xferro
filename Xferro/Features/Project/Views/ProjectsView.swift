@@ -16,7 +16,7 @@ struct ProjectsView: View {
             Spacer()
             HStack {
                 Spacer()
-                if let commitsViewModel = viewModel.commitsViewModel() {
+                if let commitsViewModel = viewModel.commitsViewModel {
                     ProjectView(commitsViewModel: commitsViewModel)
                 } else {
                     FolderPickerView(viewModel: folderPickerViewModel)

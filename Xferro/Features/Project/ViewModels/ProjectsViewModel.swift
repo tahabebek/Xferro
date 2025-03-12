@@ -12,16 +12,27 @@ import Observation
     var user: User
 
     init?(user: User?) {
+        git_libgit2_init()
         guard let user else { return nil }
-        print("init ProjectsViewModel")
         self.user = user
+        if user.projects.isNotEmpty {
+            var repositories: [Repository] = []
+            for project in user.projects {
+                let repository = Repository.at(project.url).mustSucceed()
+                repositories.append(repository)
+            }
+            guard repositories.isNotEmpty else { return nil }
+            let commitsViewModel = CommitsViewModel(repositories: repositories, user: user) { [weak self] url, commitsViewModel in
+                guard let self else { return }
+                userDidSelectFolder(url, commitsViewModel: commitsViewModel)
+            }
+            self.commitsViewModel = commitsViewModel
+        } else {
+            self.commitsViewModel = nil
+        }
     }
 
-    deinit {
-        print("deinit ProjectsViewModel")
-    }
-
-    private var _commitsViewModel: CommitsViewModel?
+    var commitsViewModel: CommitsViewModel?
 
     func userDidSelectFolder(_ url: URL, commitsViewModel: CommitsViewModel? = nil) {
         let isGit = isFolderGit(url: url)
@@ -33,26 +44,6 @@ import Observation
                 }
             }
         }
-    }
-
-    func commitsViewModel() -> CommitsViewModel? {
-        if let _commitsViewModel {
-            return _commitsViewModel
-        }
-        guard user.projects.isNotEmpty else { return nil }
-        var repositories: [Repository] = []
-        for project in user.projects {
-            if let repository = try? Repository.at(project.url).get() {
-                repositories.append(repository)
-            }
-        }
-        guard repositories.isNotEmpty else { return nil }
-        let commitsViewModel = CommitsViewModel(repositories: repositories, user: user) { [weak self] url, commitsViewModel in
-            guard let self else { return }
-            userDidSelectFolder(url, commitsViewModel: commitsViewModel)
-        }
-        _commitsViewModel = commitsViewModel
-        return commitsViewModel
     }
 
     private func isFolderGit(url: URL) -> Bool {

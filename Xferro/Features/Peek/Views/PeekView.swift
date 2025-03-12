@@ -8,13 +8,15 @@
 import SwiftUI
 
 struct PeekView: View {
-    @Binding var deltaInfo: DeltaInfo
+    @Binding var file: OldNewFile
+    @Binding var timeStamp: Date
+    @State var intitalDiffLoadIsComplete: Bool = false
 
     var body: some View {
         Group {
-            if let diffInfo = deltaInfo.diffInfo {
+            if let diffInfo = file.diffInfo {
                 VStack(spacing: 0) {
-                    PeekViewHeader(statusFileName: deltaInfo.statusFileName, countString: countString)
+                    PeekViewHeader(statusFileName: file.statusFileName, countString: countString)
                         .background(Color.clear)
                         .padding(.horizontal, 8)
                     Divider()
@@ -33,10 +35,10 @@ struct PeekView: View {
                                     set: { _ in }
                                 ),
                                 onDiscardPart: {
-                                    deltaInfo.discardPart($0)
+                                    file.discardPart($0)
                                 },
                                 onDiscardLine: {
-                                    deltaInfo.discardLine($0)
+                                    file.discardLine($0)
                                 }
                             )
                         }
@@ -47,7 +49,7 @@ struct PeekView: View {
                 .background(Color.clear)
             } else {
                 VStack(spacing: 0) {
-                    PeekViewHeader(statusFileName: deltaInfo.statusFileName, countString: countString)
+                    PeekViewHeader(statusFileName: file.statusFileName, countString: countString)
                         .background(Color.clear)
                         .padding(.horizontal, 8)
                     Divider()
@@ -72,10 +74,21 @@ struct PeekView: View {
             x: 0,
             y: 3
         )
+        .onChange(of: timeStamp) {
+            Task {
+                await file.setDiffInfo()
+            }
+        }
+        .task(id: timeStamp) {
+            if !intitalDiffLoadIsComplete {
+                intitalDiffLoadIsComplete = true
+                await file.setDiffInfo()
+            }
+        }
     }
 
     var countString: String {
-        if let diffInfo = deltaInfo.diffInfo {
+        if let diffInfo = file.diffInfo {
             switch diffInfo {
             case _ as NoDiffInfo, _ as BinaryDiffInfo:
                 ""

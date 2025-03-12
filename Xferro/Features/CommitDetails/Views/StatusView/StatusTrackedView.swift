@@ -8,42 +8,42 @@
 import SwiftUI
 
 struct StatusTrackedView: View {
-    @Binding var currentDeltaInfo: DeltaInfo?
-    @Binding var deltaInfos: [DeltaInfo]
+    @Binding var currentFile: OldNewFile?
+    @Binding var files: [OldNewFile]
 
-    let onTapInclude: (DeltaInfo) -> Void
-    let onTapExclude: (DeltaInfo) -> Void
-    let onTapDiscard: (DeltaInfo) -> Void
+    let onTapInclude: (OldNewFile) -> Void
+    let onTapExclude: (OldNewFile) -> Void
+    let onTapDiscard: (OldNewFile) -> Void
     let onTapIncludeAll: () -> Void
     let onTapExcludeAll: () -> Void
 
     var body: some View {
         Section {
             Group {
-                ForEach($deltaInfos) { deltaInfo in
+                ForEach($files) { file in
                     HStack {
                         StatusTrackedRowView(
-                            currentDeltaInfo: $currentDeltaInfo,
-                            deltaInfo: deltaInfo,
-                            onTapInclude: { onTapInclude(deltaInfo.wrappedValue) },
-                            onTapExclude: { onTapExclude(deltaInfo.wrappedValue) },
-                            onTapDiscard: { onTapDiscard(deltaInfo.wrappedValue) }
+                            currentFile: $currentFile,
+                            file: file,
+                            onTapInclude: { onTapInclude(file.wrappedValue) },
+                            onTapExclude: { onTapExclude(file.wrappedValue) },
+                            onTapDiscard: { onTapDiscard(file.wrappedValue) }
                         )
                     }
                 }
             }
         } header: {
             HStack {
-                Text("\(deltaInfos.count) changed \(deltaInfos.count == 1 ? "file" : "files")")
+                Text("\(files.count) changed \(files.count == 1 ? "file" : "files")")
                 Spacer()
-                if deltaInfos.allSatisfy({ $0.checkState == CheckboxState.checked }) {
+                if files.allSatisfy({ $0.checkState == CheckboxState.checked }) {
                     XFerroButton(
                         title: "Unselect All",
                         onTap: {
                             onTapExcludeAll()
                         }
                     )
-                } else if deltaInfos.allSatisfy({ $0.checkState == CheckboxState.unchecked }) {
+                } else if files.allSatisfy({ $0.checkState == CheckboxState.unchecked }) {
                     XFerroButton(
                         title: "Select All",
                         onTap: {
@@ -68,6 +68,6 @@ struct StatusTrackedView: View {
             }
             .padding(.bottom, 4)
         }
-        .animation(.default, value: deltaInfos)
+        .animation(.default, value: files.count)
     }
 }

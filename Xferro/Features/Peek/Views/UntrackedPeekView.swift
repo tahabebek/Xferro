@@ -8,17 +8,16 @@
 import SwiftUI
 
 struct UntrackedPeekView: View {
-    @Binding var deltaInfo: DeltaInfo
+    @Binding var file: OldNewFile
 
-    let onTapTrack: (DeltaInfo) -> Void
-    let onTapIgnore: (DeltaInfo) -> Void
-    let onTapDiscard: (DeltaInfo) -> Void
+    let onTapTrack: (OldNewFile) -> Void
+    let onTapIgnore: (OldNewFile) -> Void
+    let onTapDiscard: (OldNewFile) -> Void
 
     var body: some View {
-//        let _ = Self._printChanges()
         Group {
             VStack(spacing: 0) {
-                PeekViewHeader(statusFileName: deltaInfo.statusFileName, countString: "")
+                PeekViewHeader(statusFileName: file.statusFileName, countString: "")
                     .background(Color.clear)
                     .padding(.horizontal, 8)
                 Divider()
@@ -26,7 +25,7 @@ struct UntrackedPeekView: View {
                     Spacer()
                     HStack {
                         Spacer()
-                        Text("\(deltaInfo.statusFileName) is untracked.")
+                        Text("\(file.statusFileName) is untracked.")
                         Spacer()
                     }
                     HStack {
@@ -35,7 +34,7 @@ struct UntrackedPeekView: View {
                             isProminent: false,
                             isSmall: true,
                             onTap: {
-                                onTapTrack(deltaInfo)
+                                onTapTrack(file)
                             }
                         )
                         .padding()
@@ -44,7 +43,7 @@ struct UntrackedPeekView: View {
                             isProminent: false,
                             isSmall: true,
                             onTap: {
-                                onTapIgnore(deltaInfo)
+                                onTapIgnore(file)
                             }
                         )
                         .padding()
@@ -54,7 +53,7 @@ struct UntrackedPeekView: View {
                             isProminent: false,
                             isSmall: true,
                             onTap: {
-                                onTapDiscard(deltaInfo)
+                                onTapDiscard(file)
                             }
                         )
                         .padding()

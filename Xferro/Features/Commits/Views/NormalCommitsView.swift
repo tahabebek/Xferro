@@ -38,6 +38,6 @@ struct NormalCommitsView: View {
                 Spacer()
             }
         }
-        .animation(.default, value: viewModel.currentRepositoryInfos)
+        .animation(.default, value: viewModel.currentRepositoryInfos.count)
     }
 }

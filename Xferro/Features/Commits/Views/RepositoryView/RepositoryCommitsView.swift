@@ -33,7 +33,7 @@ struct RepositoryCommitsView: View {
                     branchCount: localBranches.count,
                     selectableStatus: selectableStatus
                 ))
-                .animation(.default, value: detachedTag)
+                .animation(.default, value: detachedTag.id)
             } else if var detachedCommit {
                 DetachedCommitBranchView(viewModel: DetachedCommitBranchViewModel(
                     onUserTapped: onUserTapped,
@@ -44,7 +44,7 @@ struct RepositoryCommitsView: View {
                     branchCount: localBranches.count,
                     selectableStatus: selectableStatus
                 ))
-                .animation(.default, value: detachedCommit)
+                .animation(.default, value: detachedCommit.detachedCommit.id)
             }
             ForEach(localBranches) { branchInfo in
                 BranchView(viewModel: BranchViewModel(
@@ -58,7 +58,7 @@ struct RepositoryCommitsView: View {
                     branchCount: localBranches.count,
                     selectableStatus: selectableStatus
                 ))
-                .animation(.default, value: localBranches)
+                .animation(.default, value: localBranches.count)
             }
         }
     }

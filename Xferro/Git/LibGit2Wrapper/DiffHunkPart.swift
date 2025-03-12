@@ -7,16 +7,10 @@
 
 import Foundation
 
-@Observable final class DiffHunkPart: Equatable, Identifiable {
-    static func == (lhs: DiffHunkPart, rhs: DiffHunkPart) -> Bool {
-        lhs.id == rhs.id
-    }
-
-    var id: String {
-        "\(type.id).\(indexInHunk).\(isSelected).\(selectedLinesCount).\(oldFilePath ?? "").\(newFilePath ?? "")"
-    }
-
-    enum DiffHunkPartType: Equatable, Identifiable {
+@Observable final class DiffHunkPart: Identifiable {
+    let id = UUID()
+    
+    enum DiffHunkPartType: Identifiable {
         var id: String {
             switch self {
             case .context:

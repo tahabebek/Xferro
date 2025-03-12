@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct StatusUntrackedRowView: View {
-    @Binding var currentDeltaInfo: DeltaInfo?
-    @Binding var deltaInfo: DeltaInfo
+    @Binding var currentFile: OldNewFile?
+    @Binding var file: OldNewFile
     @State var isCurrent: Bool = false
 
     let onTapTrack: () -> Void
@@ -18,8 +18,8 @@ struct StatusUntrackedRowView: View {
 
     var body: some View {
         HStack {
-            Image(systemName: deltaInfo.statusImageName).foregroundColor(deltaInfo.statusColor)
-            Text(deltaInfo.statusFileName)
+            Image(systemName: file.statusImageName).foregroundColor(file.statusColor)
+            Text(file.statusFileName)
                 .statusRowText(isCurrent: $isCurrent)
             Spacer()
         }
@@ -27,23 +27,23 @@ struct StatusUntrackedRowView: View {
         .frame(minHeight: 24)
         .frame(maxHeight: 48)
         .onTapGesture {
-            currentDeltaInfo = deltaInfo
+            currentFile = file
         }
         .onAppear {
             updateIsCurrent()
         }
-        .onChange(of: currentDeltaInfo) {
+        .onChange(of: currentFile?.id) {
             updateIsCurrent()
         }
         .contextMenu {
-            Button("Discard \(deltaInfo.statusFileName)") {
+            Button("Discard \(file.statusFileName)") {
                 onTapDiscard()
             }
         }
     }
 
     private func updateIsCurrent() {
-        if let currentDeltaInfoId = currentDeltaInfo?.id, currentDeltaInfoId == deltaInfo.id {
+        if let currentFileId = currentFile?.id, currentFileId == file.id {
             isCurrent = true
         } else {
             isCurrent = false

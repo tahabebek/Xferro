@@ -8,29 +8,21 @@
 import Foundation
 import Observation
 
-@Observable class DiffLine: Identifiable, Equatable
+@Observable class DiffLine: Identifiable
 {
-    var id: String {
-        "\(type.id).\(oldLine).\(newLine).\(isSelected).\(indexInPart)"
-    }
-    static func == (lhs: DiffLine, rhs: DiffLine) -> Bool {
-        lhs.id == rhs.id
-    }
-
+    let id = UUID()
     let type: DiffLineType
-    let isTracked: Bool
     let gitDiffLine: git_diff_line
     var numberOfLinesInPart: Int = 0
     var isSelected: Bool
     var indexInPart: Int = 0
 
-    init(_ gitDiffLine: git_diff_line, isTracked: Bool) {
+    init(_ gitDiffLine: git_diff_line) {
         self.gitDiffLine = gitDiffLine
         self.type = DiffLineType(origin: gitDiffLine.origin)
         self.oldLine = gitDiffLine.old_lineno
         self.newLine = gitDiffLine.new_lineno
         self.isAdditionOrDeletion = self.type == .addition || self.type == .deletion
-        self.isTracked = isTracked
         self.text = if let text = NSString(
             bytes: gitDiffLine.content,
             length: gitDiffLine.content_len,
@@ -41,8 +33,6 @@ import Observation
             ""
         }
         if case .context = type {
-            self.isSelected = false
-        } else if !isTracked {
             self.isSelected = false
         } else {
             self.isSelected = true
@@ -55,7 +45,7 @@ import Observation
     let text: String
 }
 
-enum DiffLineType: Equatable, Hashable {
+enum DiffLineType: Hashable {
     var id: String {
         switch self {
         case .addition:

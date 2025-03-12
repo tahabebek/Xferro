@@ -5,22 +5,14 @@
 import Foundation
 import Observation
 
-@Observable final class DiffHunk: Identifiable, Equatable, Copyable
-{
-    static func == (lhs: DiffHunk, rhs: DiffHunk) -> Bool {
-        lhs.id == rhs.id
-    }
-
-    var id: String {
-        "\(delta.oldFilePath ?? "").\(delta.newFilePath ?? "").\(patch.id).\(hunkIndex).\(type)"
-    }
+@Observable final class DiffHunk: Identifiable, Copyable {
+    let id = UUID()
 
     var parts: [DiffHunkPart]
     let hunk: git_diff_hunk
     let hunkIndex: Int
     let patch: Patch
     let delta: Diff.Delta
-    let type: StatusType
     let repository: Repository
 
     var oldStart: Int32 { hunk.old_start }
@@ -40,14 +32,12 @@ import Observation
         hunkIndex: Int,
         patch: Patch,
         delta: Diff.Delta,
-        type: StatusType,
         repostiory: Repository
     ) {
         self.hunk = hunk
         self.hunkIndex = hunkIndex
         self.patch = patch
         self.delta = delta
-        self.type = type
         self.parts = []
         self.repository = repostiory
         self.hunkHeader = getHunkHeader(hunk: hunk)
@@ -288,7 +278,7 @@ import Observation
             let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
             fatalError(err.localizedDescription)
         }
-        return DiffLine(linePointer.pointee, isTracked: type != .untracked)
+        return DiffLine(linePointer.pointee)
     }
 
     func enumerateLines(_ callback: (DiffLine) -> Void)
@@ -302,17 +292,16 @@ import Observation
             })
             else { continue }
 
-            callback(DiffLine(line.pointee, isTracked: type != .untracked))
+            callback(DiffLine(line.pointee))
         }
     }
 
-    func copy() -> Self {
-        Self(
+    func copy() -> DiffHunk {
+        DiffHunk(
             hunk: hunk,
             hunkIndex: hunkIndex,
             patch: patch,
             delta: delta,
-            type: type,
             repostiory: repository
         )
     }

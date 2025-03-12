@@ -8,32 +8,32 @@
 import SwiftUI
 
 struct StatusUntrackedView: View {
-    @Binding var currentDeltaInfo: DeltaInfo?
-    @Binding var untrackedDeltaInfos: [DeltaInfo]
+    @Binding var currentFile: OldNewFile?
+    @Binding var files: [OldNewFile]
 
-    let onTapTrack: (DeltaInfo) -> Void
+    let onTapTrack: (OldNewFile) -> Void
     let onTapTrackAll: () -> Void
-    let onTapIgnore: (DeltaInfo) -> Void
-    let onTapDiscard: (DeltaInfo) -> Void
+    let onTapIgnore: (OldNewFile) -> Void
+    let onTapDiscard: (OldNewFile) -> Void
 
     var body: some View {
         Section {
             Group {
-                ForEach($untrackedDeltaInfos) { deltaInfo in
+                ForEach($files) { file in
                     HStack {
                         StatusUntrackedRowView(
-                            currentDeltaInfo: $currentDeltaInfo,
-                            deltaInfo: deltaInfo,
-                            onTapTrack: { onTapTrack(deltaInfo.wrappedValue) },
-                            onTapIgnore: { onTapIgnore(deltaInfo.wrappedValue) },
-                            onTapDiscard: { onTapDiscard(deltaInfo.wrappedValue) }
+                            currentFile: $currentFile,
+                            file: file,
+                            onTapTrack: { onTapTrack(file.wrappedValue) },
+                            onTapIgnore: { onTapIgnore(file.wrappedValue) },
+                            onTapDiscard: { onTapDiscard(file.wrappedValue) }
                         )
                         XFerroButton(
                             title: "Track",
                             isProminent: false,
                             isSmall: true,
                             onTap: {
-                                onTapTrack(deltaInfo.wrappedValue)
+                                onTapTrack(file.wrappedValue)
                             }
                         )
                         XFerroButton(
@@ -41,7 +41,7 @@ struct StatusUntrackedView: View {
                             isProminent: false,
                             isSmall: true,
                             onTap: {
-                                onTapIgnore(deltaInfo.wrappedValue)
+                                onTapIgnore(file.wrappedValue)
                             }
                         )
                         XFerroButton(
@@ -50,7 +50,7 @@ struct StatusUntrackedView: View {
                             isProminent: false,
                             isSmall: true,
                             onTap: {
-                                onTapDiscard(deltaInfo.wrappedValue)
+                                onTapDiscard(file.wrappedValue)
                             }
                         )
                     }
@@ -58,7 +58,7 @@ struct StatusUntrackedView: View {
             }
         } header: {
             HStack {
-                Text("\(untrackedDeltaInfos.count) untracked \(untrackedDeltaInfos.count == 1 ? "item" : "items")")
+                Text("\(files.count) untracked \(files.count == 1 ? "item" : "items")")
                 Spacer()
                 XFerroButton(
                     title: "Track All",
@@ -69,6 +69,6 @@ struct StatusUntrackedView: View {
             }
             .padding(.vertical, 4)
         }
-        .animation(.default, value: untrackedDeltaInfos)
+        .animation(.default, value: files.count)
     }
 }

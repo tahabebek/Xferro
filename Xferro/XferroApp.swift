@@ -51,9 +51,6 @@ struct SwiftSpaceApp: App {
                                 projectsViewModel = ProjectsViewModel(user: currentUser)
                             }
                         }
-//                        if let newValue, let currentUser = newValue.currentUser {
-//                            projectsViewModel = ProjectsViewModel(user: newValue)
-//                        }
                     }
                     .environment(\.windowSize, geometry.size)
                 }

@@ -8,19 +8,19 @@
 import SwiftUI
 
 struct StatusViewChangeView: View {
-    @Binding var currentDeltaInfo: DeltaInfo?
-    @Binding var trackedDeltaInfos: [DeltaInfo]
-    @Binding var untrackedDeltaInfos: [DeltaInfo]
+    @Binding var currentFile: OldNewFile?
+    @Binding var trackedFiles: [OldNewFile]
+    @Binding var untrackedFiles: [OldNewFile]
     let hasChanges: Bool
 
-    let onTapExclude: (DeltaInfo) -> Void
+    let onTapExclude: (OldNewFile) -> Void
     let onTapExcludeAll: () -> Void
-    let onTapInclude: (DeltaInfo) -> Void
+    let onTapInclude: (OldNewFile) -> Void
     let onTapIncludeAll: () -> Void
-    let onTapTrack: (DeltaInfo) -> Void
+    let onTapTrack: (OldNewFile) -> Void
     let onTapTrackAll: () -> Void
-    let onTapIgnore: (DeltaInfo) -> Void
-    let onTapDiscard: (DeltaInfo) -> Void
+    let onTapIgnore: (OldNewFile) -> Void
+    let onTapDiscard: (OldNewFile) -> Void
     
     var body: some View {
         ZStack {
@@ -31,10 +31,10 @@ struct StatusViewChangeView: View {
                     Text("No changes.")
                 }
                 LazyVStack(spacing: 4) {
-                    if trackedDeltaInfos.isNotEmpty {
+                    if trackedFiles.isNotEmpty {
                         StatusTrackedView(
-                            currentDeltaInfo: $currentDeltaInfo,
-                            deltaInfos: $trackedDeltaInfos,
+                            currentFile: $currentFile,
+                            files: $trackedFiles,
                             onTapInclude: onTapInclude,
                             onTapExclude: onTapExclude,
                             onTapDiscard: onTapDiscard,
@@ -42,10 +42,10 @@ struct StatusViewChangeView: View {
                             onTapExcludeAll: onTapExcludeAll
                         )
                     }
-                    if untrackedDeltaInfos.isNotEmpty {
+                    if untrackedFiles.isNotEmpty {
                         StatusUntrackedView(
-                            currentDeltaInfo: $currentDeltaInfo,
-                            untrackedDeltaInfos: $untrackedDeltaInfos,
+                            currentFile: $currentFile,
+                            files: $untrackedFiles,
                             onTapTrack: onTapTrack,
                             onTapTrackAll: onTapTrackAll,
                             onTapIgnore: onTapIgnore,

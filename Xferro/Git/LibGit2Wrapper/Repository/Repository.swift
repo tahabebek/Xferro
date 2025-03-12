@@ -7,17 +7,11 @@
 
 import Foundation
 
-class Repository: Identifiable, Equatable, Hashable {
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(pointer)
-    }
+class Repository: Identifiable {
+    let id = UUID()
     static let staticLock = NSRecursiveLock()
     let lock = NSRecursiveLock()
-    var id: ObjectIdentifier { ObjectIdentifier(self) }
 
-    static func == (lhs: Repository, rhs: Repository) -> Bool {
-        lhs.pointer == rhs.pointer
-    }
     /// The underlying libgit2 `git_repository` object.
     let pointer: OpaquePointer
 

@@ -8,7 +8,7 @@
 
 import Foundation
 
-class DetachedCommitInfo: Identifiable, Equatable {
+class DetachedCommitInfo: Identifiable {
     var id: String {
         detachedCommit.id
     }
@@ -35,7 +35,6 @@ class DetachedCommitInfo: Identifiable, Equatable {
         if let _commits {
             return _commits
         }
-        print("get commits")
         let commits = await detachedAncestorCommitsOf(owner: owner)
         _commits = commits
         return commits

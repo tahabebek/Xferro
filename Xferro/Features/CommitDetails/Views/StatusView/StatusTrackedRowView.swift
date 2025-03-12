@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct StatusTrackedRowView: View {
-    @Binding var currentDeltaInfo: DeltaInfo?
-    @Binding var deltaInfo: DeltaInfo
+    @Binding var currentFile: OldNewFile?
+    @Binding var file: OldNewFile
     @State var isCurrent: Bool = false
 
     let onTapInclude: () -> Void
@@ -18,43 +18,43 @@ struct StatusTrackedRowView: View {
 
     var body: some View {
         HStack {
-            TriStateCheckbox(state: $deltaInfo.checkState) {
-                switch deltaInfo.checkState {
+            TriStateCheckbox(state: $file.checkState) {
+                switch file.checkState {
                 case .unchecked, .partiallyChecked:
-                    deltaInfo.checkState = .checked
+                    file.checkState = .checked
                 case .checked:
-                    deltaInfo.checkState = .unchecked
+                    file.checkState = .unchecked
                 }
             }
             .frame(width: 16, height: 16)
             .padding(.trailing, 4)
-            Text(deltaInfo.statusFileName)
+            Text(file.statusFileName)
                 .statusRowText(isCurrent: $isCurrent)
             Spacer()
-            Image(systemName: deltaInfo.statusImageName).foregroundColor(deltaInfo.statusColor)
+            Image(systemName: file.statusImageName).foregroundColor(file.statusColor)
                 .frame(width: 24, height: 24)
         }
         .contentShape(Rectangle())
         .frame(minHeight: 24)
         .frame(maxHeight: 48)
         .onTapGesture {
-            currentDeltaInfo = deltaInfo
+            currentFile = file
         }
         .onAppear {
             updateIsCurrent()
         }
-        .onChange(of: currentDeltaInfo) {
+        .onChange(of: currentFile?.id) {
             updateIsCurrent()
         }
         .contextMenu {
-            Button("Discard changes in \(deltaInfo.statusFileName)") {
+            Button("Discard changes in \(file.statusFileName)") {
                 onTapDiscard()
             }
         }
     }
 
     private func updateIsCurrent() {
-        if let currentDeltaInfoId = currentDeltaInfo?.id, currentDeltaInfoId == deltaInfo.id {
+        if let currentFileId = currentFile?.id, currentFileId == file.id {
             isCurrent = true
         } else {
             isCurrent = false

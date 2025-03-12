@@ -50,15 +50,4 @@ import Observation
             }
         }
     }
-
-    static func == (lhs: DiffInfo, rhs: DiffInfo) -> Bool {
-        lhs.allHunks == rhs.allHunks &&
-        lhs.addedLinesCount == rhs.addedLinesCount &&
-        lhs.deletedLinesCount == rhs.deletedLinesCount &&
-        lhs.statusFileName == rhs.statusFileName
-    }
-
-    var id: String {
-        "\(statusFileName).\(addedLinesCount).\(deletedLinesCount).\(allHunks.count).\(allHunks.flatMap(\.id)).\(checkState)"
-    }
 }

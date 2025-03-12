@@ -59,4 +59,19 @@ extension FileManager {
     static func urls(in directory: FileManager.SearchPathDirectory, in domainMask: FileManager.SearchPathDomainMask) -> [URL] {
         FileManager.default.urls(for: directory, in: domainMask)
     }
+
+    static func lastModificationDate(of filePath: String) -> Date? {
+        let fileManager = FileManager.default
+
+        do {
+            let attributes = try fileManager.attributesOfItem(atPath: filePath)
+            if let modificationDate = attributes[.modificationDate] as? Date {
+                return modificationDate
+            }
+            return nil
+        } catch {
+            print("Error getting file attributes: \(error)")
+            return nil
+        }
+    }
 }

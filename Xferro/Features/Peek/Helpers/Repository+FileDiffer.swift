@@ -18,13 +18,13 @@ extension Repository {
         case workspace
     }
 
-    func diffMaker(deltaInfo: DeltaInfo, commitOID: OID, parentOID: OID?) -> PatchMaker.PatchResult?
+    func diffMaker(oldNewFile: OldNewFile, commitOID: OID, parentOID: OID?) -> PatchMaker.PatchResult?
     {
-        switch deltaInfo.delta.status {
+        switch oldNewFile.status {
         case .unmodified:
             return .noDifference
         case .added, .copied, .untracked, .modified:
-            guard let newFile = deltaInfo.newFilePath else {
+            guard let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
             let toCommit = commit(commitOID).mustSucceed()
@@ -49,7 +49,7 @@ extension Repository {
 
             return .diff(PatchMaker(repository: self, from: fromSource, to: toSource, path: newFile))
         case .deleted:
-            guard let oldFile = deltaInfo.oldFilePath else {
+            guard let oldFile = oldNewFile.old else {
                 fatalError(.invalid)
             }
             let toCommit = commit(commitOID).mustSucceed()
@@ -74,8 +74,8 @@ extension Repository {
 
             return .diff(PatchMaker(repository: self, from: fromSource, to: toSource, path: oldFile))
         case .renamed, .typeChange:
-            guard let oldFile = deltaInfo.delta.oldFile?.path,
-                  let newFile = deltaInfo.delta.newFile?.path else {
+            guard let oldFile = oldNewFile.old,
+                  let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
             let toCommit = commit(commitOID).mustSucceed()
@@ -107,13 +107,13 @@ extension Repository {
     }
 
     /// Returns a diff maker for a file in the index, compared to HEAD
-    func stagedDiff(head: Head, deltaInfo: DeltaInfo) -> PatchMaker.PatchResult
+    func stagedDiff(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult
     {
-        switch deltaInfo.delta.status {
+        switch oldNewFile.status {
         case .unmodified:
             return .noDifference
         case .added, .copied, .untracked:
-            guard let newFile = deltaInfo.newFilePath else {
+            guard let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
             guard isTextFile(newFile, context: .workspace) else {
@@ -127,7 +127,7 @@ extension Repository {
                 path: newFile)
             )
         case .deleted:
-            guard let oldFile = deltaInfo.oldFilePath else {
+            guard let oldFile = oldNewFile.old else {
                 fatalError(.invalid)
             }
             guard isTextFile(oldFile, context: .workspace) else {
@@ -142,7 +142,7 @@ extension Repository {
                 path: oldFile)
             )
         case .modified:
-            guard let newFile = deltaInfo.newFilePath else {
+            guard let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
             guard isTextFile(newFile, context: .workspace) else {
@@ -157,8 +157,8 @@ extension Repository {
                 path: newFile)
             )
         case .renamed, .typeChange:
-            guard let oldFile = deltaInfo.delta.oldFile?.path,
-                  let newFile = deltaInfo.delta.newFile?.path else {
+            guard let oldFile = oldNewFile.old,
+                  let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
             let indexBlob = stagedBlob(file: newFile)
@@ -197,19 +197,19 @@ extension Repository {
     }
 
     /// Returns a diff maker for a file in the workspace, compared to the index.
-    func unstagedDiff(head: Head, deltaInfo: DeltaInfo) -> PatchMaker.PatchResult
+    func unstagedDiff(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult
     {
-        switch deltaInfo.delta.status {
+        switch oldNewFile.status {
         case .unmodified:
             return .noDifference
         case .added, .copied, .untracked:
-            guard let newFile = deltaInfo.newFilePath else {
+            guard let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
             guard isTextFile(newFile, context: .workspace) else {
                 return .binary
             }
-            let newFileData = try! Data(contentsOf: deltaInfo.newFileURL!)
+            let newFileData = try! Data(contentsOf: URL(filePath: oldNewFile.new!))
             return .diff(PatchMaker(
                 repository: self,
                 from: .data(Data()),
@@ -217,7 +217,7 @@ extension Repository {
                 path: newFile)
             )
         case .deleted:
-            guard let oldFile = deltaInfo.oldFilePath else {
+            guard let oldFile = oldNewFile.old else {
                 fatalError(.invalid)
             }
             guard isTextFile(oldFile, context: .workspace) else {
@@ -231,13 +231,13 @@ extension Repository {
                 path: oldFile)
             )
         case .modified:
-            guard let newFile = deltaInfo.newFilePath else {
+            guard let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
             guard isTextFile(newFile, context: .workspace) else {
                 return .binary
             }
-            guard let newFileData = try? Data(contentsOf: deltaInfo.newFileURL!) else {
+            guard let newFileData = try? Data(contentsOf: URL(filePath: oldNewFile.new!)) else {
                 fatalError(.invalid)
             }
             let headBlob = fileBlob(head: head, path: newFile)
@@ -248,11 +248,11 @@ extension Repository {
                 path: newFile)
             )
         case .renamed, .typeChange:
-            guard let oldFile = deltaInfo.delta.oldFile?.path,
-                  let newFile = deltaInfo.delta.newFile?.path else {
+            guard let oldFile = oldNewFile.old,
+                  let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
-            let newFileData = try! Data(contentsOf: deltaInfo.newFileURL!)
+            let newFileData = try! Data(contentsOf: URL(filePath: oldNewFile.new!))
             let headBlob = fileBlob(head: head, path: oldFile)
             return .diff(PatchMaker(
                 repository: self,

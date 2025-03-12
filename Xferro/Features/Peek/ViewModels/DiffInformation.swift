@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol DiffInformation: Equatable, Identifiable {
+protocol DiffInformation: Identifiable {
     var hunks: () -> [DiffHunk] { get }
     var checkState: CheckboxState { get set }
     var statusFileName: String { get }
