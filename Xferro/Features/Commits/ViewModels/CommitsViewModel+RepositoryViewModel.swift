@@ -169,7 +169,7 @@ extension CommitsViewModel {
     }
 
     private func remoteBranchInfos(of repositoryInfo: RepositoryViewModel) -> [BranchInfo] {
-        repositoryInfo.repository.remoteBranches().mustSucceed()
+        repositoryInfo.repository.remoteBranches().mustSucceed(repositoryInfo.repository.gitDir)
             .map {
                 BranchInfo(
                     branch: $0,

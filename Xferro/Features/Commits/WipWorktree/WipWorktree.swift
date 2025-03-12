@@ -47,9 +47,9 @@ final class WipWorktree {
                 if GIT_EEXISTS.rawValue == error.code {
                     // this probably means the worktree folder is deleted by the user (or system) from the caches directory
                     deleteWipWorktree(for: repository)
-                    newBranch = repository.createBranch(branchName, oid: headOID).mustSucceed()
+                    newBranch = repository.createBranch(branchName, oid: headOID).mustSucceed(repository.gitDir)
                 } else {
-                    fatalError(.unhandledError)
+                    fatalError(.unhandledRepositoryError(repository.gitDir))
                 }
             }
             guard let newBranch else {
@@ -59,9 +59,9 @@ final class WipWorktree {
                 .addWorkTree(
                     name: worktreeName,
                     path: worktreeRepositoryURL.path
-                ).mustSucceed()
-            let worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
-            Head.checkout(repository: worktreeRepository, longName: newBranch.longName).mustSucceed()
+                ).mustSucceed(repository.gitDir)
+            let worktreeRepository = try! Repository.at(worktreeRepositoryURL).get()
+            Head.checkout(repository: worktreeRepository, longName: newBranch.longName).mustSucceed(worktreeRepository.gitDir)
             return WipWorktree(
                 worktreeRepository: worktreeRepository,
                 originalRepository: repository,
@@ -125,7 +125,7 @@ final class WipWorktree {
     static func deleteWipWorktree(for repository: Repository) {
         let worktreeName = WipWorktree.worktreeName(for: repository)
         let worktreePath = Self.worktreeRepositoryURL(originalRepository: repository).path
-        repository.pruneWorkTree(worktreeName, force: true).mustSucceed()
+        repository.pruneWorkTree(worktreeName, force: true).mustSucceed(repository.gitDir)
         if FileManager.fileExists(worktreePath) {
             try! FileManager.removeItem(URL(filePath: worktreePath, directoryHint: .isDirectory))
         }
@@ -133,7 +133,7 @@ final class WipWorktree {
         let branchIterator = BranchIterator(repo: repository, type: .local)
         while let branch = try? branchIterator.next()?.get() {
             if branch.name.hasPrefix(WipWorktree.wipBranchesPrefix) {
-                repository.deleteBranch(branch.name).mustSucceed()
+                repository.deleteBranch(branch.name).mustSucceed(repository.gitDir)
             }
         }
     }
@@ -162,18 +162,18 @@ final class WipWorktree {
         }
 
         if shouldDeleteBranch {
-            repository.deleteBranch(branchNameOfItemInWorktreeRepository).mustSucceed()
+            repository.deleteBranch(branchNameOfItemInWorktreeRepository).mustSucceed(repository.gitDir)
         } else {
-            worktreeRepository.reset(oid: item.selectableItem.oid , type: .hard).mustSucceed()
+            worktreeRepository.reset(oid: item.selectableItem.oid , type: .hard).mustSucceed(worktreeRepository.gitDir)
         }
     }
 
     static func worktreeRepository(of repository: Repository) -> Repository {
         let worktreeRepositoryURL = WipWorktree.worktreeRepositoryURL(originalRepository: repository)
-        guard Repository.isGitRepository(url: worktreeRepositoryURL).mustSucceed() else {
+        guard try! Repository.isGitRepository(url: worktreeRepositoryURL).get() else {
             fatalError(.impossible)
         }
-        let worktreeRepository = Repository.at(worktreeRepositoryURL).mustSucceed()
+        let worktreeRepository = try! Repository.at(worktreeRepositoryURL).get()
         guard worktreeRepository.isWorkTree else {
             fatalError(.illegal)
         }
@@ -196,7 +196,7 @@ final class WipWorktree {
     }
 
     func getBranch(branchName: String) -> Branch? {
-        worktreeRepository.localBranch(named: branchName).mustSucceed()
+        worktreeRepository.localBranch(named: branchName).mustSucceed(worktreeRepository.gitDir)
     }
 
     @discardableResult
@@ -205,11 +205,12 @@ final class WipWorktree {
             branchName,
             oid: oid,
             force: true
-        ).mustSucceed()
+        ).mustSucceed(worktreeRepository.gitDir)
     }
 
     func checkout(branchName: String) {
-        Head.checkout(repository: worktreeRepository, longName: branchName.longBranchRef,.init(strategy: .Force)).mustSucceed()
+        Head.checkout(repository: worktreeRepository, longName: branchName.longBranchRef,.init(strategy: .Force))
+            .mustSucceed(worktreeRepository.gitDir)
     }
 
     @discardableResult
@@ -218,12 +219,12 @@ final class WipWorktree {
     }
 
     func addToWorktreeIndex(path: String) {
-        worktreeRepository.stage(path: path).mustSucceed()
+        worktreeRepository.stage(path: path).mustSucceed(worktreeRepository.gitDir)
     }
 
     @discardableResult
     func commit(summary: String? = nil) -> Commit {
-        worktreeRepository.commit(message: summary ?? Self.wipCommitMessage).mustSucceed()
+        worktreeRepository.commit(message: summary ?? Self.wipCommitMessage).mustSucceed(worktreeRepository.gitDir)
     }
 
     func wipCommits(repositoryInfo: RepositoryViewModel, branchName: String) -> [SelectableWipCommit] {

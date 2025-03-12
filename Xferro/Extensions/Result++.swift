@@ -2,11 +2,12 @@ import Swift
 
 extension Result {
     @discardableResult
-    func mustSucceed() -> Success {
+    func mustSucceed(_ gitDir: URL) -> Success {
         switch self {
         case .success(let value):
             return value
         case .failure(let error):
+            try? FileManager.removeItem(gitDir.appendingPathComponent("index.lock"))
             fatalError(error.localizedDescription)
         }
     }

@@ -63,14 +63,14 @@ enum Head: Codable, Equatable {
     static func of(_ repository: Repository) -> Head {
         guard let headRef = try? repository.HEAD().get() else {
             repository.createEmptyCommit()
-            let newHeadRef = repository.HEAD().mustSucceed()
+            let newHeadRef = repository.HEAD().mustSucceed(repository.gitDir)
             return getHeadWithReference(repository, newHeadRef)
         }
         return getHeadWithReference(repository, headRef)
     }
 
     static func of(worktree: String, in repository: Repository) -> Head {
-        getHeadWithReference(repository, repository.HEAD(for: worktree).mustSucceed())
+        getHeadWithReference(repository, repository.HEAD(for: worktree).mustSucceed(repository.gitDir))
     }
 
     static func setHead(repository: Repository, oid: OID) -> Result<Void, NSError> {
@@ -86,7 +86,7 @@ enum Head: Codable, Equatable {
     }
 
     private static func getHeadWithReference(_ repository: Repository, _ headRef: ReferenceType) -> Head {
-        let headCommit = repository.commit(headRef.oid).mustSucceed()
+        let headCommit = repository.commit(headRef.oid).mustSucceed(repository.gitDir)
 
         return if let branchRef = headRef as? Branch {
             .branch(branchRef, headCommit)

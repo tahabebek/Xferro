@@ -8,6 +8,57 @@
 import Foundation
 
 extension Repository {
+    // target file should not be added to the index before calling this function
+    func applyPartiallyCheckedFileToIndex(patchContent: String, file: OldNewFile) {
+        print(patchContent)
+        var patchContentLines = patchContent.lines
+        patchContentLines.remove(at: 1)
+
+        let firstPrefix: String
+        let secondPrefix: String
+
+        if patchContentLines.first!.hasPrefix("diff --git a") {
+            firstPrefix = "diff --git a"
+            secondPrefix = "b"
+        } else {
+            firstPrefix = "diff --git b"
+            secondPrefix = "a"
+        }
+        let firstLine = patchContentLines.first!.droppingPrefix(firstPrefix)
+        let oldFileName = String(firstLine.split(separator: " ").first!)
+        let newFileName = String(firstLine.split(separator: " ").second!).droppingPrefix(secondPrefix)
+        let actualOldFileName = file.old != nil ? "/" + file.old! : ""
+        let actualNewFileName = file.new != nil ? "/" + file.new! : ""
+
+        for i in 0..<3 {
+            patchContentLines[i].replace(occurencesOf: oldFileName, with: actualOldFileName)
+            patchContentLines[i].replace(occurencesOf: newFileName, with: actualNewFileName)
+        }
+
+        let adjustedPatchContent = patchContentLines.joined(separator: "\n")
+        print(adjustedPatchContent)
+
+        var diffPointer: OpaquePointer?
+        var result = git_diff_from_buffer(&diffPointer, adjustedPatchContent, strlen(adjustedPatchContent))
+        guard result == GIT_OK.rawValue, let diffPointer else {
+            fatalError(.unhandledRepositoryError(gitDir))
+        }
+        defer { git_diff_free(diffPointer) }
+
+        var applyOpts = git_apply_options()
+        git_apply_options_init(&applyOpts, UInt32(GIT_APPLY_OPTIONS_VERSION))
+
+        result = git_apply(
+            pointer, diffPointer,
+            GIT_APPLY_LOCATION_INDEX,
+            &applyOpts
+        )
+        guard result == GIT_OK.rawValue else {
+            let err = NSError(gitError: result, pointOfFailure: "git_apply")
+            fatalError(err.localizedDescription)
+        }
+    }
+
     func discard(hunk: DiffHunk)
     {
         var encoding = String.Encoding.utf8
@@ -23,7 +74,7 @@ extension Repository {
                     GitCLI.executeGit(self, ["restore", url.path])
                 }
                 try? FileManager.removeItem(url.path)
-                stage(path: hunk.newFilePath!).mustSucceed()
+                stage(path: hunk.newFilePath!).mustSucceed(gitDir)
             } else {
                 fatalError(.invalid)
             }

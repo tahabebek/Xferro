@@ -5,7 +5,7 @@
 //  Created by Taha Bebek on 2/10/25.
 //
 
-public enum FatalErrorReason: String, Hashable {
+public enum FatalErrorReason: Hashable {
     case abstract
     case deprecated
     case illegal
@@ -16,7 +16,8 @@ public enum FatalErrorReason: String, Hashable {
     case unimplemented
     case unknown
     case unsupported
-    case unhandledError
+    case unhandledError(_ message: String)
+    case unhandledRepositoryError(_ gitDir: URL)
 }
 
 func fatalError(
@@ -38,7 +39,10 @@ func fatalError(
         fatalError("\(function) unimplemented", file: file, line: line)
     case .unsupported:
         fatalError("\(function) unsupported", file: file, line: line)
-    case .unhandledError:
+    case .unhandledError(let message):
+        fatalError("\(function) unhandled error: \(message)", file: file, line: line)
+    case .unhandledRepositoryError(let gitDir):
+        try? FileManager.removeItem(gitDir.appendingPathComponent("index.lock"))
         fatalError("\(function) unhandled error", file: file, line: line)
     default:
         fatalError()

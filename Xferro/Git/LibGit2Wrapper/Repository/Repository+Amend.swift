@@ -12,7 +12,7 @@ extension Repository {
     func amend(message: String) -> Result<Commit, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        let headCommit = commit().mustSucceed()
+        let headCommit = commit().mustSucceed(gitDir)
         var commit: OpaquePointer? = nil
         var oid = headCommit.oid.oid
         var result = git_commit_lookup(&commit, self.pointer, &oid)

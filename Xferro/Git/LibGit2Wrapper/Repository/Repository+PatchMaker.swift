@@ -27,9 +27,9 @@ extension Repository {
             guard let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
-            let toCommit = commit(commitOID).mustSucceed()
+            let toCommit = commit(commitOID).mustSucceed(gitDir)
 
-            let parentCommit = parentOID.flatMap { commit($0).mustSucceed() }
+            let parentCommit = parentOID.flatMap { commit($0).mustSucceed(gitDir) }
             guard isTextFile(newFile, context: .commit(toCommit)) ||
                     parentCommit.map({ isTextFile(newFile, context: .commit($0)) }) ?? false
             else { return .binary }
@@ -52,9 +52,9 @@ extension Repository {
             guard let oldFile = oldNewFile.old else {
                 fatalError(.invalid)
             }
-            let toCommit = commit(commitOID).mustSucceed()
+            let toCommit = commit(commitOID).mustSucceed(gitDir)
 
-            let parentCommit = parentOID.flatMap { commit($0).mustSucceed() }
+            let parentCommit = parentOID.flatMap { commit($0).mustSucceed(gitDir) }
             guard isTextFile(oldFile, context: .commit(toCommit)) ||
                     parentCommit.map({ isTextFile(oldFile, context: .commit($0)) }) ?? false
             else { return .binary }
@@ -78,9 +78,9 @@ extension Repository {
                   let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
-            let toCommit = commit(commitOID).mustSucceed()
+            let toCommit = commit(commitOID).mustSucceed(gitDir)
 
-            let parentCommit = parentOID.flatMap { commit($0).mustSucceed() }
+            let parentCommit = parentOID.flatMap { commit($0).mustSucceed(gitDir) }
             guard isTextFile(newFile, context: .commit(toCommit)) ||
                     parentCommit.map({ isTextFile(oldFile, context: .commit($0)) }) ?? false
             else { return .binary }
@@ -276,11 +276,11 @@ extension Repository {
 
     func stagedBlob(file: String) -> Blob?
     {
-        let index = index().mustSucceed()
+        let index = index().mustSucceed(gitDir)
         guard let entryOID = index.entry(at: file)?.oid else { return nil }
         return withGitObject(entryOID, type: GIT_OBJECT_BLOB) {
             Blob($0, lock: lock)
-        }.mustSucceed()
+        }.mustSucceed(gitDir)
     }
 
     func fileBlob(head: Head, path: String) -> Blob?
@@ -306,7 +306,7 @@ extension Repository {
         if case .blob(let oid) = toEntry.object {
             return withGitObject(oid, type: GIT_OBJECT_BLOB) {
                 Blob($0, lock: lock)
-            }.mustSucceed()
+            }.mustSucceed(gitDir)
         }
         return nil
     }
@@ -333,11 +333,11 @@ extension Repository {
                 return !blob.isBinary
             }
         case .index:
-            let index = index().mustSucceed()
+            let index = index().mustSucceed(gitDir)
             guard let entryOID = index.entry(at: path)?.oid else { return false }
             let blob = withGitObject(entryOID, type: GIT_OBJECT_BLOB) {
                 Blob($0, lock: lock)
-            }.mustSucceed()
+            }.mustSucceed(gitDir)
             return !blob.isBinary
         case .workspace:
             let url = self.fileURL(path)
@@ -382,7 +382,7 @@ extension Repository {
         if case .blob(let oid) = toEntry.object {
             return withGitObject(oid, type: GIT_OBJECT_BLOB) {
                 Blob($0, lock: lock)
-            }.mustSucceed()
+            }.mustSucceed(gitDir)
         }
         return nil
     }

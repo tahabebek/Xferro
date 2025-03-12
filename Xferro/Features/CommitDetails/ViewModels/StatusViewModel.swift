@@ -57,13 +57,11 @@ import OrderedCollections
                     let modifiedDate = FileManager.lastModificationDate(of: newFile.workDirNew!)!
                     if let cachedModificationDate = await lastModifiedCache[newFile.workDirNew!] {
                         if cachedModificationDate != modifiedDate {
-                            print("updated tracked file for \(newFile.workDirNew!)")
                             trackedFiles[key] = newFile
                         } else {
                             // do nothing
                         }
                     } else {
-                        print("updated uncached tracked file for \(newFile.workDirNew!)")
                         trackedFiles[key] = newFile
                         await lastModifiedCache.set(key: newFile.workDirNew!, value: modifiedDate)
                     }
@@ -147,7 +145,7 @@ import OrderedCollections
         return (trackedFiles, untrackedFiles)
     }
 
-    func actionTapped(_ action: StatusActionButtonsView.BoxAction) async {
+    func actionTapped(_ action: StatusActionButtonsView.BoxAction) async throws {
         switch action {
 //        case .splitAndCommit:
 //            await commitTapped()
@@ -155,13 +153,13 @@ import OrderedCollections
         case .amend:
             await amendTapped()
         case .commitAndPush:
-            await commitTapped()
+            try await commitTapped()
             fatalError(.unimplemented)
         case .amendAndPush:
             await amendTapped()
             fatalError(.unimplemented)
         case .commitAndForcePush:
-            await commitTapped()
+            try await commitTapped()
             fatalError(.unimplemented)
         case .amendAndForcePush:
             await amendTapped()
@@ -188,18 +186,90 @@ import OrderedCollections
             fatalError(.invalid)
         }
         if flag {
-            repository.stage(path: path).mustSucceed()
+            repository.stage(path: path).mustSucceed(repository.gitDir)
         } else {
-            repository.unstage(path: path).mustSucceed()
+            repository.unstage(path: path).mustSucceed(repository.gitDir)
         }
     }
 
     @discardableResult
-    func commitTapped() async -> Commit {
+    func commitTapped() async throws -> Commit {
         guard let repository else {
             fatalError(.invalid)
         }
-        let commit: Commit = repository.commit(message: commitSummary).mustSucceed()
+
+        GitCLI.executeGit(repository, ["restore", "--staged", "."])
+
+        for file in trackedFiles.values.elements where file.checkState == .checked {
+            guard file.new != nil || file.old != nil else {
+                fatalError(.invalid)
+            }
+
+            if let new = file.new {
+                GitCLI.executeGit(repository, ["add", new])
+            }
+            if let old = file.old {
+                GitCLI.executeGit(repository, ["add", old])
+            }
+        }
+
+        for file in trackedFiles.values.elements where file.checkState == .partiallyChecked {
+            guard let hunks = file.diffInfo?.hunks() else {
+                fatalError(.invalid)
+            }
+
+            let hunkCopies = hunks.map { $0.copy() }
+            let originalLines = hunks.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
+            let copyLines = hunkCopies.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
+            for i in 0..<originalLines.count {
+                copyLines[i].isSelected = !originalLines[i].isSelected
+            }
+
+            let selectedLines = copyLines.filter(\.isSelected)
+
+            switch file.status {
+            case .added, .copied, .renamed, .typeChange, .modified:
+                guard let new = file.new else {
+                    fatalError(.invalid)
+                }
+                GitCLI.executeGit(repository, ["add", new])
+
+                let patchContent = try await SelectedLinesDiffMaker.makeDiff(
+                    repository: repository,
+                    filePath: new,
+                    selectedLines: selectedLines,
+                    allHunks: hunkCopies,
+                    reverse: true
+                )
+                repository.applyPartiallyCheckedFileToIndex(
+                    patchContent: patchContent,
+                    file: file
+                )
+            case .deleted:
+                guard let old = file.old else {
+                    fatalError(.invalid)
+                }
+                let patchContent = try await SelectedLinesDiffMaker.makeDiff(
+                    repository: repository,
+                    filePath: old,
+                    selectedLines: selectedLines,
+                    allHunks: hunkCopies,
+                    reverse: true
+                )
+                GitCLI.executeGit(repository, ["add", old])
+                repository.applyPartiallyCheckedFileToIndex(
+                    patchContent: patchContent,
+                    file: file
+                )
+            case .ignored, .unreadable, .unmodified, .untracked:
+                fatalError(.invalid)
+            case .conflicted:
+                fatalError(.unimplemented)
+            }
+        }
+
+
+        let commit: Commit = repository.commit(message: commitSummary).mustSucceed(repository.gitDir)
         commitSummary = ""
         return commit
     }
@@ -212,7 +282,7 @@ import OrderedCollections
         guard let repository else {
             fatalError(.invalid)
         }
-        let headCommit: Commit = repository.commit().mustSucceed()
+        let headCommit: Commit = repository.commit().mustSucceed(repository.gitDir)
         var newMessage = commitSummary
         if newMessage.isEmptyOrWhitespace {
             newMessage = headCommit.summary
@@ -221,7 +291,7 @@ import OrderedCollections
         guard !newMessage.isEmptyOrWhitespace else {
             fatalError(.unsupported)
         }
-        repository.amend(message: newMessage).mustSucceed()
+        repository.amend(message: newMessage).mustSucceed(repository.gitDir)
         commitSummary = ""
     }
 
@@ -312,5 +382,17 @@ import OrderedCollections
 
     var hasChanges: Bool {
         !trackedFiles.isEmpty || !untrackedFiles.isEmpty
+    }
+
+    func selectAll(flag: Bool) async {
+        let keys = Set(trackedFiles.values.elements.map(\.key))
+        for key in keys {
+            if flag, trackedFiles[key]?.checkState == .checked { continue }
+            if !flag, trackedFiles[key]?.checkState == .unchecked { continue }
+            trackedFiles[key]?.checkState = flag ? .checked : .unchecked
+            for line in trackedFiles[key]?.diffInfo?.hunks().flatMap(\.parts).filter({ $0.type != .context }).flatMap(\.lines) ?? [] {
+                line.isSelected = flag
+            }
+        }
     }
 }

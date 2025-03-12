@@ -253,7 +253,6 @@ import OrderedCollections
         await MainActor.run {
             diffInfo = newDiffInfo
         }
-        print("setDiffInfo for \(path)")
     }
 
     func setDiffInfo() async {
@@ -294,7 +293,6 @@ import OrderedCollections
                     await MainActor.run {
                         diffInfo = newDiffInfo
                     }
-                    print("setDiffInfo for \(workDirOld)")
                 }
             } else {
                 if diffInfo == nil {
@@ -303,7 +301,6 @@ import OrderedCollections
                     await MainActor.run {
                         diffInfo = newDiffInfo
                     }
-                    print("setDiffInfo for \(workDirOld)")
                 }
             }
         case .unreadable, .conflicted:

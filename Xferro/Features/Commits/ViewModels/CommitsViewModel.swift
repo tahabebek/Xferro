@@ -209,7 +209,7 @@ import OrderedCollections
     }
 
     func deleteBranchTapped(repository: Repository, branchName: String) {
-        repository.deleteBranch(branchName).mustSucceed()
+        repository.deleteBranch(branchName).mustSucceed(repository.gitDir)
     }
 
     func usedDidSelectFolder(_ folder: URL) {

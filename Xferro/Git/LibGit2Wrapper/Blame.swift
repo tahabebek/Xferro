@@ -63,11 +63,11 @@ public final class Blame
                     var authorSig, committerSig: Signature!
 
                     if oid.isZero {
-                        authorSig = Signature.default(repository).mustSucceed()
+                        authorSig = Signature.default(repository).mustSucceed(repository.gitDir)
                         committerSig = authorSig
                     }
                     else {
-                        let commit = repository.commit(oid).mustSucceed()
+                        let commit = repository.commit(oid).mustSucceed(repository.gitDir)
 
                         authorSig = commit.author
                         committerSig = commit.committer

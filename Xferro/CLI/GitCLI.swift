@@ -59,12 +59,12 @@ enum GitCLI {
                                     code: Int(process.terminationStatus),
                                     userInfo: [NSLocalizedDescriptionKey: "Git failed: \(output)"])
                 print(error)
-                fatalError(.unhandledError)
+                fatalError(.unhandledRepositoryError(repository.gitDir))
             }
             return output
         } catch {
             print("Failed to run git: \(error)")
-            fatalError(.unhandledError)
+            fatalError(.unhandledRepositoryError(repository.gitDir))
         }
     }
 

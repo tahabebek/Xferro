@@ -18,7 +18,7 @@ import Observation
         if user.projects.isNotEmpty {
             var repositories: [Repository] = []
             for project in user.projects {
-                let repository = Repository.at(project.url).mustSucceed()
+                let repository = try! Repository.at(project.url).get()
                 repositories.append(repository)
             }
             guard repositories.isNotEmpty else { return nil }

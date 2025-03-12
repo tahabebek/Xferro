@@ -65,7 +65,7 @@ final class GitWatcher {
         self.stashChangePublisher = stashChangePublisher
         self.queue = TaskQueue(id: Self.taskQueueID(path: repository.workDir.path))
 
-        repository.references(withPrefix: "").mustSucceed().forEach { localBranchCache[$0.longName] = $0.oid }
+        repository.references(withPrefix: "").mustSucceed(repository.gitDir).forEach { localBranchCache[$0.longName] = $0.oid }
         let objectsPath = repository.gitDir.appendingPathComponent("objects").path
 
         let changeSubject = PassthroughSubject<Set<String>, Never>()
@@ -146,7 +146,7 @@ final class GitWatcher {
         defer { mutex.unlock() }
 
         var newRefCache = [String: OID]()
-        repository.references(withPrefix: "refs/remotes").mustSucceed().forEach { newRefCache[$0.longName] = $0.oid }
+        repository.references(withPrefix: "refs/remotes").mustSucceed(repository.gitDir).forEach { newRefCache[$0.longName] = $0.oid }
         let newKeys = Set(newRefCache.keys)
         let oldKeys = Set(remoteBranchCache.keys)
         let addedRefs = newKeys.subtracting(oldKeys)
@@ -183,7 +183,7 @@ final class GitWatcher {
         defer { mutex.unlock() }
 
         var newRefCache = [String: OID]()
-        repository.references(withPrefix: "refs/tags").mustSucceed().forEach { newRefCache[$0.longName] = $0.oid }
+        repository.references(withPrefix: "refs/tags").mustSucceed(repository.gitDir).forEach { newRefCache[$0.longName] = $0.oid }
         let newKeys = Set(newRefCache.keys)
         let oldKeys = Set(tagCache.keys)
         let addedRefs = newKeys.subtracting(oldKeys)
@@ -221,7 +221,7 @@ final class GitWatcher {
         defer { mutex.unlock() }
 
         var newRefCache = [String: OID]()
-        repository.references(withPrefix: "refs/heads").mustSucceed().forEach { newRefCache[$0.longName] = $0.oid }
+        repository.references(withPrefix: "refs/heads").mustSucceed(repository.gitDir).forEach { newRefCache[$0.longName] = $0.oid }
         let newKeys = Set(newRefCache.keys)
         let oldKeys = Set(localBranchCache.keys)
         let addedRefs = newKeys.subtracting(oldKeys)

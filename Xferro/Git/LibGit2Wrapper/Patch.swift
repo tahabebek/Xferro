@@ -32,7 +32,7 @@ final class Patch
         let newBlobResult = git_object_lookup_prefix(&newBlobPointer, repository.pointer, &newBlobOid, newBlob.oid.length, GIT_OBJECT_BLOB)
 
         guard oldBlobResult == GIT_OK.rawValue && newBlobResult == GIT_OK.rawValue else {
-            fatalError(.unhandledError)
+            fatalError(.unhandledRepositoryError(repository.gitDir))
         }
 
         let patch = try! OpaquePointer.from { patch in
@@ -52,7 +52,7 @@ final class Patch
         let oldBlobResult = git_object_lookup_prefix(&oldBlobPointer, repository.pointer, &oldBlobOid, oldBlob.oid.length, GIT_OBJECT_BLOB)
 
         guard oldBlobResult == GIT_OK.rawValue else {
-            fatalError(.unhandledError)
+            fatalError(.unhandledRepositoryError(repository.gitDir))
         }
 
         let patch = try! OpaquePointer.from { patch in

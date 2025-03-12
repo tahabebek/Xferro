@@ -13,7 +13,6 @@ final class StatusManager {
 
     private init() {}
 
-#warning("Fix locked repo crashes ( rm /Users/tahabebek/Projects/Xferro/.git/index.lock fixes it)")
 #warning("Check if you can use lsFiles for status view")
     //        let lsFiles = GitCLI.executeGit(self, ["ls-files", "--stage", filePath])
     //        print("ls-files: \(lsFiles)")
@@ -25,7 +24,7 @@ final class StatusManager {
             .renamesIndexToWorkdir,
             .sortCaseSensitively,
             .updateIndex
-        ]).mustSucceed()
+        ]).mustSucceed(repository.gitDir)
     }
 
     func isUntracked(relativePath: String, statusEntries: [StatusEntry]) -> Bool {

@@ -28,11 +28,11 @@ struct StatusView: View {
                             hasChanges: viewModel.hasChanges,
                             onCommitTapped: {
                                 Task {
-                                    await viewModel.commitTapped()
+                                    try? await viewModel.commitTapped()
                                 }
                             },
                             onBoxActionTapped: { action in
-                                await viewModel.actionTapped(action)
+                                try? await viewModel.actionTapped(action)
                             }
                         )
                         .padding()
@@ -50,12 +50,17 @@ struct StatusView: View {
                             ),
                             hasChanges: viewModel.hasChanges,
                             onTapExclude: { file in
-
+                                fatalError(.deprecated)
                             }, onTapExcludeAll: {
-
+                                Task {
+                                    await viewModel.selectAll(flag: false)
+                                }
                             }, onTapInclude: { file in
-
+                                fatalError(.deprecated)
                             }, onTapIncludeAll: {
+                                Task {
+                                    await viewModel.selectAll(flag: true)
+                                }
 
                             }, onTapTrack: { file in
                                 Task {
