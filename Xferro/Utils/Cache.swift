@@ -16,10 +16,6 @@ actor Cache<Value> {
         cache[key] = value
     }
 
-    private func remove(_ key: String) {
-        cache.removeValue(forKey: key)
-    }
-
     func clearAll() {
         cache.removeAll()
     }
@@ -36,6 +32,10 @@ actor Cache<Value> {
         get {
             return cache[key]
         }
+    }
+
+    func removeValue(forKey key: String) {
+        cache.removeValue(forKey: key)
     }
 }
 

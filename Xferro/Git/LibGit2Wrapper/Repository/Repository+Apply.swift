@@ -10,7 +10,6 @@ import Foundation
 extension Repository {
     // target file should not be added to the index before calling this function
     func applyPartiallyCheckedFileToIndex(patchContent: String, file: OldNewFile) {
-        print(patchContent)
         var patchContentLines = patchContent.lines
         patchContentLines.remove(at: 1)
 
@@ -36,7 +35,6 @@ extension Repository {
         }
 
         let adjustedPatchContent = patchContentLines.joined(separator: "\n")
-        print(adjustedPatchContent)
 
         var diffPointer: OpaquePointer?
         var result = git_diff_from_buffer(&diffPointer, adjustedPatchContent, strlen(adjustedPatchContent))
