@@ -110,6 +110,10 @@ extension String {
         }
         return .unknown
     }
+
+    var fileURL: URL? {
+        URL(filePath: self)
+    }
 }
 
 infix operator +/ : AdditionPrecedence

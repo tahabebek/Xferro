@@ -20,7 +20,11 @@ import OrderedCollections
     var repository: Repository?
     var selectableStatus: SelectableStatus?
 
-    func updateStatus(newSelectableStatus: SelectableStatus, repository: Repository?) async {
+    func updateStatus(
+        newSelectableStatus: SelectableStatus,
+        repository: Repository?,
+        head: Head
+    ) async {
         guard let repository else {
             return
         }
@@ -28,7 +32,11 @@ import OrderedCollections
             fatalError(.invalid)
         }
 
-        let (newTrackedFiles, newUntrackedFiles) = getTrackedAndUntrackedFiles(repository: repository, newSelectableStatus: newSelectableStatus)
+        let (newTrackedFiles, newUntrackedFiles) = await getTrackedAndUntrackedFiles(
+            repository: repository,
+            newSelectableStatus: newSelectableStatus,
+            head: head
+        )
 
         if selectableStatus != nil {
             let oldKeys = Set(trackedFiles.values.elements.map(\.key))
@@ -80,8 +88,9 @@ import OrderedCollections
 
     private func getTrackedAndUntrackedFiles(
         repository: Repository,
-        newSelectableStatus: SelectableStatus
-    ) -> (OrderedDictionary<String, OldNewFile>, OrderedDictionary<String, OldNewFile>) {
+        newSelectableStatus: SelectableStatus,
+        head: Head
+    ) async -> (OrderedDictionary<String, OldNewFile>, OrderedDictionary<String, OldNewFile>) {
         var addedFiles: Set<String> = []
 
         var trackedFiles: OrderedDictionary<String, OldNewFile> = [:]
@@ -101,6 +110,7 @@ import OrderedCollections
                         new: delta.newFilePath,
                         status: delta.status,
                         repository: repository,
+                        head: head,
                         key: key
                     )
             case .unreadable:
@@ -113,6 +123,7 @@ import OrderedCollections
                         new: delta.newFilePath,
                         status: delta.status,
                         repository: repository,
+                        head: head,
                         key: key
                     )
             }
@@ -228,18 +239,18 @@ import OrderedCollections
         guard let repository else {
             fatalError(.invalid)
         }
-        let oldFile = file.old
-        let newFile = file.new
+        let oldFile = file.workDirOld
+        let newFile = file.workDirNew
         var fileURLs = [URL]()
 
         if let oldFile, let newFile, oldFile == newFile {
-            fileURLs.append(URL(filePath: oldFile))
+            fileURLs.append(oldFile.fileURL!)
         } else {
             if let oldFile {
-                fileURLs.append(URL(filePath: oldFile))
+                fileURLs.append(oldFile.fileURL!)
             }
             if let newFile {
-                fileURLs.append(URL(filePath: newFile))
+                fileURLs.append(newFile.fileURL!)
             }
         }
         for fileURL in fileURLs {

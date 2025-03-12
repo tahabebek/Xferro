@@ -18,7 +18,7 @@ extension Repository {
         case workspace
     }
 
-    func diffMaker(oldNewFile: OldNewFile, commitOID: OID, parentOID: OID?) -> PatchMaker.PatchResult?
+    func patchMaker(oldNewFile: OldNewFile, commitOID: OID, parentOID: OID?) -> PatchMaker.PatchResult?
     {
         switch oldNewFile.status {
         case .unmodified:
@@ -106,8 +106,7 @@ extension Repository {
         }
     }
 
-    /// Returns a diff maker for a file in the index, compared to HEAD
-    func stagedDiff(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult
+    func patchMakerForAStagedFileComparedToHEAD(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult
     {
         switch oldNewFile.status {
         case .unmodified:
@@ -176,8 +175,7 @@ extension Repository {
         }
     }
 
-    /// Returns a diff maker for a file in the index, compared to HEAD-1.
-    func amendingStagedDiff(head: Head, file: String) -> PatchMaker.PatchResult?
+    func patchMakerForAStagedFileComparedToHEAD1(head: Head, file: String) -> PatchMaker.PatchResult?
     {
         guard isTextFile(file, context: .index)
         else { return .binary }
@@ -196,8 +194,7 @@ extension Repository {
         )
     }
 
-    /// Returns a diff maker for a file in the workspace, compared to the index.
-    func unstagedDiff(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult
+    func patchMakerForAFileInTeWorkspaceComparedToHead(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult
     {
         switch oldNewFile.status {
         case .unmodified:
@@ -209,7 +206,7 @@ extension Repository {
             guard isTextFile(newFile, context: .workspace) else {
                 return .binary
             }
-            let newFileData = try! Data(contentsOf: URL(filePath: oldNewFile.new!))
+            let newFileData = try! Data(contentsOf: workDir.appendingPathComponent(newFile))
             return .diff(PatchMaker(
                 repository: self,
                 from: .data(Data()),
@@ -237,7 +234,7 @@ extension Repository {
             guard isTextFile(newFile, context: .workspace) else {
                 return .binary
             }
-            guard let newFileData = try? Data(contentsOf: URL(filePath: oldNewFile.new!)) else {
+            guard let newFileData = try? Data(contentsOf: workDir.appendingPathComponent(newFile)) else {
                 fatalError(.invalid)
             }
             let headBlob = fileBlob(head: head, path: newFile)
@@ -252,7 +249,7 @@ extension Repository {
                   let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
-            let newFileData = try! Data(contentsOf: URL(filePath: oldNewFile.new!))
+            let newFileData = try! Data(contentsOf: workDir.appendingPathComponent(newFile))
             let headBlob = fileBlob(head: head, path: oldFile)
             return .diff(PatchMaker(
                 repository: self,

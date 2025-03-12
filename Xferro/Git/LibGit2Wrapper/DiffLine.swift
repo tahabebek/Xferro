@@ -8,9 +8,15 @@
 import Foundation
 import Observation
 
-@Observable class DiffLine: Identifiable
+@Observable class DiffLine: Identifiable, Equatable
 {
-    let id = UUID()
+    var id: String {
+        "\(type.id).\(oldLine).\(newLine).\(isSelected).\(indexInPart)"
+    }
+    static func == (lhs: DiffLine, rhs: DiffLine) -> Bool {
+        lhs.id == rhs.id
+    }
+    
     let type: DiffLineType
     let gitDiffLine: git_diff_line
     var numberOfLinesInPart: Int = 0

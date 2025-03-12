@@ -12,15 +12,16 @@ import Observation
     let hunk: git_diff_hunk
     let hunkIndex: Int
     let patch: Patch
-    let delta: Diff.Delta
+    let oldFilePath: String?
+    let newFilePath: String?
+    let status: Diff.Delta.Status
     let repository: Repository
 
-    var oldStart: Int32 { hunk.old_start }
-    var oldLines: Int32 { hunk.old_lines }
-    var newStart: Int32 { hunk.new_start }
-    var newLines: Int32 { hunk.new_lines }
-    #warning("is this causing a performance issue?")
-    var lineCount: Int { Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex)) }
+    let oldStart: Int
+    let oldLines: Int
+    let newStart: Int
+    let newLines: Int
+    let lineCount: Int
     var hunkHeader: String = ""
 
     var selectedLinesCount: Int {
@@ -31,17 +32,27 @@ import Observation
         hunk: git_diff_hunk,
         hunkIndex: Int,
         patch: Patch,
-        delta: Diff.Delta,
-        repostiory: Repository
+        oldFilePath: String?,
+        newFilePath: String?,
+        status: Diff.Delta.Status,
+        repository: Repository
     ) {
         self.hunk = hunk
         self.hunkIndex = hunkIndex
         self.patch = patch
-        self.delta = delta
+        self.oldFilePath = oldFilePath
+        self.newFilePath = newFilePath
+        self.status = status
         self.parts = []
-        self.repository = repostiory
+        self.repository = repository
+        self.lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
+        self.oldStart = Int(hunk.old_start)
+        self.oldLines = Int(hunk.old_lines)
+        self.newStart = Int(hunk.new_start)
+        self.newLines = Int(hunk.new_lines)
+
         self.hunkHeader = getHunkHeader(hunk: hunk)
-        let lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
+
         var currentLines: [DiffLine] = []
         var currentPartType = DiffHunkPart.DiffHunkPartType.context
         var partIndex = 0
@@ -54,8 +65,8 @@ import Observation
                         type: currentPartType,
                         lines: currentLines,
                         indexInHunk: partIndex,
-                        oldFilePath: delta.oldFilePath,
-                        newFilePath: delta.newFilePath
+                        oldFilePath: oldFilePath,
+                        newFilePath: newFilePath
                     ))
                     partIndex += 1
                     currentPartType = .additionOrDeletion
@@ -71,8 +82,8 @@ import Observation
                         type: currentPartType,
                         lines: currentLines,
                         indexInHunk: partIndex,
-                        oldFilePath: delta.oldFilePath,
-                        newFilePath: delta.newFilePath
+                        oldFilePath: oldFilePath,
+                        newFilePath: newFilePath
                     ))
                     partIndex += 1
                     currentPartType = .context
@@ -84,8 +95,8 @@ import Observation
             type: currentPartType,
             lines: currentLines,
             indexInHunk: partIndex,
-            oldFilePath: delta.oldFilePath,
-            newFilePath: delta.newFilePath
+            oldFilePath: oldFilePath,
+            newFilePath: newFilePath
         ))
     }
 
@@ -181,15 +192,15 @@ import Observation
 
     func discard()
     {
-        repository.discard(delta: delta, hunk: self)
+        repository.discard(hunk: self)
     }
 
     func stage(_ flag: Bool) {
         Task {
             do {
-                switch delta.status {
+                switch status {
                 case .added, .modified, .copied, .renamed, .typeChange, .untracked:
-                    guard let newFilePath = delta.newFile?.path else {
+                    guard let newFilePath else {
                         fatalError(.invalid)
                     }
                     if flag {
@@ -198,7 +209,7 @@ import Observation
                         try await repository.unstageHunk(filePath: newFilePath, hunkIndex: hunkIndex)
                     }
                 case .deleted:
-                    guard let oldFilePath = delta.oldFile?.path else {
+                    guard let oldFilePath else {
                         fatalError(.invalid)
                     }
                     if flag {
@@ -220,9 +231,9 @@ import Observation
     func stageLines(_ flag: Bool, allHunks: [DiffHunk]) {
         Task {
             do {
-                switch delta.status {
+                switch status {
                 case .added, .modified, .copied, .renamed, .typeChange, .untracked:
-                    guard let newFilePath = delta.newFile?.path else {
+                    guard let newFilePath else {
                         fatalError(.invalid)
                     }
                     if flag {
@@ -239,7 +250,7 @@ import Observation
                         )
                     }
                 case .deleted:
-                    guard let oldFilePath = delta.oldFile?.path else {
+                    guard let oldFilePath else {
                         fatalError(.invalid)
                     }
                     if flag {
@@ -301,8 +312,10 @@ import Observation
             hunk: hunk,
             hunkIndex: hunkIndex,
             patch: patch,
-            delta: delta,
-            repostiory: repository
+            oldFilePath: oldFilePath,
+            newFilePath: newFilePath,
+            status: status,
+            repository: repository
         )
     }
 }

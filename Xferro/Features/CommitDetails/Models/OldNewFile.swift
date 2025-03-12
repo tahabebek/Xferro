@@ -28,6 +28,7 @@ import OrderedCollections
     let statusFileName: String
     let statusColor: Color
     let statusImageName: String
+    let head: Head
     let key: String
     var diffInfo: (any DiffInformation)?
 
@@ -36,8 +37,9 @@ import OrderedCollections
         new: String?,
         status: Diff.Delta.Status,
         repository: Repository,
-        diffInfo: (any DiffInformation)? = nil,
-        key: String
+        head: Head,
+        key: String,
+        diffInfo: (any DiffInformation)? = nil
     ) {
         self.old = old
         self.new = new
@@ -45,6 +47,7 @@ import OrderedCollections
         self.workDirNew = new != nil ? repository.workDir.appendingPathComponent(new!).path : nil
         self.status = status
         self.repository = repository
+        self.head = head
         self.diffInfo = diffInfo
 
         self.statusFileName = switch status {
@@ -243,13 +246,8 @@ import OrderedCollections
         }
     }
 
-    private func updateDiffInfo(path: String, modifiedDate: Date) async {
-        let newDiffInfo = DiffInfo(
-            hunks: [],
-            addedLinesCount: Int.random(in: 0...100),
-            deletedLinesCount: 0,
-            statusFileName: statusFileName
-        )
+    private func actuallySetDiffInfo(path: String, modifiedDate: Date) async {
+        let newDiffInfo = await createDiffInfo()
         await diffInfoCache.set(key: path, value: newDiffInfo)
         await lastModifiedCache.set(key: path, value: modifiedDate)
         await MainActor.run {
@@ -271,15 +269,17 @@ import OrderedCollections
                     fatalError(.invalid)
                 }
                 if cachedModificationDate != modifiedDate {
-                    await updateDiffInfo(path: workDirNew, modifiedDate: modifiedDate)
+                    await actuallySetDiffInfo(path: workDirNew, modifiedDate: modifiedDate)
                 } else {
-                    // do nothing, there is no change int the file.
+                    if diffInfo == nil {
+                        await actuallySetDiffInfo(path: workDirNew, modifiedDate: modifiedDate)
+                    }
                 }
             } else {
                 guard let modifiedDate = FileManager.lastModificationDate(of: workDirNew) else {
                     fatalError(.invalid)
                 }
-                await updateDiffInfo(path: workDirNew, modifiedDate: modifiedDate)
+                await actuallySetDiffInfo(path: workDirNew, modifiedDate: modifiedDate)
             }
         case .deleted:
             guard let workDirOld else {
@@ -289,12 +289,7 @@ import OrderedCollections
                 if let cached = await diffInfoCache[workDirOld] {
                     diffInfo = cached
                 } else {
-                    let newDiffInfo = DiffInfo(
-                        hunks: [],
-                        addedLinesCount: 0,
-                        deletedLinesCount: 0,
-                        statusFileName: statusFileName
-                    )
+                    let newDiffInfo = await createDiffInfo()
                     await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
                     await MainActor.run {
                         diffInfo = newDiffInfo
@@ -302,10 +297,51 @@ import OrderedCollections
                     print("setDiffInfo for \(workDirOld)")
                 }
             } else {
-                // do nothing, deleted files do not change.
+                if diffInfo == nil {
+                    let newDiffInfo = await createDiffInfo()
+                    await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
+                    await MainActor.run {
+                        diffInfo = newDiffInfo
+                    }
+                    print("setDiffInfo for \(workDirOld)")
+                }
             }
         case .unreadable, .conflicted:
             fatalError(.unimplemented)
+        }
+    }
+
+    private func createDiffInfo() async -> any DiffInformation {
+        let patchResult = repository.patchMakerForAFileInTeWorkspaceComparedToHead(head: head, oldNewFile: self)
+
+        switch patchResult {
+        case .noDifference:
+            return NoDiffInfo(statusFileName: statusFileName)
+        case .binary:
+            return BinaryDiffInfo(statusFileName: statusFileName)
+        case .diff(let patchMaker):
+            let patch = patchMaker.makePatch()
+            var newHunks = [DiffHunk]()
+            let hunkCount = patch.hunkCount
+            for index in 0..<hunkCount {
+                if let hunk = patch.hunk(
+                    at: index,
+                    oldFilePath: old,
+                    newFilePath: new,
+                    status: status,
+                    repository: repository
+                ) {
+                    newHunks.append(hunk)
+                }
+            }
+            return DiffInfo(
+                hunks: newHunks,
+                oldFilePath: old,
+                newFilePath: new,
+                addedLinesCount: patch.addedLinesCount,
+                deletedLinesCount: patch.deletedLinesCount,
+                statusFileName: statusFileName
+            )
         }
     }
 }

@@ -126,7 +126,9 @@ final class Patch
 
     func hunk(
         at index: Int,
-        delta: Diff.Delta,
+        oldFilePath: String? = nil,
+        newFilePath: String? = nil,
+        status: Diff.Delta.Status,
         repository: Repository
     ) -> DiffHunk?
     {
@@ -139,8 +141,10 @@ final class Patch
             hunk: hunk.pointee,
             hunkIndex: index,
             patch: self,
-            delta: delta,
-            repostiory: repository
+            oldFilePath: oldFilePath,
+            newFilePath: newFilePath,
+            status: status,
+            repository: repository
         )
     }
 }

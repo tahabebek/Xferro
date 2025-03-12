@@ -8,12 +8,12 @@
 import Foundation
 
 extension Repository {
-    func discard(delta: Diff.Delta, hunk: DiffHunk)
+    func discard(hunk: DiffHunk)
     {
         var encoding = String.Encoding.utf8
-        switch delta.status {
+        switch hunk.status {
         case .added, .copied:
-            guard let url = delta.newFileURL else {
+            guard let url = hunk.newFilePath?.fileURL else {
                 fatalError(.invalid)
             }
             if FileManager.fileExists(url.path) {
@@ -23,12 +23,12 @@ extension Repository {
                     GitCLI.executeGit(self, ["restore", url.path])
                 }
                 try? FileManager.removeItem(url.path)
-                stage(path: delta.newFilePath!).mustSucceed()
+                stage(path: hunk.newFilePath!).mustSucceed()
             } else {
                 fatalError(.invalid)
             }
         case .modified, .renamed:
-            guard let url = delta.newFileURL else {
+            guard let url = hunk.newFilePath?.fileURL else {
                 fatalError(.invalid)
             }
             do {
@@ -45,7 +45,7 @@ extension Repository {
                 fatalError(error.localizedDescription)
             }
         case .deleted:
-            guard let url = delta.oldFileURL else {
+            guard let url = hunk.oldFilePath?.fileURL else {
                 fatalError(.invalid)
             }
             if !FileManager.fileExists(url.path) {
@@ -58,7 +58,7 @@ extension Repository {
                 fatalError(.invalid)
             }
         case .untracked:
-            guard let url = delta.newFileURL else {
+            guard let url = hunk.newFilePath?.fileURL else {
                 fatalError(.invalid)
             }
             if FileManager.fileExists(url.path) {
@@ -67,9 +67,14 @@ extension Repository {
                 fatalError(.invalid)
             }
         case .typeChange:
-            guard let oldFileURL = delta.oldFileURL, let newFileURL = delta.newFileURL else {
+            guard let oldFilePath = hunk.oldFilePath, let newFilePath = hunk.newFilePath else {
                 fatalError(.invalid)
             }
+
+            guard let oldFileURL = oldFilePath.fileURL, let newFileURL = newFilePath.fileURL else {
+                fatalError(.invalid)
+            }
+            
             do {
                 try FileManager.moveItem(oldFileURL, to: newFileURL)
             } catch {

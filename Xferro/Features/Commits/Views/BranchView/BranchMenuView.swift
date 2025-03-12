@@ -17,7 +17,6 @@ struct BranchMenuView: View {
 
     var body: some View {
         Button(action: {
-            print("Branch button tapped!")
             showingBranchOptions = true
         }) {
             Label(name, systemImage: "arrowtriangle.down.fill")

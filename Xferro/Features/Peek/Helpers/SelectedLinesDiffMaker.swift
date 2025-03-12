@@ -29,10 +29,6 @@ enum SelectedLinesDiffMaker {
         selectedLines: [DiffLine],
         allHunks: [DiffHunk]
     ) async throws -> Result {
-        guard selectedLines.isNotEmpty else {
-            fatalError(.invalid)
-        }
-
         let headFileResult = GitCLI.showHead(repository, filePath)
         switch headFileResult {
         case .success(let headFileContent):
@@ -138,6 +134,9 @@ enum SelectedLinesDiffMaker {
         repository: Repository,
         selectedLines: [DiffLine]
     ) async throws -> [String] {
+        guard selectedLines.isNotEmpty else {
+            fatalError(.invalid)
+        }
         var result = [String]()
         for selectedLine in selectedLines {
             if case .addition = selectedLine.type {
@@ -154,6 +153,9 @@ enum SelectedLinesDiffMaker {
         headFileLines: [String],
         selectedLines: [DiffLine]
     ) async throws -> [String] {
+        guard selectedLines.isNotEmpty else {
+            fatalError(.invalid)
+        }
         var result = [String]()
         for headLineIndex in 0..<headFileLines.count  {
             let headLine = headFileLines[headLineIndex]
@@ -185,6 +187,10 @@ enum SelectedLinesDiffMaker {
         selectedLines: [DiffLine],
         allLinesInHunk: [DiffLine]
     ) async throws -> [String] {
+        guard selectedLines.isNotEmpty else {
+            return headFileLines
+        }
+
         var result: [String] = []
         var headLineIndex: Int = 0
         var currentLineIndex: Int = 0

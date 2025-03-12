@@ -25,9 +25,14 @@ struct ProjectView: View {
             .onChange(of: commitsViewModel.currentSelectedItem) {
                 if let item = commitsViewModel.currentSelectedItem, case .regular(let selectableStatus) = item.type {
                     if case .status(let status) = selectableStatus {
-                        if let repo = commitsViewModel.currentRepositoryInfo?.repository {
+                        if let repo = commitsViewModel.currentRepositoryInfo?.repository,
+                           let head = commitsViewModel.currentRepositoryInfo?.head {
                             Task {
-                                await statusViewModel.updateStatus(newSelectableStatus: status, repository: repo)
+                                await statusViewModel.updateStatus(
+                                    newSelectableStatus: status,
+                                    repository: repo,
+                                    head: head
+                                )
                             }
                         }
                     }
@@ -36,9 +41,14 @@ struct ProjectView: View {
             .onChange(of: commitsViewModel.currentRepositoryInfo) {
                 if let item = commitsViewModel.currentSelectedItem, case .regular(let selectableStatus) = item.type {
                     if case .status(let status) = selectableStatus {
-                        if let repo = commitsViewModel.currentRepositoryInfo?.repository {
+                        if let repo = commitsViewModel.currentRepositoryInfo?.repository ,
+                            let head = commitsViewModel.currentRepositoryInfo?.head {
                             Task {
-                                await statusViewModel.updateStatus(newSelectableStatus: status, repository: repo)
+                                await statusViewModel.updateStatus(
+                                    newSelectableStatus: status,
+                                    repository: repo,
+                                    head: head
+                                )
                             }
                         }
                     }
