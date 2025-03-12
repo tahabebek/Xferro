@@ -8,32 +8,28 @@
 import Foundation
 
 final class PatchMaker {
-    enum SourceType
-    {
+    enum SourceType {
         case blob(Blob)
         case data(Data)
 
-        init(_ blob: (Blob)?)
-        {
+        init(_ blob: (Blob)?) {
             self = blob.map { .blob($0) } ?? .data(Data())
         }
     }
 
-    enum PatchResult
-    {
+    enum PatchResult {
         case noDifference
         case binary
         case diff(PatchMaker)
 
-        var patchMaker: PatchMaker?
-        {
+        var patchMaker: PatchMaker? {
             switch self {
             case .diff(let maker): return maker
             default: return nil
             }
         }
     }
-    
+
     let repository: Repository
     let path: String
     let fromSource: SourceType
@@ -47,16 +43,14 @@ final class PatchMaker {
         return result
     }
 
-    init(repository: Repository, from: SourceType, to: SourceType, path: String)
-    {
+    init(repository: Repository, from: SourceType, to: SourceType, path: String) {
         self.repository = repository
         self.fromSource = from
         self.toSource = to
         self.path = path
     }
 
-    func makePatch() -> Patch
-    {
+    func makePatch() -> Patch {
         switch (fromSource, toSource) {
         case let (.blob(fromBlob), .blob(toBlob)):
             Patch(repository: repository, oldBlob: fromBlob, newBlob: toBlob, options: options)

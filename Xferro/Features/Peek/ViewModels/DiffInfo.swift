@@ -40,6 +40,10 @@ import Observation
     var checkState: CheckboxState {
         get {
             let lines = allHunks.flatMap(\.parts).filter { $0.type != .context }.flatMap(\.lines)
+            if lines.count == 0 {
+                // means renamed but not modified, or binary.
+                return .checked
+            }
             let selectedLinesCount = lines.filter(\.isSelected).count
             if selectedLinesCount == 0 {
                 return .unchecked

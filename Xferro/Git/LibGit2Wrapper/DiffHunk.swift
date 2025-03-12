@@ -1,5 +1,5 @@
 //
-//  Created by Taha Bebeks on 2/25/25.
+//  Created by Taha Bebek on 2/25/25.
 //
 
 import Foundation
@@ -193,88 +193,6 @@ import Observation
     func discard()
     {
         repository.discard(hunk: self)
-    }
-
-    func stage(_ flag: Bool) {
-        Task {
-            do {
-                switch status {
-                case .added, .modified, .copied, .renamed, .typeChange, .untracked:
-                    guard let newFilePath else {
-                        fatalError(.invalid)
-                    }
-                    if flag {
-                        try await repository.stageHunk(filePath: newFilePath, hunkIndex: hunkIndex)
-                    } else {
-                        try await repository.unstageHunk(filePath: newFilePath, hunkIndex: hunkIndex)
-                    }
-                case .deleted:
-                    guard let oldFilePath else {
-                        fatalError(.invalid)
-                    }
-                    if flag {
-                        try await repository.stageHunk(filePath: oldFilePath, hunkIndex: hunkIndex)
-                    } else {
-                        try await repository.unstageHunk(filePath: oldFilePath, hunkIndex: hunkIndex)
-                    }
-                case .ignored, .unreadable, .unmodified:
-                    fatalError(.invalid)
-                case .conflicted:
-                    fatalError(.unimplemented)
-                }
-            } catch {
-                fatalError(error.localizedDescription)
-            }
-        }
-    }
-
-    func stageLines(_ flag: Bool, allHunks: [DiffHunk]) {
-        Task {
-            do {
-                switch status {
-                case .added, .modified, .copied, .renamed, .typeChange, .untracked:
-                    guard let newFilePath else {
-                        fatalError(.invalid)
-                    }
-                    if flag {
-                        try await repository.stageSelectedLines(
-                            filePath: newFilePath,
-                            hunk: self,
-                            allHunks: allHunks
-                        )
-                    } else {
-                        try await repository.unstageSelectedLines(
-                            filePath: newFilePath,
-                            hunk: self,
-                            allHunks: allHunks
-                        )
-                    }
-                case .deleted:
-                    guard let oldFilePath else {
-                        fatalError(.invalid)
-                    }
-                    if flag {
-                        try await repository.stageSelectedLines(
-                            filePath: oldFilePath,
-                            hunk: self,
-                            allHunks: allHunks
-                        )
-                    } else {
-                        try await repository.unstageSelectedLines(
-                            filePath: oldFilePath,
-                            hunk: self,
-                            allHunks: allHunks
-                        )
-                    }
-                case .ignored, .unreadable, .unmodified:
-                    fatalError(.invalid)
-                case .conflicted:
-                    fatalError(.unimplemented)
-                }
-            } catch {
-                fatalError(error.localizedDescription)
-            }
-        }
     }
 
     private func selectedLines() -> [DiffLine] {

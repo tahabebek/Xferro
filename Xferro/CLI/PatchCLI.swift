@@ -21,7 +21,6 @@ enum PatchCLI {
         outputFilePath: String? = nil,
         operation: PatchOperation
     ) throws -> String {
-        print(diff)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/patch")
 
@@ -30,8 +29,8 @@ enum PatchCLI {
         arguments.append("-V")
         arguments.append("none")
         // Disable reject files
-//        arguments.append("-r")
-//        arguments.append("/dev/null")
+        arguments.append("-r")
+        arguments.append("/dev/null")
 
         if let inputPath = inputFilePath {
             arguments.append(inputPath)
@@ -72,7 +71,6 @@ enum PatchCLI {
 
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(data: outputData, encoding: .utf8) ?? ""
-        print("Patch output: \(output)")
         return output
     }
 }

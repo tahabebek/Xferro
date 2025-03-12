@@ -86,40 +86,6 @@ extension Repository {
             fatalError(.unimplemented)
         }
     }
-
-    func stageSelectedLines(
-        filePath: String,
-        hunk: DiffHunk,
-        allHunks: [DiffHunk]
-    ) async throws {
-        let selectedLinesDiff = try await SelectedLinesDiffMaker.makeDiff(
-            repository: self,
-            filePath: filePath,
-            hunk: hunk,
-            allHunks: allHunks
-        )
-        print(selectedLinesDiff)
-        // Use git apply --cached to apply the selected lines to the index (staging them)
-        // The trailing dash (-) in the command git apply --cached - is a special character that tells Git to read the patch content from standard input (stdin) rather than from a file.
-    }
-
-    func unstageSelectedLines(
-        filePath: String,
-        hunk: DiffHunk,
-        allHunks: [DiffHunk]
-    ) async throws {
-        // Get the staged diff for the file
-        let selectedLinesDiff = try await SelectedLinesDiffMaker.makeDiff(
-            repository: self,
-            filePath: filePath,
-            hunk: hunk,
-            allHunks: allHunks
-        )
-
-        print(selectedLinesDiff)
-        // Use git apply --cached --reverse to unapply the selected lines from the index (unstaging them)
-        // The trailing dash (-) in the command git apply --cached - is a special character that tells Git to read the patch content from standard input (stdin) rather than from a file.
-    }
     
     func stageHunk(filePath: String, hunkIndex: Int) async throws
     {
