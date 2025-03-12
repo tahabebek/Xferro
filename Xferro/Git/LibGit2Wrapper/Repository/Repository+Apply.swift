@@ -10,6 +10,8 @@ import Foundation
 extension Repository {
     // target file should not be added to the index before calling this function
     func applyPartiallyCheckedFileToIndex(patchContent: String, file: OldNewFile) {
+        lock.lock()
+        defer { lock.unlock() }
         var patchContentLines = patchContent.lines
         patchContentLines.remove(at: 1)
 
@@ -59,6 +61,8 @@ extension Repository {
 
     func discard(hunk: DiffHunk)
     {
+        lock.lock()
+        defer { lock.unlock() }
         var encoding = String.Encoding.utf8
         switch hunk.status {
         case .added, .copied:
