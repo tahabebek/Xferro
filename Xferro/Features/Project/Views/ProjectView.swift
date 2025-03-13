@@ -17,7 +17,7 @@ struct ProjectView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HSplitView {
             CommitsView(commitsViewModel: commitsViewModel)
                 .frame(maxWidth: Dimensions.commitsViewMaxWidth)
             StatusView(viewModel: statusViewModel)

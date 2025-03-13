@@ -9,13 +9,12 @@ import SwiftUI
 
 struct StatusActionView: View {
     @Binding var commitSummary: String
+    @Binding var canCommit: Bool
+    @Binding var hasChanges: Bool
     @FocusState private var isTextFieldFocused: Bool
     @State private var horizontalAlignment: HorizontalAlignment = .leading
     @State private var verticalAlignment: VerticalAlignment = .top
 
-    let commitSummaryIsEmptyOrWhitespace: Bool
-    let canCommit: Bool
-    let hasChanges: Bool
     let onCommitTapped: () -> Void
     let onBoxActionTapped: (StatusActionButtonsView.BoxAction) async -> Void
 
@@ -34,7 +33,7 @@ struct StatusActionView: View {
                 }
                 XFerroButton(
                     title: "Commit",
-                    disabled: commitSummaryIsEmptyOrWhitespace || canCommit || !hasChanges,
+                    disabled: commitSummary.isEmptyOrWhitespace || canCommit || !hasChanges,
                     dangerous: false,
                     isProminent: true,
                     onTap: {
@@ -46,9 +45,9 @@ struct StatusActionView: View {
             .padding(.bottom, StatusView.actionBoxBottomPadding)
             AnyLayout(FlowLayout(alignment:.init(horizontal: horizontalAlignment, vertical: verticalAlignment))) {
                 StatusActionButtonsView(
-                    hasChanges: hasChanges,
-                    canCommit: canCommit,
-                    commitSummaryIsEmptyOrWhitespace: commitSummaryIsEmptyOrWhitespace,
+                    commitSummary: $commitSummary,
+                    canCommit: $canCommit,
+                    hasChanges: $hasChanges,
                     onTap: { action in
                         isTextFieldFocused = false
                         Task {

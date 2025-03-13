@@ -131,10 +131,10 @@ import Observation
         var oldText = [String]()
         var newText = [String]()
 
-        enumerateLines { line in
-            let content = line.text
+        for hunkLine in parts.flatMap(\.lines) {
+            let content = hunkLine.text
 
-            switch line.type {
+            switch hunkLine.type {
             case .context:
                 oldText.append(content)
                 newText.append(content)
@@ -163,33 +163,6 @@ import Observation
         return lines.joined(separator: text.lineEndingStyle.string)
     }
 
-    /// Returns true if the hunk can be applied to the given text.
-    /// - parameter lines: The target text. This is an array of strings rather
-    /// than the raw text to more efficiently query multiple hunks on one file.
-    func canApply(to lines: [String]) -> Bool
-    {
-        guard (oldLines == 0) || (oldStart - 1 + oldLines <= lines.count)
-        else { return false }
-
-        var oldText = [String]()
-
-        enumerateLines { line in
-            switch line.type {
-            case .context, .deletion:
-                oldText.append(line.text)
-            default:
-                break
-            }
-        }
-
-        // oldStart and oldLines are 0 if the old file is empty
-        let targetLineStart = max(Int(oldStart) - 1, 0)
-        let targetLineCount = Int(self.oldLines)
-        let replaceRange = targetLineStart..<(targetLineStart+targetLineCount)
-
-        return oldText.elementsEqual(lines[replaceRange])
-    }
-
     func discard()
     {
         repository.discard(hunk: self)
@@ -208,21 +181,6 @@ import Observation
             fatalError(err.localizedDescription)
         }
         return DiffLine(linePointer.pointee)
-    }
-
-    func enumerateLines(_ callback: (DiffLine) -> Void)
-    {
-        print("enumerate DiffHunk.enumerateLines")
-        let lineCount = git_patch_num_lines_in_hunk(patch.patch, hunkIndex)
-
-        for lineIndex in 0..<lineCount {
-            guard let line: UnsafePointer<git_diff_line> = try? .from({
-                git_patch_get_line_in_hunk(&$0, patch.patch, hunkIndex, Int(lineIndex))
-            })
-            else { continue }
-
-            callback(DiffLine(line.pointee))
-        }
     }
 
     func copy() -> DiffHunk {

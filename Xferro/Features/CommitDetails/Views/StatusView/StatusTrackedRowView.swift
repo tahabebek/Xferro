@@ -12,8 +12,6 @@ struct StatusTrackedRowView: View {
     @Binding var file: OldNewFile
     @State var isCurrent: Bool = false
 
-    let onTapInclude: () -> Void
-    let onTapExclude: () -> Void
     let onTapDiscard: () -> Void
 
     var body: some View {

@@ -66,9 +66,11 @@ extension Repository {
         var encoding = String.Encoding.utf8
         switch hunk.status {
         case .added, .copied:
-            guard let url = hunk.newFilePath?.fileURL else {
+            guard let path = hunk.newFilePath else {
                 fatalError(.invalid)
             }
+
+            let url = workDir.appendingPathComponent(path)
             if FileManager.fileExists(url.path) {
                 if url.isDirectory {
                     GitCLI.executeGit(self, ["restore", url.appendingPathComponent("*").path])
@@ -81,9 +83,10 @@ extension Repository {
                 fatalError(.invalid)
             }
         case .modified, .renamed:
-            guard let url = hunk.newFilePath?.fileURL else {
+            guard let path = hunk.newFilePath else {
                 fatalError(.invalid)
             }
+            let url = workDir.appendingPathComponent(path)
             do {
                 if FileManager.fileExists(url.path) {
                     let fileText = try String(contentsOf: url, usedEncoding: &encoding)
@@ -98,9 +101,10 @@ extension Repository {
                 fatalError(error.localizedDescription)
             }
         case .deleted:
-            guard let url = hunk.oldFilePath?.fileURL else {
+            guard let path = hunk.oldFilePath else {
                 fatalError(.invalid)
             }
+            let url = workDir.appendingPathComponent(path)
             if !FileManager.fileExists(url.path) {
                 if url.isDirectory {
                     GitCLI.executeGit(self, ["restore", url.appendingPathComponent("*").path])
@@ -111,9 +115,10 @@ extension Repository {
                 fatalError(.invalid)
             }
         case .untracked:
-            guard let url = hunk.newFilePath?.fileURL else {
+            guard let path = hunk.newFilePath else {
                 fatalError(.invalid)
             }
+            let url = workDir.appendingPathComponent(path)
             if FileManager.fileExists(url.path) {
                 try! FileManager.removeItem(url.path)
             } else {
@@ -124,10 +129,8 @@ extension Repository {
                 fatalError(.invalid)
             }
 
-            guard let oldFileURL = oldFilePath.fileURL, let newFileURL = newFilePath.fileURL else {
-                fatalError(.invalid)
-            }
-            
+            let oldFileURL = workDir.appendingPathComponent(oldFilePath)
+            let newFileURL = workDir.appendingPathComponent(newFilePath)
             do {
                 try FileManager.moveItem(oldFileURL, to: newFileURL)
             } catch {

@@ -80,7 +80,9 @@ import OrderedCollections
             self.trackedFiles = newTrackedFiles
             self.untrackedFiles = newUntrackedFiles
             self.repository = repository
-            self.selectableStatus = newSelectableStatus
+            await MainActor.run {
+                self.selectableStatus = newSelectableStatus
+            }
         }
     }
 

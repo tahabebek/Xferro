@@ -14,54 +14,14 @@ struct PeekView: View {
 
     var body: some View {
         Group {
-            if let diffInfo = file.diffInfo {
-                VStack(spacing: 0) {
-                    PeekViewHeader(statusFileName: file.statusFileName, countString: countString)
-                        .background(Color.clear)
-                        .padding(.horizontal, 8)
-                    Divider()
-                    switch diffInfo {
-                    case _ as NoDiffInfo:
-                        Text("No difference")
-                            .padding()
-                    case _ as BinaryDiffInfo:
-                        Text("Binary")
-                            .padding()
-                    case _ as DiffInfo:
-                        ForEach(diffInfo.hunks()) { hunk in
-                            HunkView(
-                                hunk: Binding<DiffHunk>(
-                                    get: { hunk },
-                                    set: { _ in }
-                                ),
-                                onDiscardPart: {
-                                    file.discardPart($0)
-                                },
-                                onDiscardLine: {
-                                    file.discardLine($0)
-                                }
-                            )
-                        }
-                    default:
-                        fatalError(.invalid)
-                    }
-                }
-                .background(Color.clear)
-            } else {
-                VStack(spacing: 0) {
-                    PeekViewHeader(statusFileName: file.statusFileName, countString: countString)
-                        .background(Color.clear)
-                        .padding(.horizontal, 8)
-                    Divider()
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                        Spacer()
-                    }
-                    Spacer()
-                }
+            VStack(spacing: 0) {
+                PeekViewHeader(statusFileName: file.statusFileName, countString: countString)
+                    .background(Color.clear)
+                    .padding(.horizontal, 8)
+                Divider()
+                DiffView(file: $file)
             }
+            .background(Color.clear)
         }
         .cornerRadius(10)
         .overlay(

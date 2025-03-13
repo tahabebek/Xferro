@@ -23,69 +23,63 @@ struct StatusView: View {
         Group {
             if viewModel.selectableStatus != nil {
                 HStack(spacing: 0) {
-                    VStack {
-                        StatusActionView(
-                            commitSummary: $viewModel.commitSummary,
-                            commitSummaryIsEmptyOrWhitespace: commitSummaryIsEmptyOrWhitespace,
-                            canCommit: viewModel.canCommit,
-                            hasChanges: viewModel.hasChanges,
-                            onCommitTapped: {
-                                Task {
-                                    try? await viewModel.commitTapped()
-                                }
-                            },
-                            onBoxActionTapped: { action in
-                                if case .discardAll = action {
-                                    discardAll = true
-                                } else {
-                                    try? await viewModel.actionTapped(action)
-                                }
+                    StatusFilesViewContainer(
+                        currentFile: $viewModel.currentFile,
+                        trackedFiles: Binding<[OldNewFile]>(
+                            get: { viewModel.trackedFiles.values.elements },
+                            set: { _ in }
+                        ),
+                        untrackedFiles: Binding<[OldNewFile]>(
+                            get: { viewModel.untrackedFiles.values.elements },
+                            set: { _ in }
+                        ),
+                        commitSummary: $viewModel.commitSummary,
+                        canCommit: $viewModel.canCommit,
+                        hasChanges: Binding<Bool>(
+                            get: { !viewModel.untrackedFiles.isEmpty || !viewModel.trackedFiles.isEmpty },
+                            set: { _ in }
+                        ),
+                        onCommitTapped: {
+                            Task {
+                                try? await viewModel.commitTapped()
                             }
-                        )
-                        .padding()
-                        .background(Color(hexValue: 0x15151A))
-                        .cornerRadius(8)
-                        StatusViewChangeView(
-                            currentFile: $viewModel.currentFile,
-                            trackedFiles: Binding<[OldNewFile]>(
-                                get: { viewModel.trackedFiles.values.elements },
-                                set: { _ in }
-                            ),
-                            untrackedFiles: Binding<[OldNewFile]>(
-                                get: { viewModel.untrackedFiles.values.elements },
-                                set: { _ in }
-                            ),
-                            hasChanges: viewModel.hasChanges,
-                            onTapExclude: { file in
-                                fatalError(.deprecated)
-                            }, onTapExcludeAll: {
-                                Task {
-                                    await viewModel.selectAll(flag: false)
-                                }
-                            }, onTapInclude: { file in
-                                fatalError(.deprecated)
-                            }, onTapIncludeAll: {
-                                Task {
-                                    await viewModel.selectAll(flag: true)
-                                }
-
-                            }, onTapTrack: { file in
-                                Task {
-                                    await viewModel.trackTapped(flag: true, file: file)
-                                }
-                            }, onTapTrackAll: {
-                                Task {
-                                    await viewModel.trackAllTapped()
-                                }
-                            }, onTapIgnore: { file in
-                                Task {
-                                    await viewModel.ignoreTapped(file: file)
-                                }
-                            }, onTapDiscard: {
-                                discardFile = $0
+                        },
+                        onBoxActionTapped: { action in
+                            if case .discardAll = action {
+                                discardAll = true
+                            } else {
+                                try? await viewModel.actionTapped(action)
                             }
-                        )
-                    }
+                        },
+                        onTapExcludeAll: {
+                            Task {
+                                await viewModel.selectAll(flag: false)
+                            }
+                        },
+                        onTapIncludeAll: {
+                            Task {
+                                await viewModel.selectAll(flag: true)
+                            }
+                        },
+                        onTapTrack: { file in
+                            Task {
+                                await viewModel.trackTapped(flag: true, file: file)
+                            }
+                        },
+                        onTapTrackAll: {
+                            Task {
+                                await viewModel.trackAllTapped()
+                            }
+                        },
+                        onTapIgnore: { file in
+                            Task {
+                                await viewModel.ignoreTapped(file: file)
+                            }
+                        },
+                        onTapDiscard: {
+                            discardFile = $0
+                        }
+                    )
                     .frame(width: Dimensions.commitDetailsViewMaxWidth)
                     PeekViewContainer(
                         currentFile: $viewModel.currentFile,
@@ -148,8 +142,7 @@ struct StatusView: View {
                 }
                 .animation(.default, value: viewModel.selectableStatus)
                 .animation(.default, value: viewModel.commitSummary)
-            } else {
-                EmptyView()
+                .opacity(viewModel.selectableStatus == nil ? 0 : 1)
             }
         }
         .padding(.horizontal, 6)
@@ -159,11 +152,5 @@ struct StatusView: View {
         Task {
             await viewModel.discardTapped(file: file)
         }
-    }
-}
-
-extension StatusView {
-    var commitSummaryIsEmptyOrWhitespace: Bool {
-        viewModel.commitSummary.isEmptyOrWhitespace
     }
 }

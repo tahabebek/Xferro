@@ -24,10 +24,10 @@ struct StatusActionButtonsView: View {
     }
     
     @State private var boxActions: [BoxAction] = BoxAction.allCases
+    @Binding var commitSummary: String
+    @Binding var canCommit: Bool
+    @Binding var hasChanges: Bool
 
-    let hasChanges: Bool
-    let canCommit: Bool
-    let commitSummaryIsEmptyOrWhitespace: Bool
     let onTap: (BoxAction) -> Void
 
     var body: some View {
@@ -41,11 +41,11 @@ struct StatusActionButtonsView: View {
             case .amend:
                 disabled = canCommit || !hasChanges
             case .commitAndPush:
-                disabled = commitSummaryIsEmptyOrWhitespace || !hasChanges
+                disabled = commitSummary.isEmptyOrWhitespace || !hasChanges
             case .amendAndPush:
                 disabled = !hasChanges
             case .commitAndForcePush:
-                disabled = commitSummaryIsEmptyOrWhitespace || !hasChanges
+                disabled = commitSummary.isEmptyOrWhitespace || !hasChanges
             case .amendAndForcePush:
                 disabled = !hasChanges
             case .stash:
