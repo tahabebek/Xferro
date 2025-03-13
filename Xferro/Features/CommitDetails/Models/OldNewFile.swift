@@ -123,26 +123,20 @@ import OrderedCollections
     }
 
     func discardPart(_ part: DiffHunkPart) {
-        guard case .additionOrDeletion = part.type else {
+        guard case .additionOrDeletion = part.type, let hunks = diffInfo?.hunks() else {
             fatalError(.invalid)
         }
         Task {
             do {
                 let selectedLines = part.lines.filter(\.isSelected)
-                try await discardLines(selectedLines)
+                try await discardLines(lines: selectedLines, hunks: hunks)
             } catch {
                 fatalError(error.localizedDescription)
             }
         }
     }
 
-    private func discardLines(_ lines: [DiffLine]) async throws {
-        guard let diffInfo else {
-            fatalError(.invalid)
-        }
-
-        let hunks = diffInfo.hunks()
-
+    func discardLines(lines: [DiffLine], hunks: [DiffHunk]) async throws {
         switch status {
         case .added, .copied, .renamed, .typeChange:
             guard let newFilePath = new else {

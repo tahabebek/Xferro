@@ -27,9 +27,7 @@ struct StatusView: View {
                             canCommit: viewModel.canCommit,
                             hasChanges: viewModel.hasChanges,
                             onCommitTapped: {
-                                Task {
-                                    try? await viewModel.commitTapped()
-                                }
+                                try? viewModel.commitTapped()
                             },
                             onBoxActionTapped: { action in
                                 try? await viewModel.actionTapped(action)
