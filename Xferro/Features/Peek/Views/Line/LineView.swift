@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LineView: View {
-    static let backgroundOpacity: CGFloat = 0.3
+    static let backgroundOpacity: CGFloat = 0.2
     static let hoveredTextBackgroundOpacity: CGFloat = 0.7
     static let hoveredLineBackgroundOpacity: CGFloat = 0.7
     static let selectedLineBackgroundOpacity: CGFloat = 0.5
