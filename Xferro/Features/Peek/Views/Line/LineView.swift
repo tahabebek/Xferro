@@ -67,14 +67,12 @@ struct LineView: View {
                 .frame(height: 20)
                 .minimumScaleFactor(0.75)
                 TextBox(
-                    isLineSelected: $isLineSelected,
                     hoveredLine: $hoveredLine,
                     isAdditionOrDeletion: isAdditionOrDeletion,
                     color: color(),
                     text: text,
                     lineNumber: oldLine == -1 ? newLine : oldLine,
                     indexInPart: indexInPart,
-                    onToggleLine: onToggleLine,
                     onDiscardLine: onDiscardLine
                 )
                 Spacer()

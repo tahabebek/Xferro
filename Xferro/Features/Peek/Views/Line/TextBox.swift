@@ -9,7 +9,6 @@ import SwiftUI
 
 struct TextBox: View {
     @Environment(\.partIsHovered) var partIsHovered
-    @Binding var isLineSelected: Bool
     @Binding var hoveredLine: Int?
 
     let isAdditionOrDeletion: Bool
@@ -17,7 +16,6 @@ struct TextBox: View {
     let text: String
     let lineNumber: Int
     let indexInPart: Int
-    let onToggleLine: () -> Void
     let onDiscardLine: () -> Void
 
     var body: some View {
@@ -26,21 +24,10 @@ struct TextBox: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 20)
             Text(text)
+                .textSelection(.enabled)
                 .font(.body.monospaced())
                 .frame(height: 20)
                 .padding(.leading, 8)
-        }
-        .onHover { flag in
-            if flag {
-                hoveredLine = indexInPart
-            } else {
-                hoveredLine = nil
-            }
-        }
-        .onTapGesture {
-            if isAdditionOrDeletion {
-                onToggleLine()
-            }
         }
         .background {
             backgroundForTextBox()
