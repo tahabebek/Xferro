@@ -145,24 +145,24 @@ import OrderedCollections
         return (trackedFiles, untrackedFiles)
     }
 
-    func actionTapped(_ action: StatusActionButtonsView.BoxAction) throws {
+    func actionTapped(_ action: StatusActionButtonsView.BoxAction) async throws {
         switch action {
 //        case .splitAndCommit:
 //            await commitTapped()
 //            fatalError(.unimplemented)
         case .amend:
-            amendTapped()
+            try await amendTapped()
         case .commitAndPush:
-            try commitTapped()
+            try await commitTapped()
             fatalError(.unimplemented)
         case .amendAndPush:
-            amendTapped()
+            try await amendTapped()
             fatalError(.unimplemented)
         case .commitAndForcePush:
-            try commitTapped()
+            try await commitTapped()
             fatalError(.unimplemented)
         case .amendAndForcePush:
-            amendTapped()
+            try await amendTapped()
             fatalError(.unimplemented)
         case .stash:
             fatalError(.unimplemented)
@@ -170,6 +170,8 @@ import OrderedCollections
             fatalError(.unimplemented)
         case .applyStash:
             fatalError(.unimplemented)
+        case .discardAll:
+            await discardAllTapped()
         case .addCustom:
             fatalError(.unimplemented)
         }
@@ -192,115 +194,112 @@ import OrderedCollections
         }
     }
 
-    func commitTapped() throws {
-        Task {
-            print("commit tapped")
-            guard let repository else {
-                fatalError(.invalid)
-            }
-
-            GitCLI.executeGit(repository, ["restore", "--staged", "."])
-
-            for file in trackedFiles.values.elements where file.checkState == .checked {
-                guard file.new != nil || file.old != nil else {
-                    fatalError(.invalid)
-                }
-
-                if let new = file.new {
-                    GitCLI.executeGit(repository, ["add", new])
-                }
-                if let old = file.old {
-                    GitCLI.executeGit(repository, ["add", old])
-                }
-            }
-
-            var filesToWriteBack: [String: String] = [:]
-            var filesToDelete: Set<String> = []
-
-            for file in trackedFiles.values.elements where file.checkState == .partiallyChecked {
-                guard let hunks = file.diffInfo?.hunks() else {
-                    fatalError(.invalid)
-                }
-
-                let hunkCopies = hunks.map { $0.copy() }
-                let originalLines = hunks.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
-                let copyLines = hunkCopies.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
-                for i in 0..<originalLines.count {
-                    copyLines[i].isSelected = !originalLines[i].isSelected
-                }
-
-                let unselectedLines = copyLines.filter(\.isSelected)
-                if unselectedLines.count == 0 {
-                    fatalError(.impossible)
-                }
-
-                switch file.status {
-                case .added, .copied, .renamed, .typeChange, .modified:
-                    guard let workDirNew = file.workDirNew, let new = file.new else {
-                        fatalError(.invalid)
-                    }
-                    if FileManager.fileExists(workDirNew) {
-                        let currentFile = try String(contentsOfFile: workDirNew, encoding: .utf8)
-                        filesToWriteBack[workDirNew] = currentFile
-                        try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
-                    } else {
-                        fatalError(.impossible)
-                    }
-                    GitCLI.executeGit(repository, ["add", new])
-                case .deleted:
-                    guard let old = file.old else {
-                        fatalError(.invalid)
-                    }
-
-                    try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
-                    GitCLI.executeGit(repository, ["add", old])
-                    filesToDelete.insert(old)
-                case .ignored, .unreadable, .unmodified, .untracked:
-                    fatalError(.invalid)
-                case .conflicted:
-                    fatalError(.unimplemented)
-                }
-            }
-            GitCLI.executeGit(repository, ["commit", "-m", commitSummary])
-
-            for file in trackedFiles.values.elements {
-                await diffInfoCache.removeValue(forKey: file.key)
-                if let workDirNew = file.workDirNew {
-                    await lastModifiedCache.removeValue(forKey: workDirNew)
-                }
-            }
-            for (path, content) in filesToWriteBack {
-                try! content.write(toFile: path, atomically: true, encoding: .utf8)
-            }
-            for path in filesToDelete {
-                try! FileManager.default.removeItem(atPath: path)
-            }
-            GitCLI.executeGit(repository, ["restore", "--staged", "."])
-            await MainActor.run {
-                commitSummary = ""
-            }
+    func commitTapped() async throws {
+        guard let repository else {
+            fatalError(.invalid)
         }
+        try await commit(repository: repository, amend: false)
     }
 
     func splitAndCommitTapped() async -> Commit {
         fatalError(.unimplemented)
     }
 
-    func amendTapped() {
-        Task {
-            guard let repository else {
+    func amendTapped() async throws {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+
+        try await commit(repository: repository, amend: true)
+    }
+
+    private func commit(repository: Repository, amend: Bool) async throws {
+        GitCLI.executeGit(repository, ["restore", "--staged", "."])
+
+        for file in trackedFiles.values.elements where file.checkState == .checked {
+            guard file.new != nil || file.old != nil else {
                 fatalError(.invalid)
             }
-            let headCommit: Commit = repository.commit().mustSucceed(repository.gitDir)
-            var newMessage = commitSummary
-            if newMessage.isEmptyOrWhitespace {
-                newMessage = headCommit.summary
+
+            if let new = file.new {
+                GitCLI.executeGit(repository, ["add", new])
+            }
+            if let old = file.old {
+                GitCLI.executeGit(repository, ["add", old])
+            }
+        }
+
+        var filesToWriteBack: [String: String] = [:]
+        var filesToDelete: Set<String> = []
+
+        for file in trackedFiles.values.elements where file.checkState == .partiallyChecked {
+            guard let hunks = file.diffInfo?.hunks() else {
+                fatalError(.invalid)
             }
 
-            guard !newMessage.isEmptyOrWhitespace else {
-                fatalError(.unsupported)
+            let hunkCopies = hunks.map { $0.copy() }
+            let originalLines = hunks.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
+            let copyLines = hunkCopies.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
+            for i in 0..<originalLines.count {
+                copyLines[i].isSelected = !originalLines[i].isSelected
             }
-            repository.amend(message: newMessage).mustSucceed(repository.gitDir)
+
+            let unselectedLines = copyLines.filter(\.isSelected)
+            if unselectedLines.count == 0 {
+                fatalError(.impossible)
+            }
+
+            switch file.status {
+            case .added, .copied, .renamed, .typeChange, .modified:
+                guard let workDirNew = file.workDirNew, let new = file.new else {
+                    fatalError(.invalid)
+                }
+                if FileManager.fileExists(workDirNew) {
+                    let currentFile = try String(contentsOfFile: workDirNew, encoding: .utf8)
+                    filesToWriteBack[workDirNew] = currentFile
+                    try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
+                } else {
+                    fatalError(.impossible)
+                }
+                GitCLI.executeGit(repository, ["add", new])
+            case .deleted:
+                guard let old = file.old else {
+                    fatalError(.invalid)
+                }
+
+                try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
+                GitCLI.executeGit(repository, ["add", old])
+                filesToDelete.insert(old)
+            case .ignored, .unreadable, .unmodified, .untracked:
+                fatalError(.invalid)
+            case .conflicted:
+                fatalError(.unimplemented)
+            }
+        }
+        if amend {
+            if commitSummary.isEmptyOrWhitespace {
+                GitCLI.executeGit(repository, ["commit", "--amend", "--no-edit"])
+            } else {
+                GitCLI.executeGit(repository, ["commit", "--amend", "-m", commitSummary])
+            }
+        } else {
+            GitCLI.executeGit(repository, ["commit", "-m", commitSummary])
+        }
+
+        for file in trackedFiles.values.elements {
+            await diffInfoCache.removeValue(forKey: file.key)
+            if let workDirNew = file.workDirNew {
+                await lastModifiedCache.removeValue(forKey: workDirNew)
+            }
+        }
+        for (path, content) in filesToWriteBack {
+            try! content.write(toFile: path, atomically: true, encoding: .utf8)
+        }
+        for path in filesToDelete {
+            try! FileManager.default.removeItem(atPath: path)
+        }
+        GitCLI.executeGit(repository, ["restore", "--staged", "."])
+        await MainActor.run {
             commitSummary = ""
         }
     }
@@ -351,10 +350,14 @@ import OrderedCollections
         }
     }
 
-    func discardAlertTitle(file: OldNewFile) -> String {
+    func discardAlertTitle(file: OldNewFile?) -> String {
+        guard let file else {
+            return "Are you sure you want to discard all the changes in all the files?"
+        }
+
+        var title: String = "Are you sure you want to discard all the changes"
         let oldFilePath = file.old
         let newFilePath = file.new
-        var title: String = "Are you sure you want to discard all the changes"
 
         if let oldFilePath, let newFilePath, oldFilePath == newFilePath {
             title += " to\n\(oldFilePath)?"

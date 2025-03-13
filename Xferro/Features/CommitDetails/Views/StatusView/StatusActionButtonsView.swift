@@ -19,6 +19,7 @@ struct StatusActionButtonsView: View {
         case stash = "Stash"
         case popStash = "Pop Stash"
         case applyStash = "Apply Stash"
+        case discardAll = "Discard All"
         case addCustom = "Add Custom"
     }
     
@@ -32,6 +33,7 @@ struct StatusActionButtonsView: View {
     var body: some View {
         ForEach(boxActions) { boxAction in
             var disabled = false
+            var dangerous = false
 
             switch boxAction {
 //            case .splitAndCommit:
@@ -48,12 +50,16 @@ struct StatusActionButtonsView: View {
                 disabled = !hasChanges
             case .stash:
                 disabled = !hasChanges
+            case .discardAll:
+                disabled = !hasChanges
+                dangerous = true
             case .popStash, .applyStash, .addCustom:
                 break
             }
             return XFerroButton(
                 title: boxAction.rawValue,
                 disabled: disabled,
+                dangerous: dangerous,
                 isProminent: true,
                 onTap: { onTap(boxAction) })
         }

@@ -14,7 +14,10 @@ struct StatusView: View {
         Self.actionBoxBottomPadding * 2 + Self.actionBoxVerticalInnerPadding * 2
     }
 
+    @Environment(DiscardPopup.self) var discardPopup
     @Bindable var viewModel: StatusViewModel
+    @State private var discardFile: OldNewFile? = nil
+    @State private var discardAll: Bool = false
 
     var body: some View {
         Group {
@@ -27,10 +30,16 @@ struct StatusView: View {
                             canCommit: viewModel.canCommit,
                             hasChanges: viewModel.hasChanges,
                             onCommitTapped: {
-                                try? viewModel.commitTapped()
+                                Task {
+                                    try? await viewModel.commitTapped()
+                                }
                             },
                             onBoxActionTapped: { action in
-                                try? await viewModel.actionTapped(action)
+                                if case .discardAll = action {
+                                    discardAll = true
+                                } else {
+                                    try? await viewModel.actionTapped(action)
+                                }
                             }
                         )
                         .padding()
@@ -72,10 +81,8 @@ struct StatusView: View {
                                 Task {
                                     await viewModel.ignoreTapped(file: file)
                                 }
-                            }, onTapDiscard: { file in
-                                Task {
-                                    await viewModel.discardTapped(file: file)
-                                }
+                            }, onTapDiscard: {
+                                discardFile = $0
                             }
                         )
                     }
@@ -104,10 +111,8 @@ struct StatusView: View {
                                 await viewModel.ignoreTapped(file: file)
                             }
                         },
-                        onTapDiscard: { file in
-                            Task {
-                                await viewModel.discardTapped(file: file)
-                            }
+                        onTapDiscard: {
+                            discardFile = $0
                         }
                     )
                 }
@@ -119,6 +124,28 @@ struct StatusView: View {
                         viewModel.setInitialSelection()
                     }
                 }
+                .onChange(of: discardFile) { _, newValue in
+                    if let newValue, discardPopup.isPresented == false {
+                        discardPopup.show(title: viewModel.discardAlertTitle(file: newValue)) {
+                            discard(file: newValue)
+                            self.discardFile = nil
+                        } onCancel: {
+                            self.discardFile = nil
+                        }
+                    }
+                }
+                .onChange(of: discardAll) { _, newValue in
+                    if newValue == true, discardPopup.isPresented == false {
+                        discardPopup.show(title: viewModel.discardAlertTitle(file: nil)) {
+                            discardAll = false
+                            Task {
+                                try? await viewModel.actionTapped(.discardAll)
+                            }
+                        } onCancel: {
+                            discardAll = false
+                        }
+                    }
+                }
                 .animation(.default, value: viewModel.selectableStatus)
                 .animation(.default, value: viewModel.commitSummary)
             } else {
@@ -126,6 +153,12 @@ struct StatusView: View {
             }
         }
         .padding(.horizontal, 6)
+    }
+
+    func discard(file: OldNewFile) {
+        Task {
+            await viewModel.discardTapped(file: file)
+        }
     }
 }
 
