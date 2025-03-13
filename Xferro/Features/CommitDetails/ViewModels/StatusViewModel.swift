@@ -270,11 +270,13 @@ import OrderedCollections
 
 
         let commit: Commit = repository.commit(message: commitSummary).mustSucceed(repository.gitDir)
-        commitSummary = ""
         for file in trackedFiles.values.elements {
             await diffInfoCache.removeValue(forKey: file.key)
         }
         GitCLI.executeGit(repository, ["restore", "--staged", "."])
+        await MainActor.run {
+            commitSummary = ""
+        }
         return commit
     }
 
