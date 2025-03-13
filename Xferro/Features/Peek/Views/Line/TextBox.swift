@@ -10,9 +10,9 @@ import SwiftUI
 struct TextBox: View {
     @Environment(\.partIsHovered) var partIsHovered
     @Binding var isLineSelected: Bool
-    @Binding var isAdditionOrDeletion: Bool
     @Binding var hoveredLine: Int?
 
+    let isAdditionOrDeletion: Bool
     let color: Color
     let text: String
     let lineNumber: Int

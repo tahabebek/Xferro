@@ -23,8 +23,17 @@ struct PeekView: View {
             }
             .background(Color.clear)
         }
-        .background(Color(hexValue: 0x15151A))
         .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(
+            color: Color.black.opacity(0.3),
+            radius: 5,
+            x: 0,
+            y: 3
+        )
         .onChange(of: timeStamp) {
             Task {
                 await file.setDiffInfo()

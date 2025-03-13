@@ -10,9 +10,9 @@ import SwiftUI
 struct SelectLineAndNumbersBox: View {
     @Environment(\.partIsHovered) var partIsHovered
     @Binding var isLineSelected: Bool
-    @Binding var isAdditionOrDeletion: Bool
     @Binding var hoveredLine: Int?
 
+    let isAdditionOrDeletion: Bool
     let oldLineText: String
     let newLineText: String
     let color: Color
@@ -24,7 +24,7 @@ struct SelectLineAndNumbersBox: View {
         HStack(spacing: 0) {
             SelectLineBox(
                 isLineSelected: $isLineSelected,
-                isAdditionOrDeletion: $isAdditionOrDeletion
+                isAdditionOrDeletion: isAdditionOrDeletion
             )
             LineNumberBox(lineText: oldLineText)
             LineNumberBox(lineText: newLineText)

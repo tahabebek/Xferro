@@ -15,22 +15,24 @@ struct PartView: View {
     let onDiscardLine: (DiffLine) -> Void
 
     var body: some View {
-        ForEach(part.lines) { line in
+        ForEach($part.lines) { line in
             LineView(
-                line: line,
-                part: part,
-                isFirst: line.indexInPart == 0,
-                onTogglePart: {
-                    part.toggle()
-                }, onToggleLine: {
-                    part.toggleLine(line: line)
-                }, onDiscardPart: {
-                    onDiscardPart()
-                }, onDiscardLine: {
-                    onDiscardLine(line)
-                }, onHoverPart: {
-                    isHovered = $0
-                }
+                selectedLinesCount: $part.selectedLinesCount,
+                isPartSelected: $part.isSelected,
+                isLineSelected: line.isSelected,
+                isAdditionOrDeletion: line.wrappedValue.isAdditionOrDeletion,
+                isFirst: line.wrappedValue.indexInPart == 0,
+                indexInPart: line.wrappedValue.indexInPart,
+                newLine: line.wrappedValue.newLine,
+                oldLine: line.wrappedValue.oldLine,
+                text: line.wrappedValue.text,
+                lineType: line.wrappedValue.type,
+                numberOfLinesInPart: part.lines.count,
+                onTogglePart: part.toggle,
+                onToggleLine: { part.toggleLine(line.wrappedValue) },
+                onDiscardPart: onDiscardPart,
+                onDiscardLine: { onDiscardLine(line.wrappedValue) },
+                onHoverPart: { isHovered = $0 }
             )
             .environment(\.partIsHovered, isHovered)
             .padding(.horizontal, 4)

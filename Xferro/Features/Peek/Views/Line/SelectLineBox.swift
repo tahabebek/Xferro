@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SelectLineBox: View {
     @Binding var isLineSelected: Bool
-    @Binding var isAdditionOrDeletion: Bool
+    let isAdditionOrDeletion: Bool
     
     var body: some View {
         HStack(spacing: 0) {

@@ -11,9 +11,9 @@ struct SelectAllBox: View {
     @Environment(\.partIsHovered) var partIsHovered
     @Binding var isPartSelected: Bool
     @Binding var selectedLinesCount: Int
-    @Binding var isAdditionOrDeletion: Bool
     @Binding var hoveredLine: Int?
 
+    let isAdditionOrDeletion: Bool
     let isFirst: Bool
     let color: Color
     let indexInPart: Int

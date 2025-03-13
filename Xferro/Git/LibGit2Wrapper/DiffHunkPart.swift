@@ -46,17 +46,25 @@ import Foundation
     }
     var lines: [DiffLine]
     var isSelected: Bool {
-        if case .context = type {
-            return false
-        } else {
-            return lines.allSatisfy(\.isSelected)
+        get {
+            if case .context = type {
+                return false
+            } else {
+                return lines.allSatisfy(\.isSelected)
+            }
+        } set {
+            fatalError(.unavailable)
         }
     }
     var selectedLinesCount: Int {
-        lines.filter(\.isSelected).count
+        get {
+            lines.filter(\.isSelected).count
+        } set {
+            fatalError(.unavailable)
+        }
     }
 
-    func toggleLine(line: DiffLine) {
+    func toggleLine(_ line: DiffLine) {
         if case .context = type {
             fatalError(.invalid)
         }

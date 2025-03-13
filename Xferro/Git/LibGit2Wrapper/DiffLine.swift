@@ -26,8 +26,8 @@ import Observation
     init(_ gitDiffLine: git_diff_line) {
         self.gitDiffLine = gitDiffLine
         self.type = DiffLineType(origin: gitDiffLine.origin)
-        self.oldLine = gitDiffLine.old_lineno
-        self.newLine = gitDiffLine.new_lineno
+        self.oldLine = Int(gitDiffLine.old_lineno)
+        self.newLine = Int(gitDiffLine.new_lineno)
         self.isAdditionOrDeletion = self.type == .addition || self.type == .deletion
         self.text = if let text = NSString(
             bytes: gitDiffLine.content,
@@ -45,8 +45,8 @@ import Observation
         }
     }
 
-    let oldLine: Int32
-    let newLine: Int32
+    let oldLine: Int
+    let newLine: Int
     let isAdditionOrDeletion: Bool
     let text: String
 }
