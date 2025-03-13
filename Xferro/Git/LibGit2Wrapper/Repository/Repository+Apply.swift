@@ -13,7 +13,6 @@ extension Repository {
         lock.lock()
         defer { lock.unlock() }
         var patchContentLines = patchContent.lines
-        patchContentLines.remove(at: 1)
 
         let firstPrefix: String
         let secondPrefix: String
@@ -31,7 +30,7 @@ extension Repository {
         let actualOldFileName = file.old != nil ? "/" + file.old! : ""
         let actualNewFileName = file.new != nil ? "/" + file.new! : ""
 
-        for i in 0..<3 {
+        for i in 0..<4 {
             patchContentLines[i].replace(occurencesOf: oldFileName, with: actualOldFileName)
             patchContentLines[i].replace(occurencesOf: newFileName, with: actualNewFileName)
         }
