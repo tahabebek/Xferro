@@ -36,6 +36,7 @@ struct StatusFilesViewContainer: View {
                     try? await onCommitTapped()
                     await MainActor.run {
                         committing = false
+                        currentFile = nil
                     }
                 },
                 onBoxActionTapped: onBoxActionTapped
