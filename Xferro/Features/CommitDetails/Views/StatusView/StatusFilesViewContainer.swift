@@ -14,8 +14,9 @@ struct StatusFilesViewContainer: View {
     @Binding var commitSummary: String
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
+    @State private var committing: Bool = false
 
-    let onCommitTapped: () -> Void
+    let onCommitTapped: () async throws -> Void
     let onBoxActionTapped: (StatusActionButtonsView.BoxAction) async -> Void
     let onTapExcludeAll: () -> Void
     let onTapIncludeAll: () -> Void
@@ -30,7 +31,13 @@ struct StatusFilesViewContainer: View {
                 commitSummary: $commitSummary,
                 canCommit: $canCommit,
                 hasChanges: $hasChanges,
-                onCommitTapped: onCommitTapped,
+                onCommitTapped: {
+                    committing = true
+                    try? await onCommitTapped()
+                    await MainActor.run {
+                        committing = false
+                    }
+                },
                 onBoxActionTapped: onBoxActionTapped
             )
             .padding()
@@ -47,7 +54,10 @@ struct StatusFilesViewContainer: View {
                 onTapTrackAll: onTapTrackAll,
                 onTapIgnore: onTapIgnore,
                 onTapDiscard: onTapDiscard
-            )
+            ).opacity(committing ? 0 : 1)
+            ProgressView()
+                .controlSize(.small)
+                .opacity(committing ? 1 : 0)
         }
     }
 }

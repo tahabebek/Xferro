@@ -19,6 +19,7 @@ struct WelcomeView: View {
                     Spacer()
                     if viewModel.showProgress {
                         ProgressView()
+                            .controlSize(.small)
                     } else {
                         Group {
                             switch viewModel.currentStep {

@@ -34,6 +34,7 @@ struct BranchGraphView: View {
                 }
             } else {
                 ProgressView()
+                    .controlSize(.small)
             }
         }
         .task {

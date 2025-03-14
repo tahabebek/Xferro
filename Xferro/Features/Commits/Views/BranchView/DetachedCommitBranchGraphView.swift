@@ -33,6 +33,7 @@ struct DetachedCommitBranchGraphView: View {
                 }
             } else {
                 ProgressView()
+                    .controlSize(.small)
             }
         }
         .task {

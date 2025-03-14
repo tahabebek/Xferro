@@ -20,7 +20,8 @@ struct AccountStatusCell: View {
         HStack {
             Spacer()
             if service.authenticationStatus == .inProgress {
-                ProgressView().controlSize(.small)
+                ProgressView()
+                    .controlSize(.small)
             }
             else {
                 Image(nsImage: .init(named: imageName)!)

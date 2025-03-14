@@ -15,7 +15,7 @@ struct StatusActionView: View {
     @State private var horizontalAlignment: HorizontalAlignment = .leading
     @State private var verticalAlignment: VerticalAlignment = .top
 
-    let onCommitTapped: () -> Void
+    let onCommitTapped: () async throws -> Void
     let onBoxActionTapped: (StatusActionButtonsView.BoxAction) async -> Void
 
     var body: some View {
@@ -37,8 +37,10 @@ struct StatusActionView: View {
                     dangerous: false,
                     isProminent: true,
                     onTap: {
-                        onCommitTapped()
-                        isTextFieldFocused = false
+                        Task {
+                            try await onCommitTapped()
+                            isTextFieldFocused = false
+                        }
                     }
                 )
             }

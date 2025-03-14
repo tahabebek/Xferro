@@ -43,8 +43,10 @@ struct StatusView: View {
                             set: { _ in }
                         ),
                         onCommitTapped: {
-                            Task {
-                                try? await viewModel.commitTapped()
+                            do {
+                                try await viewModel.commitTapped()
+                            } catch {
+                                fatalError(.unhandledError(error.localizedDescription))
                             }
                         },
                         onBoxActionTapped: { action in

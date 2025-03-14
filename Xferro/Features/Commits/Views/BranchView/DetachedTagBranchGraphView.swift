@@ -33,6 +33,7 @@ struct DetachedTagBranchGraphView: View {
                 }
             } else {
                 ProgressView()
+                    .controlSize(.small)
             }
         }
         .task {
