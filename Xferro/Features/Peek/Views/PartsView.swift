@@ -13,12 +13,14 @@ struct PartsView: View {
     let onDiscardLine: (DiffLine) -> Void
 
     var body: some View {
-        ForEach($parts) { part in
-            PartView(
-                part: part,
-                onDiscardPart: { onDiscardPart(part.wrappedValue) },
-                onDiscardLine: onDiscardLine
-            )
+        VStack(spacing: 0) {
+            ForEach($parts) { part in
+                PartView(
+                    part: part,
+                    onDiscardPart: { onDiscardPart(part.wrappedValue) },
+                    onDiscardLine: onDiscardLine
+                )
+            }
         }
     }
 }

@@ -17,6 +17,6 @@ struct LineNumberBox: View {
                 .padding(.trailing, 2)
             Divider()
         }
-        .frame(width: 40)
+        .frame(width: PartView.numberBoxWidth)
     }
 }

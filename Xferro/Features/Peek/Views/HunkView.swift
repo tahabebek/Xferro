@@ -33,12 +33,22 @@ struct HunkView: View {
             .padding(.vertical, 8)
             .padding(.horizontal)
             Divider()
-            PartsView(
-                parts: $hunk.parts,
-                onDiscardPart: onDiscardPart,
-                onDiscardLine: onDiscardLine
-            )
-            Divider()
+            ZStack {
+                PartsView(
+                    parts: $hunk.parts,
+                    onDiscardPart: onDiscardPart,
+                    onDiscardLine: onDiscardLine
+                )
+                .zIndex(0)
+                .offset(y: 3)
+                PreciseLineHeightText(
+                    text: hunk.parts.flatMap(\.lines).map(\.text).joined(separator: "\n")
+                )
+                .padding(.leading, PartView.selectBoxWidth * 2 + PartView.numberBoxWidth * 2 + 4)
+                .padding(.trailing, 8)
+                .frame(height: CGFloat(hunk.parts.flatMap(\.lines).count) * 20)
+                .zIndex(1)
+            }
         }
         .padding(.bottom)
     }

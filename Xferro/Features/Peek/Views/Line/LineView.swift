@@ -2,7 +2,7 @@
 //  LineView.swift
 //  Xferro
 //
-//  Created by Taha Bebek on 2/28/25.
+//  Created by Taha Bebek on 2/28/25.//
 //
 
 import SwiftUI
@@ -30,6 +30,56 @@ struct LineView: View {
     let onDiscardPart: () -> Void
     let onDiscardLine: () -> Void
     let onHoverPart: (Bool) -> Void
+    let showText: Bool
+    let color: Color
+
+    init(
+        hoveredLine: Int? = nil,
+        selectedLinesCount: Binding<Int>,
+        isPartSelected: Binding<Bool>,
+        isLineSelected: Binding<Bool>,
+        isAdditionOrDeletion: Bool,
+        isFirst: Bool,
+        indexInPart: Int,
+        newLine: Int,
+        oldLine: Int,
+        text: String,
+        lineType: DiffLineType,
+        numberOfLinesInPart: Int,
+        onTogglePart: @escaping () -> Void,
+        onToggleLine: @escaping () -> Void,
+        onDiscardPart: @escaping () -> Void,
+        onDiscardLine: @escaping () -> Void,
+        onHoverPart: @escaping (Bool) -> Void,
+        showText: Bool = true
+    ) {
+        self.hoveredLine = hoveredLine
+        self._selectedLinesCount = selectedLinesCount
+        self._isPartSelected = isPartSelected
+        self._isLineSelected = isLineSelected
+        self.isAdditionOrDeletion = isAdditionOrDeletion
+        self.isFirst = isFirst
+        self.indexInPart = indexInPart
+        self.newLine = newLine
+        self.oldLine = oldLine
+        self.text = text
+        self.lineType = lineType
+        self.numberOfLinesInPart = numberOfLinesInPart
+        self.onTogglePart = onTogglePart
+        self.onToggleLine = onToggleLine
+        self.onDiscardPart = onDiscardPart
+        self.onDiscardLine = onDiscardLine
+        self.onHoverPart = onHoverPart
+        self.showText = showText
+        self.color = switch lineType {
+        case .addition:
+            Color(hexValue: 0x28A745)
+        case .deletion:
+            Color(hexValue: 0xDC3545)
+        default:
+            Color.clear
+        }
+    }
 
     var body: some View {
         ZStack(alignment: .leading) {
@@ -42,7 +92,7 @@ struct LineView: View {
                             hoveredLine: $hoveredLine,
                             isAdditionOrDeletion: isAdditionOrDeletion,
                             isFirst: isFirst,
-                            color: color(),
+                            color: color,
                             indexInPart: indexInPart,
                             numberOfLinesInPart: numberOfLinesInPart,
                             onTogglePart: onTogglePart,
@@ -55,7 +105,7 @@ struct LineView: View {
                             isAdditionOrDeletion: isAdditionOrDeletion,
                             oldLineText: lineNumber(oldLine),
                             newLineText: lineNumber(newLine),
-                            color: color(),
+                            color: color,
                             indexInPart: indexInPart,
                             onToggleLine: onToggleLine,
                             onDiscardLine: onDiscardLine
@@ -64,17 +114,20 @@ struct LineView: View {
                 }
                 .font(.callout)
                 .monospacedDigit()
-                .frame(height: 20)
+                .frame(height: PartView.selectBoxHeight)
                 .minimumScaleFactor(0.75)
-                TextBox(
-                    hoveredLine: $hoveredLine,
-                    isAdditionOrDeletion: isAdditionOrDeletion,
-                    color: color(),
-                    text: text,
-                    lineNumber: oldLine == -1 ? newLine : oldLine,
-                    indexInPart: indexInPart,
-                    onDiscardLine: onDiscardLine
-                )
+                    // Just show the background without text
+                ZStack {
+                    color.opacity(LineView.backgroundOpacity)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 20)
+
+                    if (hoveredLine != nil && hoveredLine! == indexInPart) {
+                        color.opacity(LineView.hoveredTextBackgroundOpacity)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 20)
+                    }
+                }
                 Spacer()
             }
         }
@@ -83,16 +136,5 @@ struct LineView: View {
 
     func lineNumber(_ line: Int) -> String {
         line == -1 ? "" : line.formatted()
-    }
-
-    func color() -> Color {
-        switch lineType {
-        case .addition:
-            Color(hexValue: 0x28A745)
-        case .deletion:
-            Color(hexValue: 0xDC3545)
-        default:
-            Color.clear
-        }
     }
 }

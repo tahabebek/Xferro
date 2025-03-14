@@ -98,6 +98,11 @@ import OrderedCollections
         let handleDelta: (Repository, Diff.Delta) -> Void = { repository, delta in
             let key = (delta.oldFilePath ?? "") + (delta.newFilePath ?? "")
             if addedFiles.contains(key) {
+                if delta.status == .deleted {
+                    // this means this file is added, and then deleted, but the deletion is not staged yet.
+                    addedFiles.remove(key)
+                    trackedFiles.removeValue(forKey: key)
+                }
                 return
             }
             addedFiles.insert(key)
@@ -226,7 +231,7 @@ import OrderedCollections
             if let new = file.new {
                 GitCLI.executeGit(repository, ["add", new])
             }
-            if let old = file.old {
+            if let old = file.old , old != file.new {
                 GitCLI.executeGit(repository, ["add", old])
             }
         }

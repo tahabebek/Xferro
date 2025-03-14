@@ -20,7 +20,7 @@ struct SelectLineBox: View {
             Spacer(minLength: 0)
             Divider()
         }
-        .frame(width: 20)
+        .frame(width: PartView.selectBoxWidth)
         .contentShape(Rectangle())
     }
 }
