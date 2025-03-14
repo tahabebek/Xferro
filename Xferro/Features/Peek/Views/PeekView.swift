@@ -8,33 +8,50 @@
 import SwiftUI
 
 struct PeekView: View {
-    @Binding var file: OldNewFile
     @Binding var timeStamp: Date
     @State var intitalDiffLoadIsComplete: Bool = false
 
+    let file: OldNewFile
+    let onTapTrack: (OldNewFile) -> Void
+    let onTapIgnore: (OldNewFile) -> Void
+    let onTapDiscard: (OldNewFile) -> Void
+
     var body: some View {
         Group {
-            VStack(spacing: 0) {
-                PeekViewHeader(statusFileName: file.statusFileName, countString: countString)
-                    .background(Color.clear)
-                    .padding(.horizontal, 8)
-                Divider()
-                DiffView(file: $file)
+            ScrollView {
+                VStack(spacing: 0) {
+                    PeekViewHeader(statusFileName: file.statusFileName, countString: countString)
+                        .background(Color.clear)
+                        .padding(.horizontal, 8)
+                    Divider()
+                    ZStack {
+                        DiffView(file: file)
+                        ProgressView()
+                            .controlSize(.small)
+                            .padding()
+                            .opacity(file.diffInfo == nil ? 1 : 0)
+                    }
+                }
+                .background(Color.clear)
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
+                .shadow(
+                    color: Color.black.opacity(0.3),
+                    radius: 5,
+                    x: 0,
+                    y: 3
+                )
             }
-            .background(Color.clear)
         }
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-        )
-        .shadow(
-            color: Color.black.opacity(0.3),
-            radius: 5,
-            x: 0,
-            y: 3
-        )
         .onChange(of: timeStamp) {
+            Task {
+                await file.setDiffInfo()
+            }
+        }
+        .onChange(of: file) {
             Task {
                 await file.setDiffInfo()
             }

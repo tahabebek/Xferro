@@ -49,21 +49,17 @@ class Index {
 //        }
 //    }
 
-    func entry(atIndex index: Int) -> Index.Entry!
-    {
+    func entry(atIndex index: Int) -> Index.Entry! {
         switch index {
         case 0..<entryCount:
-            guard let entry = git_index_get_byindex(git_index, index)
-            else { return nil }
-
+            guard let entry = git_index_get_byindex(git_index, index) else { return nil }
             return Entry(git_entry: entry.pointee)
         default:
             return nil
         }
     }
 
-    func entry(at path: String) -> Index.Entry?
-    {
+    func entry(at path: String) -> Index.Entry? {
         var position: Int = 0
         guard git_index_find(&position, git_index, path) == 0,
               let entry = git_index_get_byindex(git_index, position)
@@ -121,8 +117,7 @@ class Index {
         by path: String,
         stage: Bool,
         block: (inout Entry) -> Result<Bool, NSError>
-    )
-    -> Result<Void, NSError> {
+    ) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
         guard let result = path.withCString({
@@ -138,6 +133,10 @@ class Index {
             }
         }
     }
+
+    func refresh() throws {
+        try RepoError.throwIfGitError(git_index_read(git_index, 1))
+    }
 }
 
 extension Repository {
@@ -150,5 +149,19 @@ extension Repository {
             return .failure(NSError(gitError: result, pointOfFailure: "git_repository_index"))
         }
         return .success(Index(git_index: git_index!, lock: lock))
+    }
+
+    func writeTree(git_index: OpaquePointer) throws -> Tree {
+        var treeOID = git_oid()
+        let result = git_index_write_tree(&treeOID, git_index)
+
+        try RepoError.throwIfGitError(result)
+        let tree = object(OID(treeOID)).mustSucceed(gitDir) as? Tree
+
+        guard let tree else {
+            throw RepoError.unexpected
+        }
+
+        return tree
     }
 }

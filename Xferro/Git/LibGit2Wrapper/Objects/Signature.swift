@@ -55,8 +55,8 @@ struct Signature: Codable {
             let err = NSError(gitError: signatureResult, pointOfFailure: "git_signature_default")
             return .failure(err)
         }
-        let name = (try? repository.config.string(for: "user.name").get()) ?? NSUserName()
-        let email = (try? repository.config.string(for: "user.email").get()) ?? "\(NSUserName())@\(ProcessInfo.processInfo.hostName)"
+        let name = repository.config?.userName ?? NSUserName()
+        let email = repository.config?.userEmail ?? "\(NSUserName())@\(ProcessInfo.processInfo.hostName)"
         return .success(Signature(name: name, email: email))
     }
 }

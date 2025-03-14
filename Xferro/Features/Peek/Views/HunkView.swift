@@ -44,7 +44,7 @@ struct HunkView: View {
                 PreciseLineHeightText(
                     text: hunk.parts.flatMap(\.lines).map(\.text).joined(separator: "\n")
                 )
-                .padding(.leading, PartView.selectBoxWidth * 2 + PartView.numberBoxWidth * 2 + 4)
+                .padding(.leading, PartView.selectBoxWidth * 2 + PartView.numberBoxWidth * 2 + 16)
                 .padding(.trailing, 8)
                 .frame(height: CGFloat(hunk.parts.flatMap(\.lines).count) * 20)
                 .zIndex(1)

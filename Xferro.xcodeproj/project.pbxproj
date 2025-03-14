@@ -14,6 +14,8 @@
 		7D38FE952D32CF66008BF288 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE942D32CF66008BF288 /* Sentry */; };
 		7D38FE972D32CF66008BF288 /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE962D32CF66008BF288 /* SentrySwiftUI */; };
 		7D38FE9A2D32CF87008BF288 /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = 7D38FE992D32CF87008BF288 /* Mixpanel */; };
+		7D3B68C42D84805800609D0C /* Siesta in Frameworks */ = {isa = PBXBuildFile; productRef = 7D3B68C32D84805800609D0C /* Siesta */; };
+		7D3B68C62D84805800609D0C /* Siesta_Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 7D3B68C52D84805800609D0C /* Siesta_Alamofire */; };
 		7D3B96252D4BC98B00F726D9 /* ZipArchive in Frameworks */ = {isa = PBXBuildFile; productRef = 7D3B96242D4BC98B00F726D9 /* ZipArchive */; };
 		7D53244F2D5A55E3009D60BC /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 7D53244E2D5A55E3009D60BC /* OrderedCollections */; };
 		7D96603B2D4BBE4D00007D2A /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7D96603A2D4BBE4D00007D2A /* FirebaseAuth */; };
@@ -47,13 +49,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		7DA63F6A2D73DBB800AB1A1F /* Exceptions for "XferroTests" folder in "XferroTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				GitTests.html,
-			);
-			target = 7D38FB352D2F9581008BF288 /* XferroTests */;
-		};
 		7DD1396B2D39A0550076B23B /* Exceptions for "Xferro" folder in "Xferro" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -62,16 +57,6 @@
 			target = 7D38FB242D2F957F008BF288 /* Xferro */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		7DA63F6B2D73DBB800AB1A1F /* Exceptions for "XferroTests" folder in "Compile Sources" phase from "XferroTests" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 7D38FB322D2F9581008BF288 /* Sources */;
-			membershipExceptions = (
-				GitTests.html,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7D38FB272D2F957F008BF288 /* Xferro */ = {
@@ -84,10 +69,6 @@
 		};
 		7D38FB392D2F9581008BF288 /* XferroTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				7DA63F6A2D73DBB800AB1A1F /* Exceptions for "XferroTests" folder in "XferroTests" target */,
-				7DA63F6B2D73DBB800AB1A1F /* Exceptions for "XferroTests" folder in "Compile Sources" phase from "XferroTests" target */,
-			);
 			path = XferroTests;
 			sourceTree = "<group>";
 		};
@@ -99,11 +80,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				7D38FD072D302508008BF288 /* libiconv.tbd in Frameworks */,
+				7D3B68C42D84805800609D0C /* Siesta in Frameworks */,
 				7D38FE972D32CF66008BF288 /* SentrySwiftUI in Frameworks */,
 				7D38FD052D3024F9008BF288 /* libSystem.tbd in Frameworks */,
 				7D53244F2D5A55E3009D60BC /* OrderedCollections in Frameworks */,
 				7D38FD032D3024CB008BF288 /* libz.tbd in Frameworks */,
 				7D38FD012D3024C0008BF288 /* GSS.framework in Frameworks */,
+				7D3B68C62D84805800609D0C /* Siesta_Alamofire in Frameworks */,
 				7D38FE9A2D32CF87008BF288 /* Mixpanel in Frameworks */,
 				7D38FE952D32CF66008BF288 /* Sentry in Frameworks */,
 				7D96603B2D4BBE4D00007D2A /* FirebaseAuth in Frameworks */,
@@ -185,6 +168,8 @@
 				7D38FE992D32CF87008BF288 /* Mixpanel */,
 				7D96603A2D4BBE4D00007D2A /* FirebaseAuth */,
 				7D53244E2D5A55E3009D60BC /* OrderedCollections */,
+				7D3B68C32D84805800609D0C /* Siesta */,
+				7D3B68C52D84805800609D0C /* Siesta_Alamofire */,
 			);
 			productName = Xferro;
 			productReference = 7D38FB252D2F957F008BF288 /* Xferro.app */;
@@ -273,6 +258,7 @@
 				7D9660392D4BBE4D00007D2A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				7D3B96232D4BC98B00F726D9 /* XCRemoteSwiftPackageReference "ZipArchive" */,
 				7D53244D2D5A55E3009D60BC /* XCRemoteSwiftPackageReference "swift-collections" */,
+				7D3B68C22D84805800609D0C /* XCRemoteSwiftPackageReference "siesta" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7D38FB262D2F957F008BF288 /* Products */;
@@ -859,6 +845,14 @@
 				minimumVersion = 4.3.0;
 			};
 		};
+		7D3B68C22D84805800609D0C /* XCRemoteSwiftPackageReference "siesta" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/bustoutsolutions/siesta";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.2;
+			};
+		};
 		7D3B96232D4BC98B00F726D9 /* XCRemoteSwiftPackageReference "ZipArchive" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ZipArchive/ZipArchive";
@@ -900,6 +894,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7D38FE982D32CF87008BF288 /* XCRemoteSwiftPackageReference "mixpanel-swift" */;
 			productName = Mixpanel;
+		};
+		7D3B68C32D84805800609D0C /* Siesta */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D3B68C22D84805800609D0C /* XCRemoteSwiftPackageReference "siesta" */;
+			productName = Siesta;
+		};
+		7D3B68C52D84805800609D0C /* Siesta_Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D3B68C22D84805800609D0C /* XCRemoteSwiftPackageReference "siesta" */;
+			productName = Siesta_Alamofire;
 		};
 		7D3B96242D4BC98B00F726D9 /* ZipArchive */ = {
 			isa = XCSwiftPackageProductDependency;

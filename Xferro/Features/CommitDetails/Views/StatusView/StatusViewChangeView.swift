@@ -51,7 +51,9 @@ struct StatusViewChangeView: View {
                 }
             }
             .animation(.default, value: hasChanges)
-            .padding()
+            .padding(.bottom)
+            .padding(.horizontal)
+            .padding(.top, 8)
         }
     }
 }

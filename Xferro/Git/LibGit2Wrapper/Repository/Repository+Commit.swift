@@ -20,7 +20,8 @@ extension Repository {
         tree: OpaquePointer, // git_tree
         parentCommits: [OpaquePointer?], // [git_commit]
         message: String,
-        signature: UnsafeMutablePointer<git_signature>? = nil
+        signature: UnsafeMutablePointer<git_signature>? = nil,
+        updatingRef refName: String = "HEAD"
     ) -> Result<git_oid, NSError> {
         lock.lock()
         defer { lock.unlock() }
@@ -35,7 +36,7 @@ extension Repository {
             let result = git_commit_create(
                 &commitOID,
                 self.pointer,
-                "HEAD",
+                refName,
                 signature,
                 signature,
                 "UTF-8",
@@ -178,7 +179,9 @@ extension Repository {
     func commit(tree treeOID: OID,
                 parents: [Commit],
                 message: String,
-                signature: Signature? = nil) -> Result<Commit, NSError> {
+                signature: Signature? = nil,
+                updatingRef refName: String = "HEAD"
+    ) -> Result<Commit, NSError> {
         lock.lock()
         defer { lock.unlock() }
         let sign: Signature
@@ -216,7 +219,13 @@ extension Repository {
                 parentGitCommits.append(parent!)
             }
 
-            return commit(tree: tree!, parentCommits: parentGitCommits, message: message, signature: signature).flatMap { commit(OID($0)) }
+            return commit(
+                tree: tree!,
+                parentCommits: parentGitCommits,
+                message: message,
+                signature: signature,
+                updatingRef: refName
+            ).flatMap { commit(OID($0)) }
         }
         return result
     }

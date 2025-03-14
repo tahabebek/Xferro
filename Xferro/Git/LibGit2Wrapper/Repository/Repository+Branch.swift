@@ -35,7 +35,7 @@ extension Repository {
         defer { lock.unlock() }
         do {
             let firstItem = name.split(separator: "/").first!.lowercased()
-            let remotes = try self.allRemotes().get().map(\.name)
+            let remotes = try self.allRemotes().get().compactMap(\.name)
             if remotes.contains(where: { $0.lowercased() == firstItem }) {
                 let result = reference(named: .remotePrefix + name).map { $0 as? Branch }
                 return result
@@ -137,14 +137,6 @@ extension Repository {
         return branch
     }
 
-    func deleteBranch(_ name: String, remote: String, force: Bool = false) -> Result<Void, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        let name = name.longBranchRef
-        let branch = self.push(remote, sourceRef: "", targetRef: name, force: force)
-        return branch
-    }
-
     func deleteBranch(_ name: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
@@ -174,18 +166,17 @@ extension Repository {
     func setTrackBranch(local: String, target: String?, remote: String = "origin") -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        do {
-            if let target = target {
-                try self.config.set(string: remote, for: "branch.\(local).remote").get()
-                try self.config.set(string: target.longBranchRef, for: "branch.\(local).merge").get()
-            } else {
-                try self.config.delete(keyPath: "branch.\(local).remote").get()
-                try self.config.delete(keyPath: "branch.\(local).merge").get()
-            }
-            return .success(())
-        } catch {
-            return .failure(error as NSError)
+        guard let config else {
+            return .failure(NSError(gitError: -1, pointOfFailure: "git_repository_config"))
         }
+        if let target {
+            config["branch.\(local).remote"] = remote
+            config["branch.\(local).merge"] = target.longBranchRef
+        } else {
+            config["branch.\(local).remote"] = target
+            config["branch.\(local).merge"] = target
+        }
+        return .success(())
     }
 
     func trackBranch(headRef: ReferenceType) -> Result<(remote: String, merge: String)?, NSError> {
@@ -200,14 +191,10 @@ extension Repository {
     func trackBranch(local: String) -> Result<(remote: String, merge: String)?, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        do {
-            guard let remoteName = try self.config.string(for: "branch.\(local).remote").get(),
-                  let mergeName = try self.config.string(for: "branch.\(local).merge").get() else {
-                return .success(nil)
-            }
-            return .success((remote: remoteName, merge: mergeName))
-        } catch {
-            return Result.failure(error as NSError)
+        guard let remoteName = config?.branchRemote(local),
+              let mergeName = config?.branchMerge(local) else {
+            return .success(nil)
         }
+        return .success((remote: remoteName, merge: mergeName))
     }
 }

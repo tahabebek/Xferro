@@ -9,17 +9,14 @@ import Foundation
 
 typealias DiffOptions = git_diff_options
 
-extension git_diff_options
-{
-    init(flags: DiffOption)
-    {
+extension git_diff_options {
+    init(flags: DiffOption) {
         self = git_diff_options()
         git_diff_init_options(&self, UInt32(GIT_DIFF_OPTIONS_VERSION))
         self.flags = flags.rawValue
     }
 
-    var contextLines: UInt32
-    {
+    var contextLines: UInt32 {
         get { context_lines }
         set { context_lines = newValue }
     }
@@ -32,8 +29,7 @@ extension git_diff_options
             return withUnsafePointer(to: &options) {
                 callback($0)
             }
-        }
-        else {
+        } else {
             return callback(nil)
         }
     }

@@ -114,6 +114,14 @@ extension String {
     var fileURL: URL? {
         URL(filePath: self)
     }
+
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
+    }
+
+    var pathComponents: [String] {
+        (self as NSString).pathComponents
+    }
 }
 
 infix operator +/ : AdditionPrecedence

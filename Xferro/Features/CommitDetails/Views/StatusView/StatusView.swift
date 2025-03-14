@@ -26,11 +26,14 @@ struct StatusView: View {
                     StatusFilesViewContainer(
                         currentFile: $viewModel.currentFile,
                         trackedFiles: Binding<[OldNewFile]>(
-                            get: { viewModel.trackedFiles.values.elements },
+                            get: {
+                                viewModel.trackedFiles.values.elements
+                                    .sorted { $0.statusFileName < $1.statusFileName }
+                            },
                             set: { _ in }
                         ),
                         untrackedFiles: Binding<[OldNewFile]>(
-                            get: { viewModel.untrackedFiles.values.elements },
+                            get: { viewModel.untrackedFiles.values.elements.sorted { $0.key < $1.key } },
                             set: { _ in }
                         ),
                         commitSummary: $viewModel.commitSummary,
@@ -81,34 +84,31 @@ struct StatusView: View {
                         }
                     )
                     .frame(width: Dimensions.commitDetailsViewMaxWidth)
-                    PeekViewContainer(
-                        currentFile: $viewModel.currentFile,
-                        trackedFiles: Binding<[OldNewFile]>(
-                            get: { viewModel.trackedFiles.values.elements },
-                            set: { _ in }
-                        ),
-                        untrackedFiles: Binding<[OldNewFile]>(
-                            get: { viewModel.untrackedFiles.values.elements },
-                            set: { _ in }
-                        ),
-                        timeStamp: Binding<Date>(
-                            get: { viewModel.selectableStatus!.timestamp },
-                            set: {_ in }
-                        ),
-                        onTapTrack: { file in
-                            Task {
-                                await viewModel.trackTapped(flag: true, file: file)
+                    if let file = viewModel.currentFile {
+                        PeekViewContainer(
+                            timeStamp: Binding<Date>(
+                                get: { viewModel.selectableStatus!.timestamp },
+                                set: {_ in }
+                            ),
+                            file: file,
+                            onTapTrack: { file in
+                                Task {
+                                    await viewModel.trackTapped(flag: true, file: file)
+                                }
+                            },
+                            onTapIgnore: { file in
+                                Task {
+                                    await viewModel.ignoreTapped(file: file)
+                                }
+                            },
+                            onTapDiscard: {
+                                discardFile = $0
                             }
-                        },
-                        onTapIgnore: { file in
-                            Task {
-                                await viewModel.ignoreTapped(file: file)
-                            }
-                        },
-                        onTapDiscard: {
-                            discardFile = $0
-                        }
-                    )
+                        )
+                        .id(file.id)
+                    } else {
+                        Spacer()
+                    }
                 }
                 .task {
                     viewModel.setInitialSelection()

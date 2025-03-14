@@ -98,39 +98,82 @@ import OrderedCollections
         let handleDelta: (Repository, Diff.Delta) -> Void = { repository, delta in
             let key = (delta.oldFilePath ?? "") + (delta.newFilePath ?? "")
             if addedFiles.contains(key) {
-                if delta.status == .deleted {
-                    // this means this file is added, and then deleted, but the deletion is not staged yet.
-                    addedFiles.remove(key)
-                    trackedFiles.removeValue(forKey: key)
-                }
                 return
             }
             addedFiles.insert(key)
             switch delta.status {
             case .unmodified, .ignored:
-                break
+                fatalError(.invalid)
             case .untracked:
-                untrackedFiles[key] = OldNewFile(
-                        old: delta.oldFilePath,
-                        new: delta.newFilePath,
-                        status: delta.status,
-                        repository: repository,
-                        head: head,
-                        key: key
-                    )
+                if let newPath = delta.newFilePath {
+                    if FileManager.fileExists(repository.workDir.path +/ newPath) {
+                        untrackedFiles[key] = OldNewFile(
+                            old: delta.oldFilePath,
+                            new: delta.newFilePath,
+                            status: delta.status,
+                            repository: repository,
+                            head: head,
+                            key: key
+                        )
+                    }
+                }
             case .unreadable:
                 fatalError(.unimplemented)
             case .conflicted:
                 fatalError(.unimplemented)
-            default:
-                trackedFiles[key] = OldNewFile(
-                        old: delta.oldFilePath,
-                        new: delta.newFilePath,
-                        status: delta.status,
-                        repository: repository,
-                        head: head,
-                        key: key
-                    )
+            case .added:
+                if let newPath = delta.newFilePath {
+                    if FileManager.fileExists(repository.workDir.path +/ newPath) {
+                        trackedFiles[key] = OldNewFile(
+                            old: delta.oldFilePath,
+                            new: delta.newFilePath,
+                            status: delta.status,
+                            repository: repository,
+                            head: head,
+                            key: key
+                        )
+                    }
+                }
+            case .deleted:
+                if let oldPath = delta.oldFilePath {
+                    if !FileManager.fileExists(repository.workDir.path +/ oldPath) {
+                        trackedFiles[key] = OldNewFile(
+                            old: delta.oldFilePath,
+                            new: delta.newFilePath,
+                            status: delta.status,
+                            repository: repository,
+                            head: head,
+                            key: key
+                        )
+                    }
+                }
+            case .modified:
+                if let oldPath = delta.oldFilePath,
+                   let newPath = delta.newFilePath, oldPath == newPath {
+                    if FileManager.fileExists(repository.workDir.path +/ newPath) {
+                        trackedFiles[key] = OldNewFile(
+                            old: delta.oldFilePath,
+                            new: delta.newFilePath,
+                            status: delta.status,
+                            repository: repository,
+                            head: head,
+                            key: key
+                        )
+                    }
+                }
+            case .renamed, .typeChange, .copied:
+                if let newPath = delta.newFilePath {
+                    if FileManager.fileExists(repository.workDir.path +/ newPath) {
+                        trackedFiles[key] = OldNewFile(
+                            old: delta.oldFilePath,
+                            new: delta.newFilePath,
+                            status: delta.status,
+                            repository: repository,
+                            head: head,
+                            key: key
+                        )
+                    }
+                }
             }
         }
         for statusEntry in newSelectableStatus.statusEntries {

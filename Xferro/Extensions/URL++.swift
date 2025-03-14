@@ -30,12 +30,27 @@ extension URL {
         let attributes = try FileManager.attributesOfItem(path)
         return attributes[FileAttributeKey.modificationDate] as! Date
     }
+
+    var defaultPort: Int {
+        switch scheme {
+        case "https": 443
+        case "ssh": 22
+        case "git": 9418
+        default: 80
+        }
+    }
+
+    /// Returns a copy of the URL with its path replaced
+    func withPath(_ path: String) -> URL {
+        guard var components = URLComponents(url: self, resolvingAgainstBaseURL: false)
+        else { return self }
+        components.path = path
+        return components.url ?? self
+    }
 }
 
-extension URL
-{
-    static func +/ (left: URL, right: String) -> URL
-    {
+extension URL {
+    static func +/ (left: URL, right: String) -> URL {
         return left.appendingPathComponent(right)
     }
 }

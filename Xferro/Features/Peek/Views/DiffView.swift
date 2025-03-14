@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DiffView: View {
-    @Binding var file: OldNewFile
+    let file: OldNewFile
 
     var body: some View {
         VStack(spacing: 0) {

@@ -280,7 +280,9 @@ import OrderedCollections
             }
             if diffInfo == nil {
                 if let cached = await diffInfoCache[workDirOld] {
-                    diffInfo = cached
+                    await MainActor.run {
+                        diffInfo = cached
+                    }
                 } else {
                     let newDiffInfo = await createDiffInfo()
                     await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
