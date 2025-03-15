@@ -32,7 +32,9 @@ struct XFerroButtonStyle: ButtonStyle {
             .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
             .overlay {
                 if isDisabled {
-                    Color.black.opacity(disabledOpacity)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.black.opacity(disabledOpacity))
+
                 }
             }
     }

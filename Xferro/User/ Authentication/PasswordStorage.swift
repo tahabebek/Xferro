@@ -257,10 +257,10 @@ final class KeychainStorage: TokenStorage {
         )
         var update: [CFString: Any] = [kSecValueData: password.data(using: .utf8)!]
 
-        if let newAccount = newAccount {
+        if let newAccount {
             update[kSecAttrAccount] = newAccount
         }
-        if let newURL = newURL {
+        if let newURL {
             guard let newHost = newURL.host
             else { throw PasswordError.invalidURL }
 

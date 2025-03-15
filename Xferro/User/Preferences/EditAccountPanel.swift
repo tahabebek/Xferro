@@ -34,7 +34,7 @@ struct EditAccountPanel: DataModelView {
                     }
                 }
                 TextField("Account:", text: $model.userName)
-                SecureField(
+                TextField(
                     "\(tokenTitleFor(model.serviceType)):",
                     text: $model.password,
                     prompt: Text("\(tokenPromptFor(model.serviceType))")
@@ -67,6 +67,7 @@ struct EditAccountPanel: DataModelView {
                 }
                 XFerroButton(
                     title: "Sign In",
+                    disabled: disabled(model.serviceType),
                     isProminent: true
                 ) {
                     addAccountAction()

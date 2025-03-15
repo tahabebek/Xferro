@@ -40,10 +40,7 @@ struct AccountsPrefsPane: View {
         }
     }
 
-    func squareImage(
-        _ systemName: String,
-        size: CGFloat = bottomBarHeight
-    ) -> some View {
+    func squareImage(_ systemName: String, size: CGFloat = bottomBarHeight) -> some View {
         Image(systemName: systemName)
             .frame(width: size, height: size)
             .contentShape(Rectangle())
@@ -157,11 +154,12 @@ struct AccountsPrefsPane: View {
             let account = Account(
                 type: info.serviceType,
                 user: info.userName,
-                location: .init(string: info.location)!,
+                location: info.locationURL,
                 id: info.id
             )
 
             try accountsManager.add(account, password: info.password)
+            newAccountInfo = nil
         }
         catch let error as PasswordError {
             self.passwordError = error
@@ -174,8 +172,7 @@ struct AccountsPrefsPane: View {
         editAccountInfo = nil
 
         guard let account = accountsManager.accounts
-            .first(where: { $0.id == info.id }),
-              let url = URL(string: info.location)
+            .first(where: { $0.id == info.id })
         else { return }
 
         do {
@@ -185,7 +182,7 @@ struct AccountsPrefsPane: View {
                     newAccount: .init(
                         type: info.serviceType,
                         user: info.userName,
-                        location: url,
+                        location: info.locationURL,
                         id: account.id
                     ),
                     newPassword: info.password

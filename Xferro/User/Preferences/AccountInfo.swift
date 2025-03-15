@@ -12,6 +12,15 @@ class AccountInfo: ObservableObject, Identifiable {
     @Published var password: String
     let id: UUID
 
+    var locationURL: URL {
+        let location = if serviceType.needsLocation {
+            location
+        } else {
+            serviceType.defaultLocation +/ userName
+        }
+        return URL(string: location)!
+    }
+
     init() {
         self.serviceType = .allCases.first!
         self.location = ""

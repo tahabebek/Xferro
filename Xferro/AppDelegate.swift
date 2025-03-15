@@ -16,6 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         super.init()
+        createMenu()
         git_libgit2_init()
         SentrySDK.start { options in
             options.dsn = "https://06fd8ebf14ce84b23c1252a0b78d790b@o4508498687033344.ingest.us.sentry.io/4508498688409600"
@@ -50,7 +51,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // TODO: let users add their workflow model
         // https://nvie.com/posts/a-successful-git-branching-model/
 
-        createMenu()
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
     }
@@ -60,32 +60,47 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return .terminateLater
     }
 
-    @MainActor private func createMenu() {
-        let mainMenu = NSMenu()
-        NSApp.mainMenu = mainMenu
+    private func createMenu() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            let mainMenu = NSMenu()
+            NSApp.mainMenu = mainMenu
 
-        // Create the application menu
-        let appMenuItem = NSMenuItem()
-        mainMenu.addItem(appMenuItem)
+            // Create the application menu
+            let appMenuItem = NSMenuItem()
+            mainMenu.addItem(appMenuItem)
 
-        let appMenu = NSMenu()
-        appMenuItem.submenu = appMenu
+            let appMenu = NSMenu()
+            appMenuItem.submenu = appMenu
 
-        appMenu.addItem(
-            NSMenuItem(
-                title: "Preferences...",
-                action: #selector(showPreferences),
-                keyEquivalent: ","
+            appMenu.addItem(
+                NSMenuItem(
+                    title: "Preferences...",
+                    action: #selector(showPreferences),
+                    keyEquivalent: ","
+                )
             )
-        )
 
-        appMenu.addItem(
-            NSMenuItem(
-                title: "Quit",
-                action: #selector(NSApplication.terminate(_:)),
-                keyEquivalent: "q"
+            appMenu.addItem(
+                NSMenuItem(
+                    title: "Quit",
+                    action: #selector(NSApplication.terminate(_:)),
+                    keyEquivalent: "q"
+                )
             )
-        )
+
+            let editMenu = NSMenu(title: "Edit")
+            let editMenuItem = NSMenuItem(title: "Edit", action: nil, keyEquivalent: "")
+            editMenuItem.submenu = editMenu
+
+            // Add common edit menu items
+            editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+            editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+            editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+            editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+
+            mainMenu.addItem(editMenuItem)
+        }
     }
 
     @MainActor private func saveBeforeQuit() {

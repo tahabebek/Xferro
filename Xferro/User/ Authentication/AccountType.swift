@@ -78,11 +78,11 @@ enum AccountType: Int, CaseIterable, Sendable {
 
     var defaultLocation: String {
         switch self {
-        case .gitHub: "" // "https://api.github.com"
+        case .gitHub: "https://github.com" //
         case .gitHubEnterprise: ""
-        case .bitbucketCloud: "" // "https://api.bitbucket.org"
+        case .bitbucketCloud: "https://bitbucket.org" //
         case .bitbucketServer: ""
-        case .gitLab: ""
+        case .gitLab: "https://bitbucket.com"
         case .gitLabSelfHosted: ""
         }
     }
