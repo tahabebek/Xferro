@@ -20,9 +20,7 @@ struct EditAccountPanel: DataModelView {
     }
 
     init(model: AccountInfo) {
-        self.model = model
-        self.cancel = {}
-        self.addAccountAction = {}
+        fatalError(.unimplemented)
     }
 
     var body: some View {

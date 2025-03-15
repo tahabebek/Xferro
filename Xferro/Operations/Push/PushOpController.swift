@@ -9,13 +9,17 @@ enum PushOperationOption {
 
 typealias ProgressValue = (current: Float, total: Float)
 
-final class PushOpController: OperationController {
+final class PushOpController: PasswordOpController {
     let remoteOption: PushOperationOption
     var progressSubject = PassthroughSubject<ProgressValue, Never>()
 
     init(remoteOption: PushOperationOption, repository: Repository) {
         self.remoteOption = remoteOption
         super.init(repository: repository)
+    }
+
+    required init(repository: Repository) {
+        fatalError(.unimplemented)
     }
 
     nonisolated
@@ -139,15 +143,17 @@ final class PushOpController: OperationController {
         remote: Remote,
         then callback: (@Sendable () -> Void)? = nil
     ) {
-        tryRepoOperation {
+        tryRepoOperation { [weak self] in
+            guard let self else { return }
             let callbacks = RemoteCallbacks(
+                passwordBlock: getPassword,
                 downloadProgress: nil,
-                uploadProgress: self.progressCallback
+                uploadProgress: progressCallback
             )
             
             try repository.push(branches: branches, remote: remote, callbacks: callbacks)
             callback?()
-            self.refsChangedAndEnded()
+            refsChangedAndEnded()
         }
     }
 }
