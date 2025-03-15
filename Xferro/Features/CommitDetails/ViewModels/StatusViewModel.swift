@@ -25,9 +25,7 @@ import OrderedCollections
         repository: Repository?,
         head: Head
     ) async {
-        guard let repository else {
-            return
-        }
+        guard let repository else { return }
         guard newSelectableStatus.repositoryId == repository.idOfRepo else {
             fatalError(.invalid)
         }
@@ -196,6 +194,7 @@ import OrderedCollections
     }
 
     func actionTapped(_ action: StatusActionButtonsView.BoxAction) async throws {
+        guard let repository else { return }
         switch action {
 //        case .splitAndCommit:
 //            await commitTapped()
@@ -204,7 +203,8 @@ import OrderedCollections
             try await amendTapped()
         case .commitAndPush:
             try await commitTapped()
-            fatalError(.unimplemented)
+            let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
+            try await pushOperation.start()
         case .amendAndPush:
             try await amendTapped()
             fatalError(.unimplemented)
