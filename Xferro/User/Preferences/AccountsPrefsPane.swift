@@ -160,6 +160,7 @@ struct AccountsPrefsPane: View {
 
             try accountsManager.add(account, password: info.password)
             newAccountInfo = nil
+            accountsManager.saveAccounts()
         }
         catch let error as PasswordError {
             self.passwordError = error
@@ -187,6 +188,7 @@ struct AccountsPrefsPane: View {
                     ),
                     newPassword: info.password
                 )
+            accountsManager.saveAccounts()
         }
         catch let error as PasswordError {
             passwordError = error

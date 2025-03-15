@@ -159,7 +159,7 @@ final class GitConfig {
             .urls(for: .applicationSupportDirectory,
                   in: .userDomainMask).first
         else { throw RepoError.unexpected }
-        let configURL = appSupport.appendingPathComponent("xit.gitconfig")
+        let configURL = appSupport.appendingPathComponent("xferro.gitconfig")
 
         try configURL.withUnsafeFileSystemRepresentation {
             guard let path = $0

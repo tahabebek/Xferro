@@ -8,16 +8,13 @@
 
 import Foundation
 
-extension Repository {
-    // MARK: - Remote Lookups
-
-    /// Loads all the remotes in the repository.
-    ///
-    /// Returns an array of remotes, or an error.
+extension Repository: RemoteManagement {
     func allRemotes() -> Result<[Remote], NSError> {
         lock.lock()
         defer { lock.unlock() }
         let pointer = UnsafeMutablePointer<git_strarray>.allocate(capacity: 1)
+
+
         defer {
             pointer.deallocate()
         }
@@ -29,40 +26,72 @@ extension Repository {
 
         let strarray = pointer.pointee
         let remotes: [Result<Remote, NSError>] = strarray.map {
-            return self.remote(named: $0)
+            if let remote = self.remote(named: $0) {
+                return .success(remote)
+            } else {
+                return .failure(NSError(domain: "", code: 0, userInfo: nil))
+            }
         }
         git_strarray_dispose(pointer)
 
         return remotes.aggregateResult()
     }
 
-    private func remoteLookup<A>(named name: String, _ callback: (Result<OpaquePointer, NSError>) -> A) -> A {
+    func remoteNames() -> [String] {
         lock.lock()
         defer { lock.unlock() }
-        var pointer: OpaquePointer? = nil
-        let result = git_remote_lookup(&pointer, self.pointer, name)
-
-        guard result == GIT_OK.rawValue else {
-            return callback(.failure(NSError(gitError: result, pointOfFailure: "git_remote_lookup")))
+        var strArray = git_strarray()
+        guard git_remote_list(&strArray, pointer) == 0
+        else { return [] }
+        defer {
+            git_strarray_free(&strArray)
         }
-
-        return callback(.success(pointer!))
+        return strArray.compactMap { $0 }
     }
-
-    /// Load a remote from the repository.
-    ///
-    /// name - The name of the remote.
-    ///
-    /// Returns the remote if it exists, or an error.
-    func remote(named name: String) -> Result<Remote, NSError> {
+    
+    func remote(named name: String) -> Remote? {
+        Remote(name: name, repository: pointer)
+    }
+    
+    func addRemote(named name: String, url: URL) throws {
         lock.lock()
         defer { lock.unlock() }
-        return remoteLookup(named: name) {
-            $0.map { Remote(remote: $0) }
+        var remote: OpaquePointer? = nil
+        let result = git_remote_create(&remote, pointer, name, url.absoluteString)
+
+        try RepoError.throwIfGitError(result)
+    }
+    
+    func deleteRemote(named name: String) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        let result = git_remote_delete(pointer, name)
+        try RepoError.throwIfGitError(result)
+    }
+    
+    func push(branches: [String], remote: Remote, callbacks: RemoteCallbacks) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        var result: Int32
+        let names = branches.map { $0.longBranchRef }
+
+        result = names.withGitStringArray {
+            (refspecs) in
+            git_remote_callbacks.withCallbacks(callbacks) {
+                (gitCallbacks) in
+                var mutableArray = refspecs
+                var options = git_push_options.defaultOptions()
+
+                options.callbacks = gitCallbacks
+                return Signpost.interval(.networkOperation) {
+                    git_remote_push(remote.remote, &mutableArray, &options)
+                }
+            }
         }
+        try RepoError.throwIfGitError(result)
     }
 
-    func fetch(remote: Remote, options: FetchOptions) -> Result<Void, NSError> {
+    func fetch(remote: Remote, options: FetchOptions) throws {
         lock.lock()
         defer { lock.unlock() }
         var refspecs = git_strarray.init()
@@ -71,7 +100,7 @@ extension Repository {
         result = git_remote_get_fetch_refspecs(&refspecs, remote.remote)
         guard result == GIT_OK.rawValue else {
             let err = NSError(gitError: result, pointOfFailure: "git_remote_get_fetch_refspecs")
-            return .failure(err)
+            throw err
         }
         defer {
             git_strarray_free(&refspecs)
@@ -88,19 +117,14 @@ extension Repository {
         }
         guard result == GIT_OK.rawValue else {
             let err = NSError(gitError: result, pointOfFailure: "git_remote_fetch")
-            return .failure(err)
+            throw err
         }
-        return .success(())
     }
 
-    public func pull(
-        branch: Branch,
-        remote: Remote,
-        options: FetchOptions
-    ) throws {
+    public func pull(branch: Branch, remote: Remote, options: FetchOptions) throws {
         lock.lock()
         defer { lock.unlock() }
-        fetch(remote: remote, options: options).mustSucceed(gitDir)
+        try fetch(remote: remote, options: options)
         let remoteBranch = try remoteBranch(named: "\(remote)/\(branch)").get()
         guard let remoteBranch else {
             throw NSError(gitError: 1, pointOfFailure: "git_config_get_string", description: "Could not find the upstream branch.")

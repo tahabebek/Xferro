@@ -11,6 +11,7 @@ class Repository: Identifiable {
     let id = UUID()
     static let staticLock = NSRecursiveLock()
     let lock = NSRecursiveLock()
+    let queue: TaskQueue
 
     /// The underlying libgit2 `git_repository` object.
     let pointer: OpaquePointer
@@ -22,6 +23,14 @@ class Repository: Identifiable {
     /// The Repository assumes ownership of the `git_repository` object.
     init(_ pointer: OpaquePointer) {
         self.pointer = pointer
+        self.queue = TaskQueue(id: Self.taskQueueID(path: id.uuidString))
+    }
+
+    static func taskQueueID(path: String) -> String
+    {
+        let identifier = Bundle.main.bundleIdentifier ?? "com.xferro"
+
+        return "\(identifier).\(path)"
     }
 
     deinit {

@@ -16,9 +16,7 @@ struct WipHeaderView: View {
 
     var body: some View {
         VerticalHeader(title: "Work in progress") {
-            Toggle("Auto", isOn: $autoCommitEnabled)
-            .fixedSize()
-            if autoCommitEnabled {
+            if !autoCommitEnabled {
                 Image(systemName: "plus")
                     .contentShape(Rectangle())
                     .hoverableButton("Create wip commit") {

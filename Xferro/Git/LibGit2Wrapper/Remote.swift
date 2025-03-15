@@ -266,14 +266,10 @@ struct PushTransferProgress: Sendable {
 }
 
 struct RemoteCallbacks {
-    typealias PasswordBlock = () -> (String, String)?
     typealias DownloadProgressBlock = (any TransferProgress) -> Bool
     typealias UploadProgressBlock = (PushTransferProgress) -> Bool
     typealias SidebandMessageBlock = (String) -> Bool
 
-    /// Callback for getting the user and password when they could not be
-    /// discovered automatically
-    var passwordBlock: PasswordBlock? = nil
     /// Fetch progress. Return false to stop the operation
     var downloadProgress: DownloadProgressBlock? = nil
     /// Push progress. Return false to stop the operation

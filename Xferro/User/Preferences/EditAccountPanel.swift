@@ -66,7 +66,7 @@ struct EditAccountPanel: DataModelView {
                     cancel()
                 }
                 XFerroButton(
-                    title: "Sign In",
+                    title: "Save",
                     disabled: disabled(model.serviceType),
                     isProminent: true
                 ) {

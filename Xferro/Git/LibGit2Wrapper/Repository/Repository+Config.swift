@@ -11,7 +11,15 @@ extension Repository {
     var config: GitConfig? {
         lock.lock()
         defer { lock.unlock() }
-        return GitConfig(repository: pointer)
+        if let config =  GitConfig(repository: pointer) {
+            return config
+        }
+
+        if let defaultConfig = GitConfig.default {
+            return defaultConfig
+        }
+
+        return nil
     }
 
     var configPath: String? {

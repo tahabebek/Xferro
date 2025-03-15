@@ -108,9 +108,9 @@ extension git_remote_callbacks {
                     keychain.find(url: url.withPath(""), account: userName) {
                     return git_cred_userpass_plaintext_new(cred, user, password)
                 }
-                if let (user, password) = callbacks.pointee.passwordBlock!() {
-                    return git_cred_userpass_plaintext_new(cred, user, password)
-                }
+//                if let (user, password) = callbacks.pointee.passwordBlock!() {
+//                    return git_cred_userpass_plaintext_new(cred, user, password)
+//                }
             }
             // The documentation says to return >0 to indicate no credentials
             // acquired, but that leads to an assertion failure.
@@ -166,9 +166,9 @@ extension git_remote_callbacks {
             (buffer) in
             gitCallbacks.payload = buffer.baseAddress
 
-            if callbacks.passwordBlock != nil {
-                gitCallbacks.credentials = Callbacks.credentials
-            }
+//            if callbacks.passwordBlock != nil {
+//                gitCallbacks.credentials = Callbacks.credentials
+//            }
             if callbacks.downloadProgress != nil {
                 gitCallbacks.transfer_progress = Callbacks.transferProgress
             }

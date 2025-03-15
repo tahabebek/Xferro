@@ -179,22 +179,56 @@ extension Repository {
         return .success(())
     }
 
-    func trackBranch(headRef: ReferenceType) -> Result<(remote: String, merge: String)?, NSError> {
+    func trackingBranchName(of branch: Branch) -> String? {
         lock.lock()
         defer { lock.unlock() }
-        guard let branch = headRef as? Branch else {
-            return .failure(NSError(gitError: -1, pointOfFailure: "git_branch_lookup"))
+        // Re-implement `git_branch_upstream_name` but with our cached-snapshot
+        // config optimization.
+        guard let config else {
+            fatalError(.unexpected)
         }
-        return self.trackBranch(local: branch.name)
+        guard let remoteName = config.branchRemote(branch.name),
+              let mergeName = config.branchMerge(branch.name)
+        else { return nil }
+
+        if remoteName == "." {
+            return mergeName
+        }
+        else {
+            guard let remote = remote(named: remoteName),
+                  let refSpec = remote.refSpecs.first(where: { spec in
+                      spec.direction == .fetch && spec.sourceMatches(refName: mergeName)
+                  })
+            else { return nil }
+
+            return refSpec.transformToTarget(name: mergeName)?
+                .droppingPrefix(String.remotePrefix)
+        }
     }
 
-    func trackBranch(local: String) -> Result<(remote: String, merge: String)?, NSError> {
+    func setTrackingBranchName(of branch: Branch, to newValue: String?) {
         lock.lock()
         defer { lock.unlock() }
-        guard let remoteName = config?.branchRemote(local),
-              let mergeName = config?.branchMerge(local) else {
-            return .success(nil)
-        }
-        return .success((remote: remoteName, merge: mergeName))
+        var branchRef: OpaquePointer? = nil
+        let result = git_reference_lookup(&branchRef, pointer, branch.longName)
+        guard result == GIT_OK.rawValue else { return }
+        git_branch_set_upstream(branchRef, newValue)
+        config?.loadSnapshot()
+    }
+
+    /// Returns a branch object for this branch's remote tracking branch,
+    /// or `nil` if no tracking branch is set or if it references a non-existent
+    /// branch.
+    func trackingBranch(of branch: Branch) -> Branch? {
+        lock.lock()
+        defer { lock.unlock() }
+        var branchRef: OpaquePointer? = nil
+        let result = git_reference_lookup(&branchRef, pointer, branch.longName)
+        guard result == GIT_OK.rawValue else { return nil }
+        guard let upstream = try? OpaquePointer.from({
+            git_branch_upstream(&$0, branchRef)
+        })
+        else { return nil }
+        return Branch(upstream, lock: lock)
     }
 }
