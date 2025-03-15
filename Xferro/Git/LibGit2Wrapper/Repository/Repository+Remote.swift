@@ -75,10 +75,8 @@ extension Repository: RemoteManagement {
         var result: Int32
         let names = branches.map { $0.longBranchRef }
 
-        result = names.withGitStringArray {
-            (refspecs) in
-            git_remote_callbacks.withCallbacks(callbacks) {
-                (gitCallbacks) in
+        result = names.withGitStringArray { refspecs in
+            git_remote_callbacks.withCallbacks(callbacks) { gitCallbacks in
                 var mutableArray = refspecs
                 var options = git_push_options.defaultOptions()
 

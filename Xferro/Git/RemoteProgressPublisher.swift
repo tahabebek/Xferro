@@ -12,8 +12,9 @@ final class RemoteProgressPublisher {
     private(set) var callbacks = RemoteCallbacks()
     var canceled: Bool = false
 
-    init() {
+    init(passwordBlock: RemoteCallbacks.PasswordBlock? = nil) {
         callbacks = .init(
+            passwordBlock: passwordBlock,
             downloadProgress: { [weak self] in
                 guard let self = self
                 else { return false }
@@ -32,6 +33,10 @@ final class RemoteProgressPublisher {
                 self.subject.send(.sideband($0))
                 return !self.canceled
             })
+    }
+
+    func setPasswordBlock(_ block: RemoteCallbacks.PasswordBlock?) {
+        callbacks.passwordBlock = block
     }
 
     func finished() {
