@@ -33,7 +33,7 @@ struct StatusFilesViewContainer: View {
                 hasChanges: $hasChanges,
                 onCommitTapped: {
                     committing = true
-                    try? await onCommitTapped()
+                    try await onCommitTapped()
                     await MainActor.run {
                         committing = false
                         currentFile = nil

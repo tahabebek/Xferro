@@ -265,6 +265,9 @@ import OrderedCollections
 
     private func commit(repository: Repository, amend: Bool) async throws {
         GitCLI.executeGit(repository, ["restore", "--staged", "."])
+        var filesToWriteBack: [String: String] = [:]
+        var filesToAdd: Set<String> = []
+        var filesToDelete: Set<String> = []
 
         for file in trackedFiles.values.elements where file.checkState == .checked {
             guard file.new != nil || file.old != nil else {
@@ -272,15 +275,12 @@ import OrderedCollections
             }
 
             if let new = file.new {
-                GitCLI.executeGit(repository, ["add", new])
+                filesToAdd.insert(new)
             }
             if let old = file.old , old != file.new {
-                GitCLI.executeGit(repository, ["add", old])
+                filesToAdd.insert(old)
             }
         }
-
-        var filesToWriteBack: [String: String] = [:]
-        var filesToDelete: Set<String> = []
 
         for file in trackedFiles.values.elements where file.checkState == .partiallyChecked {
             guard let hunks = file.diffInfo?.hunks() else {
@@ -311,14 +311,14 @@ import OrderedCollections
                 } else {
                     fatalError(.impossible)
                 }
-                GitCLI.executeGit(repository, ["add", new])
+                filesToAdd.insert(new)
             case .deleted:
                 guard let old = file.old else {
                     fatalError(.invalid)
                 }
 
                 try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
-                GitCLI.executeGit(repository, ["add", old])
+                filesToAdd.insert(old)
                 filesToDelete.insert(old)
             case .ignored, .unreadable, .unmodified, .untracked:
                 fatalError(.invalid)
@@ -326,6 +326,9 @@ import OrderedCollections
                 fatalError(.unimplemented)
             }
         }
+
+        let addArguments = ["add"] + Array(filesToAdd)
+        GitCLI.executeGit(repository, addArguments)
         if amend {
             if commitSummary.isEmptyOrWhitespace {
                 GitCLI.executeGit(repository, ["commit", "--amend", "--no-edit"])
