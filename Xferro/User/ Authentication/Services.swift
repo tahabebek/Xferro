@@ -26,11 +26,10 @@ final class Services {
 
     typealias RepositoryService = IdentifiableService & AccountService
 
-    static let shared = Services(passwordStorage: KeychainStorage.shared)
+    static let shared = Services(tokenStorage: KeychainStorage.shared)
 
-    let passwordStorage: any PasswordStorage
+    let tokenStorage: any TokenStorage
 
-    private var teamCityServices: [String: TeamCityAPI] = [:]
     private var bitbucketServices: [String: BitbucketServerAPI] = [:]
 
     private var services: [AccountType: [String: BasicAuthService]] = [:]
@@ -40,13 +39,11 @@ final class Services {
 
     var serviceMakers: [AccountType: (Account) -> BasicAuthService?] = [:]
 
-    init(passwordStorage: any PasswordStorage) {
-        self.passwordStorage = passwordStorage
+    init(tokenStorage: any TokenStorage) {
+        self.tokenStorage = tokenStorage
 
-        let teamCityMaker: (Account) -> TeamCityAPI? = createService(for:)
         let bbsMaker: (Account) -> BitbucketServerAPI? = createService(for:)
 
-        serviceMakers[.teamCity] = teamCityMaker
         serviceMakers[.bitbucketServer] = bbsMaker
 
         NotificationCenter.default.addObserver(
@@ -109,9 +106,6 @@ final class Services {
     /// Creates an API object for each account so they can start with
     /// authorization and other state info.
     func initializeServices(with manager: AccountsManager) {
-        for account in manager.accounts(ofType: .teamCity) {
-            _ = service(for: account)
-        }
         for account in manager.accounts(ofType: .bitbucketServer) {
             _ = service(for: account)
         }
@@ -151,29 +145,12 @@ final class Services {
         return nil
     }
 
-    func buildStatusService(for remoteURL: String) -> (BuildStatusService, [String])? {
-        for service in allServices.compactMap({ $0 as? BuildStatusService }) {
-            let buildTypes = service.buildTypesForRemote(remoteURL)
-
-            if !buildTypes.isEmpty {
-                return (service, buildTypes)
-            }
-        }
-        return nil
-    }
-
-    /// Returns the TeamCity service object for the given account, or nil if
-    /// the password cannot be found.
-    func teamCityAPI(for account: Account) -> TeamCityAPI? {
-        service(for: account) as? TeamCityAPI
-    }
-
     func bitbucketServerAPI(for account: Account) -> BitbucketServerAPI? {
         service(for: account) as? BitbucketServerAPI
     }
 
     func createService<T>(for account: Account) -> T? where T: BasicAuthService {
-        guard let password = passwordStorage.find(
+        guard let password = tokenStorage.find(
             url: account.location,
             account: account.user
         )

@@ -3,15 +3,13 @@ import SwiftUI
 
 final class PrefsWindowController: NSWindowController {
     enum Tab: String, CaseIterable {
-        case general
         case accounts
-        case previews
+        case general
 
         var label: String {
             switch self {
             case .general:  return "General"
             case .accounts: return "Accounts"
-            case .previews: return "Previews"
             }
         }
 
@@ -19,7 +17,6 @@ final class PrefsWindowController: NSWindowController {
             switch self {
             case .general:  return "gear"
             case .accounts: return "person.crop.circle"
-            case .previews: return "doc.text"
             }
         }
 
@@ -35,23 +32,15 @@ final class PrefsWindowController: NSWindowController {
             case .accounts:
                 return NSHostingController(
                     rootView: AccountsPrefsPane(accountsManager: .shared, services: .shared)
-                    // Without maxHeight the pane wants to be really tall
                         .frame(minWidth: 560, maxHeight: 288)
                         .padding())
-                .sizedToFit(in: size)
-            case .previews:
-                return NSHostingController(
-                    rootView: PreviewsPrefsPane(defaults: UserDefaults.standard)
-                        .padding().fixedSize())
                 .sizedToFit(in: size)
             }
         }
     }
 
-    static let shared =
-    NSStoryboard(name: "Preferences", bundle: nil)
-        .instantiateInitialController()!
-    as! PrefsWindowController
+    static let shared = NSStoryboard(name: "Preferences", bundle: nil)
+        .instantiateInitialController()! as! PrefsWindowController
 
     var tabController: NSTabViewController!
 

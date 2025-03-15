@@ -54,8 +54,8 @@ struct AccountsPrefsPane: View {
             Table(accountsManager.accounts, selection: $selectedAccountID) {
                 TableColumn("Service", content: { ServiceLabel($0.type) })
                     .width(min: 40, ideal: 80)
-                TableColumn("User name", value: \.user)
-                TableColumn("Location", value: \.location.absoluteString)
+                TableColumn("Account", value: \.user)
+                TableColumn("Server", value: \.location.absoluteString)
                     .width(min: 40, ideal: 150)
                 TableColumn("Status") {
                     AccountStatusCell.for(service: services.service(for: $0))
@@ -139,14 +139,12 @@ struct AccountsPrefsPane: View {
         action: @escaping () -> Void,
         cancel: @escaping () -> Void
     ) -> some View {
-        VStack {
-            EditAccountPanel(model: binding.wrappedValue)
-                .onSubmit(action)
-            DialogButtonRow(validator: binding.wrappedValue, buttons: [
-                (.cancel, cancel),
-                (.accept(title), action),
-            ])
-        }
+        EditAccountPanel(
+            model: binding.wrappedValue,
+            cancel: cancel,
+            addAccountAction: action
+        )
+        .onSubmit(action)
         .padding()
     }
 
@@ -210,7 +208,7 @@ struct AccountsPrefsPane: View {
 
     func editAccount() {
         guard let account = selectedAccount else { return }
-        let password = accountsManager.passwordStorage.find(account: account) ?? ""
+        let password = accountsManager.tokenStorage.find(account: account) ?? ""
         editAccountInfo = AccountInfo(with: account, password: password)
     }
 

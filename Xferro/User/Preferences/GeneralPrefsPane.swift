@@ -4,25 +4,18 @@ struct GeneralPrefsPane: View {
     let defaults: UserDefaults
     let config: GitConfig
 
-    @AppStorage var collapseHistory: Bool
-    @AppStorage var deemphasize: Bool
-    @AppStorage var resetAmend: Bool
-    @AppStorage var tabStatus: Bool
     @ConfigValue var userName: String
     @ConfigValue var userEmail: String
+    @AppStorage var autoCommitEnabled: Bool
+    @AppStorage var autoCommitAndPushEnabled: Bool
     @AppStorage var fetchTags: Bool
-    @ConfigValue var pruneBranches: Bool
-    @AppStorage var guideWidth: Int
-    @AppStorage var showGuide: Bool
 
     var body: some View {
         Form {
-            LabeledContent("Interface options:") {
+            LabeledContent("Work in progress options:") {
                 VStack(alignment: .leading) {
-                    Toggle("Collapse history list in Staging view", isOn: $collapseHistory)
-                    Toggle("De-emphasize merge commits", isOn: $deemphasize)
-                    Toggle("Automatically reset \"Amend\"", isOn: $resetAmend)
-                    Toggle("Workspace status in tabs", isOn: $tabStatus)
+                    Toggle("Automaticaly commit on save", isOn: $autoCommitEnabled)
+                    Toggle("Automatically push wip commits", isOn: $autoCommitAndPushEnabled)
                 }
                 .fixedSize()
             }
@@ -31,22 +24,8 @@ struct GeneralPrefsPane: View {
             LabeledContent("Fetch options:") {
                 VStack(alignment: .leading) {
                     Toggle("Download tags", isOn: $fetchTags)
-                    Toggle("Prune branches", isOn: $pruneBranches)
                 }
                 .fixedSize()
-            }
-            LabeledContent("Commit view:") {
-                VStack(alignment: .leading) {
-                    Toggle("Show page guide", isOn: $showGuide)
-                    HStack {
-                        Text("Page guide at column")
-                        TextField("", value: $guideWidth, formatter: NumberFormatter())
-                            .labelsHidden()
-                            .frame(width: 40)
-                        Stepper(value: $guideWidth, in: 0...9999, label: {}).labelsHidden()
-                    }
-                    .disabled(!showGuide)
-                }
             }
         }
         .frame(minWidth: 350)
@@ -55,26 +34,17 @@ struct GeneralPrefsPane: View {
     init(defaults: UserDefaults, config: GitConfig) {
         self.defaults = defaults
         self.config = config
-        self._collapseHistory = .init(
+        self._autoCommitEnabled = .init(
             wrappedValue: false,
-            PreferenceKeys.collapseHistory,
+            PreferenceKeys.autoCommitEnabled,
             store: defaults
         )
-        self._deemphasize = .init(
+        self._autoCommitAndPushEnabled = .init(
             wrappedValue: false,
-            PreferenceKeys.deemphasizeMerges,
+            PreferenceKeys.autoCommitAndPushEnabled,
             store: defaults
         )
-        self._resetAmend = .init(
-            wrappedValue: false,
-            PreferenceKeys.resetAmend,
-            store: defaults
-        )
-        self._tabStatus = .init(
-            wrappedValue: false,
-            PreferenceKeys.statusInTabs,
-            store: defaults
-        )
+
         self._userName = .init(
             key: "user.name",
             config: config,
@@ -88,21 +58,6 @@ struct GeneralPrefsPane: View {
         self._fetchTags = .init(
             wrappedValue: false,
             PreferenceKeys.fetchTags,
-            store: defaults
-        )
-        self._pruneBranches = .init(
-            key: "fetch.prune",
-            config: config,
-            default: false
-        )
-        self._guideWidth = .init(
-            wrappedValue: defaults.guideWidth,
-            PreferenceKeys.guideWidth.key,
-            store: defaults
-        )
-        self._showGuide = .init(
-            wrappedValue: defaults.showGuide,
-            PreferenceKeys.showGuide.key,
             store: defaults
         )
     }

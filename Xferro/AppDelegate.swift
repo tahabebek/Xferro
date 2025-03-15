@@ -71,10 +71,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let appMenu = NSMenu()
         appMenuItem.submenu = appMenu
 
-        // Add the Quit item
-        appMenu.addItem(NSMenuItem(title: "Quit",
-                                   action: #selector(NSApplication.terminate(_:)),
-                                   keyEquivalent: "q"))
+        appMenu.addItem(
+            NSMenuItem(
+                title: "Preferences...",
+                action: #selector(showPreferences),
+                keyEquivalent: ","
+            )
+        )
+
+        appMenu.addItem(
+            NSMenuItem(
+                title: "Quit",
+                action: #selector(NSApplication.terminate(_:)),
+                keyEquivalent: "q"
+            )
+        )
     }
 
     @MainActor private func saveBeforeQuit() {
@@ -84,6 +95,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         git_libgit2_shutdown()
         let app = NSApplication.shared
         app.reply(toApplicationShouldTerminate: true)
+    }
+
+    @objc func showPreferences(_ sender: Any?) {
+        PrefsWindowController.shared.window?
+            .makeKeyAndOrderFront(nil)
     }
 }
 

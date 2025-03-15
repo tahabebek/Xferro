@@ -4,13 +4,13 @@ final class AccountsManager: ObservableObject {
     static let shared = AccountsManager()
 
     let defaults: UserDefaults
-    let passwordStorage: any PasswordStorage
+    let tokenStorage: any TokenStorage
 
     @Published
     private(set) var accounts: [Account] = []
 
-    init(passwordStorage: (any PasswordStorage)? = nil) {
-        self.passwordStorage = passwordStorage ?? KeychainStorage.shared
+    init(tokenStorage: (any TokenStorage)? = nil) {
+        self.tokenStorage = tokenStorage ?? KeychainStorage.shared
         self.defaults = .standard
         readAccounts()
     }
@@ -20,12 +20,12 @@ final class AccountsManager: ObservableObject {
     }
 
     func add(_ account: Account, password: String) throws {
-        if let existingPassword = passwordStorage.find(
+        if let existingPassword = tokenStorage.find(
             url: account.location,
             account: account.user
         ) {
             if existingPassword != password {
-                try passwordStorage.change(
+                try tokenStorage.change(
                     url: account.location,
                     newURL: nil,
                     account: account.user,
@@ -35,7 +35,7 @@ final class AccountsManager: ObservableObject {
             }
         }
         else {
-            try passwordStorage.save(
+            try tokenStorage.save(
                 url: account.location,
                 account: account.user,
                 password: password
@@ -58,7 +58,7 @@ final class AccountsManager: ObservableObject {
         else {
             throw PasswordError.itemNotFound
         }
-        let oldPassword = passwordStorage.find(
+        let oldPassword = tokenStorage.find(
             url: oldAccount.location,
             account: oldAccount.user
         )
@@ -66,7 +66,7 @@ final class AccountsManager: ObservableObject {
 
         if newAccount != oldAccount || changePassword {
             if let password = oldPassword {
-                try passwordStorage
+                try tokenStorage
                     .change(
                         url: oldAccount.location,
                         newURL: newAccount.location,
@@ -75,7 +75,7 @@ final class AccountsManager: ObservableObject {
                         password: newPassword ?? password
                     )
             } else if let password = newPassword {
-                try passwordStorage
+                try tokenStorage
                     .save(
                         url: newAccount.location,
                         account: newAccount.user,

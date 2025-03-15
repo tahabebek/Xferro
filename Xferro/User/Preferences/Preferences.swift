@@ -1,23 +1,10 @@
 import Foundation
 
 enum PreferenceKeys {
-    static let deemphasizeMerges = "deemphasizeMerges"
-    static let collapseHistory = "collapseHistory"
-    static let resetAmend = "resetAmend"
-    static let fetchTags = "FetchTags"
+    static let fetchTags = "fetchTags"
     static let accounts = "accounts"
-    static let statusInTabs = "statusInTabs"
-    static let stripComments = "stripComments"
-    static let showColumns = "showColumns"
-
-    static let diffWhitespace = PreferenceKey("diffWhitespace", WhitespaceSetting.showAll)
-    static let tabWidth = PreferenceKey("tabWidth", 4)
-    static let contextLines = PreferenceKey("contextLines", 3)
-    static let fontName = PreferenceKey("fontName", "Menlo-Regular")
-    static let fontSize = PreferenceKey("fontSize", 11)
-    static let wrapping = PreferenceKey("wrapping", TextWrapping.none)
-    static let guideWidth = PreferenceKey("guideWidth", 83)
-    static let showGuide = PreferenceKey("showGuide", true)
+    static let autoCommitEnabled = "autoCommitEnabled"
+    static let autoCommitAndPushEnabled = "autoCommitAndPushEnabled"
 }
 
 struct PreferenceKey<T> {
@@ -31,20 +18,6 @@ struct PreferenceKey<T> {
 }
 
 extension PreferenceKey: Sendable where T: Sendable {}
-
-enum WhitespaceSetting: String, CaseIterable {
-    case showAll
-    case ignoreEOL
-    case ignoreAll
-
-    var displayName: String {
-        switch self {
-        case .showAll: "Show whitespace changes"
-        case .ignoreEOL: "Ignore end of line whitespace"
-        case .ignoreAll: "Ignore all whitespace"
-        }
-    }
-}
 
 extension UserDefaults {
     subscript<T>(_ key: PreferenceKey<T>) -> T {
@@ -60,19 +33,14 @@ extension UserDefaults {
         set { setValue(newValue.rawValue, forKey: key.key) }
     }
 
-    @objc dynamic var collapseHistory: Bool {
-        get { bool(forKey: PreferenceKeys.collapseHistory) }
-        set { set(newValue, forKey: PreferenceKeys.collapseHistory) }
+    @objc dynamic var autoCommitEnabled: Bool {
+        get { bool(forKey: PreferenceKeys.autoCommitEnabled) }
+        set { set(newValue, forKey: PreferenceKeys.autoCommitEnabled) }
     }
 
-    @objc dynamic var deemphasizeMerges: Bool {
-        get { bool(forKey: PreferenceKeys.deemphasizeMerges) }
-        set { set(newValue, forKey: PreferenceKeys.deemphasizeMerges) }
-    }
-
-    @objc dynamic var resetAmend: Bool {
-        get { bool(forKey: PreferenceKeys.resetAmend) }
-        set { set(newValue, forKey: PreferenceKeys.resetAmend) }
+    @objc dynamic var autoCommitAndPushEnabled: Bool {
+        get { bool(forKey: PreferenceKeys.autoCommitAndPushEnabled) }
+        set { set(newValue, forKey: PreferenceKeys.autoCommitAndPushEnabled) }
     }
 
     var accounts: [Account] {
@@ -95,70 +63,6 @@ extension UserDefaults {
         set {
             let accountsData = newValue.map { $0.plistDictionary }
             setValue(accountsData, forKey: PreferenceKeys.accounts)
-        }
-    }
-
-    @objc dynamic var statusInTabs: Bool {
-        get { bool(forKey: PreferenceKeys.statusInTabs) }
-        set { set(newValue, forKey: PreferenceKeys.statusInTabs) }
-    }
-
-    @objc dynamic var stripComments: Bool {
-        get { bool(forKey: PreferenceKeys.stripComments) }
-        set { set(newValue, forKey: PreferenceKeys.stripComments) }
-    }
-
-    @objc dynamic var showColumns: [String] {
-        get { value(forKey: PreferenceKeys.showColumns) as? [String] ?? [] }
-        set { set(newValue, forKey: PreferenceKeys.showColumns) }
-    }
-
-    @objc dynamic var fontName: String {
-        get { self[PreferenceKeys.fontName] }
-        set { self[PreferenceKeys.fontName] = newValue }
-    }
-
-    @objc dynamic var fontSize: Int {
-        get { self[PreferenceKeys.fontSize] }
-        set { self[PreferenceKeys.fontSize] = newValue }
-    }
-
-    @objc dynamic var tabWidth: Int {
-        get { self[PreferenceKeys.tabWidth] }
-        set { self[PreferenceKeys.tabWidth] = newValue }
-    }
-
-    @objc dynamic var contextLines: Int {
-        get { self[PreferenceKeys.contextLines] }
-        set { self[PreferenceKeys.contextLines] = newValue }
-    }
-
-    @objc dynamic var guideWidth: Int {
-        get { self[PreferenceKeys.guideWidth] }
-        set { self[PreferenceKeys.guideWidth] = newValue }
-    }
-
-    @objc dynamic var showGuide: Bool {
-        get { self[PreferenceKeys.showGuide] }
-        set { self[PreferenceKeys.showGuide] = newValue }
-    }
-
-    dynamic var wrapping: TextWrapping {
-        get { self[PreferenceKeys.wrapping] }
-        set { self[PreferenceKeys.wrapping] = newValue }
-    }
-
-    dynamic var whitespace: WhitespaceSetting {
-        get { self[PreferenceKeys.diffWhitespace] }
-        set { self[PreferenceKeys.diffWhitespace] = newValue }
-    }
-
-    func setShowColumn(_ identifier: String, show: Bool) {
-        if show {
-            showColumns += [identifier]
-        }
-        else {
-            showColumns = showColumns.filter { $0 != identifier }
         }
     }
 }

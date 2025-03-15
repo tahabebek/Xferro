@@ -27,7 +27,7 @@ public enum PasswordProtocol: String {
     }
 }
 
-public protocol PasswordStorage: Sendable {
+protocol TokenStorage: Sendable {
     func find(
         host: String,
         path: String,
@@ -51,7 +51,7 @@ public protocol PasswordStorage: Sendable {
     ) throws
 }
 
-extension PasswordStorage {
+extension TokenStorage {
     func find(url: URL, account: String? = nil) -> String? {
         guard let host = url.host
         else { return nil }
@@ -125,8 +125,8 @@ struct SendableKeychain: @unchecked Sendable {
     let keychain: SecKeychain
 }
 
-final class KeychainStorage: PasswordStorage {
-    static let shared: PasswordStorage = KeychainStorage()
+final class KeychainStorage: TokenStorage {
+    static let shared: TokenStorage = KeychainStorage()
 
     let sendableKeychain: SendableKeychain?
     var keychain: SecKeychain? {
