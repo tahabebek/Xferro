@@ -16,6 +16,7 @@ struct StatusViewChangeView: View {
     let onTapExcludeAll: () -> Void
     let onTapIncludeAll: () -> Void
     let onTapTrack: (OldNewFile) -> Void
+    let onTapUntrack: (OldNewFile) -> Void
     let onTapTrackAll: () -> Void
     let onTapIgnore: (OldNewFile) -> Void
     let onTapDiscard: (OldNewFile) -> Void
@@ -34,6 +35,7 @@ struct StatusViewChangeView: View {
                             currentFile: $currentFile,
                             files: $trackedFiles,
                             onTapDiscard: onTapDiscard,
+                            onTapUntrack: onTapUntrack,
                             onTapIncludeAll: onTapIncludeAll,
                             onTapExcludeAll: onTapExcludeAll
                         )

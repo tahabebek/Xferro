@@ -12,6 +12,7 @@ struct StatusTrackedView: View {
     @Binding var files: [OldNewFile]
 
     let onTapDiscard: (OldNewFile) -> Void
+    let onTapUntrack: (OldNewFile) -> Void
     let onTapIncludeAll: () -> Void
     let onTapExcludeAll: () -> Void
 
@@ -23,7 +24,8 @@ struct StatusTrackedView: View {
                         StatusTrackedRowView(
                             currentFile: $currentFile,
                             file: file,
-                            onTapDiscard: { onTapDiscard(file.wrappedValue) }
+                            onTapDiscard: { onTapDiscard(file.wrappedValue) },
+                            onTapUntrack: { onTapUntrack(file.wrappedValue) }
                         )
                     }
                 }

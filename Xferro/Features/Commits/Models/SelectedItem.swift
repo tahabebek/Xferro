@@ -9,6 +9,12 @@ import Foundation
 
 struct SelectedItem: Equatable {
     let type: SelectedItemType
+    var timeStamp = Date()
+
+    static func == (lhs: SelectedItem, rhs: SelectedItem) -> Bool {
+        lhs.type == rhs.type && lhs.timeStamp == rhs.timeStamp
+    }
+
     var oid: OID {
         switch type {
         case .regular(let regularSelectedItem):

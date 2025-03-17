@@ -17,12 +17,11 @@ import OrderedCollections
         }
     }
 
-    // use the func setCurrentSelectedItem to set currentSelectedItem
+    // use setCurrentSelectedItem to set it
     private(set) var currentSelectedItem: SelectedItem?
     @ObservationIgnored private(set) var currentRepositoryInfo: RepositoryInfo?
 
     func setCurrentSelectedItem(_ selectedItem: SelectedItem?, _ repositoryInfo: RepositoryInfo?) {
-        guard currentSelectedItem != selectedItem else { return }
         guard let repositoryInfo else {
             fatalError(.invalid)
         }

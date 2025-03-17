@@ -13,6 +13,7 @@ struct StatusTrackedRowView: View {
     @State var isCurrent: Bool = false
 
     let onTapDiscard: () -> Void
+    let onTapUntrack: () -> Void
 
     var body: some View {
         HStack {
@@ -46,7 +47,7 @@ struct StatusTrackedRowView: View {
         }
         .contextMenu {
             Button(file.status == .added ? "Untrack \(file.statusFileName)" : "Discard changes in \(file.statusFileName)") {
-                onTapDiscard()
+                onTapUntrack()
             }
         }
     }

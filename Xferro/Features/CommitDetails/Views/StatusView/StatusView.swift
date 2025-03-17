@@ -55,6 +55,11 @@ struct StatusView: View {
                                 await viewModel.trackTapped(flag: true, file: file)
                             }
                         },
+                        onTapUntrack: { file in
+                            Task {
+                                await viewModel.trackTapped(flag: false, file: file)
+                            }
+                        },
                         onTapTrackAll: {
                             Task {
                                 await viewModel.trackAllTapped()

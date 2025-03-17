@@ -20,6 +20,7 @@ struct StatusFilesViewContainer: View {
     let onTapExcludeAll: () -> Void
     let onTapIncludeAll: () -> Void
     let onTapTrack: (OldNewFile) -> Void
+    let onTapUntrack: (OldNewFile) -> Void
     let onTapTrackAll: () -> Void
     let onTapIgnore: (OldNewFile) -> Void
     let onTapDiscard: (OldNewFile) -> Void
@@ -49,6 +50,7 @@ struct StatusFilesViewContainer: View {
                 onTapExcludeAll: onTapExcludeAll,
                 onTapIncludeAll: onTapIncludeAll,
                 onTapTrack: onTapTrack,
+                onTapUntrack: onTapUntrack,
                 onTapTrackAll: onTapTrackAll,
                 onTapIgnore: onTapIgnore,
                 onTapDiscard: onTapDiscard
