@@ -12,10 +12,10 @@ struct DiffView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("No difference")
+            Text("No difference.")
                 .frame(height: file.diffInfo is NoDiffInfo ? 44 : 0)
                 .opacity(file.diffInfo is NoDiffInfo ? 1 : 0)
-            Text("Binary files differ")
+            Text("Binary files differ.")
                 .frame(height: file.diffInfo is BinaryDiffInfo ? 44 : 0)
                 .opacity(file.diffInfo is BinaryDiffInfo ? 1 : 0)
             ForEach(file.diffInfo?.hunks() ?? []) { hunk in

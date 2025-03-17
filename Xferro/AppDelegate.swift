@@ -16,7 +16,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         super.init()
-        createMenu()
+        Task { @MainActor in
+            await createMenu()
+        }
         git_libgit2_init()
         SentrySDK.start { options in
             options.dsn = "https://06fd8ebf14ce84b23c1252a0b78d790b@o4508498687033344.ingest.us.sentry.io/4508498688409600"
@@ -60,7 +62,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return .terminateLater
     }
 
-    private func createMenu() {
+    @MainActor private func createMenu() async {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             let mainMenu = NSMenu()
@@ -112,9 +114,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         app.reply(toApplicationShouldTerminate: true)
     }
 
-    @objc func showPreferences(_ sender: Any?) {
+    @MainActor @objc func showPreferences(_ sender: Any?) {
         PrefsWindowController.shared.window?
             .makeKeyAndOrderFront(nil)
+    }
+
+    @MainActor static func showErrorMessage(error: RepoError) {
+        guard let window = (NSApplication.shared.delegate as? AppDelegate)?.window else {
+            return
+        }
+        let alert = NSAlert()
+        alert.messageString = error.message
+        alert.beginSheetModal(for: window)
+    }
+
+    static var firstWindow: NSWindow {
+        NSApplication.shared.windows.first!
     }
 }
 

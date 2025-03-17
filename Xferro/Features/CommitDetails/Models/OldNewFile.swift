@@ -31,6 +31,7 @@ import OrderedCollections
     let head: Head
     let key: String
     var diffInfo: (any DiffInformation)?
+    var isUntracked: Bool = false
 
     init(
         old: String?,
@@ -245,14 +246,21 @@ import OrderedCollections
         await diffInfoCache.set(key: path, value: newDiffInfo)
         await lastModifiedCache.set(key: path, value: modifiedDate)
         await MainActor.run {
+            isUntracked = false
             diffInfo = newDiffInfo
         }
     }
 
-    func setDiffInfo() async {
+    func setDiffInfoForStatus() async {
         switch status {
-        case .unmodified, .ignored, .untracked:
+        case .unmodified, .ignored:
             fatalError(.invalid)
+        case .untracked:
+            await MainActor.run {
+                isUntracked = true
+                diffInfo = nil
+                return
+            }
         case .added, .modified, .renamed, .copied, .typeChange:
             guard let workDirNew else {
                 fatalError(.invalid)
@@ -281,12 +289,14 @@ import OrderedCollections
             if diffInfo == nil {
                 if let cached = await diffInfoCache[workDirOld] {
                     await MainActor.run {
+                        isUntracked = false
                         diffInfo = cached
                     }
                 } else {
                     let newDiffInfo = await createDiffInfo()
                     await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
                     await MainActor.run {
+                        isUntracked = false
                         diffInfo = newDiffInfo
                     }
                 }
@@ -295,12 +305,71 @@ import OrderedCollections
                     let newDiffInfo = await createDiffInfo()
                     await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
                     await MainActor.run {
+                        isUntracked = false
                         diffInfo = newDiffInfo
                     }
                 }
             }
         case .unreadable, .conflicted:
             fatalError(.unimplemented)
+        }
+    }
+
+    func setDiffInfoComparedToOwner(commit: Commit, owner: any SelectableItem) async {
+        let commitPointer = await withUnsafeContinuation { continuation in
+            let pointer = repository.withGitObject(commit.oid, type: GIT_OBJECT_COMMIT) {
+                return $0
+            }.mustSucceed(repository.gitDir)
+            continuation.resume(returning: pointer)
+        }
+        let ownerPointer = await withUnsafeContinuation { continuation in
+            let pointer = repository.withGitObject(owner.oid, type: GIT_OBJECT_COMMIT) {
+                return $0
+            }.mustSucceed(repository.gitDir)
+            continuation.resume(returning: pointer)
+        }
+
+        let diffInfo = await self.createDiffInfo(commit: commitPointer, parent: ownerPointer)
+        Task { @MainActor in
+            self.diffInfo = diffInfo
+        }
+    }
+
+    private func createDiffInfo(commit: OpaquePointer, parent: OpaquePointer) async -> any DiffInformation {
+
+        let patchResult = repository.patchMakerFromOwnerToWip(
+            oldNewFile: self,
+            ownerCommit: parent,
+            wipCommit: commit
+        )
+        switch patchResult {
+        case .noDifference:
+            return NoDiffInfo(statusFileName: statusFileName)
+        case .binary:
+            return BinaryDiffInfo(statusFileName: statusFileName)
+        case .diff(let patchMaker):
+            let patch = patchMaker.makePatch()
+            var newHunks = [DiffHunk]()
+            let hunkCount = patch.hunkCount
+            for index in 0..<hunkCount {
+                if let hunk = patch.hunk(
+                    at: index,
+                    oldFilePath: old,
+                    newFilePath: new,
+                    status: status,
+                    repository: repository
+                ) {
+                    newHunks.append(hunk)
+                }
+            }
+            return DiffInfo(
+                hunks: newHunks,
+                oldFilePath: old,
+                newFilePath: new,
+                addedLinesCount: patch.addedLinesCount,
+                deletedLinesCount: patch.deletedLinesCount,
+                statusFileName: statusFileName
+            )
         }
     }
 

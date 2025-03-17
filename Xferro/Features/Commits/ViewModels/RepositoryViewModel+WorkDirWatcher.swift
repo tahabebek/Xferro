@@ -1,5 +1,5 @@
 //
-//  RepositoryViewModel+WorkDirWatcher.swift
+//  RepositoryInfo+WorkDirWatcher.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/25/25.
@@ -8,7 +8,7 @@
 import Combine
 import Foundation
 
-extension RepositoryViewModel {
+extension RepositoryInfo {
     func setupWorkDirWatcher() -> FileEventStream {
         let untrackedFolders = StatusManager.shared.untrackedPaths(in: self.status)
             .filter {

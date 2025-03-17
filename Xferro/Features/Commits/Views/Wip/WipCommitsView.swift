@@ -10,7 +10,7 @@ import SwiftUI
 struct WipCommitsView: View {
     let viewModel: WipCommitsViewModel?
     let currentSelectedItem: SelectedItem?
-    let onUserTapped: (any SelectableItem, RepositoryViewModel) -> Void
+    let onUserTapped: (any SelectableItem, RepositoryInfo) -> Void
     let isSelectedItem: (any SelectableItem) -> Bool
     let onAddManualWipCommitTapped: () -> Void
     let onDeleteWipWorktreeTapped: (Repository) -> Void
@@ -38,31 +38,10 @@ struct WipCommitsView: View {
                     wipDescription: currentSelectedItem.selectableItem.wipDescription,
                     commits: viewModel.commits,
                     onUserTapped: {
-                        onUserTapped(currentSelectedItem.selectableItem, viewModel.repositoryInfo)
+                        onUserTapped($0, viewModel.repositoryInfo)
                     },
                     onIsSelected: isSelectedItem
                 )
-            }
-        }
-    }
-
-    func wipRectangle(item: SelectableWipCommit) -> some View {
-        ZStack {
-            Circle()
-            .fill(Color.accentColor.opacity(0.7))
-                .frame(width: 16, height: 16)
-                .overlay(
-                    Text("\(item.commit.oid.debugOID.prefix(2))")
-                        .foregroundColor(.white)
-                        .font(.system(size: 8))
-                )
-                .onTapGesture {
-                    if let viewModel {
-                        onUserTapped(item, viewModel.repositoryInfo)
-                    }
-                }
-            if isSelectedItem(item) {
-                SelectedItemOverlay(width: 16, height: 16, cornerRadius: 1)
             }
         }
     }

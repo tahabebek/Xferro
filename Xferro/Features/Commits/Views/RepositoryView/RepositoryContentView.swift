@@ -21,6 +21,7 @@ struct RepositoryContentView: View {
     let onIsSelected: (((any SelectableItem)) -> Bool)?
     let onDeleteBranchTapped: ((String) -> Void)?
     let onIsCurrentBranch: ((Branch, Head) -> Bool)?
+    let onPushBranchToRemoteTapped: ((String) -> Void)?
     let selectableStatus: SelectableStatus
     let head: Head
 
@@ -36,6 +37,7 @@ struct RepositoryContentView: View {
                     onIsSelected: onIsSelected,
                     onDeleteBranchTapped: onDeleteBranchTapped,
                     onIsCurrentBranch: onIsCurrentBranch,
+                    onPushBranchToRemoteTapped: onPushBranchToRemoteTapped,
                     selectableStatus: selectableStatus,
                     head: head
                 )

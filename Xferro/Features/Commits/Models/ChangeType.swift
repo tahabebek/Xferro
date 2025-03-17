@@ -9,11 +9,11 @@
 import Foundation
 
 enum ChangeType {
-    case head(RepositoryViewModel)
-    case index(RepositoryViewModel)
-    case reflog(RepositoryViewModel)
-    case localBranches(RepositoryViewModel)
-    case remoteBranches(RepositoryViewModel)
-    case tags(RepositoryViewModel)
-    case stash(RepositoryViewModel)
+    case head(RepositoryInfo)
+    case index(RepositoryInfo)
+    case reflog(RepositoryInfo)
+    case localBranches(RepositoryInfo)
+    case remoteBranches(RepositoryInfo)
+    case tags(RepositoryInfo)
+    case stash(RepositoryInfo)
 }

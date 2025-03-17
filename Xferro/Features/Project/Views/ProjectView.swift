@@ -11,6 +11,7 @@ import SwiftUI
 struct ProjectView: View {
     @Bindable var commitsViewModel: CommitsViewModel
     @Bindable var statusViewModel = StatusViewModel()
+    @Bindable var wipCommitViewModel = WipCommitViewModel()
 
     init(commitsViewModel: CommitsViewModel) {
         self.commitsViewModel = commitsViewModel
@@ -20,37 +21,65 @@ struct ProjectView: View {
         HSplitView {
             CommitsView(commitsViewModel: commitsViewModel)
                 .frame(maxWidth: Dimensions.commitsViewMaxWidth)
-            StatusView(viewModel: statusViewModel)
-            .frame(maxWidth: .infinity)
-            .onChange(of: commitsViewModel.currentSelectedItem) {
-                if let item = commitsViewModel.currentSelectedItem, case .regular(let selectableStatus) = item.type {
-                    if case .status(let status) = selectableStatus {
-                        if let repo = commitsViewModel.currentRepositoryInfo?.repository,
-                           let head = commitsViewModel.currentRepositoryInfo?.head {
-                            Task {
-                                await statusViewModel.updateStatus(
-                                    newSelectableStatus: status,
-                                    repository: repo,
-                                    head: head
-                                )
-                            }
-                        }
+            Group {
+                switch commitsViewModel.currentSelectedItem?.type {
+                case .regular(let type):
+                    switch type {
+                    case .status, .commit, .detachedCommit, .detachedTag:
+                        StatusView(viewModel: statusViewModel)
+                    default:
+                        EmptyView()
                     }
+                case .wip:
+                    WipCommitView(viewModel: wipCommitViewModel)
+                default:
+                    EmptyView()
                 }
             }
+            .frame(maxWidth: .infinity)
             .onChange(of: commitsViewModel.currentRepositoryInfo) {
-                if let item = commitsViewModel.currentSelectedItem, case .regular(let selectableStatus) = item.type {
-                    if case .status(let status) = selectableStatus {
-                        if let repo = commitsViewModel.currentRepositoryInfo?.repository ,
-                            let head = commitsViewModel.currentRepositoryInfo?.head {
-                            Task {
-                                await statusViewModel.updateStatus(
-                                    newSelectableStatus: status,
-                                    repository: repo,
-                                    head: head
-                                )
-                            }
+                refresh()
+            }
+            .onChange(of: commitsViewModel.currentSelectedItem) { oldValue, newValue in
+                refresh()
+            }
+        }
+    }
+
+    private func refresh() {
+        if let item = commitsViewModel.currentSelectedItem{
+            switch item.type {
+            case .regular(let type):
+                switch type {
+                case .status(let status):
+                    if let repo = commitsViewModel.currentRepositoryInfo?.repository ,
+                       let head = commitsViewModel.currentRepositoryInfo?.head {
+                        Task {
+                            await statusViewModel.updateStatus(
+                                newSelectableStatus: status,
+                                repository: repo,
+                                head: head
+                            )
                         }
+                    }
+                case .commit:
+                    break
+                case .detachedCommit:
+                    break
+                case .detachedTag:
+                    break
+                default:
+                    break
+                }
+            case .wip(let wip):
+                if let repo = commitsViewModel.currentRepositoryInfo?.repository ,
+                   let head = commitsViewModel.currentRepositoryInfo?.head {
+                    Task {
+                        await wipCommitViewModel.updateStatus(
+                            newSelectableWipCommit: wip.selectableItem as! SelectableWipCommit,
+                            repository: repo,
+                            head: head
+                        )
                     }
                 }
             }

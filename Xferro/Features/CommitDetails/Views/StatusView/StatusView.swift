@@ -8,16 +8,7 @@
 import SwiftUI
 
 struct StatusView: View {
-    static let actionBoxBottomPadding: CGFloat = 4
-    private static let actionBoxVerticalInnerPadding: CGFloat = 16
-    private static var totalVerticalPadding: CGFloat {
-        Self.actionBoxBottomPadding * 2 + Self.actionBoxVerticalInnerPadding * 2
-    }
-
-    @Environment(DiscardPopup.self) var discardPopup
     @Bindable var viewModel: StatusViewModel
-    @State private var discardFile: OldNewFile? = nil
-    @State private var discardAll: Bool = false
 
     var body: some View {
         Group {
@@ -26,14 +17,11 @@ struct StatusView: View {
                     StatusFilesViewContainer(
                         currentFile: $viewModel.currentFile,
                         trackedFiles: Binding<[OldNewFile]>(
-                            get: {
-                                viewModel.trackedFiles.values.elements
-                                    .sorted { $0.statusFileName < $1.statusFileName }
-                            },
+                            get: { viewModel.trackedFiles },
                             set: { _ in }
                         ),
                         untrackedFiles: Binding<[OldNewFile]>(
-                            get: { viewModel.untrackedFiles.values.elements.sorted { $0.key < $1.key } },
+                            get: { viewModel.untrackedFiles },
                             set: { _ in }
                         ),
                         commitSummary: $viewModel.commitSummary,
@@ -50,11 +38,7 @@ struct StatusView: View {
                             }
                         },
                         onBoxActionTapped: { action in
-                            if case .discardAll = action {
-                                discardAll = true
-                            } else {
-                                try? await viewModel.actionTapped(action)
-                            }
+                            try? await viewModel.actionTapped(action)
                         },
                         onTapExcludeAll: {
                             Task {
@@ -81,8 +65,10 @@ struct StatusView: View {
                                 await viewModel.ignoreTapped(file: file)
                             }
                         },
-                        onTapDiscard: {
-                            discardFile = $0
+                        onTapDiscard: { file in
+                            Task {
+                                await viewModel.discardTapped(file: file)
+                            }
                         }
                     )
                     .frame(width: Dimensions.commitDetailsViewMaxWidth)
@@ -103,8 +89,10 @@ struct StatusView: View {
                                     await viewModel.ignoreTapped(file: file)
                                 }
                             },
-                            onTapDiscard: {
-                                discardFile = $0
+                            onTapDiscard: { file in
+                                Task {
+                                    await viewModel.discardTapped(file: file)
+                                }
                             }
                         )
                         .id(file.id)
@@ -120,39 +108,11 @@ struct StatusView: View {
                         viewModel.setInitialSelection()
                     }
                 }
-                .onChange(of: discardFile) { _, newValue in
-                    if let newValue, discardPopup.isPresented == false {
-                        discardPopup.show(title: viewModel.discardAlertTitle(file: newValue)) {
-                            discard(file: newValue)
-                            self.discardFile = nil
-                        } onCancel: {
-                            self.discardFile = nil
-                        }
-                    }
-                }
-                .onChange(of: discardAll) { _, newValue in
-                    if newValue == true, discardPopup.isPresented == false {
-                        discardPopup.show(title: viewModel.discardAlertTitle(file: nil)) {
-                            discardAll = false
-                            Task {
-                                try? await viewModel.actionTapped(.discardAll)
-                            }
-                        } onCancel: {
-                            discardAll = false
-                        }
-                    }
-                }
                 .animation(.default, value: viewModel.selectableStatus)
                 .animation(.default, value: viewModel.commitSummary)
                 .opacity(viewModel.selectableStatus == nil ? 0 : 1)
             }
         }
         .padding(.horizontal, 6)
-    }
-
-    func discard(file: OldNewFile) {
-        Task {
-            await viewModel.discardTapped(file: file)
-        }
     }
 }

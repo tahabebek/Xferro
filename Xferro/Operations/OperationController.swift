@@ -64,8 +64,7 @@ class OperationController {
         repository.queue.executeOffMainThread { [weak self] in
             do {
                 try block()
-            }
-            catch let error {
+            } catch let error {
                 guard let self else { return }
 
                 Task { @MainActor in
@@ -74,7 +73,6 @@ class OperationController {
                     }
 
                     switch error {
-
                     case let repoError as RepoError:
                         self.showFailureError(self.repoErrorMessage(for: repoError).rawValue)
 
@@ -97,12 +95,10 @@ class OperationController {
 
     func showFailureError(_ message: String) {
         DispatchQueue.main.async {
-            if let window = NSApplication.shared.windows.first {
-                let alert = NSAlert()
+            let alert = NSAlert()
 
-                alert.messageText = message
-                alert.beginSheetModal(for: window)
-            }
+            alert.messageText = message
+            alert.beginSheetModal(for: AppDelegate.firstWindow)
         }
     }
 }

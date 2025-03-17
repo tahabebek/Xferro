@@ -2,7 +2,7 @@ import Cocoa
 import Combine
 
 enum PushOperationOption {
-    case new(Branch)
+    case new(String)
     case currentBranch
     case named(String)
 }
@@ -37,7 +37,10 @@ final class PushOpController: PasswordOpController {
         let branches: [String]
 
         switch remoteOption {
-        case .new(let branch):
+        case .new(let branchName):
+            guard let branch = repository.localBranch(named: branchName).mustSucceed(repository.gitDir) else {
+                fatalError(.unexpected)
+            }
             try pushNewBranch(repository, branch)
             return
         case .currentBranch:
@@ -62,7 +65,7 @@ final class PushOpController: PasswordOpController {
             guard !localTrackingBranches.isEmpty else {
                 let alert = NSAlert()
                 alert.messageString = .noRemoteBranches(remoteName)
-                alert.beginSheetModal(for: NSApplication.shared.windows.first!)
+                alert.beginSheetModal(for: AppDelegate.firstWindow)
                 return
             }
 
@@ -81,7 +84,7 @@ final class PushOpController: PasswordOpController {
         alert.addButton(withString: .push)
         alert.addButton(withString: .cancel)
 
-        alert.beginSheetModal(for: NSApplication.shared.windows.first!) { [weak self] response in
+        alert.beginSheetModal(for: AppDelegate.firstWindow) { [weak self] response in
             guard let self else { return }
             if response == .alertFirstButtonReturn {
                 push(repository, branches: branches, remote: remote)
@@ -99,7 +102,7 @@ final class PushOpController: PasswordOpController {
         sheetController.alreadyTracking = trackingBranchName != nil
         sheetController.setRemotes(repository.remoteNames())
 
-        NSApplication.shared.windows.first?.beginSheet(sheetController.window!) { response in
+        AppDelegate.firstWindow.beginSheet(sheetController.window!) { response in
             guard response == .OK else {
                 self.ended(result: .canceled)
                 return
@@ -143,6 +146,8 @@ final class PushOpController: PasswordOpController {
         remote: Remote,
         then callback: (@Sendable () -> Void)? = nil
     ) {
+        let pushURL = remote.pushURL!
+        print(pushURL)
         tryRepoOperation { [weak self] in
             guard let self else { return }
             let callbacks = RemoteCallbacks(

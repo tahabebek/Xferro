@@ -10,8 +10,8 @@ import Observation
 import OrderedCollections
 
 @Observable final class StatusViewModel {
-    var trackedFiles: OrderedDictionary<String, OldNewFile> = [:]
-    var untrackedFiles: OrderedDictionary<String, OldNewFile> = [:]
+    var trackedFiles: [OldNewFile] = []
+    var untrackedFiles: [OldNewFile] = []
     var currentFile: OldNewFile? = nil
 
     var commitSummary: String = ""
@@ -19,6 +19,17 @@ import OrderedCollections
 
     var repository: Repository?
     var selectableStatus: SelectableStatus?
+
+    private var unsortedTrackedFiles: OrderedDictionary<String, OldNewFile> = [:] {
+        didSet {
+            trackedFiles = Array(unsortedTrackedFiles.values.elements).sorted { $0.statusFileName < $1.statusFileName }
+        }
+    }
+    private var unsortedUntrackedFiles: OrderedDictionary<String, OldNewFile> = [:]{
+        didSet {
+            untrackedFiles = Array(unsortedUntrackedFiles.values.elements).sorted { $0.key < $1.key }
+        }
+    }
 
     func updateStatus(
         newSelectableStatus: SelectableStatus,
@@ -37,17 +48,19 @@ import OrderedCollections
         )
 
         if selectableStatus != nil {
-            let oldKeys = Set(trackedFiles.values.elements.map(\.key))
+            let oldKeys = Set(unsortedTrackedFiles.values.elements.map(\.key))
             let newKeys =  Set(newTrackedFiles.values.elements.map(\.key))
             let intersectionKeys = oldKeys.intersection(newKeys)
             let missingKeys = oldKeys.subtracting(intersectionKeys)
             let remainingKeys = newKeys.subtracting(intersectionKeys)
 
             for key in intersectionKeys {
-                let oldFile = trackedFiles[key]!
+                let oldFile = unsortedTrackedFiles[key]!
                 let newFile = newTrackedFiles[key]!
                 if oldFile.status != newFile.status {
-                    trackedFiles[key] = newFile
+                    Task { @MainActor in
+                        unsortedTrackedFiles[key] = newFile
+                    }
                 }
                 if case .deleted = newFile.status {
                     // do nothing
@@ -55,30 +68,36 @@ import OrderedCollections
                     let modifiedDate = FileManager.lastModificationDate(of: newFile.workDirNew!)!
                     if let cachedModificationDate = await lastModifiedCache[newFile.workDirNew!] {
                         if cachedModificationDate != modifiedDate {
-                            trackedFiles[key] = newFile
+                            Task { @MainActor in
+                                unsortedTrackedFiles[key] = newFile
+                            }
                         } else {
                             // do nothing
                         }
                     } else {
-                        trackedFiles[key] = newFile
+                        Task { @MainActor in
+                            unsortedTrackedFiles[key] = newFile
+                        }
                         await lastModifiedCache.set(key: newFile.workDirNew!, value: modifiedDate)
                     }
                 }
             }
-            for key in missingKeys {
-                trackedFiles.removeValue(forKey: key)
+            Task { @MainActor in
+                for key in missingKeys {
+                    unsortedTrackedFiles.removeValue(forKey: key)
+                }
+                for key in remainingKeys {
+                    unsortedTrackedFiles[key] = newTrackedFiles[key]!
+                }
+                unsortedUntrackedFiles = newUntrackedFiles
+                self.repository = repository
+                self.selectableStatus = newSelectableStatus
             }
-            for key in remainingKeys {
-                trackedFiles[key] = newTrackedFiles[key]!
-            }
-            untrackedFiles = newUntrackedFiles
-            self.repository = repository
-            self.selectableStatus = newSelectableStatus
         } else {
-            self.trackedFiles = newTrackedFiles
-            self.untrackedFiles = newUntrackedFiles
-            self.repository = repository
-            await MainActor.run {
+            Task { @MainActor in
+                self.unsortedTrackedFiles = newTrackedFiles
+                self.unsortedUntrackedFiles = newUntrackedFiles
+                self.repository = repository
                 self.selectableStatus = newSelectableStatus
             }
         }
@@ -228,7 +247,7 @@ import OrderedCollections
     }
 
     func trackAllTapped() async {
-        for file in untrackedFiles.values {
+        for file in unsortedUntrackedFiles.values {
             await trackTapped(flag: true, file: file)
         }
     }
@@ -269,7 +288,7 @@ import OrderedCollections
         var filesToAdd: Set<String> = []
         var filesToDelete: Set<String> = []
 
-        for file in trackedFiles.values.elements where file.checkState == .checked {
+        for file in unsortedTrackedFiles.values.elements where file.checkState == .checked {
             guard file.new != nil || file.old != nil else {
                 fatalError(.invalid)
             }
@@ -282,7 +301,7 @@ import OrderedCollections
             }
         }
 
-        for file in trackedFiles.values.elements where file.checkState == .partiallyChecked {
+        for file in unsortedTrackedFiles.values.elements where file.checkState == .partiallyChecked {
             guard let hunks = file.diffInfo?.hunks() else {
                 fatalError(.invalid)
             }
@@ -339,7 +358,7 @@ import OrderedCollections
             GitCLI.executeGit(repository, ["commit", "-m", commitSummary])
         }
 
-        for file in trackedFiles.values.elements {
+        for file in unsortedTrackedFiles.values.elements {
             await diffInfoCache.removeValue(forKey: file.key)
             if let workDirNew = file.workDirNew {
                 await lastModifiedCache.removeValue(forKey: workDirNew)
@@ -435,9 +454,9 @@ import OrderedCollections
     func setInitialSelection() {
         if currentFile == nil {
             var item: OldNewFile?
-            if let firstItem = trackedFiles.values.first {
+            if let firstItem = trackedFiles.first {
                 item = firstItem
-            } else if let firstItem = untrackedFiles.values.first {
+            } else if let firstItem = untrackedFiles.first {
                 item = firstItem
             }
             if let item {
@@ -451,12 +470,13 @@ import OrderedCollections
     }
 
     func selectAll(flag: Bool) async {
-        let keys = Set(trackedFiles.values.elements.map(\.key))
+        let keys = Set(unsortedTrackedFiles.values.elements.map(\.key))
         for key in keys {
-            if flag, trackedFiles[key]?.checkState == .checked { continue }
-            if !flag, trackedFiles[key]?.checkState == .unchecked { continue }
-            trackedFiles[key]?.checkState = flag ? .checked : .unchecked
-            for line in trackedFiles[key]?.diffInfo?.hunks().flatMap(\.parts).filter({ $0.type != .context }).flatMap(\.lines) ?? [] {
+            if flag, unsortedTrackedFiles[key]?.checkState == .checked { continue }
+            if !flag, unsortedTrackedFiles[key]?.checkState == .unchecked { continue }
+            unsortedTrackedFiles[key]?.checkState = flag ? .checked : .unchecked
+            for line in unsortedTrackedFiles[key]?.diffInfo?.hunks().flatMap(\.parts)
+                .filter({ $0.type != .context }).flatMap(\.lines) ?? [] {
                 line.isSelected = flag
             }
         }

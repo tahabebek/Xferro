@@ -1,5 +1,5 @@
 //
-//  CommitsViewModel+RepositoryViewModel.swift
+//  CommitsViewModel+RepositoryInfo.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/23/25.
@@ -8,8 +8,8 @@
 import Foundation
 
 extension CommitsViewModel {
-    func getRepositoryInfo(_ repository: Repository) async -> RepositoryViewModel {
-        let newRepositoryInfo: RepositoryViewModel = RepositoryViewModel(repository: repository)
+    func getRepositoryInfo(_ repository: Repository) async -> RepositoryInfo {
+        let newRepositoryInfo: RepositoryInfo = RepositoryInfo(repository: repository)
 
         newRepositoryInfo.onGitChange = { [weak self, weak newRepositoryInfo] type in
             guard let self, let newRepositoryInfo else { return }
@@ -85,6 +85,10 @@ extension CommitsViewModel {
             guard let self else { return false }
             return isCurrentBranch($0, head: $1)
         }
+        newRepositoryInfo.onPushBranchToRemoteTapped = { [weak self] in
+            guard let self else { return }
+            pushBranchToRemoteTapped(repository: repository, branchName: $0)
+        }
         let (localBranches, remoteBranches) = branchInfos(of: newRepositoryInfo)
         newRepositoryInfo.localBranchInfos = localBranches
         newRepositoryInfo.remoteBranchInfos = remoteBranches
@@ -98,7 +102,7 @@ extension CommitsViewModel {
         }
         return newRepositoryInfo
     }
-    private func stashes(of repositoryInfo: RepositoryViewModel) -> [SelectableStash] {
+    private func stashes(of repositoryInfo: RepositoryInfo) -> [SelectableStash] {
         var stashes = [SelectableStash]()
 
         try? repositoryInfo.repository.stashes().get().forEach { stash in
@@ -107,7 +111,7 @@ extension CommitsViewModel {
         return stashes
     }
 
-    private func branchInfos(of repositoryInfo: RepositoryViewModel) ->
+    private func branchInfos(of repositoryInfo: RepositoryInfo) ->
     (local: [BranchInfo], remote: [BranchInfo]) {
         let (localBranches, remoteBranches) = allBranches(of: repositoryInfo)
         let local = localBranches
@@ -121,7 +125,7 @@ extension CommitsViewModel {
         return (local, remote)
     }
 
-    private func allBranches(of repositoryInfo: RepositoryViewModel) -> (local: [Branch], remote: [Branch]) {
+    private func allBranches(of repositoryInfo: RepositoryInfo) -> (local: [Branch], remote: [Branch]) {
         var localBranches: [Branch] = []
         var remoteBranches: [Branch] = []
         let branchIterator = BranchIterator(repo: repositoryInfo.repository, type: .all)
@@ -144,7 +148,7 @@ extension CommitsViewModel {
         return (localBranches, remoteBranches)
     }
 
-    private func localBranchInfos(of repositoryInfo: RepositoryViewModel) -> [BranchInfo] {
+    private func localBranchInfos(of repositoryInfo: RepositoryInfo) -> [BranchInfo] {
         localBranches(of: repositoryInfo)
             .filter {
                 !$0.isWip
@@ -154,7 +158,7 @@ extension CommitsViewModel {
             }
     }
 
-    private func localBranches(of repositoryInfo: RepositoryViewModel) -> [Branch] {
+    private func localBranches(of repositoryInfo: RepositoryInfo) -> [Branch] {
         var branches: [Branch] = []
         let branchIterator = BranchIterator(repo: repositoryInfo.repository, type: .local)
 
@@ -168,7 +172,7 @@ extension CommitsViewModel {
         return branches
     }
 
-    private func remoteBranchInfos(of repositoryInfo: RepositoryViewModel) -> [BranchInfo] {
+    private func remoteBranchInfos(of repositoryInfo: RepositoryInfo) -> [BranchInfo] {
         repositoryInfo.repository.remoteBranches().mustSucceed(repositoryInfo.repository.gitDir)
             .map {
                 BranchInfo(
@@ -179,7 +183,7 @@ extension CommitsViewModel {
             }
     }
 
-    private func detachedTag(of repositoryInfo: RepositoryViewModel) -> TagInfo? {
+    private func detachedTag(of repositoryInfo: RepositoryInfo) -> TagInfo? {
         switch repositoryInfo.head {
         case .branch:
             return nil
@@ -206,7 +210,7 @@ extension CommitsViewModel {
             }
         }
     }
-    private func detachedCommit(of repositoryInfo: RepositoryViewModel) -> DetachedCommitInfo? {
+    private func detachedCommit(of repositoryInfo: RepositoryInfo) -> DetachedCommitInfo? {
         switch repositoryInfo.head {
         case .branch, .tag:
             return nil
@@ -224,7 +228,7 @@ extension CommitsViewModel {
             }
         }
     }
-    private func tags(of repositoryInfo: RepositoryViewModel) -> [TagInfo] {
+    private func tags(of repositoryInfo: RepositoryInfo) -> [TagInfo] {
         var tags: [TagInfo] = []
 
         try? repositoryInfo.repository.allTags().get()
@@ -244,7 +248,7 @@ extension CommitsViewModel {
     }
 
 #warning("history not implemented")
-    private func historyCommits(of repositoryInfo: RepositoryViewModel) -> [SelectableHistoryCommit] {
+    private func historyCommits(of repositoryInfo: RepositoryInfo) -> [SelectableHistoryCommit] {
         return []
     }
 }

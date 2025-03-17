@@ -11,7 +11,7 @@ struct WipCommitsContentView: View {
     let columns = [GridItem(.adaptive(minimum: 16, maximum: 16))]
     let wipDescription: String
     let commits: [SelectableWipCommit]
-    let onUserTapped: () -> Void
+    let onUserTapped: (SelectableWipCommit) -> Void
     let onIsSelected: (any SelectableItem) -> Bool
 
     var body: some View {
@@ -26,7 +26,7 @@ struct WipCommitsContentView: View {
                     LazyVGrid(columns: columns) {
                         ForEach(commits) { selectableWipCommit in
                             WipRectangle(
-                                onUserTapped: onUserTapped,
+                                onUserTapped: { onUserTapped(selectableWipCommit) },
                                 text: String(selectableWipCommit.oid.debugOID.prefix(2)),
                                 isSelected: onIsSelected(selectableWipCommit)
                             )

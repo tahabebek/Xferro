@@ -13,6 +13,7 @@ protocol SelectableItem: Equatable, Identifiable {
     var oid: OID { get }
     var repositoryId: String { get }
     var repositoryName: String { get }
+    var repositoryGitDir: String { get }
 }
 
 struct SelectableStatus: SelectableItem, Identifiable {
@@ -24,16 +25,16 @@ struct SelectableStatus: SelectableItem, Identifiable {
         var id: String {
             switch self {
             case .branch(let gitDir, let branch):
-                gitDir + branch.id
+                gitDir +/ branch.id
             case .tag(let gitDir, let tag):
-                gitDir + tag.id
+                gitDir +/ tag.id
             case .detached(let gitDir, let reference):
-                gitDir + reference.oid.id
+                gitDir +/ reference.oid.id
             }
         }
 
         static func == (lhs: StatusType, rhs: StatusType) -> Bool {
-            lhs.id == rhs.id
+            return lhs.id == rhs.id
         }
 
         static func of(gitDir: String, head: Head) -> StatusType {
@@ -49,7 +50,12 @@ struct SelectableStatus: SelectableItem, Identifiable {
     }
 
     var id: String {
-        repositoryId + "/" + type.id
+        let id = repositoryId +/ type.id
+        return id
+    }
+
+    static func == (lhs: SelectableStatus, rhs: SelectableStatus) -> Bool {
+        return lhs.id == rhs.id
     }
 
     var wipDescription: String {
@@ -81,7 +87,7 @@ struct SelectableStatus: SelectableItem, Identifiable {
     let repositoryGitDir: String
     var timestamp: Date
 
-    init(repositoryInfo: RepositoryViewModel) {
+    init(repositoryInfo: RepositoryInfo) {
         self.repositoryName = repositoryInfo.repository.nameOfRepo
         self.repositoryId = repositoryInfo.repository.idOfRepo
         self.repositoryGitDir = repositoryInfo.repository.gitDir.path
@@ -108,7 +114,7 @@ struct SelectableStatus: SelectableItem, Identifiable {
 
 struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
     init(
-        repositoryInfo: RepositoryViewModel,
+        repositoryInfo: RepositoryInfo,
         branch: Branch,
         commit: Commit
     ) {
@@ -128,6 +134,10 @@ struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
     }
     
     var id: String { repositoryId + branch.id + commit.id }
+    static func == (lhs: SelectableCommit, rhs: SelectableCommit) -> Bool {
+        lhs.id == rhs.id
+    }
+
     let repositoryGitDir: String
     let repositoryName: String
     let repositoryId: String
@@ -139,22 +149,45 @@ struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
 
 struct SelectableWipCommit: SelectableItem, Identifiable {
     var id: String { repositoryId + commit.id }
+    static func == (lhs: SelectableWipCommit, rhs: SelectableWipCommit) -> Bool {
+        lhs.id == rhs.id
+    }
+
     let repositoryGitDir: String
     let repositoryName: String
     let repositoryId: String
+    let owner: any SelectableItem
     let branch: Branch
     let commit: Commit
-    var wipDescription: String { fatalError(.unavailable) }
+    var wipDescription: String { owner.wipDescription }
     var oid: OID { commit.oid }
 
     init(
-        repositoryInfo: RepositoryViewModel,
+        repositoryInfo: RepositoryInfo,
+        owner: any SelectableItem,
         branch: Branch,
         commit: Commit
     ) {
         self.repositoryId = repositoryInfo.repository.idOfRepo
         self.repositoryName = repositoryInfo.repository.nameOfRepo
         self.repositoryGitDir = repositoryInfo.repository.gitDir.path
+        self.owner = owner
+        self.branch = branch
+        self.commit = commit
+    }
+
+    init(
+        repositoryGitDir: String,
+        repositoryName: String,
+        repositoryId: String,
+        owner: any SelectableItem,
+        branch: Branch,
+        commit: Commit
+    ) {
+        self.repositoryGitDir = repositoryGitDir
+        self.repositoryName = repositoryName
+        self.repositoryId = repositoryId
+        self.owner = owner
         self.branch = branch
         self.commit = commit
     }
@@ -180,6 +213,10 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
         }
     }
     var id: String { repositoryId + commit.id }
+    static func == (lhs: SelectableDetachedCommit, rhs: SelectableDetachedCommit) -> Bool {
+        lhs.id == rhs.id
+    }
+
     let repositoryId: String
     let repositoryName: String
     let repositoryGitDir: String
@@ -189,7 +226,7 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
     var oid: OID { commit.oid }
 
     init(
-        repositoryInfo: RepositoryViewModel,
+        repositoryInfo: RepositoryInfo,
         commit: Commit,
         owner: Owner
     ) {
@@ -211,6 +248,10 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
 
 struct SelectableDetachedTag: SelectableItem, Identifiable {
     var id: String { repositoryId + tag.id }
+    static func == (lhs: SelectableDetachedTag, rhs: SelectableDetachedTag) -> Bool {
+        lhs.id == rhs.id
+    }
+
     let repositoryGitDir: String
     let repositoryName: String
     let repositoryId: String
@@ -219,7 +260,7 @@ struct SelectableDetachedTag: SelectableItem, Identifiable {
     var oid: OID { tag.oid }
 
     init(
-        repositoryInfo: RepositoryViewModel,
+        repositoryInfo: RepositoryInfo,
         tag: TagReference
     ) {
         self.repositoryId = repositoryInfo.repository.idOfRepo
@@ -238,6 +279,10 @@ struct SelectableDetachedTag: SelectableItem, Identifiable {
 
 struct SelectableHistoryCommit: SelectableItem, Identifiable {
     var id: String { repositoryId + branch.id + commit.id }
+    static func == (lhs: SelectableHistoryCommit, rhs: SelectableHistoryCommit) -> Bool {
+        lhs.id == rhs.id
+    }
+
     let repositoryId: String
     let repositoryName: String
     let repositoryGitDir: String
@@ -247,7 +292,7 @@ struct SelectableHistoryCommit: SelectableItem, Identifiable {
     var oid: OID { commit.oid }
 
     init(
-        repositoryInfo: RepositoryViewModel,
+        repositoryInfo: RepositoryInfo,
         branch: Branch,
         commit: Commit
     ) {
@@ -261,6 +306,10 @@ struct SelectableHistoryCommit: SelectableItem, Identifiable {
 
 struct SelectableTag: SelectableItem, Identifiable {
     var id: String { repositoryId + tag.id }
+    static func == (lhs: SelectableTag, rhs: SelectableTag) -> Bool {
+        lhs.id == rhs.id
+    }
+
     let repositoryId: String
     let repositoryName: String
     let repositoryGitDir: String
@@ -269,7 +318,7 @@ struct SelectableTag: SelectableItem, Identifiable {
     var oid: OID { tag.oid }
 
     init(
-        repositoryInfo: RepositoryViewModel,
+        repositoryInfo: RepositoryInfo,
         tag: TagReference
     ) {
         self.repositoryId = repositoryInfo.repository.idOfRepo
@@ -281,6 +330,10 @@ struct SelectableTag: SelectableItem, Identifiable {
 
 struct SelectableStash: SelectableItem, Identifiable {
     var id: String { repositoryId + stash.id.formatted() }
+    static func == (lhs: SelectableStash, rhs: SelectableStash) -> Bool {
+        lhs.id == rhs.id
+    }
+
     let repositoryGitDir: String
     let repositoryName: String
     let repositoryId: String
@@ -289,7 +342,7 @@ struct SelectableStash: SelectableItem, Identifiable {
     var oid: OID { stash.oid }
 
     init(
-        repositoryInfo: RepositoryViewModel,
+        repositoryInfo: RepositoryInfo,
         stash: Stash
     ) {
         self.repositoryId = repositoryInfo.repository.idOfRepo

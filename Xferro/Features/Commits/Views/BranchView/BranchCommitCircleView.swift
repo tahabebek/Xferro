@@ -23,7 +23,7 @@ struct BranchCommitCircleView: View {
         .onTapGesture {
             onUserTapped?(item)
         }
-        if onIsSelected?(item) == false {
+        if onIsSelected?(item) ?? false {
             SelectedItemOverlay(width: BranchView.commitNodeSize, height: BranchView.commitNodeSize)
         }
     }

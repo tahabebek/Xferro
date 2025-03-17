@@ -16,7 +16,7 @@ struct RepositoryView: View {
         case history = 3
     }
 
-    let repositoryInfo: RepositoryViewModel
+    let repositoryInfo: RepositoryInfo
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
     @State private var isMinimized: Bool = false
@@ -46,11 +46,12 @@ struct RepositoryView: View {
                             onIsSelected: repositoryInfo.onIsSelected,
                             onDeleteBranchTapped: repositoryInfo.onDeleteBranchTapped,
                             onIsCurrentBranch: repositoryInfo.onIsCurrentBranch,
+                            onPushBranchToRemoteTapped: repositoryInfo.onPushBranchToRemoteTapped,
                             selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
                             head: repositoryInfo.head
                         )
-                            .padding(.bottom, 8)
-                    }
+                        .padding(.bottom, 8)
+                }
                     .frame(maxHeight: !isCollapsed ? .infinity : 0)
                 }
             }

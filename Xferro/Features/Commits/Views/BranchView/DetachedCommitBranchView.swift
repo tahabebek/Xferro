@@ -20,6 +20,7 @@ struct DetachedCommitBranchView: View {
                     name: "Detached Commit",
                     isDetached: true,
                     onDeleteBranchTapped: viewModel.onDeleteBranchTapped,
+                    onPushBranchToRemoteTapped: nil,
                     branchCount: viewModel.branchCount
                 )
                 .frame(maxWidth: 120)

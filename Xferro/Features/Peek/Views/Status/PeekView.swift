@@ -8,14 +8,7 @@
 import SwiftUI
 
 struct PeekView: View {
-    @Binding var timeStamp: Date
-    @State var intitalDiffLoadIsComplete: Bool = false
-
     let file: OldNewFile
-    let onTapTrack: (OldNewFile) -> Void
-    let onTapIgnore: (OldNewFile) -> Void
-    let onTapDiscard: (OldNewFile) -> Void
-
     var body: some View {
         Group {
             ScrollView {
@@ -44,22 +37,6 @@ struct PeekView: View {
                     x: 0,
                     y: 3
                 )
-            }
-        }
-        .onChange(of: timeStamp) {
-            Task {
-                await file.setDiffInfo()
-            }
-        }
-        .onChange(of: file) {
-            Task {
-                await file.setDiffInfo()
-            }
-        }
-        .task(id: timeStamp) {
-            if !intitalDiffLoadIsComplete {
-                intitalDiffLoadIsComplete = true
-                await file.setDiffInfo()
             }
         }
     }

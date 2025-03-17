@@ -19,29 +19,27 @@ import OrderedCollections
 
     // use the func setCurrentSelectedItem to set currentSelectedItem
     private(set) var currentSelectedItem: SelectedItem?
-    @ObservationIgnored private(set) var currentRepositoryInfo: RepositoryViewModel?
+    @ObservationIgnored private(set) var currentRepositoryInfo: RepositoryInfo?
 
-    func setCurrentSelectedItem(_ selectedItem: SelectedItem?, _ repositoryInfo: RepositoryViewModel?) {
+    func setCurrentSelectedItem(_ selectedItem: SelectedItem?, _ repositoryInfo: RepositoryInfo?) {
         guard currentSelectedItem != selectedItem else { return }
-        if let selectedItem {
-            guard let repositoryInfo else {
-                fatalError(.invalid)
-            }
-            user.lastSelectedRepositoryPath = repositoryInfo.repository.gitDir.path
-            Task {
-                await getWipCommits(selectedItem: selectedItem, repositoryInfo: repositoryInfo)
-            }
-        } else {
-            Task {
-                await getWipCommits(selectedItem: nil, repositoryInfo: nil)
-            }
+        guard let repositoryInfo else {
+            fatalError(.invalid)
+        }
+        guard let selectedItem else {
+            setupInitialCurrentSelectedItem()
+            return
+        }
+        user.lastSelectedRepositoryPath = repositoryInfo.repository.gitDir.path
+        Task {
+            await getWipCommits(selectedItem: selectedItem, repositoryInfo: repositoryInfo)
         }
         currentRepositoryInfo = repositoryInfo
         currentSelectedItem = selectedItem
     }
     
     var currentWipCommits: WipCommitsViewModel?
-    var currentRepositoryInfos: OrderedDictionary<String, RepositoryViewModel> = [:]
+    var currentRepositoryInfos: OrderedDictionary<String, RepositoryInfo> = [:]
     private let userDidSelectFolder: (URL, CommitsViewModel) -> Void
     private let user: User
     let wipCommitLock = NSRecursiveLock()
@@ -85,7 +83,7 @@ import OrderedCollections
             await MainActor.run {
                 guard currentSelectedItem == nil else { return }
                 if !currentRepositoryInfos.isEmpty {
-                    var repositoryInfo: RepositoryViewModel?
+                    var repositoryInfo: RepositoryInfo?
                     if let lastSelectedRepositoryPath = user.lastSelectedRepositoryPath {
                         for (_, info) in currentRepositoryInfos {
                             if info.repository.gitDir.path == lastSelectedRepositoryPath {
@@ -179,7 +177,7 @@ import OrderedCollections
     }
 
     // MARK: User actions
-    func userTapped(item: any SelectableItem, repositoryInfo: RepositoryViewModel) {
+    func userTapped(item: any SelectableItem, repositoryInfo: RepositoryInfo) {
         Task {
             await MainActor.run {
                 let selectedItem: SelectedItem
@@ -248,6 +246,13 @@ import OrderedCollections
                 }
                 user.removeProject(repository.gitDir.deletingLastPathComponent())
             }
+        }
+    }
+
+    func pushBranchToRemoteTapped(repository: Repository, branchName: String) {
+        Task {
+            let pushOpController = await PushOpController(remoteOption: .new(branchName), repository: repository)
+            try await pushOpController.start()
         }
     }
 }

@@ -42,7 +42,7 @@ class DetachedCommitInfo: Identifiable {
 
     private func detachedAncestorCommitsOf(
         owner: SelectableDetachedCommit.Owner,
-        count: Int = RepositoryViewModel.commitCountLimit) async -> [SelectableDetachedCommit]
+        count: Int = RepositoryInfo.commitCountLimit) async -> [SelectableDetachedCommit]
     {
         var commits: [SelectableDetachedCommit] = []
 

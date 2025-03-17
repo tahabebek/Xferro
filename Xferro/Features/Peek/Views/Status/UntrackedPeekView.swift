@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct UntrackedPeekView: View {
-    @Binding var file: OldNewFile
+    let file: OldNewFile
 
     let onTapTrack: (OldNewFile) -> Void
     let onTapIgnore: (OldNewFile) -> Void
@@ -26,6 +26,7 @@ struct UntrackedPeekView: View {
                     HStack {
                         Spacer()
                         Text("\(file.statusFileName) is untracked.")
+                            .font(.title)
                         Spacer()
                     }
                     HStack {

@@ -44,7 +44,7 @@ struct StatusActionView: View {
                     }
                 )
             }
-            .padding(.bottom, StatusView.actionBoxBottomPadding)
+            .padding(.bottom, Dimensions.actionBoxBottomPadding)
             AnyLayout(FlowLayout(alignment:.init(horizontal: horizontalAlignment, vertical: verticalAlignment))) {
                 StatusActionButtonsView(
                     commitSummary: $commitSummary,

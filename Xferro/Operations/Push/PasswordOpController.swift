@@ -11,9 +11,11 @@ class PasswordOpController: OperationController {
     required override init(repository: Repository) {
         super.init(repository: repository)
         let nc = NotificationCenter.default
-        closeSink = nc.publisher(for: NSWindow.willCloseNotification,
-                                 object: NSApplication.shared.windows.first!).sinkOnMainQueue
-        { [weak self] _ in
+        closeSink = nc.publisher(
+            for: NSWindow.willCloseNotification,
+            object: AppDelegate.firstWindow
+        )
+        .sinkOnMainQueue { [weak self] _ in
             self?.abort()
         }
     }
@@ -39,7 +41,7 @@ class PasswordOpController: OperationController {
             MainActor.assumeIsolated {
                 let controller = PasswordPanelController()
                 self.passwordController = controller
-                return (NSApplication.shared.windows.first!, controller)
+                return (AppDelegate.firstWindow, controller)
             }
         }
         guard let urlInfo = self.urlInfo.value else { return nil }

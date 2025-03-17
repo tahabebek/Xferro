@@ -17,7 +17,7 @@ class BranchInfo: Identifiable {
     let head: Head
     private var _commits: [SelectableCommit]?
 
-    func commits(count: Int = RepositoryViewModel.commitCountLimit) async -> [SelectableCommit] {
+    func commits(count: Int = RepositoryInfo.commitCountLimit) async -> [SelectableCommit] {
         if let _commits {
             return _commits
         }

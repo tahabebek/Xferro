@@ -13,35 +13,54 @@ extension Repository {
 
     enum FileContext
     {
-        case commit(Commit)
+        case commit(OpaquePointer)
         case index
         case workspace
     }
 
-    func patchMaker(oldNewFile: OldNewFile, commitOID: OID, parentOID: OID?) -> PatchMaker.PatchResult?
-    {
+    // if a file is in wip but not in owner, it will look like an addition
+    func patchMakerFromOwnerToWip(
+        oldNewFile: OldNewFile,
+        ownerCommit: OpaquePointer,
+        wipCommit: OpaquePointer
+    ) -> PatchMaker.PatchResult {
         switch oldNewFile.status {
         case .unmodified:
             return .noDifference
-        case .added, .copied, .untracked, .modified:
+        case .untracked:
+            fatalError(.unimplemented)
+        case .added, .copied:
             guard let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
-            let toCommit = commit(commitOID).mustSucceed(gitDir)
 
-            let parentCommit = parentOID.flatMap { commit($0).mustSucceed(gitDir) }
-            guard isTextFile(newFile, context: .commit(toCommit)) ||
-                    parentCommit.map({ isTextFile(newFile, context: .commit($0)) }) ?? false
+            guard isTextFile(newFile, context: .commit(wipCommit)) else { return .binary }
+
+            let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: wipCommit, path: newFile) {
+                .blob(toBlob)
+            } else {
+                .data(Data())
+            }
+
+            let fromSource: PatchMaker.SourceType = .data(Data())
+            return .diff(PatchMaker(repository: self, from: fromSource, to: toSource, path: newFile))
+        case .modified:
+            guard let newFile = oldNewFile.new else {
+                fatalError(.invalid)
+            }
+
+            guard isTextFile(newFile, context: .commit(wipCommit)) ||
+                    isTextFile(newFile, context: .commit(ownerCommit))
             else { return .binary }
 
-            let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: toCommit, path: newFile) {
+            let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: wipCommit, path: newFile) {
                 .blob(toBlob)
             } else {
                 .data(Data())
             }
 
             let fromSource: PatchMaker.SourceType =
-            if let parentCommit, let fromBlob = blob(commit: parentCommit, path: newFile) {
+            if let fromBlob = blob(commit: ownerCommit, path: newFile) {
                 .blob(fromBlob)
             } else {
                 .data(Data())
@@ -52,21 +71,15 @@ extension Repository {
             guard let oldFile = oldNewFile.old else {
                 fatalError(.invalid)
             }
-            let toCommit = commit(commitOID).mustSucceed(gitDir)
 
-            let parentCommit = parentOID.flatMap { commit($0).mustSucceed(gitDir) }
-            guard isTextFile(oldFile, context: .commit(toCommit)) ||
-                    parentCommit.map({ isTextFile(oldFile, context: .commit($0)) }) ?? false
-            else { return .binary }
-
-            let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: toCommit, path: oldFile) {
-                .blob(toBlob)
-            } else {
-                .data(Data())
+            guard isTextFile(oldFile, context: .commit(ownerCommit)) else {
+                return .binary
             }
 
+            let toSource: PatchMaker.SourceType = .data(Data())
+
             let fromSource: PatchMaker.SourceType =
-            if let parentCommit, let fromBlob = blob(commit: parentCommit, path: oldFile) {
+            if let fromBlob = blob(commit: ownerCommit, path: oldFile) {
                 .blob(fromBlob)
             } else {
                 .data(Data())
@@ -78,21 +91,18 @@ extension Repository {
                   let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
-            let toCommit = commit(commitOID).mustSucceed(gitDir)
-
-            let parentCommit = parentOID.flatMap { commit($0).mustSucceed(gitDir) }
-            guard isTextFile(newFile, context: .commit(toCommit)) ||
-                    parentCommit.map({ isTextFile(oldFile, context: .commit($0)) }) ?? false
+            guard isTextFile(newFile, context: .commit(wipCommit)) ||
+                    isTextFile(oldFile, context: .commit(ownerCommit))
             else { return .binary }
 
-            let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: toCommit, path: newFile) {
+            let toSource: PatchMaker.SourceType = if let toBlob = blob(commit: wipCommit, path: newFile) {
                 .blob(toBlob)
             } else {
                 .data(Data())
             }
 
             let fromSource: PatchMaker.SourceType =
-            if let parentCommit, let fromBlob = blob(commit: parentCommit, path: oldFile) {
+            if let fromBlob = blob(commit: ownerCommit, path: oldFile) {
                 .blob(fromBlob)
             } else {
                 .data(Data())
@@ -100,7 +110,7 @@ extension Repository {
 
             return .diff(PatchMaker(repository: self, from: fromSource, to: toSource, path: newFile))
         case .ignored, .unreadable:
-            return nil
+            fatalError(.invalid)
         case .conflicted:
             fatalError(.unimplemented)
         }
@@ -365,17 +375,16 @@ extension Repository {
         return workDir.appendingPathComponent(file)
     }
 
-    func blob(commit: Commit, path: String) -> Blob? {
+    func blob(commit: OpaquePointer, path: String) -> Blob? {
         var treePointer: OpaquePointer? = nil
-        var git_oid = commit.oid.oid
-        let result = git_object_lookup_prefix(&treePointer, self.pointer, &git_oid, commit.oid.length, GIT_OBJECT_TREE)
+        let treeResult = git_commit_tree(&treePointer, commit)
 
-        guard result == GIT_OK.rawValue, let treePointer else {
-            let err = NSError(gitError: result, pointOfFailure: "git_object_lookup_prefix")
+        guard treeResult == GIT_OK.rawValue, let treePointer else {
+            let err = NSError(gitError: treeResult, pointOfFailure: "git_commit_tree")
             fatalError(err.localizedDescription)
         }
         guard let toEntry = Tree.entry(tree: treePointer, path: path) else {
-            let err = NSError(gitError: result, pointOfFailure: "Tree.entry")
+            let err = NSError(gitError: treeResult, pointOfFailure: "Tree.entry")
             fatalError(err.localizedDescription)
         }
 

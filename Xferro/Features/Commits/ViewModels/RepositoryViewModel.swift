@@ -1,5 +1,5 @@
 //
-//  RepositoryViewModel.swift
+//  RepositoryInfo.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/10/25.
@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import Observation
 
-@Observable final class RepositoryViewModel: Identifiable {
+@Observable final class RepositoryInfo: Identifiable {
     let repository: Repository
     var head: Head
     var headOID: OID { head.oid }
@@ -36,12 +36,13 @@ import Observation
     var workDirChangeObserver: AnyCancellable?
     
     var onGitChange: ((ChangeType) -> Void)?
-    var onWorkDirChange: ((RepositoryViewModel, String?) -> Void)?
+    var onWorkDirChange: ((RepositoryInfo, String?) -> Void)?
     var onUserTapped: ((any SelectableItem) -> Void)?
     var onIsSelected: ((any SelectableItem) -> Bool)?
     var onDeleteRepositoryTapped: ((Repository) -> Void)?
     var onDeleteBranchTapped: ((String) -> Void)?
     var onIsCurrentBranch: ((Branch, Head) -> Bool)?
+    var onPushBranchToRemoteTapped: ((String) -> Void)?
 
     var wipWorktree: WipWorktree {
         WipWorktree.worktree(for: self)
@@ -56,8 +57,7 @@ import Observation
         self.workDirWatcher = setupWorkDirWatcher()
     }
 
-    func deleteRepositoryTapped()
-    {
+    func deleteRepositoryTapped() {
         onDeleteRepositoryTapped?(repository)
     }
 
@@ -74,21 +74,21 @@ import Observation
 }
 
 // MARK: Equatable
-extension RepositoryViewModel: Equatable {
-    static func == (lhs: RepositoryViewModel, rhs: RepositoryViewModel) -> Bool {
+extension RepositoryInfo: Equatable {
+    static func == (lhs: RepositoryInfo, rhs: RepositoryInfo) -> Bool {
         lhs.id == rhs.id
     }
 }
 
 // MARK: Static
-extension RepositoryViewModel {
+extension RepositoryInfo {
     static let commitCountLimit: Int = 10
 #warning("check if git and workdir debounces are in sync, maybe do not use status if there is a risk of race condition")
     static let workDirDebounce = 5
 
     static func taskQueueID(path: String) -> String
     {
-        let identifier = Bundle.main.bundleIdentifier ?? "com.xferro.xferro.workdirwatcher"
+        let identifier = Bundle.main.bundleIdentifier ?? "com.xferro.workdirwatcher"
         return "\(identifier).\(path)"
     }
 }

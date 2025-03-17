@@ -1,5 +1,5 @@
 //
-//  RepositoryViewModel+GitWatcher.swift
+//  RepositoryInfo+GitWatcher.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/25/25.
@@ -8,7 +8,7 @@
 import Combine
 import Foundation
 
-extension RepositoryViewModel {
+extension RepositoryInfo {
     func setupGitWatcher() -> GitWatcher {
         let headChangeSubject = PassthroughSubject<Void, Never>()
         let indexChangeSubject = PassthroughSubject<Void, Never>()

@@ -15,6 +15,7 @@ struct RepositoryCommitsView: View {
     let onIsSelected: (((any SelectableItem)) -> Bool)?
     let onDeleteBranchTapped: ((String) -> Void)?
     let onIsCurrentBranch: ((Branch, Head) -> Bool)?
+    let onPushBranchToRemoteTapped: ((String) -> Void)?
     let selectableStatus: SelectableStatus
     let head: Head
 
@@ -23,7 +24,7 @@ struct RepositoryCommitsView: View {
             fatalError(.impossible)
         }
         return VStack(spacing: 16) {
-            if var detachedTag {
+            if let detachedTag {
                 DetachedTagBranchView(viewModel: DetachedTagBranchViewModel(
                     onUserTapped: onUserTapped,
                     onIsSelected: onIsSelected,
@@ -34,7 +35,7 @@ struct RepositoryCommitsView: View {
                     selectableStatus: selectableStatus
                 ))
                 .animation(.default, value: detachedTag.id)
-            } else if var detachedCommit {
+            } else if let detachedCommit {
                 DetachedCommitBranchView(viewModel: DetachedCommitBranchViewModel(
                     onUserTapped: onUserTapped,
                     onIsSelected: onIsSelected,
@@ -52,6 +53,7 @@ struct RepositoryCommitsView: View {
                     onIsSelected: onIsSelected,
                     onDeleteBranchTapped: onDeleteBranchTapped,
                     onIsCurrentBranch: onIsCurrentBranch,
+                    onPushBranchToRemoteTapped: onPushBranchToRemoteTapped,
                     branchInfo: branchInfo,
                     isCurrent: (detachedTag != nil || detachedCommit != nil) ? false :
                         onIsCurrentBranch?(branchInfo.branch, head) ?? false,

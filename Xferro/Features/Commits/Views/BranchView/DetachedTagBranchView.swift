@@ -20,6 +20,7 @@ struct DetachedTagBranchView: View {
                     name: "Detached tag \(viewModel.tagInfo.tag.tag.name)",
                     isDetached: true,
                     onDeleteBranchTapped: viewModel.onDeleteBranchTapped,
+                    onPushBranchToRemoteTapped: nil,
                     branchCount: viewModel.branchCount
                 )
                 .frame(maxWidth: 120)

@@ -1,31 +1,19 @@
 //
-//  StatusTrackedRowView.swift
+//  WipCommitFileRowView.swift
 //  Xferro
 //
-//  Created by Taha Bebek on 3/3/25.
+//  Created by Taha Bebek on 3/17/25.
 //
 
 import SwiftUI
 
-struct StatusTrackedRowView: View {
+struct WipCommitFileRowView: View {
     @Binding var currentFile: OldNewFile?
     @Binding var file: OldNewFile
     @State var isCurrent: Bool = false
 
-    let onTapDiscard: () -> Void
-
     var body: some View {
         HStack {
-            TriStateCheckbox(state: $file.checkState) {
-                switch file.checkState {
-                case .unchecked, .partiallyChecked:
-                    file.checkState = .checked
-                case .checked:
-                    file.checkState = .unchecked
-                }
-            }
-            .frame(width: 16, height: 16)
-            .padding(.trailing, 4)
             Text(file.statusFileName)
                 .statusRowText(isCurrent: $isCurrent)
             Spacer()
@@ -43,11 +31,6 @@ struct StatusTrackedRowView: View {
         }
         .onChange(of: currentFile?.id) {
             updateIsCurrent()
-        }
-        .contextMenu {
-            Button(file.status == .added ? "Untrack \(file.statusFileName)" : "Discard changes in \(file.statusFileName)") {
-                onTapDiscard()
-            }
         }
     }
 

@@ -8,7 +8,7 @@
 import Foundation
 
 extension CommitsViewModel {
-    func getWipCommits(selectedItem: SelectedItem?, repositoryInfo: RepositoryViewModel?) async {
+    func getWipCommits(selectedItem: SelectedItem?, repositoryInfo: RepositoryInfo?) async {
         guard let selectedItem, let repositoryInfo else {
             Task {
                 await MainActor.run {
@@ -37,7 +37,8 @@ extension CommitsViewModel {
         }
         let wipCommits =  repositoryInfo.wipWorktree.wipCommits(
             repositoryInfo: repositoryInfo,
-            branchName: branchName
+            branchName: branchName,
+            owner: selectedItem.selectableItem
         )
         Task {
             await MainActor.run {
@@ -60,11 +61,11 @@ extension CommitsViewModel {
         currentWipCommits = nil
     }
 
-    func deleteAllWipCommitsTapped(for item: SelectedItem, repositoryInfo: RepositoryViewModel) {
+    func deleteAllWipCommitsTapped(for item: SelectedItem, repositoryInfo: RepositoryInfo) {
         deleteAllWipCommits(of: item, repositoryInfo: repositoryInfo)
     }
 
-    private func deleteAllWipCommits(of item: SelectedItem, repositoryInfo: RepositoryViewModel) {
+    private func deleteAllWipCommits(of item: SelectedItem, repositoryInfo: RepositoryInfo) {
         WipWorktree.deleteAllWipCommits(item: item, repository: repositoryInfo.repository)
         Task {
             await MainActor.run {
@@ -77,11 +78,11 @@ extension CommitsViewModel {
         guard let currentRepositoryInfo else { return }
         addManualWipCommit(repositoryInfo: currentRepositoryInfo)
     }
-    private func addManualWipCommit(repositoryInfo: RepositoryViewModel) {
+    private func addManualWipCommit(repositoryInfo: RepositoryInfo) {
         addWipCommit(repositoryInfo: repositoryInfo)
     }
 
-    func addWipCommit(repositoryInfo: RepositoryViewModel, summary: String? = nil) {
+    func addWipCommit(repositoryInfo: RepositoryInfo, summary: String? = nil) {
         wipCommitLock.lock()
         defer { wipCommitLock.unlock() }
         let worktree = repositoryInfo.wipWorktree
@@ -104,7 +105,7 @@ extension CommitsViewModel {
 
         self.reloadUIAfterAddingWipCommits(repositoryInfo: repositoryInfo)
     }
-    func reloadUIAfterAddingWipCommits(repositoryInfo: RepositoryViewModel) {
+    func reloadUIAfterAddingWipCommits(repositoryInfo: RepositoryInfo) {
         let repository = repositoryInfo.repository
         let head = repositoryInfo.head
         if let currentSelectedItem, let currentRepositoryInfo, repository.gitDir.path == currentRepositoryInfo.repository.gitDir.path {

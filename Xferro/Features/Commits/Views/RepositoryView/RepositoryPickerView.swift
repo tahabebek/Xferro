@@ -13,7 +13,7 @@ struct RepositoryPickerView: View {
     var body: some View {
         Picker(selection: $selection) {
             Group {
-                Text("Commits")
+                Text("Branches")
                     .tag(RepositoryView.Section.commits)
                 Text("Tags")
                     .tag(RepositoryView.Section.tags)

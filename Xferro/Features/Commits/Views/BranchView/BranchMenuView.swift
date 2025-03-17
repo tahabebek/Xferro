@@ -13,6 +13,7 @@ struct BranchMenuView: View {
     let name: String
     let isDetached: Bool
     let onDeleteBranchTapped: ((String) -> Void)?
+    let onPushBranchToRemoteTapped: ((String)-> Void)?
     let branchCount: Int
 
     var body: some View {
@@ -45,6 +46,12 @@ struct BranchMenuView: View {
                         .padding(.vertical, 4)
                     }
                 }
+
+                Button("Push to remote") {
+                    showingBranchOptions = false
+                    onPushBranchToRemoteTapped?(name)
+                }
+                .padding(.vertical, 4)
 
                 Button("Create a new branch based on \(name)") {
                     print("Create branch")

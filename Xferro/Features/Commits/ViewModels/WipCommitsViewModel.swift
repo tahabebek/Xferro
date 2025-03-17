@@ -10,13 +10,13 @@ import Observation
 @Observable final class WipCommitsViewModel {
     var commits: [SelectableWipCommit]
     var item: SelectedItem
-    let repositoryInfo: RepositoryViewModel
+    let repositoryInfo: RepositoryInfo
     var autoCommitEnabled: Bool
 
     init(
         commits: [SelectableWipCommit],
         item: SelectedItem,
-        repositoryInfo: RepositoryViewModel,
+        repositoryInfo: RepositoryInfo,
         autoCommitEnabled: Bool
     ) {
         self.commits = commits

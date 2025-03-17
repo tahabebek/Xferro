@@ -25,6 +25,7 @@ struct BranchView: View {
                     name: viewModel.branchInfo.branch.name,
                     isDetached: false,
                     onDeleteBranchTapped: viewModel.onDeleteBranchTapped,
+                    onPushBranchToRemoteTapped: viewModel.onPushBranchToRemoteTapped,
                     branchCount: viewModel.branchCount
                 )
                     .frame(maxWidth: 120)

@@ -12,6 +12,7 @@ struct BranchViewModel {
     let onIsSelected: ((any SelectableItem) -> Bool)?
     let onDeleteBranchTapped: ((String) -> Void)?
     let onIsCurrentBranch: ((Branch, Head) -> Bool)?
+    let onPushBranchToRemoteTapped: ((String) -> Void)?
     let branchInfo: BranchInfo
     let selectableStatus: SelectableStatus
     let isCurrent: Bool
@@ -22,6 +23,7 @@ struct BranchViewModel {
         onIsSelected: ((any SelectableItem) -> Bool)?,
         onDeleteBranchTapped: ((String) -> Void)?,
         onIsCurrentBranch: ((Branch, Head) -> Bool)?,
+        onPushBranchToRemoteTapped: ((String) -> Void)?,
         branchInfo: BranchInfo,
         isCurrent: Bool,
         branchCount: Int,
@@ -32,6 +34,7 @@ struct BranchViewModel {
         self.onIsSelected = onIsSelected
         self.onDeleteBranchTapped = onDeleteBranchTapped
         self.onIsCurrentBranch = onIsCurrentBranch
+        self.onPushBranchToRemoteTapped = onPushBranchToRemoteTapped
         self.branchInfo = branchInfo
         self.isCurrent = isCurrent
         self.branchCount = branchCount
