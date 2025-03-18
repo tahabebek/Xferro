@@ -14,12 +14,12 @@ struct WipCommitActionButtonsView: View {
     }
 
     @State private var boxActions: [BoxAction] = BoxAction.allCases
-    
+
     let onTap: (BoxAction) -> Void
 
     var body: some View {
         ForEach(boxActions) { boxAction in
-            XFerroButton(
+            XFerroButton<Void>(
                 title: boxAction.rawValue,
                 isProminent: true,
                 onTap: { onTap(boxAction) })

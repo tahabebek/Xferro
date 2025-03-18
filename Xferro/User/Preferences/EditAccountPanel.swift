@@ -50,20 +50,20 @@ struct EditAccountPanel: DataModelView {
                 .cornerRadius(8)
                 .padding(.bottom)
             HStack {
-                XFerroButton(
+                XFerroButton<Void>(
                     title: createTokenTitleFor(model.serviceType),
                     isProminent: false
                 ) {
                     openURL(model.serviceType.tokenURL)
                 }
                 Spacer()
-                XFerroButton(
+                XFerroButton<Void>(
                     title: "Cancel",
                     isProminent: false
                 ) {
                     cancel()
                 }
-                XFerroButton(
+                XFerroButton<Void>(
                     title: "Save",
                     disabled: disabled(model.serviceType),
                     isProminent: true

@@ -9,6 +9,8 @@ import SwiftUI
 
 struct StatusView: View {
     @Bindable var viewModel: StatusViewModel
+    let remotes: [Remote]
+    let stashes: [SelectableStash]
 
     var body: some View {
         Group {
@@ -30,15 +32,14 @@ struct StatusView: View {
                             get: { !viewModel.untrackedFiles.isEmpty || !viewModel.trackedFiles.isEmpty },
                             set: { _ in }
                         ),
+                        remotes: remotes,
+                        stashes: stashes,
                         onCommitTapped: {
                             do {
                                 try await viewModel.commitTapped()
                             } catch {
                                 fatalError(.unhandledError(error.localizedDescription))
                             }
-                        },
-                        onBoxActionTapped: { action in
-                            try? await viewModel.actionTapped(action)
                         },
                         onTapExcludeAll: {
                             Task {
@@ -77,6 +78,8 @@ struct StatusView: View {
                         }
                     )
                     .frame(width: Dimensions.commitDetailsViewMaxWidth)
+                    .environment(viewModel)
+
                     if let file = viewModel.currentFile {
                         PeekViewContainer(
                             timeStamp: Binding<Date>(

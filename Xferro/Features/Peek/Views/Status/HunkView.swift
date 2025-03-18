@@ -19,7 +19,7 @@ struct HunkView: View {
                     Text(hunk.hunkHeader.replacingOccurrences(of: "\n", with: " "))
                         .foregroundColor(Color(hexValue: 0xADBD42))
                     Spacer()
-                    XFerroButton(
+                    XFerroButton<Void>(
                         title: "Discard Hunk",
                         dangerous: true,
                         isProminent: false,

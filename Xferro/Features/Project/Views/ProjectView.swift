@@ -26,7 +26,11 @@ struct ProjectView: View {
                 case .regular(let type):
                     switch type {
                     case .status, .commit, .detachedCommit, .detachedTag:
-                        StatusView(viewModel: statusViewModel)
+                        StatusView(
+                            viewModel: statusViewModel,
+                            remotes: commitsViewModel.currentRepositoryInfo?.remotes ?? [],
+                            stashes: commitsViewModel.currentRepositoryInfo?.stashes ?? []
+                        )
                     default:
                         EmptyView()
                     }

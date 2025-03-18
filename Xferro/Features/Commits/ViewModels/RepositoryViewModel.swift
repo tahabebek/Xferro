@@ -15,6 +15,7 @@ import Observation
     var headOID: OID { head.oid }
     var localBranchInfos: [BranchInfo] = []
     var remoteBranchInfos: [BranchInfo] = []
+    var remotes: [Remote] = []
     var tags: [TagInfo] = []
     var stashes: [SelectableStash] = []
     var detachedTag: TagInfo? = nil

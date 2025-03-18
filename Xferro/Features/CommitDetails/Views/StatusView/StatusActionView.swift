@@ -8,15 +8,18 @@
 import SwiftUI
 
 struct StatusActionView: View {
+    @Environment(StatusViewModel.self) var statusViewModel
+
+    @FocusState private var isTextFieldFocused: Bool
     @Binding var commitSummary: String
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
-    @FocusState private var isTextFieldFocused: Bool
+    let remotes: [Remote]
+    let stashes: [SelectableStash]
     @State private var horizontalAlignment: HorizontalAlignment = .leading
     @State private var verticalAlignment: VerticalAlignment = .top
-
     let onCommitTapped: () async throws -> Void
-    let onBoxActionTapped: (StatusActionButtonsView.BoxAction) async -> Void
+    @State var errorString: String?
 
     var body: some View {
         VStack {
@@ -31,7 +34,7 @@ struct StatusActionView: View {
                     .focused($isTextFieldFocused)
                     .textFieldStyle(.roundedBorder)
                 }
-                XFerroButton(
+                XFerroButton<Void>(
                     title: "Commit",
                     disabled: commitSummary.isEmptyOrWhitespace || canCommit || !hasChanges,
                     dangerous: false,
@@ -50,12 +53,9 @@ struct StatusActionView: View {
                     commitSummary: $commitSummary,
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
-                    onTap: { action in
-                        isTextFieldFocused = false
-                        Task {
-                            await onBoxActionTapped(action)
-                        }
-                    }
+                    remotes: remotes,
+                    stashes: stashes,
+                    errorString: $errorString
                 )
             }
             .animation(.default, value: horizontalAlignment)
@@ -63,6 +63,18 @@ struct StatusActionView: View {
         }
         .onAppear {
             isTextFieldFocused = true
+        }
+        .alert("Error", isPresented: .init(
+            get: { errorString != nil },
+            set: { if !$0 { errorString = nil } }
+        )) {
+            Button("OK") {
+                errorString = nil
+            }
+        } message: {
+            if let message = errorString {
+                Text(message)
+            }
         }
     }
 }

@@ -30,7 +30,7 @@ struct UntrackedPeekView: View {
                         Spacer()
                     }
                     HStack {
-                        XFerroButton(
+                        XFerroButton<Void>(
                             title: "Track",
                             isProminent: false,
                             isSmall: true,
@@ -39,7 +39,7 @@ struct UntrackedPeekView: View {
                             }
                         )
                         .padding()
-                        XFerroButton(
+                        XFerroButton<Void>(
                             title: "Ignore",
                             isProminent: false,
                             isSmall: true,
@@ -48,7 +48,7 @@ struct UntrackedPeekView: View {
                             }
                         )
                         .padding()
-                        XFerroButton(
+                        XFerroButton<Void>(
                             title: "Discard",
                             dangerous: true,
                             isProminent: false,

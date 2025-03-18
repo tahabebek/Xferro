@@ -212,39 +212,56 @@ import OrderedCollections
         return (trackedFiles, untrackedFiles)
     }
 
-    func actionTapped(_ action: StatusActionButtonsView.BoxAction) async throws {
+    func onAmend() async throws {
+        try await amendTapped()
+    }
+
+    func onCommitAndPush(remote: Remote?) async throws {
+        fatalError(.unimplemented)
         guard let repository else { return }
-        switch action {
-//        case .splitAndCommit:
-//            await commitTapped()
-//            fatalError(.unimplemented)
-        case .amend:
-            try await amendTapped()
-        case .commitAndPush:
-            try await commitTapped()
-            let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
-            try await pushOperation.start()
-        case .amendAndPush:
-            try await amendTapped()
-            let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
-            try await pushOperation.start()
-        case .commitAndForcePush:
-            try await commitTapped()
-            fatalError(.unimplemented)
-        case .amendAndForcePush:
-            try await amendTapped()
-            fatalError(.unimplemented)
-        case .stash:
-            fatalError(.unimplemented)
-        case .popStash:
-            fatalError(.unimplemented)
-        case .applyStash:
-            fatalError(.unimplemented)
-        case .discardAll:
-            await discardAllTapped()
-        case .addCustom:
-            fatalError(.unimplemented)
-        }
+        try await commitTapped()
+        let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
+        try await pushOperation.start()
+    }
+
+    func onCommitAndForcePush(remote: Remote?) async throws {
+        fatalError(.unimplemented)
+        guard let repository else { return }
+        try await commitTapped()
+        let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
+        try await pushOperation.start()
+    }
+
+    func onAmendAndPush(remote: Remote?) async throws {
+        fatalError(.unimplemented)
+        guard let repository else { return }
+        try await amendTapped()
+        let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
+        try await pushOperation.start()
+    }
+
+    func onAmendAndForcePush(remote: Remote?) async throws {
+        fatalError(.unimplemented)
+        guard let repository else { return }
+        try await amendTapped()
+        let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
+        try await pushOperation.start()
+    }
+
+    func addRemoteTapped() async throws {
+        fatalError(.unimplemented)
+    }
+
+    func onStash() async throws {
+        fatalError(.unimplemented)
+    }
+
+    func onPopStash() async throws {
+        fatalError(.unimplemented)
+    }
+
+    func onApplyStash(stash: SelectableStash) async throws {
+        fatalError(.unimplemented)
     }
 
     func trackAllTapped() async {
@@ -263,7 +280,6 @@ import OrderedCollections
             repository.unstage(path: path).mustSucceed(repository.gitDir)
         }
     }
-
 
     func commitTapped() async throws {
         guard let repository else {
@@ -445,12 +461,12 @@ import OrderedCollections
         return title
     }
 
-    func discardAllTapped() async {
+    func discardAllTapped() async throws {
         guard let repository else {
             fatalError(.invalid)
         }
-        try! GitCLI.executeGit(repository, ["add", "."])
-        try! GitCLI.executeGit(repository, ["reset", "--hard"])
+        try GitCLI.executeGit(repository, ["add", "."])
+        try GitCLI.executeGit(repository, ["reset", "--hard"])
     }
 
     func setInitialSelection() {

@@ -97,6 +97,7 @@ extension CommitsViewModel {
         newRepositoryInfo.detachedTag = detachedTag(of: newRepositoryInfo)
         newRepositoryInfo.detachedCommit = detachedCommit(of: newRepositoryInfo)
         newRepositoryInfo.historyCommits = historyCommits(of: newRepositoryInfo)
+        newRepositoryInfo.remotes = repository.allRemotes().mustSucceed(repository.gitDir)
         Task {
             newRepositoryInfo.status = await StatusManager.shared.status(of: newRepositoryInfo.repository)
         }

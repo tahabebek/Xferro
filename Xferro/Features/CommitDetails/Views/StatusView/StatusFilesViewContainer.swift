@@ -14,9 +14,10 @@ struct StatusFilesViewContainer: View {
     @Binding var commitSummary: String
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
+    let remotes: [Remote]
+    let stashes: [SelectableStash]
 
     let onCommitTapped: () async throws -> Void
-    let onBoxActionTapped: (StatusActionButtonsView.BoxAction) async -> Void
     let onTapExcludeAll: () -> Void
     let onTapIncludeAll: () -> Void
     let onTapTrack: (OldNewFile) -> Void
@@ -31,13 +32,14 @@ struct StatusFilesViewContainer: View {
                 commitSummary: $commitSummary,
                 canCommit: $canCommit,
                 hasChanges: $hasChanges,
+                remotes: remotes,
+                stashes: stashes,
                 onCommitTapped: {
                     try await onCommitTapped()
                     await MainActor.run {
                         currentFile = nil
                     }
-                },
-                onBoxActionTapped: onBoxActionTapped
+                }
             )
             .padding()
             .background(Color(hexValue: 0x15151A))

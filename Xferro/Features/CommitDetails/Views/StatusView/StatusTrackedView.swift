@@ -35,27 +35,27 @@ struct StatusTrackedView: View {
                 Text("\(files.count) changed \(files.count == 1 ? "file" : "files")")
                 Spacer()
                 if files.allSatisfy({ $0.checkState == CheckboxState.checked }) {
-                    XFerroButton(
+                    XFerroButton<Void>(
                         title: "Unselect All",
                         onTap: {
                             onTapExcludeAll()
                         }
                     )
                 } else if files.allSatisfy({ $0.checkState == CheckboxState.unchecked }) {
-                    XFerroButton(
+                    XFerroButton<Void>(
                         title: "Select All",
                         onTap: {
                             onTapIncludeAll()
                         }
                     )
                 } else {
-                    XFerroButton(
+                    XFerroButton<Void>(
                         title: "Select All",
                         onTap: {
                             onTapIncludeAll()
                         }
                     )
-                    XFerroButton(
+                    XFerroButton<Void>(
                         title: "Unselect All",
                         onTap: {
                             onTapExcludeAll()

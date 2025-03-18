@@ -7,14 +7,15 @@
 
 import SwiftUI
 
-struct XFerroButtonOption: Identifiable {
+struct XFerroButtonOption<T>: Identifiable {
     var id: String { title }
     var isHovered: Bool = false
     let title: String
+    let data: T
 }
 
-struct XFerroButton: View {
-    @State var filteredOptions: [XFerroButtonOption] = []
+struct XFerroButton<T>: View {
+    @State var filteredOptions: [XFerroButtonOption<T>] = []
     @State var showingOptions: Bool = false
     @State var addMoreIsHovered: Bool = false
     @State var selectedOptionIndex: Int = 0
@@ -25,10 +26,10 @@ struct XFerroButton: View {
     let dangerous: Bool
     let isProminent: Bool
     let isSmall: Bool
-    let options: [XFerroButtonOption]
+    let options: [XFerroButtonOption<T>]
     let addMoreOptionsText: String?
     let showsSearchOptions: Bool
-    let onTapOption: (XFerroButtonOption) -> Void
+    let onTapOption: (XFerroButtonOption<T>) -> Void
     let onTapAddMore: () -> Void
     let onTap: () -> Void
 
@@ -38,10 +39,10 @@ struct XFerroButton: View {
         dangerous: Bool = false,
         isProminent: Bool = true,
         isSmall: Bool = false,
-        options: [XFerroButtonOption] = [],
+        options: [XFerroButtonOption<T>] = [],
         addMoreOptionsText: String? = nil,
         showsSearchOptions: Bool = false,
-        onTapOption: @escaping (XFerroButtonOption) -> Void = { _ in },
+        onTapOption: @escaping (XFerroButtonOption<T>) -> Void = { _ in },
         onTapAddMore: @escaping () -> Void = {},
         onTap: @escaping () -> Void
     ) {
@@ -73,59 +74,19 @@ struct XFerroButton: View {
             action: onTap
         )
         .popover(isPresented: $showingOptions) {
-            VStack(alignment: .leading, spacing: 8) {
-                Section {
-                    ForEach(filteredOptions.indices, id:\.self) { index in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.accentColor)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .opacity(filteredOptions[index].isHovered ? 0.7 : 0)
-                            Text(filteredOptions[index].title)
-                                .onTapGesture {
-                                    showingOptions = false
-                                    onTapOption(filteredOptions[index])
-                                }
-                                .onHover { flag in
-                                    filteredOptions[index].isHovered = flag
-                                }
-                        }
-                    }
-                } header: {
-                    if showsSearchOptions {
-                        TextField("Search", text: $searchText)
-                            .cornerRadius(8)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                if let addMoreOptionsText {
-                    Divider()
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.accentColor)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .opacity(addMoreIsHovered ? 0.7 : 0)
-                        Text(addMoreOptionsText)
-                            .onTapGesture {
-                                showingOptions = false
-                                onTapAddMore()
-                            }
-                            .onHover { flag in
-                                addMoreIsHovered = flag
-                            }
-                    }
-                }
-                Spacer()
-            }
+            XFerroButtonPopover(
+                searchText: $searchText,
+                showingOptions: $showingOptions,
+                filteredOptions: $filteredOptions,
+                addMoreIsHovered: $addMoreIsHovered,
+                options: options,
+                showsSearchOptions: showsSearchOptions,
+                addMoreOptionsText: addMoreOptionsText,
+                onTapOption: onTapOption,
+                onTapAddMore: onTapAddMore
+            )
             .padding()
-            .onChange(of: searchText) { oldValue, newValue in
-                if newValue.isEmpty {
-                    filteredOptions = options
-                } else {
-                    filteredOptions = options.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
-                }
 
-            }
         }
     }
 
@@ -135,10 +96,10 @@ struct XFerroButton: View {
         dangerous: Bool = false,
         isProminent: Bool = true,
         isSmall: Bool = false,
-        options: [XFerroButtonOption] = [],
+        options: [XFerroButtonOption<T>] = [],
         addMoreOptionsText: String? = nil,
         showsSearchOptions: Bool = false,
-        onTapOption: @escaping (XFerroButtonOption) -> Void = { _ in },
+        onTapOption: @escaping (XFerroButtonOption<T>) -> Void = { _ in },
         onTapAddMore: @escaping () -> Void = {},
         action: @escaping () -> Void) -> some View {
             Button {
@@ -174,8 +135,13 @@ struct XFerroButton: View {
     @ViewBuilder func optionsView() -> some View {
         if options.isNotEmpty {
             ZStack {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color.fabulaBack2.opacity(0.7))
+                    .frame(maxWidth: 70)
                 Label(filteredOptions[selectedOptionIndex].title, systemImage: "arrowtriangle.down.fill")
                     .labelStyle(RightImageLabelStyle())
+                    .lineLimit(1)
+                    .frame(maxWidth: 60)
                     .fixedSize()
                     .contentShape(Rectangle())
                     .onTapGesture {
