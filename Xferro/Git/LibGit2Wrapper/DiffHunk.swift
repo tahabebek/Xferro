@@ -23,9 +23,15 @@ import Observation
     let newLines: Int
     let lineCount: Int
     var hunkHeader: String = ""
+    private(set) var selectedLines: [DiffLine] = []
+    private func updateSelectedLines() {
+        selectedLines = parts.flatMap { $0.lines }.filter { $0.isSelected }
+    }
+    private(set) var lineCache: [Int: DiffLine] = [:]
+    private var selectedLinesCount: Int = 0
 
-    var selectedLinesCount: Int {
-        parts.map { $0.selectedLinesCount }.reduce(0, +)
+    private func updateSelectedLinesCount() {
+        selectedLinesCount = parts.map { $0.selectedLinesCount }.reduce(0, +)
     }
 
     init(
@@ -66,7 +72,12 @@ import Observation
                         lines: currentLines,
                         indexInHunk: partIndex,
                         oldFilePath: oldFilePath,
-                        newFilePath: newFilePath
+                        newFilePath: newFilePath,
+                        onUpdateSelectedLines: { [weak self] in
+                            guard let self else { return }
+                            updateSelectedLines()
+                            updateSelectedLinesCount()
+                        }
                     ))
                     partIndex += 1
                     currentPartType = .additionOrDeletion
@@ -83,7 +94,12 @@ import Observation
                         lines: currentLines,
                         indexInHunk: partIndex,
                         oldFilePath: oldFilePath,
-                        newFilePath: newFilePath
+                        newFilePath: newFilePath,
+                        onUpdateSelectedLines: { [weak self] in
+                            guard let self else { return }
+                            updateSelectedLines()
+                            updateSelectedLinesCount()
+                        }
                     ))
                     partIndex += 1
                     currentPartType = .context
@@ -96,7 +112,12 @@ import Observation
             lines: currentLines,
             indexInHunk: partIndex,
             oldFilePath: oldFilePath,
-            newFilePath: newFilePath
+            newFilePath: newFilePath,
+            onUpdateSelectedLines: { [weak self] in
+                guard let self else { return }
+                updateSelectedLines()
+                updateSelectedLinesCount()
+            }
         ))
     }
 
@@ -163,16 +184,14 @@ import Observation
         return lines.joined(separator: text.lineEndingStyle.string)
     }
 
-    func discard()
-    {
+    func discard() {
         repository.discard(hunk: self)
     }
 
-    private func selectedLines() -> [DiffLine] {
-        parts.flatMap { $0.lines }.filter { $0.isSelected }
-    }
-
     private func lineAtIndex(_ lineIndex: Int) -> DiffLine {
+        if let line = lineCache[lineIndex] {
+            return line
+        }
         var linePointer: UnsafePointer<git_diff_line>?
         let result = git_patch_get_line_in_hunk(&linePointer, patch.patch, hunkIndex, Int(lineIndex))
 
@@ -180,7 +199,9 @@ import Observation
             let err = NSError(gitError: result, pointOfFailure: "git_patch_get_line_in_hunk")
             fatalError(err.localizedDescription)
         }
-        return DiffLine(linePointer.pointee)
+        let line = DiffLine(linePointer.pointee)
+        lineCache[lineIndex] = line
+        return line
     }
 
     func copy() -> DiffHunk {

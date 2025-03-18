@@ -26,42 +26,51 @@ import Foundation
     let indexInHunk: Int
     let oldFilePath: String?
     let newFilePath: String?
+    let onUpdateSelectedLines: () -> Void
 
     init(
         type: DiffHunkPartType,
         lines: [DiffLine],
         indexInHunk: Int,
         oldFilePath: String?,
-        newFilePath: String?
+        newFilePath: String?,
+        onUpdateSelectedLines: @escaping () -> Void
     ) {
         self.type = type
         self.indexInHunk = indexInHunk
         self.lines = lines
         self.oldFilePath = oldFilePath
         self.newFilePath = newFilePath
+        self.onUpdateSelectedLines = onUpdateSelectedLines
+        if case .context = type {
+            isSelected = false
+        } else {
+            isSelected = true
+            updateSelectedLinesCount()
+            updateIsSelected()
+            onUpdateSelectedLines()
+        }
         for i in self.lines.indices {
             self.lines[i].indexInPart = i
             self.lines[i].numberOfLinesInPart = lines.count
         }
     }
     var lines: [DiffLine]
-    var isSelected: Bool {
-        get {
-            if case .context = type {
-                return false
-            } else {
-                return lines.allSatisfy(\.isSelected)
-            }
-        } set {
-            fatalError(.unavailable)
+    var isSelected: Bool
+    var selectedLinesCount: Int = 0
+
+
+    func updateIsSelected() {
+        if case .context = type {
+            fatalError(.invalid)
         }
+
+        isSelected = lines.allSatisfy(\.isSelected)
     }
-    var selectedLinesCount: Int {
-        get {
-            lines.filter(\.isSelected).count
-        } set {
-            fatalError(.unavailable)
-        }
+
+
+    func updateSelectedLinesCount() {
+        selectedLinesCount = lines.filter(\.self.isSelected).count
     }
 
     func toggleLine(_ line: DiffLine) {
@@ -69,6 +78,9 @@ import Foundation
             fatalError(.invalid)
         }
         line.isSelected.toggle()
+        updateIsSelected()
+        updateSelectedLinesCount()
+        onUpdateSelectedLines()
     }
 
     private func selectLine(line: DiffLine, flag: Bool) {
@@ -83,5 +95,8 @@ import Foundation
         for line in lines {
             selectLine(line: line, flag: flag)
         }
+        updateIsSelected()
+        updateSelectedLinesCount()
+        onUpdateSelectedLines()
     }
 }
