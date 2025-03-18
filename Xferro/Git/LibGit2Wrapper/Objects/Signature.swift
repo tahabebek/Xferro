@@ -42,9 +42,12 @@ struct Signature: Codable {
         return .success(signatureUnwrap)
     }
 
-    static func `default`(_ repository: Repository) -> Result<Signature, NSError> {
-        repository.lock.lock()
-        defer { repository.lock.unlock() }
+    static func `default`(_ repository: Repository, staticLock: NSRecursiveLock? = nil) -> Result<Signature, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            repository.lock.lock()
+        }
         var signature: UnsafeMutablePointer<git_signature>? = nil
         let signatureResult = git_signature_default(&signature, repository.pointer)
         if signatureResult == GIT_OK.rawValue, let signatureUnwrap = signature {
@@ -57,6 +60,11 @@ struct Signature: Codable {
         }
         let name = repository.config?.userName ?? NSUserName()
         let email = repository.config?.userEmail ?? "\(NSUserName())@\(ProcessInfo.processInfo.hostName)"
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            repository.lock.unlock()
+        }
         return .success(Signature(name: name, email: email))
     }
 }

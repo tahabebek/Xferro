@@ -31,14 +31,22 @@ extension Repository {
     }
 
     /// Get the index for the repo. The caller is responsible for freeing the index.
-    func unsafeIndex() -> Result<OpaquePointer, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+    func unsafeIndex(staticLock: NSRecursiveLock? = nil) -> Result<OpaquePointer, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         var index: OpaquePointer? = nil
         let result = git_repository_index(&index, self.pointer)
         guard result == GIT_OK.rawValue && index != nil else {
             let err = NSError(gitError: result, pointOfFailure: "git_repository_index")
             return .failure(err)
+        }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
         }
         return .success(index!)
     }
@@ -77,7 +85,7 @@ extension Repository {
     func unstage(path: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        GitCLI.executeGit(self, ["reset", "-q", "HEAD", path])
+        try! GitCLI.executeGit(self, ["reset", "-q", "HEAD", path])
         return .success(())
     }
 

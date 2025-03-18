@@ -58,47 +58,9 @@ class OperationController {
         return error.message
     }
 
-    /// Executes the given block on the repository queue, handling errors and
-    /// updating status.
-    func tryRepoOperation(block: @escaping (@Sendable () throws -> Void)) {
-        repository.queue.executeOffMainThread { [weak self] in
-            do {
-                try block()
-            } catch let error {
-                guard let self else { return }
-
-                Task { @MainActor in
-                    defer {
-                        self.ended(result: .failure)
-                    }
-
-                    switch error {
-                    case let repoError as RepoError:
-                        self.showFailureError(self.repoErrorMessage(for: repoError).rawValue)
-
-                    case let nsError as NSError where self.shoudReport(error: nsError):
-                        var message = error.localizedDescription
-
-                        if let gitError = git_error_last() {
-                            let errorString = String(cString: gitError.pointee.message)
-
-                            message.append(" \(errorString)")
-                        }
-                        self.showFailureError(message)
-                    default:
-                        break
-                    }
-                }
-            }
-        }
-    }
-
     func showFailureError(_ message: String) {
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-
-            alert.messageText = message
-            alert.beginSheetModal(for: AppDelegate.firstWindow)
-        }
+        let alert = NSAlert()
+        alert.messageText = message
+        alert.beginSheetModal(for: AppDelegate.firstWindow)
     }
 }

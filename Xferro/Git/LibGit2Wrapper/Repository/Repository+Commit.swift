@@ -9,10 +9,18 @@ import Foundation
 
 extension Repository {
     @discardableResult
-    func createEmptyCommit() -> Commit {
-        lock.lock()
-        defer { lock.unlock() }
-        let commit: Commit = commit(message: "Initial Commit").mustSucceed(gitDir)
+    func createEmptyCommit(staticLock: NSRecursiveLock? = nil) -> Commit {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
+        let commit: Commit = commit(message: "Initial Commit", staticLock: staticLock).mustSucceed(gitDir)
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
         return commit
     }
 
@@ -21,10 +29,14 @@ extension Repository {
         parentCommits: [OpaquePointer?], // [git_commit]
         message: String,
         signature: UnsafeMutablePointer<git_signature>? = nil,
-        updatingRef refName: String = "HEAD"
+        updatingRef refName: String = "HEAD",
+        staticLock: NSRecursiveLock? = nil
     ) -> Result<git_oid, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         var msgBuf = git_buf()
         git_message_prettify(&msgBuf, message, 0, /* ascii for # */ 35)
         defer { git_buf_dispose(&msgBuf) }
@@ -50,6 +62,11 @@ extension Repository {
             }
             return .success(commitOID)
         }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
         return result
     }
 
@@ -57,10 +74,14 @@ extension Repository {
         oid: git_oid,
         parentCommits: [OpaquePointer?], // [git_commit]
         message: String,
-        signature: UnsafeMutablePointer<git_signature>? = nil
+        signature: UnsafeMutablePointer<git_signature>? = nil,
+        staticLock: NSRecursiveLock? = nil
     ) -> Result<git_oid, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         var tree: OpaquePointer? = nil
         var treeOIDCopy = oid
         let lookupResult = git_tree_lookup(&tree, self.pointer, &treeOIDCopy)
@@ -69,7 +90,18 @@ extension Repository {
             return .failure(err)
         }
         defer { git_tree_free(tree) }
-        let commit = commit(tree: tree!, parentCommits: parentCommits, message: message, signature: signature)
+        let commit = commit(
+            tree: tree!,
+            parentCommits: parentCommits,
+            message: message,
+            signature: signature,
+            staticLock: staticLock
+        )
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
         return commit
     }
 
@@ -77,26 +109,45 @@ extension Repository {
         index: OpaquePointer, // git_index
         parentCommits: [OpaquePointer?], // [git_commit]
         message: String,
-        signature: UnsafeMutablePointer<git_signature>? = nil
+        signature: UnsafeMutablePointer<git_signature>? = nil,
+        staticLock: NSRecursiveLock? = nil
     ) -> Result<git_oid, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         var treeOID = git_oid()
         let result = git_index_write_tree(&treeOID, index)
         guard result == GIT_OK.rawValue else {
             let err = NSError(gitError: result, pointOfFailure: "git_index_write_tree")
             return .failure(err)
         }
-        let commit = commit(oid: treeOID, parentCommits: parentCommits, message: message, signature: signature)
+        let commit = commit(
+            oid: treeOID,
+            parentCommits: parentCommits,
+            message: message,
+            signature: signature,
+            staticLock: staticLock
+        )
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
         return commit
     }
 
     func commit(
         message: String,
-        signature: UnsafeMutablePointer<git_signature>? = nil
+        signature: UnsafeMutablePointer<git_signature>? = nil,
+        staticLock: NSRecursiveLock? = nil
     ) -> Result<git_oid, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         let unborn: Bool
         let result = git_repository_head_unborn(self.pointer)
         if result == 1 {
@@ -126,9 +177,18 @@ extension Repository {
                 return Result.failure(NSError(gitError: result, pointOfFailure: "git_commit_lookup"))
             }
         }
-        let oid = unsafeIndex().flatMap { index in
+        let oid = unsafeIndex(staticLock: staticLock).flatMap { index in
             defer { git_index_free(index) }
-            return self.commit(index: index, parentCommits: [commit].filter { $0 != nil }, message: message, signature: signature)
+            return self.commit(
+                index: index,
+                parentCommits: [commit].filter { $0 != nil },
+                message: message,
+                signature: signature)
+        }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
         }
         return oid
     }
@@ -150,10 +210,20 @@ extension Repository {
     /// oid - The OID of the commit to look up.
     ///
     /// Returns the commit if it exists, or an error.
-    func commit(_ oid: OID) -> Result<Commit, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        let commit = withGitObject(oid, type: GIT_OBJECT_COMMIT) { Commit($0, lock: lock) }
+    func commit(_ oid: OID, staticLock: NSRecursiveLock? = nil) -> Result<Commit, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
+        let commit = withGitObject(oid, type: GIT_OBJECT_COMMIT, staticLock: staticLock) {
+            Commit($0, lock: lock)
+        }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
         return commit
     }
 
@@ -232,19 +302,31 @@ extension Repository {
 
     /// Perform a commit of the staged files with the specified message and signature,
     /// assuming we are not doing a merge and using the current tip as the parent.
-    func commit(message: String, signature: Signature? = nil) -> Result<Commit, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+    func commit(
+        message: String,
+        signature: Signature? = nil,
+        staticLock: NSRecursiveLock? = nil
+    ) -> Result<Commit, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         let sign: Signature
         do {
-            sign = try signature ?? Signature.default(self).get()
+            sign = try signature ?? Signature.default(self, staticLock: staticLock).get()
         } catch {
             return .failure(error as NSError)
         }
         let result: Result<Commit, NSError> = sign.makeUnsafeSignature().flatMap {
-            self.commit(message: message, signature: $0).flatMap {
-                commit(OID($0))
+            self.commit(message: message, signature: $0, staticLock: staticLock).flatMap {
+                commit(OID($0), staticLock: staticLock)
             }
+        }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
         }
         return result
     }

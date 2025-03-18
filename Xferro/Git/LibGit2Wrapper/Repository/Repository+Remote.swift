@@ -81,8 +81,29 @@ extension Repository: RemoteManagement {
                 var options = git_push_options.defaultOptions()
 
                 options.callbacks = gitCallbacks
+                
+                // Set to single thread to reduce authentication issues
+                options.pb_parallelism = 1
+                
                 return Signpost.interval(.networkOperation) {
-                    git_remote_push(remote.remote, &mutableArray, &options)
+                    var pushURL = git_remote_pushurl(remote.remote).flatMap(String.init(cString:)) ?? nil
+                    if pushURL == nil {
+                        pushURL = git_remote_url(remote.remote).flatMap(String.init(cString:)) ?? ""
+                    }
+                    print("Pushing to URL: \(pushURL ?? "unknown")")
+                    
+                    // Reset authentication attempt counters before push
+                    git_remote_callbacks.Callbacks.resetAuthAttempts()
+                    
+                    let pushResult = git_remote_push(remote.remote, &mutableArray, &options)
+                    
+                    if pushResult != GIT_OK.rawValue {
+                        let error = git_error_last()
+                        let errorMessage = error?.pointee.message.flatMap { String(cString: $0) } ?? "Unknown error"
+                        print("Push failed with error: \(errorMessage)")
+                    }
+                    
+                    return pushResult
                 }
             }
         }
@@ -272,7 +293,7 @@ extension Repository: RemoteManagement {
         // In some cases, fast-forward merging with libgit2 can clobber unrelated
         // workspace changes, so CLI is used instead for now.
         // This actually does write, but the flag is already set
-        GitCLI.executeGit(self, ["merge", "--ff-only", branchName])
+        try! GitCLI.executeGit(self, ["merge", "--ff-only", branchName])
     }
 
     /// The full path to the MERGE_HEAD file

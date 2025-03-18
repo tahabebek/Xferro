@@ -146,19 +146,68 @@ final class PushOpController: PasswordOpController {
         remote: Remote,
         then callback: (@Sendable () -> Void)? = nil
     ) {
-        let pushURL = remote.pushURL!
-        print(pushURL)
-        tryRepoOperation { [weak self] in
-            guard let self else { return }
-            let callbacks = RemoteCallbacks(
-                passwordBlock: getPassword,
-                downloadProgress: nil,
-                uploadProgress: progressCallback
-            )
-            
+        let callbacks = RemoteCallbacks(
+            passwordBlock: nil,
+            downloadProgress: nil,
+            uploadProgress: self.progressCallback
+        )
+
+        // Add a timeout to prevent infinite loop
+        var pushAttemptSuccessful = false
+        
+        do {
+            // Try with libgit2 first
             try repository.push(branches: branches, remote: remote, callbacks: callbacks)
-            callback?()
-            refsChangedAndEnded()
+            pushAttemptSuccessful = true
+        } catch {
+            // If libgit2 fails and it looks like an SSH authentication loop issue,
+            // try falling back to CLI git which handles SSH authentication differently
+            if let _ = error as? RepoError {
+                print("LibGit2 SSH authentication failed, falling back to CLI git")
+                
+                // Prepare branch names for CLI
+                let remoteName = remote.name ?? "origin"
+                let branchSpecs = branches.map { $0.replacingOccurrences(of: "refs/heads/", with: "") }
+                
+                // Execute git push via CLI
+                do {
+                    try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs)
+                } catch {
+                    Task { @MainActor in
+                        self.showFailureError("Git CLI fallback also failed. Original error: \(error.localizedDescription)")
+                        self.ended(result: .failure)
+                    }
+                }
+            } else {
+                // Handle other errors normally
+                Task { @MainActor in
+                    defer {
+                        self.ended(result: .failure)
+                    }
+
+                    switch error {
+                    case let repoError as RepoError:
+                        self.showFailureError(self.repoErrorMessage(for: repoError).rawValue)
+
+                    case let nsError as NSError where self.shoudReport(error: nsError):
+                        var message = error.localizedDescription
+
+                        if let gitError = git_error_last() {
+                            let errorString = String(cString: gitError.pointee.message)
+                            message.append(" \(errorString)")
+                        }
+                        self.showFailureError(message)
+                    default:
+                        break
+                    }
+                }
+            }
+        }
+        
+        callback?()
+        
+        if pushAttemptSuccessful {
+            self.refsChangedAndEnded()
         }
     }
 }

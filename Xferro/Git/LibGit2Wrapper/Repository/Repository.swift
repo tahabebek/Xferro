@@ -88,10 +88,17 @@ class Repository: Identifiable {
     ///
     /// Returns the result of calling `transform` or an error if the object
     /// cannot be loaded.
-    func withGitObject<T>(_ oid: OID, type: git_object_t,
-                          transform: (OpaquePointer) -> Result<T, NSError>) -> Result<T, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+    func withGitObject<T>(
+        _ oid: OID,
+        type: git_object_t,
+        staticLock: NSRecursiveLock? = nil,
+        transform: (OpaquePointer) -> Result<T, NSError>
+    ) -> Result<T, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         var pointer: OpaquePointer? = nil
         var git_oid = oid.oid
         let result = git_object_lookup_prefix(&pointer, self.pointer, &git_oid, oid.length, type)
@@ -102,18 +109,46 @@ class Repository: Identifiable {
 
         let value = transform(pointer!)
         git_object_free(pointer)
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
         return value
     }
 
-    func withGitObject<T>(_ oid: OID, type: git_object_t, transform: (OpaquePointer) -> T) -> Result<T, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        return withGitObject(oid, type: type) { Result.success(transform($0)) }
+    func withGitObject<T>(
+        _ oid: OID,
+        type: git_object_t,
+        staticLock: NSRecursiveLock? = nil,
+        transform: (OpaquePointer) -> T)
+    -> Result<T, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
+        let result = withGitObject(oid, type: type, staticLock: staticLock) { Result.success(transform($0)) }
+
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return result
     }
 
-    func withGitObjects<T>(_ oids: [OID], type: git_object_t, transform: ([OpaquePointer]) -> Result<T, NSError>) -> Result<T, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+    func withGitObjects<T>(
+        _ oids: [OID],
+        type: git_object_t,
+        staticLock: NSRecursiveLock? = nil,
+        transform: ([OpaquePointer]) -> Result<T, NSError>
+    ) -> Result<T, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         var pointers = [OpaquePointer]()
         defer {
             for pointer in pointers {
@@ -127,13 +162,30 @@ class Repository: Identifiable {
             let result = git_object_lookup(&pointer, self.pointer, &oid, type)
 
             guard result == GIT_OK.rawValue else {
-                return Result.failure(NSError(gitError: result, pointOfFailure: "git_object_lookup"))
+                let result: Result<T, NSError> = Result.failure(
+                    NSError(
+                        gitError: result,
+                        pointOfFailure: "git_object_lookup"
+                    )
+                )
+                if let staticLock {
+                    staticLock.unlock()
+                } else {
+                    lock.unlock()
+                }
+                return result
             }
 
             pointers.append(pointer!)
         }
 
-        return transform(pointers)
+        let result = transform(pointers)
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return result
     }
 
     /// Loads the object with the given OID.
@@ -141,12 +193,21 @@ class Repository: Identifiable {
     /// oid - The OID of the blob to look up.
     ///
     /// Returns a `Blob`, `Commit`, `Tag`, or `Tree` if one exists, or an error.
-    func object(_ oid: OID) -> Result<ObjectType, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        return withGitObject(oid, type: GIT_OBJECT_ANY) { object in
-            return self.object(from: object)
+    func object(_ oid: OID, staticLock: NSRecursiveLock? = nil) -> Result<ObjectType, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
         }
+        let result = withGitObject(oid, type: GIT_OBJECT_ANY, staticLock: staticLock) { object in
+            return self.object(from: object, staticLock: staticLock)
+        }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return result
     }
 
     /// Loads the referenced object from the pointer.
@@ -154,10 +215,21 @@ class Repository: Identifiable {
     /// pointer - A pointer to an object.
     ///
     /// Returns the object if it exists, or an error.
-    func object<T>(from pointer: PointerTo<T>) -> Result<T, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        return withGitObject(pointer.oid, type: pointer.type.git_type) { T($0, lock: lock) }
+    func object<T>(from pointer: PointerTo<T>, staticLock: NSRecursiveLock? = nil) -> Result<T, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
+        let result = withGitObject(pointer.oid, type: pointer.type.git_type, staticLock: staticLock) {
+            T($0, lock: lock)
+        }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return result
     }
 
     /// Loads the referenced object from the pointer.
@@ -165,19 +237,29 @@ class Repository: Identifiable {
     /// pointer - A pointer to an object.
     ///
     /// Returns the object if it exists, or an error.
-    func object(from pointer: Pointer) -> Result<ObjectType, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+    func object(from pointer: Pointer, staticLock: NSRecursiveLock? = nil) -> Result<ObjectType, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
+        let result =
         switch pointer {
         case let .blob(oid):
-            return blob(oid).map { $0 as ObjectType }
+            blob(oid, staticLock: staticLock).map { $0 as ObjectType }
         case let .commit(oid):
-            return commit(oid).map { $0 as ObjectType }
+            commit(oid, staticLock: staticLock).map { $0 as ObjectType }
         case let .tag(oid):
-            return tag(oid).map { $0 as ObjectType }
+            tag(oid, staticLock: staticLock).map { $0 as ObjectType }
         case let .tree(oid):
-            return tree(oid).map { $0 as ObjectType }
+            tree(oid, staticLock: staticLock).map { $0 as ObjectType }
         }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return result
     }
 
     /// Loads the referenced object from the git_object.
@@ -185,23 +267,34 @@ class Repository: Identifiable {
     /// pointer - A pointer to an object.
     ///
     /// Returns the object if it exists, or an error.
-    func object(from object: OpaquePointer) -> Result<ObjectType, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        let type = git_object_type(object)
-        if type == Blob.type.git_type {
-            return .success(Blob(object, lock: lock))
-        } else if type == Commit.type.git_type {
-            return .success(Commit(object, lock: lock))
-        } else if type == Tag.type.git_type {
-            return .success(Tag(object, lock: lock))
-        } else if type == Tree.type.git_type {
-            return .success(Tree(object, lock: lock))
+    func object(from object: OpaquePointer, staticLock: NSRecursiveLock? = nil) -> Result<ObjectType, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
         }
-        let error = NSError(domain: "org.libgit2.SwiftGit2",
-                            code: 1,
-                            userInfo: [NSLocalizedDescriptionKey: "Unrecognized git_object_t '\(type)'."])
-        return Result.failure(error)
+        let type = git_object_type(object)
+        let result: Result<ObjectType, NSError>
+        if type == Blob.type.git_type {
+            result = .success(Blob(object, lock: staticLock ?? lock))
+        } else if type == Commit.type.git_type {
+            result =  .success(Commit(object, lock: staticLock ?? lock))
+        } else if type == Tag.type.git_type {
+            result =  .success(Tag(object, lock: staticLock ?? lock))
+        } else if type == Tree.type.git_type {
+            result =  .success(Tree(object, lock: staticLock ?? lock))
+        } else {
+            let error = NSError(domain: "org.libgit2.SwiftGit2",
+                                code: 1,
+                                userInfo: [NSLocalizedDescriptionKey: "Unrecognized git_object_t '\(type)'."])
+            result =  .failure(error)
+        }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return result
     }
 
     /// Loads the blob with the given OID.
@@ -209,10 +302,21 @@ class Repository: Identifiable {
     /// oid - The OID of the blob to look up.
     ///
     /// Returns the blob if it exists, or an error.
-    func blob(_ oid: OID) -> Result<Blob, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        return withGitObject(oid, type: GIT_OBJECT_BLOB) { Blob($0, lock: lock) }
+    func blob(_ oid: OID, staticLock: NSRecursiveLock? = nil) -> Result<Blob, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
+        let result = withGitObject(oid, type: GIT_OBJECT_BLOB, staticLock: staticLock) {
+            Blob($0, lock: staticLock ?? lock)
+        }
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return result
     }
 
     /// Loads the tree with the given OID.
@@ -220,17 +324,35 @@ class Repository: Identifiable {
     /// oid - The OID of the tree to look up.
     ///
     /// Returns the tree if it exists, or an error.
-    func tree(_ oid: OID) -> Result<Tree, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
-        return withGitObject(oid, type: GIT_OBJECT_TREE) { Tree($0, lock: lock) }
+    func tree(_ oid: OID, staticLock: NSRecursiveLock? = nil) -> Result<Tree, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
+        let result = withGitObject(oid, type: GIT_OBJECT_TREE, staticLock: staticLock) {
+            Tree($0, lock: staticLock ?? lock)
+        }
+
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return result
     }
 
     // MARK: - Status
 
-    func status(options: StatusOptions? = nil) -> Result<[StatusEntry], NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+    func status(
+        options: StatusOptions? = nil,
+        staticLock: NSRecursiveLock? = nil
+    ) -> Result<[StatusEntry], NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         let options = options ?? .includeUntracked
         var returnArray = [StatusEntry]()
 
@@ -238,7 +360,15 @@ class Repository: Identifiable {
         let statusOptionsPointer = UnsafeMutablePointer<git_status_options>.allocate(capacity: 1)
         let optionsResult = git_status_options_init(statusOptionsPointer, UInt32(GIT_STATUS_OPTIONS_VERSION))
         guard optionsResult == GIT_OK.rawValue else {
-            return .failure(NSError(gitError: optionsResult, pointOfFailure: "git_status_init_options"))
+            let result: Result<[StatusEntry], NSError> = .failure(
+                NSError(gitError: optionsResult, pointOfFailure: "git_status_init_options")
+            )
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+            return result
         }
         var opts = statusOptionsPointer.move()
         opts.flags = options.rawValue
@@ -249,7 +379,15 @@ class Repository: Identifiable {
         defer { git_status_list_free(unsafeStatus) }
         let statusResult = git_status_list_new(&unsafeStatus, pointer, &opts)
         guard statusResult == GIT_OK.rawValue, let unwrapStatusResult = unsafeStatus else {
-            return .failure(NSError(gitError: statusResult, pointOfFailure: "git_status_list_new"))
+            let result: Result<[StatusEntry], NSError> = .failure(
+                NSError(gitError: statusResult, pointOfFailure: "git_status_list_new")
+            )
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+            return result
         }
 
         let count = git_status_list_entrycount(unwrapStatusResult)
@@ -264,23 +402,55 @@ class Repository: Identifiable {
             returnArray.append(statusEntry)
         }
 
-        return .success(returnArray)
+        let result: Result<[StatusEntry], NSError> = .success(returnArray)
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return result
     }
 
-    func status(for path: String) -> Result<Diff.Status?, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+    func status(for path: String, staticLock: NSRecursiveLock? = nil) -> Result<Diff.Status?, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         var flags: UInt32 = 0
         let result = path.withCString { cpath in
             git_status_file(&flags, self.pointer, cpath)
         }
         if result == GIT_ENOTFOUND.rawValue {
-            return .success(nil)
+            let result: Result<Diff.Status?, NSError> = .success(nil)
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+            return result
         }
         guard result == GIT_OK.rawValue else {
-            return .failure(NSError(gitError: result, pointOfFailure: "git_status_file"))
+            let result: Result<Diff.Status?, NSError> = .failure(
+                NSError(
+                    gitError: result,
+                    pointOfFailure: "git_status_file"
+                )
+            )
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+            return result
         }
-        return .success(Diff.Status(rawValue: flags))
+        let status: Result<Diff.Status?, NSError>  = .success(Diff.Status(rawValue: flags))
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
+        return status
     }
 
     // MARK: - Validity/Existence Check
@@ -312,11 +482,19 @@ class Repository: Identifiable {
      * the characters '~', '^', ':', '\\', '?', '[', and '*', and the
      * sequences ".." and "@{" which have special meaning to revparse.
      */
-    func checkValid(_ refname: String) -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
+    func checkValid(_ refname: String, staticLock: NSRecursiveLock? = nil) -> Bool {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         var status: Int32 = 0
         let result = git_reference_name_is_valid(&status, refname)
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
         guard result == GIT_OK.rawValue else {
             return false
         }

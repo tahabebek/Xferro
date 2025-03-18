@@ -39,33 +39,28 @@ enum GitCLI {
     }
 
     @discardableResult
-    static func executeGit(_ repository: Repository, _ args: [String]) -> String {
+    static func executeGit(_ repository: Repository, _ args: [String]) throws -> String {
         let process = gitProcess(repository, args)
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
 
-        do {
-            try process.run()
-            process.waitUntilExit()
+        try process.run()
+        process.waitUntilExit()
 
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: data, encoding: .utf8) ?? ""
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: data, encoding: .utf8) ?? ""
 
-            if process.terminationStatus != 0 {
-                print("Git command failed with status \(process.terminationStatus)")
-                print("Command output: \(output)")
-                let error = NSError(domain: "GitError",
-                                    code: Int(process.terminationStatus),
-                                    userInfo: [NSLocalizedDescriptionKey: "Git failed: \(output)"])
-                print(error)
-                fatalError(.unhandledRepositoryError(repository.gitDir))
-            }
-            return output
-        } catch {
-            print("Failed to run git: \(error)")
-            fatalError(.unhandledRepositoryError(repository.gitDir))
+        if process.terminationStatus != 0 {
+            print("Git command failed with status \(process.terminationStatus)")
+            print("Command output: \(output)")
+            let error = NSError(domain: "GitError",
+                                code: Int(process.terminationStatus),
+                                userInfo: [NSLocalizedDescriptionKey: "Git failed: \(output)"])
+            print(error)
+            throw error
         }
+        return output
     }
 
     static func getDiff(

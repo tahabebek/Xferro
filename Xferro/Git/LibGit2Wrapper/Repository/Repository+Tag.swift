@@ -20,8 +20,10 @@ extension Repository {
     /// oid - The OID of the tag to look up.
     ///
     /// Returns the tag if it exists, or an error.
-    func tag(_ oid: OID) -> Result<Tag, NSError> {
-        return withGitObject(oid, type: GIT_OBJECT_TAG) { Tag($0, lock: lock) }
+    func tag(_ oid: OID, staticLock: NSRecursiveLock? = nil) -> Result<Tag, NSError> {
+        return withGitObject(oid, type: GIT_OBJECT_TAG, staticLock: staticLock) {
+            Tag($0, lock: staticLock ?? lock)
+        }
     }
 
     /// Load the tag with the given name (e.g., "tag-2").

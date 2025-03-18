@@ -61,9 +61,9 @@ enum Head: Codable, Equatable {
     }
 
     static func of(_ repository: Repository) -> Head {
-        guard let headRef = try? repository.HEAD().get() else {
+        guard let headRef = try? repository.HEAD(staticLock: Repository.staticLock).get() else {
             repository.createEmptyCommit()
-            let newHeadRef = repository.HEAD().mustSucceed(repository.gitDir)
+            let newHeadRef = repository.HEAD(staticLock: Repository.staticLock).mustSucceed(repository.gitDir)
             return getHeadWithReference(repository, newHeadRef)
         }
         return getHeadWithReference(repository, headRef)
@@ -86,7 +86,10 @@ enum Head: Codable, Equatable {
     }
 
     private static func getHeadWithReference(_ repository: Repository, _ headRef: ReferenceType) -> Head {
-        let headCommit = repository.commit(headRef.oid).mustSucceed(repository.gitDir)
+        let headCommit = repository.commit(
+            headRef.oid,
+            staticLock: Repository.staticLock
+        ).mustSucceed(repository.gitDir)
 
         return if let branchRef = headRef as? Branch {
             .branch(branchRef, headCommit)
@@ -125,16 +128,24 @@ fileprivate extension Repository {
     /// Load the reference pointed at by HEAD.
     ///
     /// When on a branch, this will return the current `Branch`.
-    func HEAD() -> Result<ReferenceType, NSError> {
-        lock.lock()
-        defer { lock.unlock() }
+    func HEAD(staticLock: NSRecursiveLock? = nil) -> Result<ReferenceType, NSError> {
+        if let staticLock {
+            staticLock.lock()
+        } else {
+            lock.lock()
+        }
         var pointer: OpaquePointer? = nil
         defer { git_reference_free(pointer) }
         let result = git_repository_head(&pointer, self.pointer)
         guard result == GIT_OK.rawValue else {
             return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_head"))
         }
-        let value = referenceWithLibGit2Reference(pointer!, lock: lock)
+        let value = referenceWithLibGit2Reference(pointer!, lock: staticLock ?? lock)
+        if let staticLock {
+            staticLock.unlock()
+        } else {
+            lock.unlock()
+        }
         return .success(value)
     }
 

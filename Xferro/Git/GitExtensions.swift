@@ -45,8 +45,9 @@ fileprivate extension RemoteCallbacks {
     }
 }
 
+
 extension git_remote_callbacks {
-    private enum Callbacks {
+    enum Callbacks {
         private static func sshKeyPaths() -> [String] {
             let manager = FileManager.default
             let sshDirectory = manager.homeDirectoryForCurrentUser
@@ -70,50 +71,66 @@ extension git_remote_callbacks {
             return result
         }
 
-        static let credentials: git_cred_acquire_cb = {
-            (cred, urlCString, userCString, allowed, payload) in
+        // Track authentication attempts to prevent infinite loop
+        private static var retryCount = 0
+
+        // Reset auth attempt counters
+        static func resetAuthAttempts() {
+            retryCount = 0
+        }
+        
+        static let credentials: git_cred_acquire_cb = { (cred, urlCString, userCString, allowed, payload) in
             guard let callbacks = RemoteCallbacks.fromPayload(payload)
             else { return -1 }
             let allowed = git_credential_t(allowed)
+            let username = userCString.map { String(cString: $0) } ?? "unknown"
+            let url = urlCString.map { String(cString: $0) } ?? "unknown"
+            
+            // Track number of auth attempts for this URL
+            print("retrying \(retryCount)")
+            // If we've been called too many times for the same credential, break the loop
+            if retryCount > 3 {
+                print("Breaking authentication loop after \(retryCount) attempts")
+                retryCount = 0
+                return GIT_EAUTH.rawValue
+            }
+            retryCount += 1
 
+            print("Credential callback for URL: \(url), username: \(username), allowed: \(allowed)")
+
+            // Try to authenticate with SSH key from agent
             if allowed.contains(GIT_CREDENTIAL_SSH_KEY) {
-                var result: Int32 = 1
+                print("Attempting SSH agent authentication")
+                let sshAgentResult = git_cred_ssh_key_from_agent(cred, userCString)
 
+                if sshAgentResult == 0 {
+                    print("SSH agent authentication successful")
+                    return 0
+                } else {
+                    let error = git_error_last()
+                    let errorMessage = error?.pointee.message.flatMap { String(cString: $0) } ?? "Unknown error"
+                    print("SSH agent authentication failed: \(errorMessage)")
+                }
+
+                // Fallback to direct key files
+                var result: Int32 = 1
                 for path in sshKeyPaths() {
                     let publicPath = path.appending(".pub")
+                    print("Trying SSH key at: \(path)")
 
                     result = git_cred_ssh_key_new(cred, userCString, publicPath, path, "")
                     if result == 0 {
-                        break
+                        print("SSH key authentication successful with \(path)")
+                        return 0
+                    } else {
+                        let error = git_error_last()
+                        let errorMessage = error?.pointee.message.flatMap { String(cString: $0) } ?? "Unknown error"
+                        print("Failed with error: \(errorMessage)")
                     }
-                    else {
-                        let error = RepoError(gitCode: git_error_code(rawValue: result))
-                        fatalError("Could not load ssh key for \(path): \(error))")
-                    }
-                }
-                if result == 0 {
-                    return 0
                 }
             }
-            if allowed.contains(GIT_CREDENTIAL_USERPASS_PLAINTEXT) {
-                let keychain = KeychainStorage.shared
-                let urlString = urlCString.flatMap { String(cString: $0) }
-                let urlObject = urlString.flatMap { URL(string: $0) }
-                let userName = userCString.map { String(cString: $0) } ??
-                urlObject?.impliedUserName
 
-                if let url = urlObject,
-                   let user = userName,
-                   let password = keychain.find(url: url, account: userName) ??
-                    keychain.find(url: url.withPath(""), account: userName) {
-                    return git_cred_userpass_plaintext_new(cred, user, password)
-                }
-                if let (user, password) = callbacks.pointee.passwordBlock!() {
-                    return git_cred_userpass_plaintext_new(cred, user, password)
-                }
-            }
-            // The documentation says to return >0 to indicate no credentials
-            // acquired, but that leads to an assertion failure.
+            print("No authentication methods succeeded")
             return -1
         }
 
@@ -166,9 +183,7 @@ extension git_remote_callbacks {
             (buffer) in
             gitCallbacks.payload = buffer.baseAddress
 
-            if callbacks.passwordBlock != nil {
-                gitCallbacks.credentials = Callbacks.credentials
-            }
+            gitCallbacks.credentials = Callbacks.credentials
             if callbacks.downloadProgress != nil {
                 gitCallbacks.transfer_progress = Callbacks.transferProgress
             }

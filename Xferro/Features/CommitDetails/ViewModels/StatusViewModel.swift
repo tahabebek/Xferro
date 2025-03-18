@@ -226,7 +226,8 @@ import OrderedCollections
             try await pushOperation.start()
         case .amendAndPush:
             try await amendTapped()
-            fatalError(.unimplemented)
+            let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
+            try await pushOperation.start()
         case .commitAndForcePush:
             try await commitTapped()
             fatalError(.unimplemented)
@@ -284,7 +285,7 @@ import OrderedCollections
     }
 
     private func commit(repository: Repository, amend: Bool) async throws {
-        GitCLI.executeGit(repository, ["restore", "--staged", "."])
+        try GitCLI.executeGit(repository, ["restore", "--staged", "."])
         var filesToWriteBack: [String: String] = [:]
         var filesToAdd: Set<String> = []
         var filesToDelete: Set<String> = []
@@ -348,15 +349,15 @@ import OrderedCollections
         }
 
         let addArguments = ["add"] + Array(filesToAdd)
-        GitCLI.executeGit(repository, addArguments)
+        try GitCLI.executeGit(repository, addArguments)
         if amend {
             if commitSummary.isEmptyOrWhitespace {
-                GitCLI.executeGit(repository, ["commit", "--amend", "--no-edit"])
+                try GitCLI.executeGit(repository, ["commit", "--amend", "--no-edit"])
             } else {
-                GitCLI.executeGit(repository, ["commit", "--amend", "-m", commitSummary])
+                try GitCLI.executeGit(repository, ["commit", "--amend", "-m", commitSummary])
             }
         } else {
-            GitCLI.executeGit(repository, ["commit", "-m", commitSummary])
+            try GitCLI.executeGit(repository, ["commit", "-m", commitSummary])
         }
 
         for file in unsortedTrackedFiles.values.elements {
@@ -371,7 +372,7 @@ import OrderedCollections
         for path in filesToDelete {
             try! FileManager.default.removeItem(atPath: path)
         }
-        GitCLI.executeGit(repository, ["restore", "--staged", "."])
+        try GitCLI.executeGit(repository, ["restore", "--staged", "."])
         await MainActor.run {
             commitSummary = ""
         }
@@ -413,9 +414,9 @@ import OrderedCollections
                 try! FileManager.removeItem(fileURL)
             case .deleted, .modified, .renamed, .typeChange:
                 if fileURL.isDirectory {
-                    GitCLI.executeGit(repository, ["restore", fileURL.appendingPathComponent("*").path])
+                    try! GitCLI.executeGit(repository, ["restore", fileURL.appendingPathComponent("*").path])
                 } else {
-                    GitCLI.executeGit(repository, ["restore", fileURL.path])
+                    try! GitCLI.executeGit(repository, ["restore", fileURL.path])
                 }
             case .conflicted, .unreadable:
                 fatalError(.unimplemented)
@@ -448,8 +449,8 @@ import OrderedCollections
         guard let repository else {
             fatalError(.invalid)
         }
-        GitCLI.executeGit(repository, ["add", "."])
-        GitCLI.executeGit(repository, ["reset", "--hard"])
+        try! GitCLI.executeGit(repository, ["add", "."])
+        try! GitCLI.executeGit(repository, ["reset", "--hard"])
     }
 
     func setInitialSelection() {
