@@ -54,7 +54,8 @@ extension RepositoryInfo {
 
                             continue
                         }
-                        if URL(filePath: path).deletingLastPathComponent().path.hasSuffix("~") {
+                        if path.contains("~"){
+                            print("skipped \(path)")
                             continue
                         }
 

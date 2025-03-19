@@ -62,7 +62,7 @@ import Foundation
 
     func updateIsSelected() {
         if case .context = type {
-            fatalError(.invalid)
+            return
         }
 
         isSelected = lines.allSatisfy(\.isSelected)
@@ -75,7 +75,7 @@ import Foundation
 
     func toggleLine(_ line: DiffLine) {
         if case .context = type {
-            fatalError(.invalid)
+            return
         }
         line.isSelected.toggle()
         updateIsSelected()
@@ -85,7 +85,7 @@ import Foundation
 
     private func selectLine(line: DiffLine, flag: Bool) {
         if case .context = type {
-            fatalError(.invalid)
+            return
         }
         line.isSelected = flag
     }
@@ -94,6 +94,24 @@ import Foundation
         let flag = !isSelected
         for line in lines {
             selectLine(line: line, flag: flag)
+        }
+        updateIsSelected()
+        updateSelectedLinesCount()
+        onUpdateSelectedLines()
+    }
+
+    func unselectAll() {
+        for line in lines {
+            selectLine(line: line, flag: false)
+        }
+        updateIsSelected()
+        updateSelectedLinesCount()
+        onUpdateSelectedLines()
+    }
+
+    func selectAll() {
+        for line in lines {
+            selectLine(line: line, flag: true)
         }
         updateIsSelected()
         updateSelectedLinesCount()

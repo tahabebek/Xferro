@@ -25,15 +25,16 @@ enum SelectedLinesDiffMaker {
 
     static func makeFileWithSelectedLines(
         repository: Repository,
-        filePath: String,
+        oldFilePath: String,
+        newFilePath: String,
         selectedLines: [DiffLine],
         allHunks: [DiffHunk]
     ) async throws -> Result {
-        let headFileResult = GitCLI.showHead(repository, filePath)
+        let headFileResult = GitCLI.showHead(repository, oldFilePath)
         switch headFileResult {
         case .success(let headFileContent):
             let headFileLines = headFileContent.lines
-            let path = repository.workDir.appendingPathComponent(filePath).path
+            let path = repository.workDir.appendingPathComponent(newFilePath).path
             if FileManager.fileExists(path) {
                 let currentFileLines = try String(contentsOfFile: path, encoding: .utf8).lines
                 let allLinesInHunk = allHunks.flatMap(\.parts).flatMap((\.lines)).filter(\.isAdditionOrDeletion)
@@ -56,7 +57,7 @@ enum SelectedLinesDiffMaker {
         case .failure(let error):
             switch error {
             case .fileNotInHead:
-                let path = repository.workDir.appendingPathComponent(filePath).path
+                let path = repository.workDir.appendingPathComponent(newFilePath).path
                 if FileManager.fileExists(path) {
                     let result = try await makeFileWithSelectedLinesForAddedFile(
                         repository: repository,
@@ -74,34 +75,50 @@ enum SelectedLinesDiffMaker {
 
     static func makeFileWithSelectedLinesInTheHunk(
         repository: Repository,
-        filePath: String,
+        oldFilePath: String,
+        newFilePath: String,
         hunk: DiffHunk,
         allHunks: [DiffHunk]
     ) async throws -> Result {
         let selectedLines = hunk.parts.flatMap(\.lines).filter(\.isSelected)
-        return try await makeFileWithSelectedLines(repository: repository, filePath: filePath, selectedLines: selectedLines, allHunks: allHunks)
+        return try await makeFileWithSelectedLines(
+            repository: repository,
+            oldFilePath: oldFilePath,
+            newFilePath: newFilePath,
+            selectedLines: selectedLines,
+            allHunks: allHunks
+        )
     }
 
     static func makeDiff(
         repository: Repository,
-        filePath: String,
+        oldFilePath: String,
+        newFilePath: String,
         hunk: DiffHunk,
         allHunks: [DiffHunk]
     ) async throws -> String {
         let selectedLines = hunk.parts.flatMap(\.lines).filter(\.isSelected)
-        return try await makeDiff(repository: repository, filePath: filePath, selectedLines: selectedLines, allHunks: allHunks)
+        return try await makeDiff(
+            repository: repository,
+            oldFilePath: oldFilePath,
+            newFilePath: newFilePath,
+            selectedLines: selectedLines,
+            allHunks: allHunks
+        )
     }
 
     static func makeDiff(
         repository: Repository,
-        filePath: String,
+        oldFilePath: String,
+        newFilePath: String,
         selectedLines: [DiffLine],
         allHunks: [DiffHunk],
         reverse: Bool = false
     ) async throws -> String {
         let result = try await makeFileWithSelectedLines(
             repository: repository,
-            filePath: filePath,
+            oldFilePath: oldFilePath,
+            newFilePath: newFilePath,
             selectedLines: selectedLines,
             allHunks: allHunks
         )
@@ -134,9 +151,6 @@ enum SelectedLinesDiffMaker {
         repository: Repository,
         selectedLines: [DiffLine]
     ) async throws -> [String] {
-        guard selectedLines.isNotEmpty else {
-            fatalError(.invalid)
-        }
         var result = [String]()
         for selectedLine in selectedLines {
             if case .addition = selectedLine.type {
@@ -153,9 +167,6 @@ enum SelectedLinesDiffMaker {
         headFileLines: [String],
         selectedLines: [DiffLine]
     ) async throws -> [String] {
-        guard selectedLines.isNotEmpty else {
-            fatalError(.invalid)
-        }
         var result = [String]()
         for headLineIndex in 0..<headFileLines.count  {
             let headLine = headFileLines[headLineIndex]
@@ -187,10 +198,6 @@ enum SelectedLinesDiffMaker {
         selectedLines: [DiffLine],
         allLinesInHunk: [DiffLine]
     ) async throws -> [String] {
-        guard selectedLines.isNotEmpty else {
-            return headFileLines
-        }
-
         var result: [String] = []
         var headLineIndex: Int = 0
         var currentLineIndex: Int = 0

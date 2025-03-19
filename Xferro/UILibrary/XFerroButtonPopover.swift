@@ -14,6 +14,7 @@ struct XFerroButtonPopover<T>: View {
     @Binding var showingOptions: Bool
     @Binding var filteredOptions: [XFerroButtonOption<T>]
     @Binding var addMoreIsHovered: Bool
+    @Binding var selectedOptionIndex: Int
 
     let options: [XFerroButtonOption<T>]
     let showsSearchOptions: Bool
@@ -34,6 +35,7 @@ struct XFerroButtonPopover<T>: View {
                             Text(filteredOptions[index].title)
                                 .onTapGesture {
                                     showingOptions = false
+                                    selectedOptionIndex = index
                                     onTapOption(filteredOptions[index])
                                 }
                                 .onHover { flag in

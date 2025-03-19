@@ -45,6 +45,9 @@ import Observation
     var onIsCurrentBranch: ((Branch, Head) -> Bool)?
     var onPushBranchToRemoteTapped: ((String) -> Void)?
 
+    var observers: Set<AnyCancellable> = []
+    var refreshRemoteSubject: PassthroughSubject<Void, Never> = .init()
+
     var wipWorktree: WipWorktree {
         WipWorktree.worktree(for: self)
     }
@@ -56,6 +59,14 @@ import Observation
         self.queue = TaskQueue(id: Self.taskQueueID(path: repository.workDir.path))
         self.gitWatcher = self.setupGitWatcher()
         self.workDirWatcher = setupWorkDirWatcher()
+
+        refreshRemoteSubject
+            .eraseToAnyPublisher()
+            .sink { [weak self] in
+                guard let self else { return }
+                remotes = repository.allRemotes().mustSucceed(repository.gitDir)
+            }
+            .store(in: &observers)
     }
 
     func deleteRepositoryTapped() {
@@ -71,6 +82,9 @@ import Observation
         reflogChangeObserver?.cancel()
         stashChangeObserver?.cancel()
         workDirChangeObserver?.cancel()
+        for observer in observers {
+            observer.cancel()
+        }
     }
 }
 

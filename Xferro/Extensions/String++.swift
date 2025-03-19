@@ -40,6 +40,9 @@ extension String {
     func capitalizingFirstLetter() -> String {
         prefix(1).uppercased() + String(dropFirst())
     }
+    func uncapitalizingFirstLetter() -> String {
+        prefix(1).lowercased() + String(dropFirst())
+    }
 
     mutating func capitalizeFirstLetter() {
         self = self.capitalizingFirstLetter()

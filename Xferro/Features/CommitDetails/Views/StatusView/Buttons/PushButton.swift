@@ -30,8 +30,15 @@ struct PushButton: View {
             disabled: commitSummary.isEmptyOrWhitespace || !hasChanges,
             dangerous: force,
             options: remoteOptions,
+            selectedOptionIndex: Binding<Int>(
+                get: {
+                    statusViewModel.getLastSelectedRemoteIndex(buttonTitle: "push")
+                }, set: { value, _ in
+                    statusViewModel.setLastSelectedRemote(value, buttonTitle: "push")
+                }
+            ),
             addMoreOptionsText: "Add Remote...",
-            showsSearchOptions: true,
+            showsSearchOptions: false,
             onTapOption: { option in
                 selectedRemoteForPush = option.data
             },
@@ -64,6 +71,10 @@ struct PushButton: View {
                         errorString = error.localizedDescription
                     }
                 }
-            })
+            }
+        )
+        .task {
+            selectedRemoteForPush = remotes[statusViewModel.getLastSelectedRemoteIndex(buttonTitle: "push")]
+        }
     }
 }

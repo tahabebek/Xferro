@@ -56,13 +56,14 @@ struct ProjectView: View {
             case .regular(let type):
                 switch type {
                 case .status(let status):
-                    if let repo = commitsViewModel.currentRepositoryInfo?.repository ,
-                       let head = commitsViewModel.currentRepositoryInfo?.head {
+                    if let repositoryInfo = commitsViewModel.currentRepositoryInfo {
                         Task {
                             await statusViewModel.updateStatus(
                                 newSelectableStatus: status,
-                                repository: repo,
-                                head: head
+                                repository: repositoryInfo.repository,
+                                head: repositoryInfo.head,
+                                remotes: repositoryInfo.remotes,
+                                refreshRemoteSubject: repositoryInfo.refreshRemoteSubject
                             )
                         }
                     }
@@ -76,13 +77,12 @@ struct ProjectView: View {
                     break
                 }
             case .wip(let wip):
-                if let repo = commitsViewModel.currentRepositoryInfo?.repository ,
-                   let head = commitsViewModel.currentRepositoryInfo?.head {
+                if let repositoryInfo = commitsViewModel.currentRepositoryInfo {
                     Task {
                         await wipCommitViewModel.updateStatus(
                             newSelectableWipCommit: wip.selectableItem as! SelectableWipCommit,
-                            repository: repo,
-                            head: head
+                            repository: repositoryInfo.repository,
+                            head: repositoryInfo.head
                         )
                     }
                 }

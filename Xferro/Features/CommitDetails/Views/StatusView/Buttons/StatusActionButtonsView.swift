@@ -12,10 +12,10 @@ struct StatusActionButtonsView: View {
     enum BoxAction: String, CaseIterable, Identifiable, Equatable {
         var id: String { rawValue }
         case amend = "Amend"
-        case commitAndPush = "Commit, and Push to"
-        case amendAndPush = "Amend, and Push to"
-        case commitAndForcePush = "Commit, and Force Push to"
-        case amendAndForcePush = "Amend, and Force Push to"
+        case commitAndPush = "Commit and Push"
+        case amendAndPush = "Amend and Push"
+        case commitAndForcePush = "Commit and Force Push"
+        case amendAndForcePush = "Amend and Force Push"
         case stash = "Stash"
         case popStash = "Pop Stash"
         case applyStash = "Apply Stash"

@@ -26,6 +26,7 @@ struct PopStashButton: View {
                         errorString = error.localizedDescription
                     }
                 }
-            })
+            }
+        )
     }
 }

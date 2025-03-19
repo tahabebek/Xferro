@@ -26,6 +26,7 @@ struct StashButton: View {
                         errorString = error.localizedDescription
                     }
                 }
-            })
+            }
+        )
     }
 }

@@ -23,7 +23,11 @@ import OrderedCollections
 
     func setCurrentSelectedItem(_ selectedItem: SelectedItem?, _ repositoryInfo: RepositoryInfo?) {
         guard let repositoryInfo else {
-            fatalError(.invalid)
+            currentRepositoryInfo = nil
+            currentSelectedItem = nil
+            currentWipCommits = nil
+            setupInitialCurrentSelectedItem()
+            return
         }
         guard let selectedItem else {
             setupInitialCurrentSelectedItem()
@@ -60,7 +64,7 @@ import OrderedCollections
             for repository in repositories {
                 await addRepository(repository)
             }
-            await MainActor.run {
+            Task { @MainActor in
                 setupInitialCurrentSelectedItem()
             }
         }
@@ -72,14 +76,14 @@ import OrderedCollections
 
     private func updateRepositoryInfo(_ repository: Repository) async {
         let repositoryInfo = await getRepositoryInfo(repository)
-        await MainActor.run {
+        Task { @MainActor in
             currentRepositoryInfos[kRepositoryInfo(repository)] = repositoryInfo
         }
     }
 
     private func setupInitialCurrentSelectedItem() {
         Task {
-            await MainActor.run {
+            Task { @MainActor in
                 guard currentSelectedItem == nil else { return }
                 if !currentRepositoryInfos.isEmpty {
                     var repositoryInfo: RepositoryInfo?
@@ -178,7 +182,7 @@ import OrderedCollections
     // MARK: User actions
     func userTapped(item: any SelectableItem, repositoryInfo: RepositoryInfo) {
         Task {
-            await MainActor.run {
+            Task { @MainActor in
                 let selectedItem: SelectedItem
                 switch item {
                 case let status as SelectableStatus:
@@ -233,7 +237,7 @@ import OrderedCollections
             fatalError(.unexpected)
         }
         Task {
-            await MainActor.run {
+            Task { @MainActor in
                 currentRepositoryInfos.removeValue(forKey: kRepositoryInfo(repository))
                 if currentSelectedItem != nil {
                     guard let currentRepositoryInfo else {
@@ -249,9 +253,9 @@ import OrderedCollections
     }
 
     func pushBranchToRemoteTapped(repository: Repository, branchName: String) {
-        Task {
-            let pushOpController = await PushOpController(remoteOption: .new(branchName), repository: repository)
-            try await pushOpController.start()
-        }
+//        Task {
+//            let pushOpController = await PushOpController(localBranchName: branchName, repository: repository)
+//            try await pushOpController.start()
+//        }
     }
 }

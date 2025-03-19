@@ -27,6 +27,7 @@ struct DiscardAllButton: View {
                         errorString = error.localizedDescription
                     }
                 }
-            })
+            }
+        )
     }
 }

@@ -5,6 +5,7 @@
 //  Created by Taha Bebek on 2/15/25.
 //
 
+import Combine
 import SwiftUI
 import Observation
 import OrderedCollections
@@ -16,15 +17,51 @@ import OrderedCollections
 
     var commitSummary: String = ""
     var canCommit: Bool = false
-
+    var shouldAddRemoteBranch: Bool = false
     var repository: Repository?
+    var remotes: [Remote]?
     var selectableStatus: SelectableStatus?
+    var refreshRemoteSubject: PassthroughSubject<Void, Never>?
+
+    func getLastSelectedRemoteIndex(buttonTitle: String) -> Int {
+        guard let remotes else {
+            fatalError(.illegal)
+        }
+
+        let userDefaults = UserDefaults.standard
+        if let remote = userDefaults.string(forKey: selectedRemoteKey(buttonTitle: buttonTitle)) {
+            return Int(remote)!
+        } else {
+            if remotes.count > 0 {
+                if let originIndex = remotes.firstIndex(where: { $0.name == "origin" }) {
+                    setLastSelectedRemote(originIndex, buttonTitle: buttonTitle)
+                    return originIndex
+                } else if let upstreamIndex = remotes.firstIndex(where: { $0.name == "upstream" }) {
+                    setLastSelectedRemote(upstreamIndex, buttonTitle: buttonTitle)
+                    return upstreamIndex
+                }
+            }
+        }
+        return 0
+    }
+
+    func setLastSelectedRemote(_ index: Int, buttonTitle: String) {
+        UserDefaults.standard.set(index, forKey: selectedRemoteKey(buttonTitle: buttonTitle))
+    }
+
+    private func selectedRemoteKey(buttonTitle: String) -> String {
+        guard let selectableStatus else {
+            fatalError(.illegal)
+        }
+        return selectableStatus.id + ".\(buttonTitle)"
+    }
 
     private var unsortedTrackedFiles: OrderedDictionary<String, OldNewFile> = [:] {
         didSet {
             trackedFiles = Array(unsortedTrackedFiles.values.elements).sorted { $0.statusFileName < $1.statusFileName }
         }
     }
+
     private var unsortedUntrackedFiles: OrderedDictionary<String, OldNewFile> = [:]{
         didSet {
             untrackedFiles = Array(unsortedUntrackedFiles.values.elements).sorted { $0.key < $1.key }
@@ -34,12 +71,15 @@ import OrderedCollections
     func updateStatus(
         newSelectableStatus: SelectableStatus,
         repository: Repository?,
-        head: Head
+        head: Head,
+        remotes: [Remote],
+        refreshRemoteSubject: PassthroughSubject<Void, Never>
     ) async {
         guard let repository else { return }
         guard newSelectableStatus.repositoryId == repository.idOfRepo else {
             fatalError(.invalid)
         }
+        self.refreshRemoteSubject = refreshRemoteSubject
 
         let (newTrackedFiles, newUntrackedFiles) = await getTrackedAndUntrackedFiles(
             repository: repository,
@@ -55,8 +95,11 @@ import OrderedCollections
             let remainingKeys = newKeys.subtracting(intersectionKeys)
 
             for key in intersectionKeys {
-                let oldFile = unsortedTrackedFiles[key]!
-                let newFile = newTrackedFiles[key]!
+                let oldFile = unsortedTrackedFiles[key]
+                let newFile = newTrackedFiles[key]
+                #warning("sometimes these are nil, investigate why, they shouldn't be nil")
+                guard let oldFile, let newFile else { continue }
+
                 if oldFile.status != newFile.status {
                     Task { @MainActor in
                         unsortedTrackedFiles[key] = newFile
@@ -91,6 +134,7 @@ import OrderedCollections
                 }
                 unsortedUntrackedFiles = newUntrackedFiles
                 self.repository = repository
+                self.remotes = remotes
                 self.selectableStatus = newSelectableStatus
             }
         } else {
@@ -98,6 +142,7 @@ import OrderedCollections
                 self.unsortedTrackedFiles = newTrackedFiles
                 self.unsortedUntrackedFiles = newUntrackedFiles
                 self.repository = repository
+                self.remotes = remotes
                 self.selectableStatus = newSelectableStatus
             }
         }
@@ -216,35 +261,119 @@ import OrderedCollections
         try await amendTapped()
     }
 
-    func onCommitAndPush(remote: Remote?) async throws {
-        fatalError(.unimplemented)
-        guard let repository else { return }
-        try await commitTapped()
-        let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
-        try await pushOperation.start()
+    func onAddRemote(
+        fetchURLString: String,
+        pushURLString: String,
+        remoteName: String
+    ) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+
+        Task { @MainActor in
+            shouldAddRemoteBranch = false
+        }
+
+        guard let fetchURL = URL(string: fetchURLString) else {
+            return
+        }
+
+        do {
+            try repository.addRemote(named: remoteName, url: fetchURL)
+            if let remote = repository.remote(named: remoteName) {
+                try remote.updatePushURLString(pushURLString)
+                refreshRemoteSubject?.send()
+            }
+            return
+        } catch let error as RepoError {
+            Task { @MainActor in
+                AppDelegate.showErrorMessage(error: error)
+            }
+        } catch {
+            Task { @MainActor in
+                AppDelegate.showErrorMessage(error: .unexpected)
+            }
+        }
     }
 
+    func onCommitAndPush(remote: Remote?) async throws {
+        try await tryCommitAndPush(remote: remote, force: true)
+    }
+    
     func onCommitAndForcePush(remote: Remote?) async throws {
-        fatalError(.unimplemented)
-        guard let repository else { return }
+        try await tryCommitAndPush(remote: remote, force: true)
+    }
+
+    private func tryCommitAndPush(remote: Remote?, force: Bool) async throws {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+
+        if let remote {
+            try await actuallyCommitAndPush(remote: remote, repository: repository, force: force)
+        } else {
+            Task { @MainActor in
+                shouldAddRemoteBranch = true
+            }
+        }
+    }
+
+    private func actuallyCommitAndPush(
+        remote: Remote,
+        repository: Repository,
+        force: Bool = false
+    ) async throws {
+        let head = Head.of(repository)
+        guard case .branch(let currentBranch, _) = head else {
+            throw RepoError.detachedHead
+        }
+
         try await commitTapped()
-        let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
+        let pushOperation = await PushOpController(
+            localBranch: currentBranch,
+            remote: remote,
+            repository: repository,
+            force: force
+        )
         try await pushOperation.start()
+
     }
 
     func onAmendAndPush(remote: Remote?) async throws {
-        fatalError(.unimplemented)
-        guard let repository else { return }
-        try await amendTapped()
-        let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
-        try await pushOperation.start()
+        try await tryAmendAndPush(remote: remote, force: false)
     }
 
     func onAmendAndForcePush(remote: Remote?) async throws {
-        fatalError(.unimplemented)
-        guard let repository else { return }
+        try await tryAmendAndPush(remote: remote, force: true)
+    }
+
+    private func tryAmendAndPush(remote: Remote?, force: Bool) async throws {
+        guard let repository else {
+            fatalError(.unimplemented)
+        }
+
+        if let remote {
+            try await actuallyAmendAndPush(remote: remote, repository: repository, force: force)
+        } else {
+            Task { @MainActor in
+                shouldAddRemoteBranch = true
+            }
+        }
+    }
+
+    private func actuallyAmendAndPush(remote: Remote, repository: Repository, force: Bool) async throws {
         try await amendTapped()
-        let pushOperation = await PushOpController(remoteOption: .currentBranch, repository: repository)
+        
+        let head = Head.of(repository)
+        guard case .branch(let currentBranch, _) = head else {
+            throw RepoError.detachedHead
+        }
+        let pushOperation = await PushOpController(
+            localBranch: currentBranch,
+            remote: remote,
+            repository: repository,
+            force: force
+        )
         try await pushOperation.start()
     }
 
@@ -389,7 +518,7 @@ import OrderedCollections
             try! FileManager.default.removeItem(atPath: path)
         }
         try GitCLI.executeGit(repository, ["restore", "--staged", "."])
-        await MainActor.run {
+        Task { @MainActor in
             commitSummary = ""
         }
     }

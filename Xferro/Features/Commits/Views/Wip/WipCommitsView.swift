@@ -25,9 +25,12 @@ struct WipCommitsView: View {
                     ),
                     onAddManualWipCommitTapped: onAddManualWipCommitTapped,
                     onDeleteWipWorktreeTapped: {
+                        viewModel.commits = []
                         onDeleteWipWorktreeTapped(viewModel.repositoryInfo.repository)
                     },
-                    tooltipForDeletion: "Delete all wip commits for \(viewModel.repositoryInfo.repository.nameOfRepo)",
+                    tooltipForDeleteRepo: "Delete all wip commits of \(viewModel.repositoryInfo.repository.nameOfRepo)",
+                    tooltipForDeleteBranch: currentSelectedItem != nil ?
+                    "Delete wip commits of \(currentSelectedItem!.selectableItem.wipDescription.uncapitalizingFirstLetter())" : nil,
                     isNotEmpty: viewModel.isNotEmpty)
                 .frame(height: 36)
                 .padding(.top, 8)

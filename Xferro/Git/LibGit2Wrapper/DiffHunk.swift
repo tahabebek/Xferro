@@ -119,6 +119,9 @@ import Observation
                 updateSelectedLinesCount()
             }
         ))
+
+        updateSelectedLines()
+        updateSelectedLinesCount()
     }
 
     private func getHunkHeader(hunk: git_diff_hunk) -> String {

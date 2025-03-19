@@ -27,6 +27,7 @@ struct AmendButton: View {
                         errorString = error.localizedDescription
                     }
                 }
-            })
+            }
+        )
     }
 }

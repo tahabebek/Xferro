@@ -17,7 +17,7 @@ protocol RemoteManagement: AnyObject {
     /// - parameter branches: Local branches to push; must have a tracking branch set
     /// - parameter remote: Target remote to push to
     /// - parameter callbacks: Password and progress callbacks
-    func push(branches: [String], remote: Remote, callbacks: RemoteCallbacks) throws
+    func push(branches: [String], remote: Remote, callbacks: RemoteCallbacks, force: Bool) throws
 
     /// Dowloads updated refs and commits from the remote.
     func fetch(remote: Remote, options: FetchOptions) throws

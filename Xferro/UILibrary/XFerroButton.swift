@@ -15,10 +15,10 @@ struct XFerroButtonOption<T>: Identifiable {
 }
 
 struct XFerroButton<T>: View {
+    @Binding var selectedOptionIndex: Int
     @State var filteredOptions: [XFerroButtonOption<T>] = []
     @State var showingOptions: Bool = false
     @State var addMoreIsHovered: Bool = false
-    @State var selectedOptionIndex: Int = 0
     @State private var searchText = ""
 
     let title: String
@@ -40,6 +40,7 @@ struct XFerroButton<T>: View {
         isProminent: Bool = true,
         isSmall: Bool = false,
         options: [XFerroButtonOption<T>] = [],
+        selectedOptionIndex: Binding<Int> = .constant(0),
         addMoreOptionsText: String? = nil,
         showsSearchOptions: Bool = false,
         onTapOption: @escaping (XFerroButtonOption<T>) -> Void = { _ in },
@@ -53,6 +54,7 @@ struct XFerroButton<T>: View {
         self.isSmall = isSmall
         self.options = options
         self.filteredOptions = options
+        self._selectedOptionIndex = selectedOptionIndex
         self.addMoreOptionsText = addMoreOptionsText
         self.showsSearchOptions = showsSearchOptions
         self.onTapOption = onTapOption
@@ -79,6 +81,7 @@ struct XFerroButton<T>: View {
                 showingOptions: $showingOptions,
                 filteredOptions: $filteredOptions,
                 addMoreIsHovered: $addMoreIsHovered,
+                selectedOptionIndex: $selectedOptionIndex,
                 options: options,
                 showsSearchOptions: showsSearchOptions,
                 addMoreOptionsText: addMoreOptionsText,
@@ -133,15 +136,15 @@ struct XFerroButton<T>: View {
         }
 
     @ViewBuilder func optionsView() -> some View {
-        if options.isNotEmpty {
+        if filteredOptions.count > selectedOptionIndex {
             ZStack {
-                RoundedRectangle(cornerRadius: 3)
+                RoundedRectangle(cornerRadius: 4)
                     .fill(Color.fabulaBack2.opacity(0.7))
-                    .frame(maxWidth: 70)
+                    .frame(maxWidth: 130)
                 Label(filteredOptions[selectedOptionIndex].title, systemImage: "arrowtriangle.down.fill")
                     .labelStyle(RightImageLabelStyle())
                     .lineLimit(1)
-                    .frame(maxWidth: 60)
+                    .frame(maxWidth: 120)
                     .fixedSize()
                     .contentShape(Rectangle())
                     .onTapGesture {

@@ -129,8 +129,11 @@ import OrderedCollections
         }
         Task {
             do {
-                let selectedLines = part.lines.filter(\.isSelected)
-                try await discardLines(lines: selectedLines, hunks: hunks)
+                for part in hunks.flatMap(\.parts) {
+                    part.selectAll()
+                }
+                part.unselectAll()
+                try await discardLines(lines: hunks.flatMap(\.selectedLines), hunks: hunks)
             } catch {
                 fatalError(error.localizedDescription)
             }
@@ -139,57 +142,67 @@ import OrderedCollections
 
     func discardLines(lines: [DiffLine], hunks: [DiffHunk]) async throws {
         switch status {
-        case .added, .copied, .renamed, .typeChange:
+        case .added, .copied:
             guard let newFilePath = new else {
                 fatalError(.invalid)
             }
-            let diff = try await SelectedLinesDiffMaker.makeDiff(
+            if lines.isEmpty {
+                // this means delete the file
+                try FileManager.removeItem(repository.workDir +/ newFilePath)
+                return
+            }
+            let result = try await SelectedLinesDiffMaker.makeFileWithSelectedLines(
                 repository: repository,
-                filePath: newFilePath,
+                oldFilePath: newFilePath,
+                newFilePath: newFilePath,
                 selectedLines: lines,
-                allHunks: hunks,
-                reverse: true
-            )
-            try PatchCLI.executePatch(
-                diff: diff,
-                inputFilePath: nil,
-                outputFilePath: repository.workDir.path + "/" + newFilePath,
-                operation: .create
-            )
-        case .modified:
+                allHunks: hunks
+            ).resultingFileLines.joined(separator: "\n")
+            try result.data(using: .utf8)?.write(to: repository.workDir +/ newFilePath)
+        case .modified, .renamed, .typeChange:
             guard let oldFilePath = old, let newFilePath = new else {
                 fatalError(.invalid)
             }
-            let diff = try await SelectedLinesDiffMaker.makeDiff(
+            if lines.isEmpty {
+                // this means reset the file
+                let headFileResult = GitCLI.showHead(repository, oldFilePath)
+                guard case .success(let result) = headFileResult else {
+                    fatalError(.impossible)
+                }
+
+                try result.data(using: .utf8)?.write(to: repository.workDir +/ newFilePath)
+                return
+            }
+            let result = try await SelectedLinesDiffMaker.makeFileWithSelectedLines(
                 repository: repository,
-                filePath: newFilePath,
+                oldFilePath: oldFilePath,
+                newFilePath: newFilePath,
                 selectedLines: lines,
-                allHunks: hunks,
-                reverse: true
-            )
-            try PatchCLI.executePatch(
-                diff: diff,
-                inputFilePath: repository.workDir.path + "/" + oldFilePath,
-                outputFilePath: repository.workDir.path + "/" + newFilePath,
-                operation: .modify
-            )
+                allHunks: hunks
+            ).resultingFileLines.joined(separator: "\n")
+            try result.data(using: .utf8)?.write(to: repository.workDir +/ newFilePath)
         case .deleted:
             guard let oldFilePath = old else {
                 fatalError(.invalid)
             }
-            let diff = try await SelectedLinesDiffMaker.makeDiff(
+            if lines.isEmpty {
+                // this means bring back the file
+                let headFileResult = GitCLI.showHead(repository, oldFilePath)
+                guard case .success(let result) = headFileResult else {
+                    fatalError(.impossible)
+                }
+
+                try result.data(using: .utf8)?.write(to: repository.workDir +/ oldFilePath)
+                return
+            }
+            let result = try await SelectedLinesDiffMaker.makeFileWithSelectedLines(
                 repository: repository,
-                filePath: oldFilePath,
+                oldFilePath: oldFilePath,
+                newFilePath: oldFilePath,
                 selectedLines: lines,
-                allHunks: hunks,
-                reverse: true
-            )
-            try PatchCLI.executePatch(
-                diff: diff,
-                inputFilePath: repository.workDir.path + "/" + oldFilePath,
-                outputFilePath: nil,
-                operation: .delete
-            )
+                allHunks: hunks
+            ).resultingFileLines.joined(separator: "\n")
+            try result.data(using: .utf8)?.write(to: repository.workDir +/ oldFilePath)
         case .ignored, .unreadable, .unmodified, .untracked:
             fatalError(.invalid)
         case .conflicted:
@@ -219,17 +232,54 @@ import OrderedCollections
 
             do {
                 switch status {
-                case .added, .copied, .renamed, .typeChange, .modified, .deleted:
+                case .modified, .renamed, .typeChange:
+                    guard let newFilePath = new, let oldFilePath = old else {
+                        fatalError(.invalid)
+                    }
+                    let result = try await SelectedLinesDiffMaker.makeFileWithSelectedLines(
+                        repository: repository,
+                        oldFilePath: oldFilePath,
+                        newFilePath: newFilePath,
+                        selectedLines: selectedLines,
+                        allHunks: hunkCopies
+                    )
+                    try result.resultingFileLines.joined(separator: "\n").write(
+                        toFile: repository.workDir.path + "/" + newFilePath,
+                        atomically: true,
+                        encoding: .utf8
+                    )
+                case .deleted:
+                    guard let oldFilePath = old else {
+                        fatalError(.invalid)
+                    }
+                    let result = try await SelectedLinesDiffMaker.makeFileWithSelectedLines(
+                        repository: repository,
+                        oldFilePath: oldFilePath,
+                        newFilePath: oldFilePath,
+                        selectedLines: selectedLines,
+                        allHunks: hunkCopies
+                    )
+                    try result.resultingFileLines.joined(separator: "\n").write(
+                        toFile: repository.workDir.path + "/" + oldFilePath,
+                        atomically: true,
+                        encoding: .utf8
+                    )
+                case .added, .copied:
                     guard let newFilePath = new else {
                         fatalError(.invalid)
                     }
                     let result = try await SelectedLinesDiffMaker.makeFileWithSelectedLines(
                         repository: repository,
-                        filePath: newFilePath,
+                        oldFilePath: newFilePath,
+                        newFilePath: newFilePath,
                         selectedLines: selectedLines,
                         allHunks: hunkCopies
                     )
-                    try result.resultingFileLines.joined(separator: "\n").write(toFile: repository.workDir.path + "/" + newFilePath, atomically: true, encoding: .utf8)
+                    try result.resultingFileLines.joined(separator: "\n").write(
+                        toFile: repository.workDir.path + "/" + newFilePath,
+                        atomically: true,
+                        encoding: .utf8
+                    )
                 case .ignored, .unreadable, .unmodified, .untracked:
                     fatalError(.invalid)
                 case .conflicted:
@@ -245,7 +295,7 @@ import OrderedCollections
         let newDiffInfo = await createDiffInfo()
         await diffInfoCache.set(key: path, value: newDiffInfo)
         await lastModifiedCache.set(key: path, value: modifiedDate)
-        await MainActor.run {
+        Task { @MainActor in
             isUntracked = false
             diffInfo = newDiffInfo
         }
@@ -256,7 +306,7 @@ import OrderedCollections
         case .unmodified, .ignored:
             fatalError(.invalid)
         case .untracked:
-            await MainActor.run {
+            Task { @MainActor in
                 isUntracked = true
                 diffInfo = nil
                 return
@@ -288,14 +338,14 @@ import OrderedCollections
             }
             if diffInfo == nil {
                 if let cached = await diffInfoCache[workDirOld] {
-                    await MainActor.run {
+                    Task { @MainActor in
                         isUntracked = false
                         diffInfo = cached
                     }
                 } else {
                     let newDiffInfo = await createDiffInfo()
                     await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
-                    await MainActor.run {
+                    Task { @MainActor in
                         isUntracked = false
                         diffInfo = newDiffInfo
                     }
@@ -304,7 +354,7 @@ import OrderedCollections
                 if diffInfo == nil {
                     let newDiffInfo = await createDiffInfo()
                     await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
-                    await MainActor.run {
+                    Task { @MainActor in
                         isUntracked = false
                         diffInfo = newDiffInfo
                     }

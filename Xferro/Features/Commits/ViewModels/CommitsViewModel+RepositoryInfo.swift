@@ -14,7 +14,7 @@ extension CommitsViewModel {
         newRepositoryInfo.onGitChange = { [weak self, weak newRepositoryInfo] type in
             guard let self, let newRepositoryInfo else { return }
             Task {
-                await MainActor.run { [weak self] in
+                Task { @MainActor [weak self] in
                     guard let self else { return }
                     switch type {
                     case .head(let repositoryInfo):

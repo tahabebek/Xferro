@@ -1,30 +1,30 @@
 import Cocoa
 import Combine
 
-enum PushOperationOption {
-    case new(String)
-    case currentBranch
-    case named(String)
-}
-
 typealias ProgressValue = (current: Float, total: Float)
 
-final class PushOpController: PasswordOpController {
-    let remoteOption: PushOperationOption
+final class PushOpController: OperationController {
+    enum OperationResult {
+        case success
+        case failure
+    }
+
+    let repository: Repository
+    let localBranch: Branch
+    let remote: Remote
+    let force: Bool
+    var cancelled = false
     var progressSubject = PassthroughSubject<ProgressValue, Never>()
 
-    init(remoteOption: PushOperationOption, repository: Repository) {
-        self.remoteOption = remoteOption
-        super.init(repository: repository)
+    init(localBranch: Branch, remote: Remote, repository: Repository, force: Bool = false) {
+        self.localBranch = localBranch
+        self.remote = remote
+        self.force = force
+        self.repository = repository
     }
 
-    required init(repository: Repository) {
-        fatalError(.unimplemented)
-    }
-
-    nonisolated
     func progressCallback(progress: PushTransferProgress) -> Bool {
-        guard !canceled else { return false }
+        guard !cancelled else { return false }
 
         Task { @MainActor in
             progressSubject.send((Float(progress.current), Float(progress.total)))
@@ -32,103 +32,9 @@ final class PushOpController: PasswordOpController {
         return true
     }
 
-    override func start() throws {
-        let remote: Remote
-        let branches: [String]
-
-        switch remoteOption {
-        case .new(let branchName):
-            guard let branch = repository.localBranch(named: branchName).mustSucceed(repository.gitDir) else {
-                fatalError(.unexpected)
-            }
-            try pushNewBranch(repository, branch)
-            return
-        case .currentBranch:
-            let head = Head.of(repository)
-            guard case .branch(let currentBranch, _) = head else {
-                throw RepoError.detachedHead
-            }
-            guard let trackingBranch = repository.trackingBranch(of: currentBranch),
-                  let trackedRemote = Remote(name: trackingBranch.name, repository: repository.pointer) else {
-                try pushNewBranch(repository, currentBranch)
-                return
-            }
-            remote = trackedRemote
-            branches = [currentBranch.name]
-        case .named(let remoteName):
-            guard let namedRemote = repository.remote(named: remoteName) else {
-                fatalError(.invalid)
-            }
-            let localTrackingBranches = repository.localBranches().mustSucceed(repository.gitDir).filter {
-                repository.trackingBranch(of: $0)?.remoteName == remoteName
-            }
-            guard !localTrackingBranches.isEmpty else {
-                let alert = NSAlert()
-                alert.messageString = .noRemoteBranches(remoteName)
-                alert.beginSheetModal(for: AppDelegate.firstWindow)
-                return
-            }
-
-            remote = namedRemote
-            branches = localTrackingBranches.map { $0.name }
-        }
-
-        let alert = NSAlert()
-        let remoteName = remote.name ?? "origin"
-        let message: UIString = branches.count == 1 ?
-            .confirmPush(localBranch: branches.first!,
-                         remote: remoteName) :
-            .confirmPushAll(remote: remoteName)
-
-        alert.messageString = message
-        alert.addButton(withString: .push)
-        alert.addButton(withString: .cancel)
-
-        alert.beginSheetModal(for: AppDelegate.firstWindow) { [weak self] response in
-            guard let self else { return }
-            if response == .alertFirstButtonReturn {
-                push(repository, branches: branches, remote: remote)
-            }
-            else {
-                ended(result: .canceled)
-            }
-        }
-    }
-
-    func pushNewBranch(_ repository: Repository, _ branch: Branch) throws {
-        let sheetController = PushNewPanelController.controller()
-
-        var trackingBranchName = repository.trackingBranchName(of: branch)
-        sheetController.alreadyTracking = trackingBranchName != nil
-        sheetController.setRemotes(repository.remoteNames())
-
-        AppDelegate.firstWindow.beginSheet(sheetController.window!) { response in
-            guard response == .OK else {
-                self.ended(result: .canceled)
-                return
-            }
-            guard let remote = repository.remote(named: sheetController.selectedRemote) else {
-                self.ended(result: .failure)
-                return
-            }
-
-            self.push(repository, branches: [branch.name], remote: remote, then: {
-                // This is now on the repo queue
-                if let remoteName = remote.name {
-                    DispatchQueue.main.async {
-                        if sheetController.setTrackingBranch {
-                            trackingBranchName =
-                            remoteName +/
-                            branch.name
-                        }
-                    }
-                }
-            })
-        }
-    }
-
-    override func shoudReport(error: NSError) -> Bool {
-        return true
+    @discardableResult
+    func start() async throws -> OperationResult {
+        await push(repository, branches: [localBranch.longName], remote: remote, force: force)
     }
 
     override func repoErrorMessage(for error: RepoError) -> UIString {
@@ -144,21 +50,18 @@ final class PushOpController: PasswordOpController {
         _ repository: Repository,
         branches: [String],
         remote: Remote,
-        then callback: (@Sendable () -> Void)? = nil
-    ) {
+        force: Bool
+    ) async -> OperationResult {
         let callbacks = RemoteCallbacks(
             passwordBlock: nil,
             downloadProgress: nil,
             uploadProgress: self.progressCallback
         )
 
-        // Add a timeout to prevent infinite loop
-        var pushAttemptSuccessful = false
-        
         do {
             // Try with libgit2 first
-            try repository.push(branches: branches, remote: remote, callbacks: callbacks)
-            pushAttemptSuccessful = true
+            try repository.push(branches: branches, remote: remote, callbacks: callbacks, force: force)
+            return .success
         } catch {
             // If libgit2 fails and it looks like an SSH authentication loop issue,
             // try falling back to CLI git which handles SSH authentication differently
@@ -171,20 +74,16 @@ final class PushOpController: PasswordOpController {
                 
                 // Execute git push via CLI
                 do {
-                    try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs)
+                    try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs + (force ? ["--force"] : []))
                 } catch {
                     Task { @MainActor in
                         self.showFailureError("Git CLI fallback also failed. Original error: \(error.localizedDescription)")
-                        self.ended(result: .failure)
+                        return OperationResult.failure
                     }
                 }
             } else {
                 // Handle other errors normally
                 Task { @MainActor in
-                    defer {
-                        self.ended(result: .failure)
-                    }
-
                     switch error {
                     case let repoError as RepoError:
                         self.showFailureError(self.repoErrorMessage(for: repoError).rawValue)
@@ -200,14 +99,10 @@ final class PushOpController: PasswordOpController {
                     default:
                         break
                     }
+                    return OperationResult.failure
                 }
             }
         }
-        
-        callback?()
-        
-        if pushAttemptSuccessful {
-            self.refsChangedAndEnded()
-        }
+        return OperationResult.failure
     }
 }

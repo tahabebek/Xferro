@@ -79,7 +79,6 @@ struct StatusView: View {
                     )
                     .frame(width: Dimensions.commitDetailsViewMaxWidth)
                     .environment(viewModel)
-
                     if let file = viewModel.currentFile {
                         PeekViewContainer(
                             timeStamp: Binding<Date>(
@@ -104,12 +103,17 @@ struct StatusView: View {
                             }
                         )
                         .id(file.id)
-                    } else {
-                        Spacer()
                     }
+                    Spacer()
                 }
                 .task {
                     viewModel.setInitialSelection()
+                }
+                .sheet(isPresented: $viewModel.shouldAddRemoteBranch) {
+                    AddNewRemoteView()
+                        .padding()
+                        .frame(maxHeight: .infinity)
+                        .environment(viewModel)
                 }
                 .onChange(of: viewModel.selectableStatus!) { oldValue, newValue in
                     if oldValue.oid != newValue.oid {

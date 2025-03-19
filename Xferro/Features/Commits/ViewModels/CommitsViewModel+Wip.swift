@@ -11,7 +11,7 @@ extension CommitsViewModel {
     func getWipCommits(selectedItem: SelectedItem?, repositoryInfo: RepositoryInfo?) async {
         guard let selectedItem, let repositoryInfo else {
             Task {
-                await MainActor.run {
+                Task { @MainActor in
                     currentWipCommits = nil
                 }
             }
@@ -41,7 +41,7 @@ extension CommitsViewModel {
             owner: selectedItem.selectableItem
         )
         Task {
-            await MainActor.run {
+            Task { @MainActor in
                 currentWipCommits = WipCommitsViewModel(
                     commits: wipCommits,
                     item: selectedItem,
@@ -58,7 +58,9 @@ extension CommitsViewModel {
 
     private func deleteWipWorktree(for repository: Repository) {
         WipWorktree.deleteWipWorktree(for: repository)
-        currentWipCommits = nil
+        Task { @MainActor in
+            currentWipCommits = nil
+        }
     }
 
     func deleteAllWipCommitsTapped(for item: SelectedItem, repositoryInfo: RepositoryInfo) {
@@ -67,10 +69,8 @@ extension CommitsViewModel {
 
     private func deleteAllWipCommits(of item: SelectedItem, repositoryInfo: RepositoryInfo) {
         WipWorktree.deleteAllWipCommits(item: item, repository: repositoryInfo.repository)
-        Task {
-            await MainActor.run {
-                currentWipCommits = nil
-            }
+        Task { @MainActor in
+            currentWipCommits = nil
         }
     }
 
