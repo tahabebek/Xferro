@@ -120,12 +120,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @MainActor static func showErrorMessage(error: RepoError) {
-        guard let window = (NSApplication.shared.delegate as? AppDelegate)?.window else {
-            return
-        }
         let alert = NSAlert()
         alert.messageString = error.message
-        alert.beginSheetModal(for: window)
+        alert.beginSheetModal(for: Self.firstWindow)
     }
 
     static var firstWindow: NSWindow {

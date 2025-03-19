@@ -386,7 +386,6 @@ import OrderedCollections
     }
 
     private func createDiffInfo(commit: OpaquePointer, parent: OpaquePointer) async -> any DiffInformation {
-
         let patchResult = repository.patchMakerFromOwnerToWip(
             oldNewFile: self,
             ownerCommit: parent,

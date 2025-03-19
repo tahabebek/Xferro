@@ -47,7 +47,11 @@ struct StatusTrackedRowView: View {
         }
         .contextMenu {
             Button(file.status == .added ? "Untrack \(file.statusFileName)" : "Discard changes in \(file.statusFileName)") {
-                onTapUntrack()
+                if file.status == .added {
+                    onTapUntrack()
+                } else {
+                    onTapDiscard()
+                }
             }
         }
     }

@@ -110,7 +110,7 @@ struct StatusView: View {
                     viewModel.setInitialSelection()
                 }
                 .sheet(isPresented: $viewModel.shouldAddRemoteBranch) {
-                    AddNewRemoteView()
+                    AddNewRemoteView(title: viewModel.addRemoteTitle)
                         .padding()
                         .frame(maxHeight: .infinity)
                         .environment(viewModel)

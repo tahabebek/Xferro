@@ -27,7 +27,7 @@ struct PushButton: View {
 
         XFerroButton<Remote>(
             title: title,
-            disabled: commitSummary.isEmptyOrWhitespace || !hasChanges,
+            disabled: (commitSummary.isEmptyOrWhitespace || !hasChanges) && !amend,
             dangerous: force,
             options: remoteOptions,
             selectedOptionIndex: Binding<Int>(

@@ -16,11 +16,15 @@ struct AddNewRemoteView: View {
     @State var pushURL: String = ""
     @State var invalidMessage: String?
 
+    let title: String
+
     var body: some View {
         VStack(alignment: .leading) {
-            Text("This repository doesn't have a remote, add one to push changes to the server.")
+            Text(title)
             .font(.title2)
-            .padding()
+            .padding(.horizontal)
+            .padding(.bottom)
+            .padding(.top, 8)
             VStack(alignment: .leading) {
                 HStack {
                     Spacer()
@@ -55,9 +59,13 @@ struct AddNewRemoteView: View {
                     .frame(width: 340)
                 }
             }
-            Text(invalidMessage ?? "")
-                .foregroundStyle(.red)
-                .opacity(invalidMessage == nil ? 0 : 1)
+            HStack {
+                Spacer()
+                Text(invalidMessage ?? "")
+                    .foregroundStyle(.red)
+                    .opacity(invalidMessage == nil ? 0 : 1)
+                Spacer()
+            }
             .padding(.bottom)
             HStack {
                 Spacer()

@@ -22,6 +22,7 @@ import OrderedCollections
     var remotes: [Remote]?
     var selectableStatus: SelectableStatus?
     var refreshRemoteSubject: PassthroughSubject<Void, Never>?
+    var addRemoteTitle: String = ""
 
     func getLastSelectedRemoteIndex(buttonTitle: String) -> Int {
         guard let remotes else {
@@ -277,19 +278,21 @@ import OrderedCollections
         guard let fetchURL = URL(string: fetchURLString) else {
             return
         }
-
         do {
             try repository.addRemote(named: remoteName, url: fetchURL)
             if let remote = repository.remote(named: remoteName) {
                 try remote.updatePushURLString(pushURLString)
-                refreshRemoteSubject?.send()
             }
+            print("not sure what happened")
+            refreshRemoteSubject?.send()
             return
         } catch let error as RepoError {
+            print("\(error)")
             Task { @MainActor in
                 AppDelegate.showErrorMessage(error: error)
             }
         } catch {
+            print("\(error)")
             Task { @MainActor in
                 AppDelegate.showErrorMessage(error: .unexpected)
             }
@@ -299,7 +302,7 @@ import OrderedCollections
     func onCommitAndPush(remote: Remote?) async throws {
         try await tryCommitAndPush(remote: remote, force: true)
     }
-    
+
     func onCommitAndForcePush(remote: Remote?) async throws {
         try await tryCommitAndPush(remote: remote, force: true)
     }
@@ -313,6 +316,7 @@ import OrderedCollections
             try await actuallyCommitAndPush(remote: remote, repository: repository, force: force)
         } else {
             Task { @MainActor in
+                addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
                 shouldAddRemoteBranch = true
             }
         }
@@ -356,6 +360,7 @@ import OrderedCollections
             try await actuallyAmendAndPush(remote: remote, repository: repository, force: force)
         } else {
             Task { @MainActor in
+                addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
                 shouldAddRemoteBranch = true
             }
         }
@@ -378,7 +383,10 @@ import OrderedCollections
     }
 
     func addRemoteTapped() async throws {
-        fatalError(.unimplemented)
+        Task { @MainActor in
+            addRemoteTitle = "Add a new remote"
+            shouldAddRemoteBranch = true
+        }
     }
 
     func onStash() async throws {
@@ -520,6 +528,7 @@ import OrderedCollections
         try GitCLI.executeGit(repository, ["restore", "--staged", "."])
         Task { @MainActor in
             commitSummary = ""
+            currentFile = nil
         }
     }
 
@@ -567,6 +576,13 @@ import OrderedCollections
                 fatalError(.unimplemented)
             }
         }
+
+        if file == currentFile {
+            Task { @MainActor in
+                currentFile = nil
+                setInitialSelection()
+            }
+        }
     }
 
     func discardAlertTitle(file: OldNewFile?) -> String {
@@ -596,6 +612,9 @@ import OrderedCollections
         }
         try GitCLI.executeGit(repository, ["add", "."])
         try GitCLI.executeGit(repository, ["reset", "--hard"])
+        Task { @MainActor in
+            currentFile = nil
+        }
     }
 
     func setInitialSelection() {
