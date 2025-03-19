@@ -71,10 +71,8 @@ extension git_remote_callbacks {
             return result
         }
 
-        // Track authentication attempts to prevent infinite loop
         private static var retryCount = 0
 
-        // Reset auth attempt counters
         static func resetAuthAttempts() {
             retryCount = 0
         }
@@ -87,50 +85,40 @@ extension git_remote_callbacks {
             let url = urlCString.map { String(cString: $0) } ?? "unknown"
             
             // Track number of auth attempts for this URL
-            print("retrying \(retryCount)")
             // If we've been called too many times for the same credential, break the loop
-            if retryCount > 3 {
-                print("Breaking authentication loop after \(retryCount) attempts")
+            if retryCount > 1 {
                 retryCount = 0
                 return GIT_EAUTH.rawValue
             }
             retryCount += 1
 
-            print("Credential callback for URL: \(url), username: \(username), allowed: \(allowed)")
 
             // Try to authenticate with SSH key from agent
             if allowed.contains(GIT_CREDENTIAL_SSH_KEY) {
-                print("Attempting SSH agent authentication")
                 let sshAgentResult = git_cred_ssh_key_from_agent(cred, userCString)
 
                 if sshAgentResult == 0 {
-                    print("SSH agent authentication successful")
                     return 0
                 } else {
                     let error = git_error_last()
                     let errorMessage = error?.pointee.message.flatMap { String(cString: $0) } ?? "Unknown error"
-                    print("SSH agent authentication failed: \(errorMessage)")
                 }
 
                 // Fallback to direct key files
                 var result: Int32 = 1
                 for path in sshKeyPaths() {
                     let publicPath = path.appending(".pub")
-                    print("Trying SSH key at: \(path)")
 
                     result = git_cred_ssh_key_new(cred, userCString, publicPath, path, "")
                     if result == 0 {
-                        print("SSH key authentication successful with \(path)")
                         return 0
                     } else {
                         let error = git_error_last()
                         let errorMessage = error?.pointee.message.flatMap { String(cString: $0) } ?? "Unknown error"
-                        print("Failed with error: \(errorMessage)")
                     }
                 }
             }
 
-            print("No authentication methods succeeded")
             return -1
         }
 

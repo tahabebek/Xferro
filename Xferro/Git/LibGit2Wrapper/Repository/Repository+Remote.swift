@@ -83,9 +83,7 @@ extension Repository: RemoteManagement {
 
                 options.callbacks = gitCallbacks
                 
-                // Set to single thread to reduce authentication issues
                 options.pb_parallelism = 1
-                // Reset authentication attempt counters before push
                 git_remote_callbacks.Callbacks.resetAuthAttempts()
 
                 let pushResult = git_remote_push(remote.remote, &mutableArray, &options)
@@ -93,7 +91,6 @@ extension Repository: RemoteManagement {
                 if pushResult != GIT_OK.rawValue {
                     let error = git_error_last()
                     let errorMessage = error?.pointee.message.flatMap { String(cString: $0) } ?? "Unknown error"
-                    print("Push failed with error: \(errorMessage)")
                 }
 
                 return pushResult

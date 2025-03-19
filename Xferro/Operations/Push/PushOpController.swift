@@ -66,13 +66,9 @@ final class PushOpController: OperationController {
             // If libgit2 fails and it looks like an SSH authentication loop issue,
             // try falling back to CLI git which handles SSH authentication differently
             if let _ = error as? RepoError {
-                print("LibGit2 SSH authentication failed, falling back to CLI git")
-                
-                // Prepare branch names for CLI
                 let remoteName = remote.name ?? "origin"
                 let branchSpecs = branches.map { $0.replacingOccurrences(of: "refs/heads/", with: "") }
                 
-                // Execute git push via CLI
                 do {
                     try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs + (force ? ["--force"] : []))
                 } catch {
@@ -82,7 +78,6 @@ final class PushOpController: OperationController {
                     }
                 }
             } else {
-                // Handle other errors normally
                 Task { @MainActor in
                     switch error {
                     case let repoError as RepoError:
