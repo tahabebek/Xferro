@@ -10,73 +10,54 @@ import Foundation
 import SwiftUI
 
 struct XFerroButtonPopover<T>: View {
-    @Binding var searchText: String
     @Binding var showingOptions: Bool
-    @Binding var filteredOptions: [XFerroButtonOption<T>]
+    @Binding var options: [XFerroButtonOption<T>]
     @Binding var addMoreIsHovered: Bool
     @Binding var selectedOptionIndex: Int
 
-    let options: [XFerroButtonOption<T>]
-    let showsSearchOptions: Bool
     let addMoreOptionsText: String?
     let onTapOption: (XFerroButtonOption<T>) -> Void
     let onTapAddMore: () -> Void
 
     var body: some View {
-//        ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-                Section {
-                    ForEach(filteredOptions.indices, id:\.self) { index in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.accentColor)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .opacity(filteredOptions[index].isHovered ? 0.7 : 0)
-                            Text(filteredOptions[index].title)
-                                .onTapGesture {
-                                    showingOptions = false
-                                    selectedOptionIndex = index
-                                    onTapOption(filteredOptions[index])
-                                }
-                                .onHover { flag in
-                                    filteredOptions[index].isHovered = flag
-                                }
-                        }
-                    }
-                } header: {
-                    if showsSearchOptions {
-                        TextField("Search", text: $searchText)
-                            .cornerRadius(8)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                if let addMoreOptionsText {
-                    Divider()
+        VStack(alignment: .leading, spacing: 8) {
+            Section {
+                ForEach(options.indices, id:\.self) { index in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 4)
                             .fill(Color.accentColor)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .opacity(addMoreIsHovered ? 0.7 : 0)
-                        Text(addMoreOptionsText)
+                            .opacity(options[index].isHovered ? 0.7 : 0)
+                        Text(options[index].title)
                             .onTapGesture {
                                 showingOptions = false
-                                onTapAddMore()
+                                selectedOptionIndex = index
+                                onTapOption(options[index])
                             }
                             .onHover { flag in
-                                addMoreIsHovered = flag
+                                options[index].isHovered = flag
                             }
                     }
                 }
-                Spacer()
             }
-            .onChange(of: searchText) { oldValue, newValue in
-                if newValue.isEmpty {
-                    filteredOptions = options
-                } else {
-                    filteredOptions = options.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+            if let addMoreOptionsText {
+                Divider()
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.accentColor)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .opacity(addMoreIsHovered ? 0.7 : 0)
+                    Text(addMoreOptionsText)
+                        .onTapGesture {
+                            showingOptions = false
+                            onTapAddMore()
+                        }
+                        .onHover { flag in
+                            addMoreIsHovered = flag
+                        }
                 }
-
             }
-//        }
+            Spacer()
+        }
     }
 }

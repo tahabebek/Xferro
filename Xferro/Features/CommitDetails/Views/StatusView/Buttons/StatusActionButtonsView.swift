@@ -47,9 +47,9 @@ struct StatusActionButtonsView: View {
                     commitSummary: $commitSummary,
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
-                    remotes: remotes,
                     selectedRemoteForPush: $selectedRemoteForPush,
                     errorString: $errorString,
+                    remotes: remotes,
                     title: boxAction.rawValue,
                     amend: false,
                     force: false
@@ -59,9 +59,9 @@ struct StatusActionButtonsView: View {
                     commitSummary: $commitSummary,
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
-                    remotes: remotes,
                     selectedRemoteForPush: $selectedRemoteForPush,
                     errorString: $errorString,
+                    remotes: remotes,
                     title: boxAction.rawValue,
                     amend: true,
                     force: false
@@ -71,9 +71,9 @@ struct StatusActionButtonsView: View {
                     commitSummary: $commitSummary,
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
-                    remotes: remotes,
                     selectedRemoteForPush: $selectedRemoteForPush,
                     errorString: $errorString,
+                    remotes: remotes,
                     title: boxAction.rawValue,
                     amend: false,
                     force: true
@@ -83,9 +83,9 @@ struct StatusActionButtonsView: View {
                     commitSummary: $commitSummary,
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
-                    remotes: remotes,
                     selectedRemoteForPush: $selectedRemoteForPush,
                     errorString: $errorString,
+                    remotes: remotes,
                     title: boxAction.rawValue,
                     amend: true,
                     force: true
@@ -104,10 +104,10 @@ struct StatusActionButtonsView: View {
                 )
             case .applyStash:
                 ApplyStashButton(
-                    stashes: stashes,
                     selectedStashToApply: $selectedStashToApply,
                     errorString: $errorString,
-                    title: boxAction.rawValue
+                    title: boxAction.rawValue,
+                    stashes: stashes
                 )
             case .discardAll:
                 DiscardAllButton(

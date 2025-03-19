@@ -13,23 +13,45 @@ struct PushButton: View {
     @Binding var commitSummary: String
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
-    let remotes: [Remote]
     @Binding var selectedRemoteForPush: Remote?
     @Binding var errorString: String?
+    @State var options: [XFerroButtonOption<Remote>] = []
 
+    let remotes: [Remote]
     let title: String
     let amend: Bool
     let force: Bool
 
-    var body: some View {
-        let remoteOptions: [XFerroButtonOption<Remote>] = remotes
-            .compactMap { $0.name != nil ? XFerroButtonOption(title: $0.name!, data: $0) : nil }
+    init(
+        commitSummary: Binding<String>,
+        canCommit: Binding<Bool>,
+        hasChanges: Binding<Bool>,
+        selectedRemoteForPush: Binding<Remote?> = .constant(nil),
+        errorString: Binding<String?> = .constant(nil),
+        remotes: [Remote],
+        title: String,
+        amend: Bool,
+        force: Bool
+    ) {
+        self._commitSummary = commitSummary
+        self._canCommit = canCommit
+        self._hasChanges = hasChanges
+        self._selectedRemoteForPush = selectedRemoteForPush
+        self._errorString = errorString
+        self.remotes = remotes
+        self.title = title
+        self.amend = amend
+        self.force = force
 
+        self._options = State(wrappedValue: remotes.map { XFerroButtonOption(title: $0.name!, data: $0) })
+    }
+
+    var body: some View {
         XFerroButton<Remote>(
             title: title,
             disabled: (commitSummary.isEmptyOrWhitespace || !hasChanges) && !amend,
             dangerous: force,
-            options: remoteOptions,
+            options: $options,
             selectedOptionIndex: Binding<Int>(
                 get: {
                     statusViewModel.getLastSelectedRemoteIndex(buttonTitle: "push")
@@ -73,6 +95,9 @@ struct PushButton: View {
                 }
             }
         )
+        .onChange(of: remotes.count) {
+            options = remotes.map { XFerroButtonOption(title: $0.name!, data: $0) }
+        }
         .task {
             selectedRemoteForPush = remotes[statusViewModel.getLastSelectedRemoteIndex(buttonTitle: "push")]
         }

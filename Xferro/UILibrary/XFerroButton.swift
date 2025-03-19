@@ -16,7 +16,7 @@ struct XFerroButtonOption<T>: Identifiable {
 
 struct XFerroButton<T>: View {
     @Binding var selectedOptionIndex: Int
-    @State var filteredOptions: [XFerroButtonOption<T>] = []
+    @Binding var options: [XFerroButtonOption<T>]
     @State var showingOptions: Bool = false
     @State var addMoreIsHovered: Bool = false
     @State private var searchText = ""
@@ -26,7 +26,6 @@ struct XFerroButton<T>: View {
     let dangerous: Bool
     let isProminent: Bool
     let isSmall: Bool
-    let options: [XFerroButtonOption<T>]
     let addMoreOptionsText: String?
     let showsSearchOptions: Bool
     let onTapOption: (XFerroButtonOption<T>) -> Void
@@ -39,7 +38,7 @@ struct XFerroButton<T>: View {
         dangerous: Bool = false,
         isProminent: Bool = true,
         isSmall: Bool = false,
-        options: [XFerroButtonOption<T>] = [],
+        options: Binding<[XFerroButtonOption<T>]> = .constant([]),
         selectedOptionIndex: Binding<Int> = .constant(0),
         addMoreOptionsText: String? = nil,
         showsSearchOptions: Bool = false,
@@ -52,8 +51,7 @@ struct XFerroButton<T>: View {
         self.dangerous = dangerous
         self.isProminent = isProminent
         self.isSmall = isSmall
-        self.options = options
-        self.filteredOptions = options
+        self._options = options
         self._selectedOptionIndex = selectedOptionIndex
         self.addMoreOptionsText = addMoreOptionsText
         self.showsSearchOptions = showsSearchOptions
@@ -75,22 +73,6 @@ struct XFerroButton<T>: View {
             onTapAddMore: onTapAddMore,
             action: onTap
         )
-        .popover(isPresented: $showingOptions) {
-            XFerroButtonPopover(
-                searchText: $searchText,
-                showingOptions: $showingOptions,
-                filteredOptions: $filteredOptions,
-                addMoreIsHovered: $addMoreIsHovered,
-                selectedOptionIndex: $selectedOptionIndex,
-                options: options,
-                showsSearchOptions: showsSearchOptions,
-                addMoreOptionsText: addMoreOptionsText,
-                onTapOption: onTapOption,
-                onTapAddMore: onTapAddMore
-            )
-            .padding()
-
-        }
     }
 
     @ViewBuilder func buttonWith(
@@ -136,19 +118,31 @@ struct XFerroButton<T>: View {
         }
 
     @ViewBuilder func optionsView() -> some View {
-        if filteredOptions.count > selectedOptionIndex {
+        if options.count > selectedOptionIndex {
             ZStack {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.fabulaBack2.opacity(0.7))
-                    .frame(maxWidth: 130)
-                Label(filteredOptions[selectedOptionIndex].title, systemImage: "arrowtriangle.down.fill")
+                    .frame(maxWidth: 80)
+                Label(options[selectedOptionIndex].title, systemImage: "arrowtriangle.down.fill")
                     .labelStyle(RightImageLabelStyle())
                     .lineLimit(1)
-                    .frame(maxWidth: 120)
+                    .frame(maxWidth: 72)
                     .fixedSize()
                     .contentShape(Rectangle())
                     .onTapGesture {
                         showingOptions.toggle()
+                    }
+                    .popover(isPresented: $showingOptions) {
+                        XFerroButtonPopover(
+                            showingOptions: $showingOptions,
+                            options: $options,
+                            addMoreIsHovered: $addMoreIsHovered,
+                            selectedOptionIndex: $selectedOptionIndex,
+                            addMoreOptionsText: addMoreOptionsText,
+                            onTapOption: onTapOption,
+                            onTapAddMore: onTapAddMore
+                        )
+                        .padding()
                     }
             }
         }

@@ -283,16 +283,17 @@ import OrderedCollections
             if let remote = repository.remote(named: remoteName) {
                 try remote.updatePushURLString(pushURLString)
             }
-            print("not sure what happened")
+            remotes?.append(Remote(name: remoteName, repository: repository.pointer)!)
+            remotes?.sort { $0.name! < $1.name! }
+            if let index = remotes?.firstIndex(where: { $0.name == remoteName }) {
+                setLastSelectedRemote(index, buttonTitle: "push")
+            }
             refreshRemoteSubject?.send()
-            return
         } catch let error as RepoError {
-            print("\(error)")
             Task { @MainActor in
                 AppDelegate.showErrorMessage(error: error)
             }
         } catch {
-            print("\(error)")
             Task { @MainActor in
                 AppDelegate.showErrorMessage(error: .unexpected)
             }
