@@ -73,6 +73,20 @@ import Observation
         onDeleteRepositoryTapped?(repository)
     }
 
+    enum FetchType {
+        case remote(Remote)
+        case all
+    }
+
+    func fetchTapped(fetchType: FetchType) async throws {
+        switch fetchType {
+        case .remote(let remote):
+            fatalError(.unimplemented)
+        case .all:
+            fatalError(.unimplemented)
+        }
+    }
+
     deinit {
         headChangeObserver?.cancel()
         indexChangeObserver?.cancel()

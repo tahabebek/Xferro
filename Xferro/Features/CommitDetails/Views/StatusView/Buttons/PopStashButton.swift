@@ -17,6 +17,7 @@ struct PopStashButton: View {
     var body: some View {
         XFerroButton<Void>(
             title: title,
+            info: XFerroButtonInfo(info: InfoTexts.stash),
             disabled: stashes.isEmpty,
             onTap: {
                 Task {

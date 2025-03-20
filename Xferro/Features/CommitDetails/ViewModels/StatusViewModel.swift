@@ -301,20 +301,20 @@ import OrderedCollections
     }
 
     func onCommitAndPush(remote: Remote?) async throws {
-        try await tryCommitAndPush(remote: remote, force: true)
+        try await tryCommitAndPush(remote: remote, pushType: .normal)
     }
 
-    func onCommitAndForcePush(remote: Remote?) async throws {
-        try await tryCommitAndPush(remote: remote, force: true)
+    func onCommitAndForcePushWithLease(remote: Remote?) async throws {
+        try await tryCommitAndPush(remote: remote, pushType: .forceWithLease)
     }
 
-    private func tryCommitAndPush(remote: Remote?, force: Bool) async throws {
+    private func tryCommitAndPush(remote: Remote?, pushType: Repository.PushType) async throws {
         guard let repository else {
             fatalError(.invalid)
         }
 
         if let remote {
-            try await actuallyCommitAndPush(remote: remote, repository: repository, force: force)
+            try await actuallyCommitAndPush(remote: remote, repository: repository, pushType: pushType)
         } else {
             Task { @MainActor in
                 addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
@@ -326,7 +326,7 @@ import OrderedCollections
     private func actuallyCommitAndPush(
         remote: Remote,
         repository: Repository,
-        force: Bool = false
+        pushType: Repository.PushType
     ) async throws {
         let head = Head.of(repository)
         guard case .branch(let currentBranch, _) = head else {
@@ -338,27 +338,27 @@ import OrderedCollections
             localBranch: currentBranch,
             remote: remote,
             repository: repository,
-            force: force
+            pushType: pushType
         )
         try await pushOperation.start()
 
     }
 
     func onAmendAndPush(remote: Remote?) async throws {
-        try await tryAmendAndPush(remote: remote, force: false)
+        try await tryAmendAndPush(remote: remote, pushType: .normal)
     }
 
-    func onAmendAndForcePush(remote: Remote?) async throws {
-        try await tryAmendAndPush(remote: remote, force: true)
+    func onAmendAndForcePushWithLease(remote: Remote?) async throws {
+        try await tryAmendAndPush(remote: remote, pushType: .forceWithLease)
     }
 
-    private func tryAmendAndPush(remote: Remote?, force: Bool) async throws {
+    private func tryAmendAndPush(remote: Remote?, pushType: Repository.PushType) async throws {
         guard let repository else {
             fatalError(.unimplemented)
         }
 
         if let remote {
-            try await actuallyAmendAndPush(remote: remote, repository: repository, force: force)
+            try await actuallyAmendAndPush(remote: remote, repository: repository, pushType: pushType)
         } else {
             Task { @MainActor in
                 addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
@@ -367,7 +367,7 @@ import OrderedCollections
         }
     }
 
-    private func actuallyAmendAndPush(remote: Remote, repository: Repository, force: Bool) async throws {
+    private func actuallyAmendAndPush(remote: Remote, repository: Repository, pushType: Repository.PushType) async throws {
         try await amendTapped()
         
         let head = Head.of(repository)
@@ -378,7 +378,7 @@ import OrderedCollections
             localBranch: currentBranch,
             remote: remote,
             repository: repository,
-            force: force
+            pushType: pushType
         )
         try await pushOperation.start()
     }

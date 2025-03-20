@@ -12,14 +12,14 @@ final class PushOpController: OperationController {
     let repository: Repository
     let localBranch: Branch
     let remote: Remote
-    let force: Bool
+    let pushType: Repository.PushType
     var cancelled = false
     var progressSubject = PassthroughSubject<ProgressValue, Never>()
 
-    init(localBranch: Branch, remote: Remote, repository: Repository, force: Bool = false) {
+    init(localBranch: Branch, remote: Remote, repository: Repository, pushType: Repository.PushType) {
         self.localBranch = localBranch
         self.remote = remote
-        self.force = force
+        self.pushType = pushType
         self.repository = repository
     }
 
@@ -34,7 +34,7 @@ final class PushOpController: OperationController {
 
     @discardableResult
     func start() async throws -> OperationResult {
-        await push(repository, branches: [localBranch.longName], remote: remote, force: force)
+        await push(repository, branches: [localBranch.longName], remote: remote, pushType: pushType)
     }
 
     override func repoErrorMessage(for error: RepoError) -> UIString {
@@ -50,7 +50,7 @@ final class PushOpController: OperationController {
         _ repository: Repository,
         branches: [String],
         remote: Remote,
-        force: Bool
+        pushType: Repository.PushType
     ) async -> OperationResult {
         let callbacks = RemoteCallbacks(
             passwordBlock: nil,
@@ -60,7 +60,7 @@ final class PushOpController: OperationController {
 
         do {
             // Try with libgit2 first
-            try repository.push(branches: branches, remote: remote, callbacks: callbacks, force: force)
+            try repository.push(branches: branches, remote: remote, callbacks: callbacks, pushType: pushType)
             return .success
         } catch {
             // If libgit2 fails and it looks like an SSH authentication loop issue,
@@ -70,7 +70,14 @@ final class PushOpController: OperationController {
                 let branchSpecs = branches.map { $0.replacingOccurrences(of: "refs/heads/", with: "") }
                 
                 do {
-                    try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs + (force ? ["--force"] : []))
+                    switch pushType {
+                    case .normal:
+                        try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs)
+                    case .force:
+                        try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs + ["--force"])
+                    case .forceWithLease:
+                        try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs + ["--force-with-lease"])
+                    }
                 } catch {
                     Task { @MainActor in
                         self.showFailureError("Git CLI fallback also failed. Original error: \(error.localizedDescription)")

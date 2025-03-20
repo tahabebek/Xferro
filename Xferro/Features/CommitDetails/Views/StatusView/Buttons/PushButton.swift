@@ -49,8 +49,8 @@ struct PushButton: View {
     var body: some View {
         XFerroButton<Remote>(
             title: title,
+            info: force ? XFerroButtonInfo(info: InfoTexts.forcePushWithLease) : XFerroButtonInfo(info: InfoTexts.push),
             disabled: (commitSummary.isEmptyOrWhitespace || !hasChanges) && !amend,
-            dangerous: force,
             options: $options,
             selectedOptionIndex: Binding<Int>(
                 get: {
@@ -78,13 +78,13 @@ struct PushButton: View {
                     do {
                         if amend {
                             if force {
-                                try await statusViewModel.onAmendAndForcePush(remote: selectedRemoteForPush)
+                                try await statusViewModel.onAmendAndForcePushWithLease(remote: selectedRemoteForPush)
                             } else {
                                 try await statusViewModel.onAmendAndPush(remote: selectedRemoteForPush)
                             }
                         } else {
                             if force {
-                                try await statusViewModel.onCommitAndForcePush(remote: selectedRemoteForPush)
+                                try await statusViewModel.onCommitAndForcePushWithLease(remote: selectedRemoteForPush)
                             } else {
                                 try await statusViewModel.onCommitAndPush(remote: selectedRemoteForPush)
                             }

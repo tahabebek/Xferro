@@ -14,12 +14,12 @@ struct StatusActionButtonsView: View {
         case amend = "Amend"
         case commitAndPush = "Commit and Push"
         case amendAndPush = "Amend and Push"
-        case commitAndForcePush = "Commit and Force Push"
-        case amendAndForcePush = "Amend and Force Push"
-        case stash = "Stash"
+        case commitAndForcePush = "Commit and Force Push with Lease"
+        case amendAndForcePush = "Amend and Force Push with Lease"
+        case stash = "Push Stash"
         case popStash = "Pop Stash"
-        case applyStash = "Apply Stash"
-        case discardAll = "Discard All"
+//        case applyStash = "Apply Stash"
+        case discardAll = "Discard All Changes"
     }
     
     @State private var boxActions: [BoxAction] = BoxAction.allCases
@@ -102,13 +102,13 @@ struct StatusActionButtonsView: View {
                     errorString: $errorString,
                     title: boxAction.rawValue
                 )
-            case .applyStash:
-                ApplyStashButton(
-                    selectedStashToApply: $selectedStashToApply,
-                    errorString: $errorString,
-                    title: boxAction.rawValue,
-                    stashes: stashes
-                )
+//            case .applyStash:
+//                ApplyStashButton(
+//                    selectedStashToApply: $selectedStashToApply,
+//                    errorString: $errorString,
+//                    title: boxAction.rawValue,
+//                    stashes: stashes
+//                )
             case .discardAll:
                 DiscardAllButton(
                     hasChanges: $hasChanges,

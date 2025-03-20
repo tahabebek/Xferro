@@ -15,7 +15,7 @@ struct RepositoryNavigationView: View {
         HStack {
             Image(systemName: "xmark")
                 .contentShape(Rectangle())
-                .hoverableButton("Remove Repository") {
+                .onTapGesture {
                     withAnimation(.easeInOut) {
                         deleteRepositoryTapped()
                     }
@@ -23,7 +23,7 @@ struct RepositoryNavigationView: View {
             Image(systemName: "chevron.down")
                 .rotationEffect(Angle(degrees: !isCollapsed ? -180 : 0))
                 .contentShape(Rectangle())
-                .hoverableButton(isCollapsed ? "Expand" : "Collapse") {
+                .onTapGesture {
                     withAnimation(.easeInOut) {
                         isCollapsed.toggle()
                     }

@@ -19,17 +19,18 @@ struct RepositoryView: View {
     let repositoryInfo: RepositoryInfo
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
-    @State private var isMinimized: Bool = false
 
     var body: some View {
         Group {
             VStack(spacing: 0) {
                 RepositoryMenuView(
                     isCollapsed: $isCollapsed,
-                    gitDir: repositoryInfo.repository.gitDir) {
-                        repositoryInfo.deleteRepositoryTapped()
-                    }
-                    .frame(height: isMinimized ? 54 : 36)
+                    deleteRepositoryTapped: repositoryInfo.deleteRepositoryTapped,
+                    onFetchTapped: repositoryInfo.fetchTapped,
+                    gitDir: repositoryInfo.repository.gitDir,
+                    head: repositoryInfo.head
+                )
+                .frame(height: 36)
                 if !isCollapsed {
                     VStack(spacing: 16) {
                         RepositoryPickerView(selection: $selection)
@@ -60,7 +61,6 @@ struct RepositoryView: View {
         }
         .animation(.default, value: repositoryInfo.head)
         .animation(.default, value: isCollapsed)
-        .animation(.default, value: isMinimized)
         .background(
             Color(hexValue: 0x15151A)
                 .cornerRadius(8)

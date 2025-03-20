@@ -36,6 +36,7 @@ struct StatusActionView: View {
                 }
                 XFerroButton<Void>(
                     title: "Commit",
+                    info: XFerroButtonInfo(info: InfoTexts.commit),
                     disabled: commitSummary.isEmptyOrWhitespace || canCommit || !hasChanges,
                     dangerous: false,
                     isProminent: true,

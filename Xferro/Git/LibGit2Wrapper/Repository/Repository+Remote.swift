@@ -68,13 +68,33 @@ extension Repository: RemoteManagement {
         let result = git_remote_delete(pointer, name)
         try RepoError.throwIfGitError(result)
     }
-    
-    func push(branches: [String], remote: Remote, callbacks: RemoteCallbacks, force: Bool) throws {
+
+    enum PushType {
+        case normal
+        case force
+        case forceWithLease
+    }
+
+    func push(
+        branches: [String],
+        remote: Remote,
+        callbacks: RemoteCallbacks,
+        pushType: PushType = .normal
+    ) throws {
         lock.lock()
         defer { lock.unlock() }
         var result: Int32
-        let names = branches.map { force ? "+\($0.longBranchRef)" : $0.longBranchRef }
 
+        let names = branches.map {
+            switch pushType {
+            case .normal:
+                $0.longBranchRef
+            case .force:
+                "+\($0.longBranchRef)"
+            case .forceWithLease:
+                "+refs/heads/\($0):refs/heads/\($0)"
+            }
+        }
 
         result = names.withGitStringArray { refspecs in
             git_remote_callbacks.withCallbacks(callbacks) { gitCallbacks in
@@ -86,14 +106,7 @@ extension Repository: RemoteManagement {
                 options.pb_parallelism = 1
                 git_remote_callbacks.Callbacks.resetAuthAttempts()
 
-                let pushResult = git_remote_push(remote.remote, &mutableArray, &options)
-
-                if pushResult != GIT_OK.rawValue {
-                    let error = git_error_last()
-                    let errorMessage = error?.pointee.message.flatMap { String(cString: $0) } ?? "Unknown error"
-                }
-
-                return pushResult
+                return git_remote_push(remote.remote, &mutableArray, &options)
             }
         }
         try RepoError.throwIfGitError(result)

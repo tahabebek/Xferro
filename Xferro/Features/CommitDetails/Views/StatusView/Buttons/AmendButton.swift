@@ -18,6 +18,7 @@ struct AmendButton: View {
     var body: some View {
         XFerroButton<Void>(
             title: title,
+            info: XFerroButtonInfo(info: InfoTexts.amend),
             disabled: canCommit || !hasChanges,
             onTap: {
                 Task {

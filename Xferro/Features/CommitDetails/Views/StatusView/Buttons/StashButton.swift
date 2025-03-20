@@ -17,6 +17,7 @@ struct StashButton: View {
     var body: some View {
         XFerroButton<Void>(
             title: title,
+            info: XFerroButtonInfo(info: InfoTexts.stash),
             disabled: !hasChanges,
             onTap: {
                 Task {
