@@ -347,7 +347,7 @@ import OrderedCollections
             case .merge:
                 activity = ProgressManager.shared.startActivity(name: "Pulling branch \(head.name) (merge)...")
                 do {
-                    try GitCLI.executeGit(repository, ["pull", "--merge"])
+                    try GitCLI.executeGit(repository, ["pull", "--no-rebase"])
                 } catch {
                     Task { @MainActor in
                         AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))

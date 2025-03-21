@@ -56,12 +56,12 @@ struct ProjectView: View {
                             stashes: commitsViewModel.currentRepositoryInfo?.stashes ?? []
                         )
                     default:
-                        nothingIsSelected
+                        EmptyView()
                     }
                 case .wip:
                     WipCommitView(viewModel: wipCommitViewModel)
                 default:
-                    nothingIsSelected
+                    EmptyView()
                 }
             }
             .frame(maxWidth: .infinity)
@@ -71,17 +71,6 @@ struct ProjectView: View {
             .onChange(of: commitsViewModel.currentSelectedItem) { oldValue, newValue in
                 refresh()
             }
-        }
-    }
-
-    var nothingIsSelected: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Spacer()
-                Text("Nothing is selected.")
-            }
-            Spacer()
         }
     }
 

@@ -154,7 +154,7 @@ struct StatusView: View {
                         )
                         .id(file.id)
                     } else {
-                        Text("Nothing is selected.")
+                        EmptyView()
                     }
                     Spacer(minLength: 0)
                 }
