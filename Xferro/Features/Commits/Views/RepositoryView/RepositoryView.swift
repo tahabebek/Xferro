@@ -20,15 +20,26 @@ struct RepositoryView: View {
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
 
+    let onPullTapped: (StatusViewModel.PullType) -> Void
+    let onFetchTapped: (StatusViewModel.FetchType) -> Void
+    let onAddRemoteTapped: () -> Void
+    let onGetLastSelectedRemoteIndex: (String) -> Int
+    let onSetLastSelectedRemote: (Int, String) -> Void
+
     var body: some View {
         Group {
             VStack(spacing: 0) {
                 RepositoryMenuView(
                     isCollapsed: $isCollapsed,
-                    deleteRepositoryTapped: repositoryInfo.deleteRepositoryTapped,
-                    onFetchTapped: repositoryInfo.fetchTapped,
+                    onDeleteRepositoryTapped: repositoryInfo.deleteRepositoryTapped,
+                    onPullTapped: onPullTapped,
+                    onFetchTapped: onFetchTapped,
+                    onAddRemoteTapped: onAddRemoteTapped,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemote: onSetLastSelectedRemote,
                     gitDir: repositoryInfo.repository.gitDir,
-                    head: repositoryInfo.head
+                    head: repositoryInfo.head,
+                    remotes: repositoryInfo.remotes
                 )
                 .frame(height: 36)
                 if !isCollapsed {

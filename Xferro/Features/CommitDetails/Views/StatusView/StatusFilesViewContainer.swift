@@ -26,6 +26,19 @@ struct StatusFilesViewContainer: View {
     let onTapIgnore: (OldNewFile) -> Void
     let onTapDiscard: (OldNewFile) -> Void
 
+    let onAmend: () async throws -> Void
+    let onApplyStash: (SelectableStash) async throws -> Void
+    let onStash: () async throws -> Void
+    let onDiscardAll: () async throws -> Void
+    let onPopStash: () async throws -> Void
+    let onGetLastSelectedRemoteIndex: (String) -> Int
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
+    let onAddRemoteTapped: () -> Void
+    let onAmendAndForcePushWithLease: (Remote?) async throws -> Void
+    let onAmendAndPush: (Remote?) async throws -> Void
+    let onCommitAndForcePushWithLease: (Remote?) async throws -> Void
+    let onCommitAndPush: (Remote?) async throws -> Void
+
     var body: some View {
         VStack {
             StatusActionView(
@@ -39,7 +52,19 @@ struct StatusFilesViewContainer: View {
                     Task { @MainActor in
                         currentFile = nil
                     }
-                }
+                },
+                onAmend: onAmend,
+                onApplyStash: onApplyStash,
+                onStash: onStash,
+                onDiscardAll: onDiscardAll,
+                onPopStash: onPopStash,
+                onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                onAddRemoteTapped: onAddRemoteTapped,
+                onAmendAndForcePushWithLease: onAmendAndForcePushWithLease,
+                onAmendAndPush: onAmendAndPush,
+                onCommitAndForcePushWithLease: onCommitAndForcePushWithLease,
+                onCommitAndPush: onCommitAndPush
             )
             .padding()
             .background(Color(hexValue: 0x15151A))

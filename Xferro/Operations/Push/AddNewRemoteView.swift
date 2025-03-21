@@ -9,7 +9,6 @@ import SwiftUI
 
 struct AddNewRemoteView: View {
     @Environment(\.dismiss) var dismiss
-    @Environment(StatusViewModel.self) var statusViewModel
     @FocusState var isTextFieldFocused: Bool
     @State var name: String = ""
     @State var fetchURL: String = ""
@@ -17,6 +16,7 @@ struct AddNewRemoteView: View {
     @State var invalidMessage: String?
 
     let title: String
+    let onAddRemote: (String, String, String) async -> Void
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -88,11 +88,7 @@ struct AddNewRemoteView: View {
                         } else {
                             dismiss()
                             Task {
-                                await statusViewModel.onAddRemote(
-                                    fetchURLString: fetchURL,
-                                    pushURLString: pushURL.isEmpty ? fetchURL : pushURL,
-                                    remoteName: name
-                                )
+                                await onAddRemote(fetchURL, pushURL.isEmpty ? fetchURL : pushURL, name)
                             }
                         }
                     }

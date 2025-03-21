@@ -55,52 +55,13 @@ final class Services {
             else { return }
 
             if case .failed(let error) = service.authenticationStatus {
-                let serviceName = service.account.type.displayName
-                let user = service.account.user
-
-                Task {
-                    if await Self.shouldReauthenticate(
-                        service: serviceName,
-                        user: user,
-                        error: error?.localizedDescription
-                    ) {
-                        service.attemptAuthentication()
-                    }
-                }
+                fatalError(.unhandledError(error?.localizedDescription ?? "Unknown error"))
             }
         }
     }
 
     func pullRequestService(forID id: UUID) -> (any PullRequestService)? {
         allServices.first { $0.id == id } as? PullRequestService
-    }
-
-    @MainActor
-    static func shouldReauthenticate(
-        service: String,
-        user: String,
-        error: String?
-    ) -> Bool {
-        guard !(PrefsWindowController.shared.window?.isKeyWindow ?? false)
-        else { return false }
-        let alert = NSAlert()
-
-        alert.messageString = .authFailed(service: service, account: user)
-        alert.informativeText = error ?? ""
-        alert.addButton(withString: .ok)
-        alert.addButton(withString: .retry)
-        alert.addButton(withString: .openPrefs)
-        switch alert.runModal() {
-        case .alertFirstButtonReturn: // OK
-            break
-        case .alertSecondButtonReturn: // Retry
-            return true
-        case .alertThirdButtonReturn: // Open prefs
-            PrefsWindowController.show(tab: .accounts)
-        default:
-            break
-        }
-        return false
     }
 
     /// Creates an API object for each account so they can start with

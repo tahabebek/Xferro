@@ -54,9 +54,13 @@ final class Remote {
     }
 
     func rename(_ name: String) throws {
-        guard let oldName = git_remote_name(remote),
-              let owner = git_remote_owner(remote)
-        else { throw RepoError.unexpected }
+        guard let oldName = git_remote_name(remote) else {
+            throw RepoError.unexpected("Old name not found")
+        }
+
+        guard let owner = git_remote_owner(remote) else {
+            throw RepoError.unexpected("Owner not found")
+        }
 
         let problems = UnsafeMutablePointer<git_strarray>.allocate(capacity: 1)
         defer {
@@ -84,9 +88,13 @@ final class Remote {
     }
 
     func updateURLString(_ URLString: String?) throws {
-        guard let name = git_remote_name(remote),
-              let owner = git_remote_owner(remote)
-        else { throw RepoError.unexpected }
+        guard let name = git_remote_name(remote) else {
+            throw RepoError.unexpected("Old name not found")
+        }
+
+        guard let owner = git_remote_owner(remote) else {
+            throw RepoError.unexpected("Owner not found")
+        }
         let result = git_remote_set_url(owner, name, URLString)
 
         if result == GIT_EINVALIDSPEC.rawValue {
@@ -97,9 +105,13 @@ final class Remote {
     }
 
     func updatePushURLString(_ URLString: String?) throws {
-        guard let name = git_remote_name(remote),
-              let owner = git_remote_owner(remote)
-        else { throw RepoError.unexpected }
+        guard let name = git_remote_name(remote) else {
+            throw RepoError.unexpected("Old name not found")
+        }
+
+        guard let owner = git_remote_owner(remote) else {
+            throw RepoError.unexpected("Owner not found")
+        }
         let result = git_remote_set_pushurl(owner, name, URLString)
 
         if result == GIT_EINVALIDSPEC.rawValue {

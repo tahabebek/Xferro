@@ -208,7 +208,7 @@ extension Repository: RemoteManagement {
                 return
             }
             if analysis.contains(.unborn) {
-                throw RepoError.unexpected
+                throw RepoError.unexpected("Branch is unborn")
             }
             if analysis.contains(.fastForward) {
                 fastForwardMerge(branch: targetBranch, remoteBranch: branch)
@@ -218,8 +218,11 @@ extension Repository: RemoteManagement {
             let branchCommit = try? object(branch.oid).get() as? Commit
             let targetCommit = try? object(targetBranch.oid).get() as? Commit
 
-            guard let branchCommit, let targetCommit else {
-                throw RepoError.unexpected
+            guard let branchCommit else {
+                throw RepoError.unexpected("There is no branch commit")
+            }
+            guard let targetCommit else {
+                throw RepoError.unexpected("There is no target commit")
             }
             if analysis.contains(.normal) {
                 try normalMerge(
@@ -230,7 +233,7 @@ extension Repository: RemoteManagement {
                 )
                 return
             }
-            throw RepoError.unexpected
+            throw RepoError.unexpected("Merge failed")
         }
     }
 
@@ -447,7 +450,7 @@ extension Repository: RemoteManagement {
                     throw error
                 }
                 catch let error  {
-                    publisher.error(.unexpected)
+                    publisher.error(.unexpected(error.localizedDescription))
                     throw error
                 }
 

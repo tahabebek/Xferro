@@ -19,8 +19,32 @@ struct ProjectView: View {
 
     var body: some View {
         HSplitView {
-            CommitsView(commitsViewModel: commitsViewModel)
-                .frame(maxWidth: Dimensions.commitsViewMaxWidth)
+            CommitsView(
+                commitsViewModel: commitsViewModel,
+                onPullTapped: { type in
+                    statusViewModel.pullTapped(pullType: type)
+                },
+                onFetchTapped: { type in
+                    statusViewModel.fetchTapped(fetchType: type)
+                },
+                onPushTapped: { branchName, remote, type in
+                    Task {
+                        try await statusViewModel.onPush(branchName: branchName, remote:remote, pushType:type)
+                    }
+                },
+                onAddRemoteTapped: {
+                    statusViewModel.addRemoteTapped()
+                },
+                onGetLastSelectedRemoteIndex: {
+                    statusViewModel.getLastSelectedRemoteIndex(buttonTitle: $0)
+                },
+                onSetLastSelectedRemote: { value, buttonTitle in
+                    statusViewModel.setLastSelectedRemote(value, buttonTitle: buttonTitle)
+                }
+            )
+            .frame(minWidth: 0)
+            .frame(maxWidth: Dimensions.commitsViewMaxWidth)
+            .layoutPriority(1)
             Group {
                 switch commitsViewModel.currentSelectedItem?.type {
                 case .regular(let type):
@@ -32,12 +56,12 @@ struct ProjectView: View {
                             stashes: commitsViewModel.currentRepositoryInfo?.stashes ?? []
                         )
                     default:
-                        EmptyView()
+                        nothingIsSelected
                     }
                 case .wip:
                     WipCommitView(viewModel: wipCommitViewModel)
                 default:
-                    EmptyView()
+                    nothingIsSelected
                 }
             }
             .frame(maxWidth: .infinity)
@@ -47,6 +71,17 @@ struct ProjectView: View {
             .onChange(of: commitsViewModel.currentSelectedItem) { oldValue, newValue in
                 refresh()
             }
+        }
+    }
+
+    var nothingIsSelected: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Text("Nothing is selected.")
+            }
+            Spacer()
         }
     }
 

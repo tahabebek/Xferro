@@ -11,12 +11,6 @@ import Observation
 import OrderedCollections
 
 @Observable final class CommitsViewModel {
-    var autoCommitEnabled: Bool {
-        didSet {
-            UserDefaults.standard.set(autoCommitEnabled, forKey: "autoCommitEnabled")
-        }
-    }
-
     // use setCurrentSelectedItem to set it
     private(set) var currentSelectedItem: SelectedItem?
     @ObservationIgnored private(set) var currentRepositoryInfo: RepositoryInfo?
@@ -52,11 +46,6 @@ import OrderedCollections
         user: User,
         userDidSelectFolder: @escaping (URL, CommitsViewModel) -> Void
     ) {
-        if UserDefaults.standard.object(forKey: "autoCommitEnabled") == nil {
-            self.autoCommitEnabled = true
-        } else {
-            self.autoCommitEnabled = UserDefaults.standard.bool(forKey: "autoCommitEnabled")
-        }
         self.userDidSelectFolder = userDidSelectFolder
         self.user = user
 

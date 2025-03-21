@@ -157,13 +157,15 @@ final class GitConfig {
     private func addAppConfig() throws {
         guard let appSupport = FileManager.default
             .urls(for: .applicationSupportDirectory,
-                  in: .userDomainMask).first
-        else { throw RepoError.unexpected }
+                  in: .userDomainMask).first else {
+            throw RepoError.unexpected("application support directory not found")
+        }
         let configURL = appSupport.appendingPathComponent("xferro.gitconfig")
 
         try configURL.withUnsafeFileSystemRepresentation {
-            guard let path = $0
-            else { throw RepoError.unexpected }
+            guard let path = $0 else {
+                throw RepoError.unexpected("Can't convert URL to file system path")
+            }
             let result = git_config_add_file_ondisk(config, path, GIT_CONFIG_LEVEL_APP, nil, 1)
             try RepoError.throwIfGitError(result)
         }

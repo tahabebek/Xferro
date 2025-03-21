@@ -8,71 +8,132 @@
 import SwiftUI
 
 struct WipHeaderView: View {
-    @Binding var autoCommitEnabled: Bool
+    @Environment(\.dismiss) var dismiss
+    @AppStorage var autoCommitEnabled: Bool
+    @AppStorage var autoPushEnabled: Bool
+
+    @State var errorString: String? = nil
     @State var showButtons = false
+    @State var options: [XFerroButtonOption<Remote>] = []
+    @State var selectedRemoteForPush: Remote? = nil
+
+    let viewModel: WipCommitsViewModel
     let onAddManualWipCommitTapped: () -> Void
     let onDeleteWipWorktreeTapped: () -> Void
-    let tooltipForDeleteRepo: String
-    let tooltipForDeleteBranch: String?
-    let isNotEmpty: Bool
+    let onAddRemoteTapped: () -> Void
+    let onGetLastSelectedRemoteIndex: (String) -> Int
+    let onSetLastSelectedRemote: (Int, String) -> Void
+    let onPushTapped: (String, Remote?, Repository.PushType) async throws -> Void
+
+    init(
+        viewModel: WipCommitsViewModel,
+        onAddManualWipCommitTapped: @escaping () -> Void,
+        onDeleteWipWorktreeTapped: @escaping () -> Void,
+        onAddRemoteTapped: @escaping () -> Void,
+        onGetLastSelectedRemoteIndex: @escaping (String) -> Int,
+        onSetLastSelectedRemote: @escaping (Int, String) -> Void,
+        onPushTapped: @escaping (String, Remote?, Repository.PushType) async throws -> Void
+    ) {
+        self._autoCommitEnabled = .init(
+            wrappedValue: false,
+            PreferenceKeys.autoCommitEnabled,
+            store: UserDefaults.standard
+        )
+        self._autoPushEnabled = .init(
+            wrappedValue: false,
+            PreferenceKeys.autoPushEnabled,
+            store: UserDefaults.standard
+        )
+        self.viewModel = viewModel
+        self.onAddManualWipCommitTapped = onAddManualWipCommitTapped
+        self.onDeleteWipWorktreeTapped = onDeleteWipWorktreeTapped
+        self.onAddRemoteTapped = onAddRemoteTapped
+        self.onGetLastSelectedRemoteIndex = onGetLastSelectedRemoteIndex
+        self.onSetLastSelectedRemote = onSetLastSelectedRemote
+        self.onPushTapped = onPushTapped
+    }
 
     var body: some View {
-        HStack {
-            Button(action: {
-                showButtons = true
-            }) {
-                Label {
-                    Text("Work in Progress")
-                        .font(.title2)
-                } icon: {
-                    Image(systemName: "arrowtriangle.down.fill")
+        HStack(spacing: 0) {
+            VerticalHeader(title: "Work in Progress") {
+                VStack(alignment: .leading, spacing: 8) {
+                    if !autoCommitEnabled {
+                        XFerroButton<Void>(
+                            title: "Commit Wip",
+                            info: XFerroButtonInfo(info: ""),
+                            onTap: {
+                                dismiss()
+                                onAddManualWipCommitTapped()
+                            }
+                        )
+                    }
+                    if !autoPushEnabled {
+                        XFerroButton<Remote>(
+                            title: "Push",
+                            options: $options,
+                            selectedOptionIndex: Binding<Int>(
+                                get: {
+                                    onGetLastSelectedRemoteIndex("push")
+                                }, set: { value, _ in
+                                    onSetLastSelectedRemote(value, "push")
+                                }
+                            ),
+                            addMoreOptionsText: "Add Remote...",
+                            onTapOption: { option in
+                                selectedRemoteForPush = option.data
+                            },
+                            onTapAddMore: {
+                                    onAddRemoteTapped()
+                            },
+                            onTap: {
+                                Task {
+                                    do {
+                                        dismiss()
+                                        try await onPushTapped(viewModel.branchName, selectedRemoteForPush, .force)
+                                    } catch {
+                                        errorString = error.localizedDescription
+                                    }
+                                }
+                            }
+                        )
+                        .onChange(of: viewModel.repositoryInfo.remotes.count) {
+                            options = viewModel.repositoryInfo.remotes.map {
+                                XFerroButtonOption(title: $0.name!, data: $0)
+                            }
+                        }
+                        .task {
+                            selectedRemoteForPush = viewModel.repositoryInfo.remotes[
+                                onGetLastSelectedRemoteIndex("push")
+                            ]
+                        }
+                    }
+                    if !autoPushEnabled || !autoPushEnabled {
+                        Divider()
+                    }
+                    XFerroButton<Void>(
+                        title: "Delete all wip commits of \(viewModel.repositoryInfo.repository.nameOfRepo)",
+                        onTap: {
+                            dismiss()
+                            showButtons = false
+                        }
+                    )
+                    XFerroButton<Void>(
+                        title: "Delete wip commits of \(viewModel.item.selectableItem.wipDescription.uncapitalizingFirstLetter())",
+                        onTap: {
+                            dismiss()
+                            showButtons = false
+                        }
+                    )
+                    Divider()
+                    Toggle("Automatically commit wip on save", isOn: $autoCommitEnabled)
+                        .toggleStyle(.switch)
+                    Toggle("Automatically push wip commits", isOn: $autoPushEnabled)
+                        .toggleStyle(.switch)
                 }
-                .fixedSize()
-                .labelStyle(RightImageLabelStyle())
+                .padding()
             }
-            .buttonStyle(PlainButtonStyle())
-            .padding(.leading, 6)
-            Spacer()
-            XFerroButton<Void>(
-                title: "Commit",
-                onTap: {
-                    onAddManualWipCommitTapped()
-                }
-            )
-            .padding(.trailing, 4)
-            .opacity(!autoCommitEnabled ? 0 : 1)
         }
-        .popover(isPresented: $showButtons) {
-            VStack(alignment: .leading, spacing: 8) {
-                XFerroButton<Void>(
-                    title: tooltipForDeleteBranch ?? "",
-                    onTap: {
-                        showButtons = false
-                    }
-                )
-                .padding(.vertical, tooltipForDeleteBranch != nil ? 4 : 0)
-                .opacity(tooltipForDeleteBranch != nil ? 1 : 0)
-
-                XFerroButton<Void>(
-                    title: tooltipForDeleteRepo,
-                    onTap: {
-                        showButtons = false
-                    }
-                )
-                .padding(.vertical, 4)
-                Divider()
-                XFerroButton<Void>(
-                    title: "Wip Settings",
-                    isProminent: false,
-                    onTap: {
-                        showButtons = false
-                    }
-                )
-                .padding(.vertical, 4)
-            }
-            .padding()
-            .frame(minWidth: 250)
-        }
+        .frame(height: Dimensions.verticalHeaderHeight)
         .animation(.default, value: autoCommitEnabled)
     }
 }

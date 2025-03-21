@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct StashButton: View {
-    @Environment(StatusViewModel.self) var statusViewModel
     @Binding var hasChanges: Bool
     @Binding var errorString: String?
 
     let title: String
+    let onStash: () async throws -> Void
 
     var body: some View {
         XFerroButton<Void>(
@@ -22,7 +22,7 @@ struct StashButton: View {
             onTap: {
                 Task {
                     do {
-                        try await statusViewModel.onStash()
+                        try await onStash()
                     } catch {
                         errorString = error.localizedDescription
                     }

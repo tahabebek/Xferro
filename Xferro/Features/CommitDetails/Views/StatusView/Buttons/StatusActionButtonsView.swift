@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct StatusActionButtonsView: View {
-    @Environment(StatusViewModel.self) var statusViewModel
     enum BoxAction: String, CaseIterable, Identifiable, Equatable {
         var id: String { rawValue }
         case amend = "Amend"
@@ -18,7 +17,7 @@ struct StatusActionButtonsView: View {
         case amendAndForcePush = "Amend and Force Push with Lease"
         case stash = "Push Stash"
         case popStash = "Pop Stash"
-//        case applyStash = "Apply Stash"
+        case applyStash = "Apply Stash"
         case discardAll = "Discard All Changes"
     }
     
@@ -32,6 +31,19 @@ struct StatusActionButtonsView: View {
     @State var selectedRemoteForPush: Remote?
     @State var selectedStashToApply: SelectableStash?
 
+    let onAmend: () async throws -> Void
+    let onApplyStash: (SelectableStash) async throws -> Void
+    let onStash: () async throws -> Void
+    let onDiscardAll: () async throws -> Void
+    let onPopStash: () async throws -> Void
+    let onGetLastSelectedRemoteIndex: (String) -> Int
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
+    let onAddRemoteTapped: () -> Void
+    let onAmendAndForcePushWithLease: (Remote?) async throws -> Void
+    let onAmendAndPush: (Remote?) async throws -> Void
+    let onCommitAndForcePushWithLease: (Remote?) async throws -> Void
+    let onCommitAndPush: (Remote?) async throws -> Void
+
     var body: some View {
         ForEach(boxActions) { boxAction in
             switch boxAction {
@@ -40,7 +52,8 @@ struct StatusActionButtonsView: View {
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
                     errorString: $errorString,
-                    title: boxAction.rawValue
+                    title: boxAction.rawValue,
+                    onAmend: onAmend
                 )
             case .commitAndPush:
                 PushButton(
@@ -52,7 +65,14 @@ struct StatusActionButtonsView: View {
                     remotes: remotes,
                     title: boxAction.rawValue,
                     amend: false,
-                    force: false
+                    force: false,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: onAddRemoteTapped,
+                    onAmendAndForcePushWithLease: onAmendAndForcePushWithLease,
+                    onAmendAndPush: onAmendAndPush,
+                    onCommitAndForcePushWithLease: onCommitAndForcePushWithLease,
+                    onCommitAndPush: onCommitAndPush
                 )
             case .amendAndPush:
                 PushButton(
@@ -64,7 +84,14 @@ struct StatusActionButtonsView: View {
                     remotes: remotes,
                     title: boxAction.rawValue,
                     amend: true,
-                    force: false
+                    force: false,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: onAddRemoteTapped,
+                    onAmendAndForcePushWithLease: onAmendAndForcePushWithLease,
+                    onAmendAndPush: onAmendAndPush,
+                    onCommitAndForcePushWithLease: onCommitAndForcePushWithLease,
+                    onCommitAndPush: onCommitAndPush
                 )
             case .commitAndForcePush:
                 PushButton(
@@ -76,7 +103,14 @@ struct StatusActionButtonsView: View {
                     remotes: remotes,
                     title: boxAction.rawValue,
                     amend: false,
-                    force: true
+                    force: true,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: onAddRemoteTapped,
+                    onAmendAndForcePushWithLease: onAmendAndForcePushWithLease,
+                    onAmendAndPush: onAmendAndPush,
+                    onCommitAndForcePushWithLease: onCommitAndForcePushWithLease,
+                    onCommitAndPush: onCommitAndPush
                 )
             case .amendAndForcePush:
                 PushButton(
@@ -88,32 +122,43 @@ struct StatusActionButtonsView: View {
                     remotes: remotes,
                     title: boxAction.rawValue,
                     amend: true,
-                    force: true
+                    force: true,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: onAddRemoteTapped,
+                    onAmendAndForcePushWithLease: onAmendAndForcePushWithLease,
+                    onAmendAndPush: onAmendAndPush,
+                    onCommitAndForcePushWithLease: onCommitAndForcePushWithLease,
+                    onCommitAndPush: onCommitAndPush
                 )
             case .stash:
                 StashButton(
                     hasChanges: $hasChanges,
                     errorString: $errorString,
-                    title: boxAction.rawValue
+                    title: boxAction.rawValue,
+                    onStash: onStash
                 )
             case .popStash:
                 PopStashButton(
                     stashes: stashes,
                     errorString: $errorString,
-                    title: boxAction.rawValue
+                    title: boxAction.rawValue,
+                    onPopStash: onPopStash
                 )
-//            case .applyStash:
-//                ApplyStashButton(
-//                    selectedStashToApply: $selectedStashToApply,
-//                    errorString: $errorString,
-//                    title: boxAction.rawValue,
-//                    stashes: stashes
-//                )
+            case .applyStash:
+                ApplyStashButton(
+                    selectedStashToApply: $selectedStashToApply,
+                    errorString: $errorString,
+                    title: boxAction.rawValue,
+                    stashes: stashes,
+                    onApplyStash: onApplyStash
+                )
             case .discardAll:
                 DiscardAllButton(
                     hasChanges: $hasChanges,
                     errorString: $errorString,
-                    title: boxAction.rawValue
+                    title: boxAction.rawValue,
+                    onDiscardAll: onDiscardAll
                 )
             }
         }

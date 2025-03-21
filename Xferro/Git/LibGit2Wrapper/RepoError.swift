@@ -34,7 +34,7 @@ enum RepoError: Swift.Error {
     case mergeInProgress
     case notFound
     case patchMismatch
-    case unexpected
+    case unexpected(String)
     case workspaceDirty
 
     static func gitError(_ code: Int32) -> Self {
@@ -89,8 +89,8 @@ enum RepoError: Swift.Error {
                 .fileNotFound(path)
         case .notFound:
                 .notFound
-        case .unexpected:
-                .unexpected
+        case .unexpected(let message):
+            UIString(rawValue: message)
         case .workspaceDirty:
                 .workspaceDirty
         }

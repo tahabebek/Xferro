@@ -57,7 +57,6 @@ enum GitCLI {
             let error = NSError(domain: "GitError",
                                 code: Int(process.terminationStatus),
                                 userInfo: [NSLocalizedDescriptionKey: "Git failed: \(output)"])
-            print(error)
             throw error
         }
         return output

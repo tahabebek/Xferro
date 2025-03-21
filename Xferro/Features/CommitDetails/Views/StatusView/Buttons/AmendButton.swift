@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct AmendButton: View {
-    @Environment(StatusViewModel.self) var statusViewModel
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
     @Binding var errorString: String?
 
     let title: String
-    
+    let onAmend: () async throws -> Void
+
     var body: some View {
         XFerroButton<Void>(
             title: title,
@@ -23,7 +23,7 @@ struct AmendButton: View {
             onTap: {
                 Task {
                     do {
-                        try await statusViewModel.onAmend()
+                        try await onAmend()
                     } catch {
                         errorString = error.localizedDescription
                     }

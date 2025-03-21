@@ -14,25 +14,26 @@ struct WipCommitsView: View {
     let isSelectedItem: (any SelectableItem) -> Bool
     let onAddManualWipCommitTapped: () -> Void
     let onDeleteWipWorktreeTapped: (Repository) -> Void
+    let onAddRemoteTapped: () -> Void
+    let onGetLastSelectedRemoteIndex: (String) -> Int
+    let onSetLastSelectedRemote: (Int, String) -> Void
+    let onPushTapped: (String, Remote?, Repository.PushType) async throws -> Void
 
     var body: some View {
         PinnedScrollableView(showsIndicators: false) {
             if let viewModel {
                 WipHeaderView(
-                    autoCommitEnabled: Binding<Bool>(
-                        get: { viewModel.autoCommitEnabled },
-                        set: { viewModel.autoCommitEnabled = $0 }
-                    ),
+                    viewModel: viewModel,
                     onAddManualWipCommitTapped: onAddManualWipCommitTapped,
                     onDeleteWipWorktreeTapped: {
                         viewModel.commits = []
                         onDeleteWipWorktreeTapped(viewModel.repositoryInfo.repository)
                     },
-                    tooltipForDeleteRepo: "Delete all wip commits of \(viewModel.repositoryInfo.repository.nameOfRepo)",
-                    tooltipForDeleteBranch: currentSelectedItem != nil ?
-                    "Delete wip commits of \(currentSelectedItem!.selectableItem.wipDescription.uncapitalizingFirstLetter())" : nil,
-                    isNotEmpty: viewModel.isNotEmpty)
-                .frame(height: 36)
+                    onAddRemoteTapped: onAddRemoteTapped,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemote: onSetLastSelectedRemote,
+                    onPushTapped: onPushTapped
+                )
                 .padding(.top, 8)
             }
         } content: {

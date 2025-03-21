@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct PopStashButton: View {
-    @Environment(StatusViewModel.self) var statusViewModel
     let stashes: [SelectableStash]
     @Binding var errorString: String?
     
     let title: String
+    let onPopStash: () async throws -> Void
 
     var body: some View {
         XFerroButton<Void>(
@@ -22,7 +22,7 @@ struct PopStashButton: View {
             onTap: {
                 Task {
                     do {
-                        try await statusViewModel.onPopStash()
+                        try await onPopStash()
                     } catch {
                         errorString = error.localizedDescription
                     }

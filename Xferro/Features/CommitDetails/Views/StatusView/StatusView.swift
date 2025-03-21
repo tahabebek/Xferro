@@ -75,10 +75,60 @@ struct StatusView: View {
                             Task {
                                 await viewModel.discardTapped(file: file)
                             }
+                        },
+                        onAmend: {
+                            Task {
+                                try await viewModel.amendTapped()
+                            }
+                        },
+                        onApplyStash: { stash in
+                            Task {
+                                try await viewModel.onApplyStash(stash: stash)
+                            }
+                        },
+                        onStash: {
+                            Task {
+                                try await viewModel.onStash()
+                            }
+                        },
+                        onDiscardAll: {
+                            Task {
+                                try await viewModel.discardAllTapped()
+                            }
+                        },
+                        onPopStash: {
+                            Task {
+                                try await viewModel.onPopStash()
+                            }
+                        },
+                        onGetLastSelectedRemoteIndex: { remote in
+                            return viewModel.getLastSelectedRemoteIndex(buttonTitle: remote)
+                        },
+                        onSetLastSelectedRemoteIndex: { index, remote in
+                            viewModel.setLastSelectedRemote(index, buttonTitle: remote)
+                        },
+                        onAddRemoteTapped: {
+                            viewModel.addRemoteTapped()
+                        },
+                        onAmendAndForcePushWithLease: { remote in
+                            Task {
+                                try await viewModel.onAmendAndForcePushWithLease(remote: remote)
+                            }
+                        }, onAmendAndPush: { remote in
+                            Task {
+                                try await viewModel.onAmendAndPush(remote: remote)
+                            }
+                        }, onCommitAndForcePushWithLease: { remote in
+                            Task {
+                                try await viewModel.onCommitAndForcePushWithLease(remote: remote)
+                            }
+                        }, onCommitAndPush: { remote in
+                            Task {
+                                try await viewModel.onCommitAndPush(remote: remote)
+                            }
                         }
                     )
                     .frame(width: Dimensions.commitDetailsViewMaxWidth)
-                    .environment(viewModel)
                     if let file = viewModel.currentFile {
                         PeekViewContainer(
                             timeStamp: Binding<Date>(
@@ -103,17 +153,29 @@ struct StatusView: View {
                             }
                         )
                         .id(file.id)
+                    } else {
+                        Text("Nothing is selected.")
                     }
-                    Spacer()
+                    Spacer(minLength: 0)
                 }
                 .task {
                     viewModel.setInitialSelection()
                 }
                 .sheet(isPresented: $viewModel.shouldAddRemoteBranch) {
-                    AddNewRemoteView(title: viewModel.addRemoteTitle)
+                    AddNewRemoteView(
+                        title: viewModel.addRemoteTitle,
+                        onAddRemote: { fetchURLString, pushURLString, remoteName in
+                            Task {
+                                await viewModel.onAddRemote(
+                                    fetchURLString: fetchURLString,
+                                    pushURLString: pushURLString,
+                                    remoteName: remoteName
+                                )
+                            }
+                        }
+                    )
                         .padding()
                         .frame(maxHeight: .infinity)
-                        .environment(viewModel)
                 }
                 .onChange(of: viewModel.selectableStatus!) { oldValue, newValue in
                     if oldValue.oid != newValue.oid {
@@ -125,6 +187,6 @@ struct StatusView: View {
                 .opacity(viewModel.selectableStatus == nil ? 0 : 1)
             }
         }
-        .padding(.horizontal, 6)
+        .padding(.leading, 8)
     }
 }

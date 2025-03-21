@@ -159,7 +159,7 @@ extension Repository {
         let tree = object(OID(treeOID)).mustSucceed(gitDir) as? Tree
 
         guard let tree else {
-            throw RepoError.unexpected
+            throw RepoError.unexpected("Tree not found")
         }
 
         return tree

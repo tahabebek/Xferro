@@ -4,7 +4,7 @@ enum PreferenceKeys {
     static let fetchTags = "fetchTags"
     static let accounts = "accounts"
     static let autoCommitEnabled = "autoCommitEnabled"
-    static let autoCommitAndPushEnabled = "autoCommitAndPushEnabled"
+    static let autoPushEnabled = "autoPushEnabled"
 }
 
 struct PreferenceKey<T> {
@@ -38,9 +38,9 @@ extension UserDefaults {
         set { set(newValue, forKey: PreferenceKeys.autoCommitEnabled) }
     }
 
-    @objc dynamic var autoCommitAndPushEnabled: Bool {
-        get { bool(forKey: PreferenceKeys.autoCommitAndPushEnabled) }
-        set { set(newValue, forKey: PreferenceKeys.autoCommitAndPushEnabled) }
+    @objc dynamic var autoPushEnabled: Bool {
+        get { bool(forKey: PreferenceKeys.autoPushEnabled) }
+        set { set(newValue, forKey: PreferenceKeys.autoPushEnabled) }
     }
 
     var accounts: [Account] {

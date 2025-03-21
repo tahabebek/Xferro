@@ -35,7 +35,7 @@ import Observation
     var tagsChangeObserver: AnyCancellable?
     var stashChangeObserver: AnyCancellable?
     var workDirChangeObserver: AnyCancellable?
-    
+
     var onGitChange: ((ChangeType) -> Void)?
     var onWorkDirChange: ((RepositoryInfo, String?) -> Void)?
     var onUserTapped: ((any SelectableItem) -> Void)?
@@ -71,20 +71,6 @@ import Observation
 
     func deleteRepositoryTapped() {
         onDeleteRepositoryTapped?(repository)
-    }
-
-    enum FetchType {
-        case remote(Remote)
-        case all
-    }
-
-    func fetchTapped(fetchType: FetchType) async throws {
-        switch fetchType {
-        case .remote(let remote):
-            fatalError(.unimplemented)
-        case .all:
-            fatalError(.unimplemented)
-        }
     }
 
     deinit {

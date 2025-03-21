@@ -9,10 +9,12 @@ import Cocoa
 import FirebaseCore
 import Mixpanel
 import Sentry
+import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var users: Users?
     var window: NSWindow!
+    var settingsViewController: NSHostingController<SettingsView>?
 
     override init() {
         super.init()
@@ -63,46 +65,103 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @MainActor private func createMenu() async {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            let mainMenu = NSMenu()
-            NSApp.mainMenu = mainMenu
+        let mainMenu = NSMenu()
+        NSApp.mainMenu = mainMenu
 
-            // Create the application menu
-            let appMenuItem = NSMenuItem()
-            mainMenu.addItem(appMenuItem)
+        // Create the application menu
+        let appMenuItem = NSMenuItem()
+        mainMenu.addItem(appMenuItem)
 
-            let appMenu = NSMenu()
-            appMenuItem.submenu = appMenu
+        let appMenu = NSMenu()
+        appMenuItem.submenu = appMenu
 
-            appMenu.addItem(
-                NSMenuItem(
-                    title: "Preferences...",
-                    action: #selector(showPreferences),
-                    keyEquivalent: ","
-                )
+        appMenu.addItem(
+            NSMenuItem(
+                title: "Preferences...",
+                action: #selector(showSettings),
+                keyEquivalent: ","
             )
+        )
 
-            appMenu.addItem(
-                NSMenuItem(
-                    title: "Quit",
-                    action: #selector(NSApplication.terminate(_:)),
-                    keyEquivalent: "q"
-                )
+        appMenu.addItem(
+            NSMenuItem(
+                title: "Quit",
+                action: #selector(NSApplication.terminate(_:)),
+                keyEquivalent: "q"
             )
+        )
 
-            let editMenu = NSMenu(title: "Edit")
-            let editMenuItem = NSMenuItem(title: "Edit", action: nil, keyEquivalent: "")
-            editMenuItem.submenu = editMenu
+        let repositoriesMenu = NSMenu(title: "File")
+        let repositoriesMenuItem = NSMenuItem(title: "File", action: nil, keyEquivalent: "")
+        repositoriesMenuItem.submenu = repositoriesMenu
 
-            // Add common edit menu items
-            editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-            editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-            editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-            editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        repositoriesMenu.addItem(withTitle: "New Repository", action: #selector(newRepository), keyEquivalent: "x")
+        repositoriesMenu.addItem(withTitle: "Add Local Repository", action: #selector(addLocalRepository), keyEquivalent: "o")
+        repositoriesMenu.addItem(withTitle: "Clone Repository", action: #selector(addLocalRepository), keyEquivalent: "O")
+        mainMenu.addItem(repositoriesMenuItem)
 
-            mainMenu.addItem(editMenuItem)
-        }
+        let editMenu = NSMenu(title: "Edit")
+        let editMenuItem = NSMenuItem(title: "Edit", action: nil, keyEquivalent: "")
+        editMenuItem.submenu = editMenu
+
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+
+        mainMenu.addItem(editMenuItem)
+
+        let viewMenu = NSMenu(title: "View")
+        let viewMenuItem = NSMenuItem(title: "View", action: nil, keyEquivalent: "")
+        viewMenuItem.submenu = viewMenu
+
+        // Add items to the View menu
+        let toggleSidebarItem = NSMenuItem(title: "Toggle Sidebar", action: #selector(toggleSidebar(_:)), keyEquivalent: "s")
+        toggleSidebarItem.keyEquivalentModifierMask = [.command, .control]
+        viewMenu.addItem(toggleSidebarItem)
+
+        viewMenu.addItem(NSMenuItem.separator())
+
+        // Add standard View menu items
+        viewMenu.addItem(withTitle: "Enter Full Screen", action: #selector(NSWindow.toggleFullScreen(_:)), keyEquivalent: "f")
+
+        // Add Window menu
+        let windowMenu = NSMenu(title: "Window")
+        let windowMenuItem = NSMenuItem(title: "Window", action: nil, keyEquivalent: "")
+        windowMenuItem.submenu = windowMenu
+
+        // Add items to the Window menu
+        windowMenu.addItem(withTitle: "Minimize", action: #selector(NSWindow.miniaturize(_:)), keyEquivalent: "m")
+        windowMenu.addItem(withTitle: "Zoom", action: #selector(NSWindow.zoom(_:)), keyEquivalent: "")
+        windowMenu.addItem(NSMenuItem.separator())
+        windowMenu.addItem(withTitle: "Bring All to Front", action: #selector(NSApplication.arrangeInFront(_:)), keyEquivalent: "")
+
+        // Add Help menu
+        let helpMenu = NSMenu(title: "Help")
+        let helpMenuItem = NSMenuItem(title: "Help", action: nil, keyEquivalent: "")
+        helpMenuItem.submenu = helpMenu
+
+        helpMenu.addItem(withTitle: "Xferro Help", action: #selector(showHelp(_:)), keyEquivalent: "?")
+
+        mainMenu.addItem(viewMenuItem)
+        mainMenu.addItem(windowMenuItem)
+        mainMenu.addItem(helpMenuItem)
+    }
+
+    @objc private func newRepository(_ sender: Any?) {
+    }
+
+    @objc private func addLocalRepository(_ sender: Any?) {
+    }
+
+    @objc private func cloneRepository(_ sender: Any?) {
+    }
+
+    @objc func toggleSidebar(_ sender: NSMenuItem) {
+    }
+
+    @objc func showHelp(_ sender: NSMenuItem) {
+        NSWorkspace.shared.open(URL(string: "https://xferro.ai/contact")!)
     }
 
     @MainActor private func saveBeforeQuit() {
@@ -114,14 +173,54 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         app.reply(toApplicationShouldTerminate: true)
     }
 
-    @MainActor @objc func showPreferences(_ sender: Any?) {
-        PrefsWindowController.shared.window?
-            .makeKeyAndOrderFront(nil)
+    @MainActor @objc func showSettings(_ sender: Any?) {
+        let contentView = SettingsView(
+            defaults: UserDefaults.standard,
+            config: GitConfig.default!
+        ) { [weak self] in
+            guard let self else { return }
+            dismissSettings()
+        }
+        settingsViewController = NSHostingController(rootView: contentView)
+        Self.firstWindow.contentViewController?.presentAsSheet(settingsViewController!)
+
+    }
+
+    @MainActor func dismissSettings() {
+        if let controller = settingsViewController,
+           let presentingViewController = controller.presentingViewController {
+            presentingViewController.dismiss(controller)
+        }
     }
 
     @MainActor static func showErrorMessage(error: RepoError) {
         let alert = NSAlert()
-        alert.messageString = error.message
+        alert.messageText = "Something went wrong"
+        alert.informativeText = ""
+        alert.alertStyle = .informational
+
+        // Create a scroll view with text view inside
+        let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 450, height: 300))
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .noBorder
+
+        let contentView = NSTextView(frame: scrollView.bounds)
+        contentView.isEditable = false
+        contentView.isSelectable = true
+        contentView.string = error.message.rawValue
+        contentView.textContainer?.widthTracksTextView = true
+        contentView.textContainer?.containerSize = NSSize(width: scrollView.bounds.width, height: CGFloat.greatestFiniteMagnitude)
+        contentView.isVerticallyResizable = true
+        contentView.autoresizingMask = [.width]
+
+        scrollView.documentView = contentView
+
+        alert.accessoryView = scrollView
+
+        // Add default button
+        alert.addButton(withTitle: "Dismiss")
         alert.beginSheetModal(for: Self.firstWindow)
     }
 

@@ -8,24 +8,26 @@
 import SwiftUI
 
 struct ApplyStashButton: View {
-    @Environment(StatusViewModel.self) var statusViewModel
     @Binding var selectedStashToApply: SelectableStash?
     @Binding var errorString: String?
+    @State var stashOptions: [XFerroButtonOption<SelectableStash>] = []
 
     let title: String
     let stashes: [SelectableStash]
-    @State var stashOptions: [XFerroButtonOption<SelectableStash>] = []
+    let onApplyStash: (SelectableStash) async throws -> Void
 
     init(
         selectedStashToApply: Binding<SelectableStash?> = .constant(nil),
         errorString: Binding<String?> = .constant(nil),
         title: String,
-        stashes: [SelectableStash]
+        stashes: [SelectableStash],
+        onApplyStash: @escaping (SelectableStash) async throws -> Void
     ) {
         self._selectedStashToApply = selectedStashToApply
         self._errorString = errorString
         self.title = title
         self.stashes = stashes
+        self.onApplyStash = onApplyStash
 
         self._stashOptions = State(
             initialValue: stashes.map {
@@ -36,9 +38,9 @@ struct ApplyStashButton: View {
     var body: some View {
         XFerroButton<SelectableStash>(
             title: title,
+            info: XFerroButtonInfo(info: InfoTexts.applyStash),
             disabled: stashes.isEmpty,
             options: $stashOptions,
-            showsSearchOptions: true,
             onTapOption: { option in
                 selectedStashToApply = option.data
             },
@@ -46,7 +48,7 @@ struct ApplyStashButton: View {
                 if let selectedStashToApply {
                     Task {
                         do {
-                            try await statusViewModel.onApplyStash(stash: selectedStashToApply)
+                            try await onApplyStash(selectedStashToApply)
                         } catch {
                             errorString = error.localizedDescription
                         }

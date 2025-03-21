@@ -9,22 +9,41 @@ import SwiftUI
 
 struct CommitsView: View {
     let commitsViewModel: CommitsViewModel
+
+    let onPullTapped: (StatusViewModel.PullType) -> Void
+    let onFetchTapped: (StatusViewModel.FetchType) -> Void
+    let onPushTapped: (String, Remote?, Repository.PushType) async throws -> Void
+    let onAddRemoteTapped: () -> Void
+    let onGetLastSelectedRemoteIndex: (String) -> Int
+    let onSetLastSelectedRemote: (Int, String) -> Void
+
     var body: some View {
         VSplitView {
-            NormalCommitsView(viewModel: commitsViewModel)
+            NormalCommitsView(
+                viewModel: commitsViewModel,
+                onPullTapped: onPullTapped,
+                onFetchTapped: onFetchTapped,
+                onAddRemoteTapped: onAddRemoteTapped,
+                onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                onSetLastSelectedRemote: onSetLastSelectedRemote
+            )
                 .padding(.trailing, 6)
             WipCommitsView(
                 viewModel: commitsViewModel.currentWipCommits,
-                currentSelectedItem: commitsViewModel.currentSelectedItem
-            ) {
-                commitsViewModel.userTapped(item: $0, repositoryInfo: $1)
-            } isSelectedItem: {
-                commitsViewModel.isSelected(item: $0)
-            } onAddManualWipCommitTapped: {
-                commitsViewModel.addManualWipCommitTapped()
-            } onDeleteWipWorktreeTapped: {
-                commitsViewModel.deleteWipWorktreeTapped(for: $0)
-            }
+                currentSelectedItem: commitsViewModel.currentSelectedItem,
+                onUserTapped: commitsViewModel.userTapped(item:repositoryInfo:),
+                isSelectedItem: {
+                    commitsViewModel.isSelected(item: $0)
+                },
+                onAddManualWipCommitTapped: {
+                    commitsViewModel.addManualWipCommitTapped()
+                }, onDeleteWipWorktreeTapped: {
+                    commitsViewModel.deleteWipWorktreeTapped(for: $0)
+                }, onAddRemoteTapped: onAddRemoteTapped,
+                onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                onSetLastSelectedRemote: onSetLastSelectedRemote,
+                onPushTapped: onPushTapped
+            )
             .padding(.trailing, 6)
         }
     }

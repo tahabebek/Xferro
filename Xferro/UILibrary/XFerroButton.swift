@@ -39,7 +39,6 @@ struct XFerroButton<OptionData>: View {
     let isProminent: Bool
     let isSmall: Bool
     let addMoreOptionsText: String?
-    let showsSearchOptions: Bool
     let onTapOption: (XFerroButtonOption<OptionData>) -> Void
     let onTapAddMore: () -> Void
     let onTap: () -> Void
@@ -54,7 +53,6 @@ struct XFerroButton<OptionData>: View {
         options: Binding<[XFerroButtonOption<OptionData>]> = .constant([]),
         selectedOptionIndex: Binding<Int> = .constant(0),
         addMoreOptionsText: String? = nil,
-        showsSearchOptions: Bool = false,
         onTapOption: @escaping (XFerroButtonOption<OptionData>) -> Void = { _ in },
         onTapAddMore: @escaping () -> Void = {},
         onTap: @escaping () -> Void
@@ -68,7 +66,6 @@ struct XFerroButton<OptionData>: View {
         self._options = options
         self._selectedOptionIndex = selectedOptionIndex
         self.addMoreOptionsText = addMoreOptionsText
-        self.showsSearchOptions = showsSearchOptions
         self.onTapOption = onTapOption
         self.onTapAddMore = onTapAddMore
         self.onTap = onTap
@@ -112,8 +109,13 @@ struct XFerroButton<OptionData>: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.fabulaBack2.opacity(0.7))
                     .frame(maxWidth: 80)
-                Label(options[selectedOptionIndex].title, systemImage: "arrowtriangle.down.fill")
-                    .labelStyle(RightImageLabelStyle())
+                Label(
+                    options[selectedOptionIndex].title,
+                    systemImage: Images.actionButtonSystemImageName
+                )
+                .labelStyle(
+                    RightImageLabelStyle()
+                )
                     .lineLimit(1)
                     .frame(maxWidth: 72)
                     .fixedSize()
@@ -139,7 +141,7 @@ struct XFerroButton<OptionData>: View {
 
     @ViewBuilder func infoView() -> some View {
         if let info {
-            Image(systemName: "info.circle")
+            Images.infoButtonImage
                 .frame(width: 16, height: 16)
                 .contentShape(Rectangle())
                 .onTapGesture {

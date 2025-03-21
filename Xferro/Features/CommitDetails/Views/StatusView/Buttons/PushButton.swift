@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct PushButton: View {
-    @Environment(StatusViewModel.self) var statusViewModel
-
     @Binding var commitSummary: String
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
@@ -22,6 +20,14 @@ struct PushButton: View {
     let amend: Bool
     let force: Bool
 
+    let onGetLastSelectedRemoteIndex: (String) -> Int
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
+    let onAddRemoteTapped: () -> Void
+    let onAmendAndForcePushWithLease: (Remote?) async throws -> Void
+    let onAmendAndPush: (Remote?) async throws -> Void
+    let onCommitAndForcePushWithLease: (Remote?) async throws -> Void
+    let onCommitAndPush: (Remote?) async throws -> Void
+
     init(
         commitSummary: Binding<String>,
         canCommit: Binding<Bool>,
@@ -31,7 +37,14 @@ struct PushButton: View {
         remotes: [Remote],
         title: String,
         amend: Bool,
-        force: Bool
+        force: Bool,
+        onGetLastSelectedRemoteIndex: @escaping (String) -> Int,
+        onSetLastSelectedRemoteIndex: @escaping (Int, String) -> Void,
+        onAddRemoteTapped: @escaping () -> Void,
+        onAmendAndForcePushWithLease: @escaping (Remote?) async throws -> Void,
+        onAmendAndPush: @escaping (Remote?) async throws -> Void,
+        onCommitAndForcePushWithLease: @escaping (Remote?) async throws -> Void,
+        onCommitAndPush: @escaping (Remote?) async throws -> Void
     ) {
         self._commitSummary = commitSummary
         self._canCommit = canCommit
@@ -42,6 +55,13 @@ struct PushButton: View {
         self.title = title
         self.amend = amend
         self.force = force
+        self.onGetLastSelectedRemoteIndex = onGetLastSelectedRemoteIndex
+        self.onSetLastSelectedRemoteIndex = onSetLastSelectedRemoteIndex
+        self.onAddRemoteTapped = onAddRemoteTapped
+        self.onAmendAndForcePushWithLease = onAmendAndForcePushWithLease
+        self.onAmendAndPush = onAmendAndPush
+        self.onCommitAndForcePushWithLease = onCommitAndForcePushWithLease
+        self.onCommitAndPush = onCommitAndPush
 
         self._options = State(wrappedValue: remotes.map { XFerroButtonOption(title: $0.name!, data: $0) })
     }
@@ -54,39 +74,32 @@ struct PushButton: View {
             options: $options,
             selectedOptionIndex: Binding<Int>(
                 get: {
-                    statusViewModel.getLastSelectedRemoteIndex(buttonTitle: "push")
+                    onGetLastSelectedRemoteIndex("push")
                 }, set: { value, _ in
-                    statusViewModel.setLastSelectedRemote(value, buttonTitle: "push")
+                    onSetLastSelectedRemoteIndex(value, "push")
                 }
             ),
             addMoreOptionsText: "Add Remote...",
-            showsSearchOptions: false,
             onTapOption: { option in
                 selectedRemoteForPush = option.data
             },
             onTapAddMore: {
-                Task {
-                    do {
-                        try await statusViewModel.addRemoteTapped()
-                    } catch {
-                        errorString = error.localizedDescription
-                    }
-                }
+                onAddRemoteTapped()
             },
             onTap: {
                 Task {
                     do {
                         if amend {
                             if force {
-                                try await statusViewModel.onAmendAndForcePushWithLease(remote: selectedRemoteForPush)
+                                try await onAmendAndForcePushWithLease(selectedRemoteForPush)
                             } else {
-                                try await statusViewModel.onAmendAndPush(remote: selectedRemoteForPush)
+                                try await onAmendAndPush(selectedRemoteForPush)
                             }
                         } else {
                             if force {
-                                try await statusViewModel.onCommitAndForcePushWithLease(remote: selectedRemoteForPush)
+                                try await onCommitAndForcePushWithLease(selectedRemoteForPush)
                             } else {
-                                try await statusViewModel.onCommitAndPush(remote: selectedRemoteForPush)
+                                try await onCommitAndPush(selectedRemoteForPush)
                             }
                         }
                     } catch {
@@ -99,7 +112,7 @@ struct PushButton: View {
             options = remotes.map { XFerroButtonOption(title: $0.name!, data: $0) }
         }
         .task {
-            selectedRemoteForPush = remotes[statusViewModel.getLastSelectedRemoteIndex(buttonTitle: "push")]
+            selectedRemoteForPush = remotes[onGetLastSelectedRemoteIndex("push")]
         }
     }
 }

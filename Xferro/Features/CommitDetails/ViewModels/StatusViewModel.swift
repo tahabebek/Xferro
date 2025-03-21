@@ -24,30 +24,34 @@ import OrderedCollections
     var refreshRemoteSubject: PassthroughSubject<Void, Never>?
     var addRemoteTitle: String = ""
 
+    static var lastIndex = 0
+
     func getLastSelectedRemoteIndex(buttonTitle: String) -> Int {
         guard let remotes else {
-            fatalError(.illegal)
+            return Self.lastIndex
         }
-
+        var index = 0
         let userDefaults = UserDefaults.standard
         if let remote = userDefaults.string(forKey: selectedRemoteKey(buttonTitle: buttonTitle)) {
-            return Int(remote)!
+            index = Int(remote)!
         } else {
             if remotes.count > 0 {
                 if let originIndex = remotes.firstIndex(where: { $0.name == "origin" }) {
                     setLastSelectedRemote(originIndex, buttonTitle: buttonTitle)
-                    return originIndex
+                    index = originIndex
                 } else if let upstreamIndex = remotes.firstIndex(where: { $0.name == "upstream" }) {
                     setLastSelectedRemote(upstreamIndex, buttonTitle: buttonTitle)
-                    return upstreamIndex
+                    index = upstreamIndex
                 }
             }
         }
-        return 0
+        Self.lastIndex = index
+        return index
     }
 
     func setLastSelectedRemote(_ index: Int, buttonTitle: String) {
         UserDefaults.standard.set(index, forKey: selectedRemoteKey(buttonTitle: buttonTitle))
+        Self.lastIndex = index
     }
 
     private func selectedRemoteKey(buttonTitle: String) -> String {
@@ -262,6 +266,107 @@ import OrderedCollections
         try await amendTapped()
     }
 
+    enum FetchType {
+        case remote(Remote?)
+        case all
+    }
+
+    enum PullType {
+        case merge
+        case rebase
+    }
+
+    func fetchTapped(fetchType: FetchType) {
+        Task {
+            var activity: Activity?
+            defer {
+                if let activity {
+                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
+                }
+            }
+            guard let repository else {
+                fatalError(.invalid)
+            }
+            
+            switch fetchType {
+            case .remote(let remote):
+                guard let remote else {
+                    Task { @MainActor in
+                        addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
+                        shouldAddRemoteBranch = true
+                    }
+                    return false
+                }
+                activity = ProgressManager.shared.startActivity(name: "Fetching \(remote.name ?? "remote")...")
+                do {
+                    try GitCLI.executeGit(repository, ["fetch", remote.name!, "--prune"])
+                } catch {
+                    Task { @MainActor in
+                        AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
+                    }
+                }
+            case .all:
+                activity = ProgressManager.shared.startActivity(name: "Fetching all remotes")
+                do {
+                    try GitCLI.executeGit(repository, ["fetch", "--all", "--prune"])
+                } catch {
+                    Task { @MainActor in
+                        AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
+                    }
+                }
+            }
+            return true
+        }
+    }
+
+    func pullTapped(pullType: PullType) {
+        Task {
+            var activity: Activity?
+            defer {
+                if let activity {
+                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
+                }
+            }
+            guard let repository else {
+                fatalError(.invalid)
+            }
+
+            let head = Head.of(repository)
+            guard case .branch = head else {
+                fatalError(.invalid)
+            }
+
+            guard (repository.config ?? GitConfig.default)!.branchRemote(head.name) != nil else {
+                Task { @MainActor in
+                    AppDelegate.showErrorMessage(error: RepoError.unexpected("No remote configured for current branch"))
+                }
+                return
+            }
+
+            switch pullType {
+            case .merge:
+                activity = ProgressManager.shared.startActivity(name: "Pulling branch \(head.name) (merge)...")
+                do {
+                    try GitCLI.executeGit(repository, ["pull", "--merge"])
+                } catch {
+                    Task { @MainActor in
+                        AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
+                    }
+                }
+            case .rebase:
+                activity = ProgressManager.shared.startActivity(name: "Pulling branch \(head.name) (rebase)...")
+                do {
+                    try GitCLI.executeGit(repository, ["pull", "--rebase",])
+                } catch {
+                    Task { @MainActor in
+                        AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
+                    }
+                }
+            }
+        }
+    }
+
+
     func onAddRemote(
         fetchURLString: String,
         pushURLString: String,
@@ -295,7 +400,7 @@ import OrderedCollections
             }
         } catch {
             Task { @MainActor in
-                AppDelegate.showErrorMessage(error: .unexpected)
+                AppDelegate.showErrorMessage(error: .unexpected(error.localizedDescription))
             }
         }
     }
@@ -383,11 +488,38 @@ import OrderedCollections
         try await pushOperation.start()
     }
 
-    func addRemoteTapped() async throws {
-        Task { @MainActor in
-            addRemoteTitle = "Add a new remote"
-            shouldAddRemoteBranch = true
+    func onPush(
+        branchName: String,
+        remote: Remote?,
+        pushType: Repository.PushType
+    ) async throws {
+        guard let repository else {
+            fatalError(.unimplemented)
         }
+
+        if let remote {
+            guard let branch = repository.branch(named: branchName).mustSucceed(repository.gitDir) else {
+                return
+            }
+            let pushOperation = await PushOpController(
+                localBranch: branch,
+                remote: remote,
+                repository: repository,
+                pushType: pushType
+            )
+            try await pushOperation.start()
+        } else {
+            Task { @MainActor in
+                addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
+                shouldAddRemoteBranch = true
+            }
+        }
+    }
+
+    @MainActor
+    func addRemoteTapped() {
+        addRemoteTitle = "Add a new remote"
+        shouldAddRemoteBranch = true
     }
 
     func onStash() async throws {

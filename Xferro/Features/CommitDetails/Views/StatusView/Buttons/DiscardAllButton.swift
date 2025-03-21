@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct DiscardAllButton: View {
-    @Environment(StatusViewModel.self) var statusViewModel
     @Binding var hasChanges: Bool
     @Binding var errorString: String?
 
     let title: String
+    let onDiscardAll: () async throws -> Void
 
     var body: some View {
         XFerroButton<Void>(
@@ -22,7 +22,7 @@ struct DiscardAllButton: View {
             onTap: {
                 Task {
                     do {
-                        try await statusViewModel.discardAllTapped()
+                        try await onDiscardAll()
                     } catch {
                         errorString = error.localizedDescription
                     }

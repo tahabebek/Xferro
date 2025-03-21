@@ -62,7 +62,7 @@ extension CommitsViewModel {
         }
         newRepositoryInfo.onWorkDirChange = { [weak self] repositoryInfo, summary in
             guard let self else { return }
-            guard autoCommitEnabled else { return }
+            guard UserDefaults.standard.autoCommitEnabled else { return }
             addWipCommit(repositoryInfo: repositoryInfo, summary: summary)
         }
         newRepositoryInfo.onUserTapped = { [weak self, weak newRepositoryInfo] in

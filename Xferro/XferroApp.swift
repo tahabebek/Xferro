@@ -23,10 +23,12 @@ struct SwiftSpaceApp: App {
 @main
 struct SwiftSpaceApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.openURL) private var openURL
+    
     @State private var welcomeViewModel = WelcomeViewModel()
-    @State private var discardPopup = DiscardPopup()
     @State private var users: Users? = DataManager.load(Users.self, filename: DataManager.usersFileName)
     @State private var projectsViewModel: ProjectsViewModel? = ProjectsViewModel(user: DataManager.load(Users.self, filename: DataManager.usersFileName)?.currentUser)
+
     private let screenDimensions = NSScreen.main?.visibleFrame.size
 
     var body: some Scene {
@@ -36,7 +38,6 @@ struct SwiftSpaceApp: App {
                     Group {
                         if let projectsViewModel {
                             ProjectsView(viewModel: projectsViewModel)
-                                .environment(discardPopup)
                         } else {
                             WelcomeView(viewModel: welcomeViewModel)
                                 .onChange(of: welcomeViewModel.users) { oldValue, newValue in
@@ -55,7 +56,27 @@ struct SwiftSpaceApp: App {
                     .environment(\.windowSize, geometry.size)
                 }
             }
-//            .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
+            //            .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
+            .background(Color.fabulaBack2)
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    HStack(spacing: 6) {
+                        if ProgressManager.shared.isActive {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text(ProgressManager.shared.currentActivityName)
+                                .font(.body)
+                        }
+                        Images.infoButtonImage
+                            .frame(width: 16, height: 16)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                openURL(URL(string: "https://xferro.ai")!)
+                            }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .task {
                 AppDelegate.users = users
                 do {
@@ -65,37 +86,6 @@ struct SwiftSpaceApp: App {
                     // Handle TipKit errors
                     print("Error initializing TipKit \(error.localizedDescription)")
                 }
-            }
-            .background(Color.fabulaBack2)
-            .popup(
-                isPresented: $discardPopup.isPresented,
-                backgroundStyle: .blur,
-                isDestructive: true
-            ) {
-                VStack {
-                    Text(discardPopup.title)
-                        .padding()
-                    HStack {
-                        XFerroButton<Void>(
-                            title: "Cancel",
-                            onTap: {
-                                discardPopup.onCancel?()
-                                discardPopup.isPresented = false
-                            }
-                        )
-                        XFerroButton<Void>(
-                            title: "Discard",
-                            onTap: {
-                                discardPopup.onConfirm?()
-                                discardPopup.isPresented = false
-                            }
-                        )
-                    }
-                    .padding(.top)
-                }
-                .padding()
-            } onCancel: {
-                discardPopup.onCancel?()
             }
         }
     }

@@ -20,7 +20,7 @@ struct BranchMenuView: View {
         Button(action: {
             showingBranchOptions = true
         }) {
-            Label(name, systemImage: "arrowtriangle.down.fill")
+            Label(name, systemImage: Images.actionButtonSystemImageName)
                 .foregroundStyle(isCurrent ? Color.accentColor : Color.white)
                 .fixedSize()
                 .labelStyle(RightImageLabelStyle())
@@ -32,59 +32,70 @@ struct BranchMenuView: View {
         .popover(isPresented: $showingBranchOptions) {
             VStack(alignment: .leading, spacing: 8) {
                 if !isCurrent {
-                    Button("Switch to \(name)") {
-                        print("Switch to branch")
-                        showingBranchOptions = false
-                    }
-                    .padding(.vertical, 4)
-
-                    if !isDetached {
-                        Button("Delete \(name)") {
-                            onDeleteBranchTapped?(name)
+                    XFerroButton<Void>(
+                        title: "Switch to \(name)",
+                        onTap: {
                             showingBranchOptions = false
+                            fatalError(.unimplemented)
                         }
-                        .padding(.vertical, 4)
+                    )
+                    if !isDetached {
+                        XFerroButton<Void>(
+                            title: "Delete \(name)",
+                            onTap: {
+                                showingBranchOptions = false
+                                onDeleteBranchTapped?(name)
+                            }
+                        )
                     }
                 }
 
-                Button("Push to remote") {
-                    showingBranchOptions = false
-                    onPushBranchToRemoteTapped?(name)
-                }
-                .padding(.vertical, 4)
-
-                Button("Create a new branch based on \(name)") {
-                    print("Create branch")
-                    showingBranchOptions = false
-                }
-                .padding(.vertical, 4)
+                XFerroButton<Void>(
+                    title: "Push to remote",
+                    onTap: {
+                        showingBranchOptions = false
+                        onPushBranchToRemoteTapped?(name)
+                    }
+                )
+                XFerroButton<Void>(
+                    title: "Create a new branch based on \(name)",
+                    onTap: {
+                        showingBranchOptions = false
+                        fatalError(.unimplemented)
+                    }
+                )
 
                 if !isDetached, branchCount > 1 {
                     Divider()
-
-                    Button("Merge a branch into \(name)") {
-                        print("Merge into")
-                        showingBranchOptions = false
-                    }
-                    .padding(.vertical, 4)
-
-                    Button("Rebase a branch into \(name)") {
-                        print("Rebase into")
-                        showingBranchOptions = false
-                    }
-                    .padding(.vertical, 4)
-
-                    Button("Merge \(name) into another branch") {
-                        print("Merge to")
-                        showingBranchOptions = false
-                    }
-                    .padding(.vertical, 4)
-
-                    Button("Rebase \(name) into another branch") {
-                        print("Rebase to")
-                        showingBranchOptions = false
-                    }
-                    .padding(.vertical, 4)
+                    XFerroButton<Void>(
+                        title: "Merge a branch into \(name)",
+                        onTap: {
+                            showingBranchOptions = false
+                            fatalError(.unimplemented)
+                        }
+                    )
+                    XFerroButton<Void>(
+                        title: "Merge \(name) into another branch",
+                        onTap: {
+                            showingBranchOptions = false
+                            fatalError(.unimplemented)
+                        }
+                    )
+                    Divider()
+                    XFerroButton<Void>(
+                        title: "Rebase a branch into \(name)",
+                        onTap: {
+                            showingBranchOptions = false
+                            fatalError(.unimplemented)
+                        }
+                    )
+                    XFerroButton<Void>(
+                        title: "Rebase \(name) into another branch",
+                        onTap: {
+                            showingBranchOptions = false
+                            fatalError(.unimplemented)
+                        }
+                    )
                 }
             }
             .padding()

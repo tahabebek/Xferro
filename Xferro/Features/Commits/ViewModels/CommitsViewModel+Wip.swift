@@ -46,7 +46,7 @@ extension CommitsViewModel {
                     commits: wipCommits,
                     item: selectedItem,
                     repositoryInfo: repositoryInfo,
-                    autoCommitEnabled: autoCommitEnabled
+                    branchName: branchName
                 )
             }
         }
