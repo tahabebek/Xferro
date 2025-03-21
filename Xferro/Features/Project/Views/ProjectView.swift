@@ -9,12 +9,13 @@ import AppKit
 import SwiftUI
 
 struct ProjectView: View {
+    @Bindable var statusViewModel: StatusViewModel
     @Bindable var commitsViewModel: CommitsViewModel
-    @Bindable var statusViewModel = StatusViewModel()
     @Bindable var wipCommitViewModel = WipCommitViewModel()
 
-    init(commitsViewModel: CommitsViewModel) {
+    init(commitsViewModel: CommitsViewModel, statusViewModel: StatusViewModel) {
         self.commitsViewModel = commitsViewModel
+        self.statusViewModel = statusViewModel
     }
 
     var body: some View {

@@ -28,6 +28,7 @@ struct SwiftSpaceApp: App {
     @State private var welcomeViewModel = WelcomeViewModel()
     @State private var users: Users? = DataManager.load(Users.self, filename: DataManager.usersFileName)
     @State private var projectsViewModel: ProjectsViewModel? = ProjectsViewModel(user: DataManager.load(Users.self, filename: DataManager.usersFileName)?.currentUser)
+    @State private var statusViewModel = StatusViewModel()
 
     private let screenDimensions = NSScreen.main?.visibleFrame.size
 
@@ -37,7 +38,7 @@ struct SwiftSpaceApp: App {
                 GeometryReader { geometry in
                     Group {
                         if let projectsViewModel {
-                            ProjectsView(viewModel: projectsViewModel)
+                            ProjectsView(viewModel: projectsViewModel, statusViewModel: statusViewModel)
                         } else {
                             WelcomeView(viewModel: welcomeViewModel)
                                 .onChange(of: welcomeViewModel.users) { oldValue, newValue in
@@ -59,7 +60,7 @@ struct SwiftSpaceApp: App {
             //            .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
             .background(Color.fabulaBack2)
             .toolbar {
-                ToolbarItem(placement: .automatic) {
+                ToolbarItem(placement: .status) {
                     HStack(spacing: 6) {
                         if ProgressManager.shared.isActive {
                             ProgressView()

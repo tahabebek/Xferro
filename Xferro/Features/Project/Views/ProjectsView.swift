@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct ProjectsView: View {
-    let viewModel: ProjectsViewModel
+    @Bindable var viewModel: ProjectsViewModel
+    let statusViewModel: StatusViewModel
     let folderPickerViewModel = FolderPickerViewModel()
 
     var body: some View {
@@ -17,7 +18,7 @@ struct ProjectsView: View {
             HStack {
                 Spacer()
                 if let commitsViewModel = viewModel.commitsViewModel {
-                    ProjectView(commitsViewModel: commitsViewModel)
+                    ProjectView(commitsViewModel: commitsViewModel, statusViewModel: statusViewModel)
                 } else {
                     FolderPickerView(viewModel: folderPickerViewModel)
                         .onChange(of: folderPickerViewModel.selectedFolderURL) { oldValue, newValue in

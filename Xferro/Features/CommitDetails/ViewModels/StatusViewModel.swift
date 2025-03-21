@@ -24,34 +24,29 @@ import OrderedCollections
     var refreshRemoteSubject: PassthroughSubject<Void, Never>?
     var addRemoteTitle: String = ""
 
-    static var lastIndex = 0
-
     func getLastSelectedRemoteIndex(buttonTitle: String) -> Int {
         guard let remotes else {
-            return Self.lastIndex
+            fatalError(.invalid)
         }
-        var index = 0
         let userDefaults = UserDefaults.standard
         if let remote = userDefaults.string(forKey: selectedRemoteKey(buttonTitle: buttonTitle)) {
-            index = Int(remote)!
+            return Int(remote)!
         } else {
             if remotes.count > 0 {
                 if let originIndex = remotes.firstIndex(where: { $0.name == "origin" }) {
                     setLastSelectedRemote(originIndex, buttonTitle: buttonTitle)
-                    index = originIndex
+                    return originIndex
                 } else if let upstreamIndex = remotes.firstIndex(where: { $0.name == "upstream" }) {
                     setLastSelectedRemote(upstreamIndex, buttonTitle: buttonTitle)
-                    index = upstreamIndex
+                    return upstreamIndex
                 }
             }
         }
-        Self.lastIndex = index
-        return index
+        return 0
     }
 
     func setLastSelectedRemote(_ index: Int, buttonTitle: String) {
         UserDefaults.standard.set(index, forKey: selectedRemoteKey(buttonTitle: buttonTitle))
-        Self.lastIndex = index
     }
 
     private func selectedRemoteKey(buttonTitle: String) -> String {
