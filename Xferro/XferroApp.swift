@@ -88,6 +88,7 @@ struct SwiftSpaceApp: App {
                     print("Error initializing TipKit \(error.localizedDescription)")
                 }
             }
+            .preferredColorScheme(.dark)
         }
     }
 }
