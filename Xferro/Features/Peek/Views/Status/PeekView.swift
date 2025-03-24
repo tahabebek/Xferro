@@ -47,7 +47,7 @@ struct PeekView: View {
             case _ as NoDiffInfo, _ as BinaryDiffInfo:
                 ""
             case let diff as DiffInfo:
-                "\(diff.hunks().count) \(diff.hunks().count == 1 ? "chunk" : "chunks"), \(diff.addedLinesCount) \(diff.addedLinesCount == 1 ? "addition" : "additions"), \(diff.deletedLinesCount) \(diff.deletedLinesCount == 1 ? "deletion" : "deletions")"
+                "\(diff.hunks().count) \(diff.hunks().count == 1 ? "hunk" : "hunks"), \(diff.addedLinesCount) \(diff.addedLinesCount == 1 ? "addition" : "additions"), \(diff.deletedLinesCount) \(diff.deletedLinesCount == 1 ? "deletion" : "deletions")"
             default:
                 ""
             }

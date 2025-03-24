@@ -114,12 +114,19 @@ import OrderedCollections
 
     var checkState: CheckboxState {
         get {
-            return diffInfo?.checkState ?? .checked
+            diffInfo?.checkState ?? .checked
         } set {
-            guard diffInfo != nil else {
-                fatalError(.invalid)
+            if diffInfo != nil {
+                diffInfo!.checkState = newValue
+            } else {
+                Task {
+                    await setDiffInfoForStatus()
+                    guard diffInfo != nil else {
+                        fatalError(.invalid)
+                    }
+                    diffInfo!.checkState = newValue
+                }
             }
-            diffInfo!.checkState = newValue
         }
     }
 
@@ -295,7 +302,7 @@ import OrderedCollections
         let newDiffInfo = await createDiffInfo()
         await diffInfoCache.set(key: path, value: newDiffInfo)
         await lastModifiedCache.set(key: path, value: modifiedDate)
-        Task { @MainActor in
+        await MainActor.run {
             isUntracked = false
             diffInfo = newDiffInfo
         }
@@ -306,7 +313,7 @@ import OrderedCollections
         case .unmodified, .ignored:
             fatalError(.invalid)
         case .untracked:
-            Task { @MainActor in
+            await MainActor.run {
                 isUntracked = true
                 diffInfo = nil
                 return
@@ -338,14 +345,14 @@ import OrderedCollections
             }
             if diffInfo == nil {
                 if let cached = await diffInfoCache[workDirOld] {
-                    Task { @MainActor in
+                    await MainActor.run {
                         isUntracked = false
                         diffInfo = cached
                     }
                 } else {
                     let newDiffInfo = await createDiffInfo()
                     await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
-                    Task { @MainActor in
+                    await MainActor.run {
                         isUntracked = false
                         diffInfo = newDiffInfo
                     }
@@ -354,7 +361,7 @@ import OrderedCollections
                 if diffInfo == nil {
                     let newDiffInfo = await createDiffInfo()
                     await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
-                    Task { @MainActor in
+                    await MainActor.run {
                         isUntracked = false
                         diffInfo = newDiffInfo
                     }
@@ -380,7 +387,7 @@ import OrderedCollections
         }
 
         let diffInfo = await self.createDiffInfo(commit: commitPointer, parent: ownerPointer)
-        Task { @MainActor in
+        await MainActor.run {
             self.diffInfo = diffInfo
         }
     }

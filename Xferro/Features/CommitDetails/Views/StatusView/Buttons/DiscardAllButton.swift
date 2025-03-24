@@ -15,10 +15,9 @@ struct DiscardAllButton: View {
     let onDiscardAll: () async throws -> Void
 
     var body: some View {
-        XFerroButton<Void>(
+        XFButton<Void>(
             title: title,
             disabled: !hasChanges,
-            dangerous: true,
             onTap: {
                 Task {
                     do {

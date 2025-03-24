@@ -28,7 +28,7 @@ struct TriStateCheckbox: View {
                 switch state {
                 case .checked:
                     Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.small)
                         .foregroundColor(.accentColor)
                 case .unchecked:
                     EmptyView()

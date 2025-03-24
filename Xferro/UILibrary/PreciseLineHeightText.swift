@@ -9,17 +9,9 @@ import SwiftUI
 
 struct PreciseLineHeightText: NSViewRepresentable {
     let text: String
-    let fontSize: CGFloat
-    let lineHeight: CGFloat
 
-    init(
-        text: String,
-        fontSize: CGFloat = NSFont.preferredFont(forTextStyle: .body).pointSize,
-        lineHeight: CGFloat = 20.0
-    ) {
+    init(text: String) {
         self.text = text
-        self.fontSize = fontSize
-        self.lineHeight = lineHeight
     }
 
     func makeNSView(context: Context) -> NSTextView {
@@ -55,15 +47,15 @@ struct PreciseLineHeightText: NSViewRepresentable {
     }
 
     private func updateTextView(_ textView: NSTextView) {
-        let monoFont = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        let font = NSFont(name: .diffViewFontName, size: .diffViewFontSize)!
         let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.minimumLineHeight = lineHeight
-        paragraphStyle.maximumLineHeight = lineHeight
+        paragraphStyle.minimumLineHeight = .diffViewLineHeight
+        paragraphStyle.maximumLineHeight = .diffViewLineHeight
 
         let attributedString = NSAttributedString(
             string: text,
             attributes: [
-                .font: monoFont,
+                .font: font,
                 .paragraphStyle: paragraphStyle,
                 .foregroundColor: NSColor.white
             ]

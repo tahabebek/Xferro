@@ -14,22 +14,18 @@ struct ForgotPasswordView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            // Title
             Text("Reset Password")
-                .font(.system(size: 20, weight: .semibold))
-
+                .font(.heading2)
             Text("Enter your email address and we'll send you instructions to reset your password.")
-                .font(.system(size: 13))
+                .font(.paragraph3)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
-            // Email field
             VStack(alignment: .leading, spacing: 8) {
                 Text("Email")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.paragraph3)
                     .foregroundStyle(.secondary)
-
                 TextField("", text: $viewModel.email)
                     .textFieldStyle(.plain)
                     .frame(height: 38)
@@ -39,6 +35,7 @@ struct ForgotPasswordView: View {
                         RoundedRectangle(cornerRadius: 6)
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
+                    .font(.formField)
             }
             .frame(width: 300)
 

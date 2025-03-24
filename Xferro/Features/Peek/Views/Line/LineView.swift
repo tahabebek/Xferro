@@ -112,26 +112,24 @@ struct LineView: View {
                         )
                     }
                 }
-                .font(.callout)
-                .monospacedDigit()
-                .frame(height: PartView.selectBoxHeight)
+                .frame(height: .diffViewLineHeight)
                 .minimumScaleFactor(0.75)
                     // Just show the background without text
                 ZStack {
                     color.opacity(LineView.backgroundOpacity)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 20)
+                        .frame(height: .diffViewLineHeight)
 
                     if (hoveredLine != nil && hoveredLine! == indexInPart) {
                         color.opacity(LineView.hoveredTextBackgroundOpacity)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 20)
+                            .frame(height: .diffViewLineHeight)
                     }
                 }
                 Spacer()
             }
         }
-        .frame(height: 20)
+        .frame(height: .diffViewLineHeight)
     }
 
     func lineNumber(_ line: Int) -> String {

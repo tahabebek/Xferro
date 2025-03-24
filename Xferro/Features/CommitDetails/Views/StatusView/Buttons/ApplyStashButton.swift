@@ -10,7 +10,7 @@ import SwiftUI
 struct ApplyStashButton: View {
     @Binding var selectedStashToApply: SelectableStash?
     @Binding var errorString: String?
-    @State var stashOptions: [XFerroButtonOption<SelectableStash>] = []
+    @State var stashOptions: [XFButtonOption<SelectableStash>] = []
 
     let title: String
     let stashes: [SelectableStash]
@@ -31,14 +31,14 @@ struct ApplyStashButton: View {
 
         self._stashOptions = State(
             initialValue: stashes.map {
-                XFerroButtonOption(title: $0.stash.message, data: $0)
+                XFButtonOption(title: $0.stash.message, data: $0)
             })
     }
 
     var body: some View {
-        XFerroButton<SelectableStash>(
+        XFButton<SelectableStash>(
             title: title,
-            info: XFerroButtonInfo(info: InfoTexts.applyStash),
+            info: XFButtonInfo(info: InfoTexts.applyStash),
             disabled: stashes.isEmpty,
             options: $stashOptions,
             onTapOption: { option in
@@ -58,7 +58,7 @@ struct ApplyStashButton: View {
             }
         )
         .onChange(of: stashes.count) {
-            stashOptions = stashes.map { XFerroButtonOption(title: $0.stash.message, data: $0) }
+            stashOptions = stashes.map { XFButtonOption(title: $0.stash.message, data: $0) }
         }
     }
 }

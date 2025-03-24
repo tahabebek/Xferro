@@ -12,7 +12,7 @@ struct AddRepositoryButton: View {
     @State private var showFolderSelector: Bool = false
 
     var body: some View {
-        XFerroButton<Void>(
+        XFButton<Void>(
             title: "New Repository",
             onTap: {
                 showFolderSelector = true

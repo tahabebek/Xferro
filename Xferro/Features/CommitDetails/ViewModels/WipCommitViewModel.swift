@@ -35,7 +35,7 @@ import OrderedCollections
             newSelectableStatus: newSelectableWipCommit,
             head: head
         )
-        Task { @MainActor in
+        await MainActor.run {
             self.unsortedFiles = files
             self.repository = repository
             self.selectableWipCommit = newSelectableWipCommit

@@ -20,7 +20,6 @@ struct RepositoryActualStashesView: View {
                         FlaredRounded {
                             VStack {
                                 Text("\(selectableStash.stash.oid.debugOID.prefix(4))")
-                                    .font(.title)
                                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                             }
                         }

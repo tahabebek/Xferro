@@ -49,7 +49,7 @@ struct StatusFilesViewContainer: View {
                 stashes: stashes,
                 onCommitTapped: {
                     try await onCommitTapped()
-                    Task { @MainActor in
+                    await MainActor.run {
                         currentFile = nil
                     }
                 },

@@ -26,7 +26,7 @@ import Cocoa
 //                           keepIndex: keepStaged,
 //                           includeUntracked: includeUntracked,
 //                           includeIgnored: includeIgnored)
-//        Task { @MainActor in self.ended() }
+//        await MainActor.run { self.ended() }
 //      }
 //    }
 //  }

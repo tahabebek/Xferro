@@ -15,7 +15,7 @@ struct SelectLineBox: View {
         HStack(spacing: 0) {
             Spacer(minLength: 0)
             Text(isLineSelected ? "✓" : " ")
-                .monospaced()
+                .font(.diff)
                 .opacity(isAdditionOrDeletion ? 1 : 0)
             Spacer(minLength: 0)
             Divider()

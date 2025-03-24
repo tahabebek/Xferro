@@ -48,7 +48,6 @@ struct WelcomeView: View {
                 Button("Skip") {
                     viewModel.skipButtonTapped()
                 }
-                .font(.system(size: 13))
                 .buttonStyle(.plain)
                 .padding()
             }
@@ -58,7 +57,6 @@ struct WelcomeView: View {
                 Button("Back") {
                     viewModel.backButtonTapped()
                 }
-                .font(.system(size: 13))
                 .buttonStyle(.plain)
                 .padding()
             }

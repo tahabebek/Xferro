@@ -40,9 +40,7 @@ struct LoginView: View {
     @ViewBuilder var contents: some View {
         VStack(spacing: 30) {
             Text("Welcome to Xferro")
-                .font(.system(size: 36, weight: .semibold))
             Text("A superior git client.")
-                .font(.title)
             VStack(spacing: 15) {
                 Image(systemName: "lock.circle.fill")
                     .resizable()
@@ -50,11 +48,9 @@ struct LoginView: View {
                     .frame(width: 64, height: 64)
                     .foregroundStyle(.blue)
                 Text("Sign in to your account")
-                    .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                 if viewModel.showCheckYourEmailMessage {
                     Text("Check your email for a verification link.")
-                        .font(.system(size: 14))
                         .foregroundStyle(.purple)
                 }
             }
@@ -63,7 +59,6 @@ struct LoginView: View {
             VStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Email")
-                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.secondary)
 
                     TextField("", text: $viewModel.email)
@@ -80,7 +75,6 @@ struct LoginView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Password")
-                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.secondary)
 
                     HStack {
@@ -114,7 +108,6 @@ struct LoginView: View {
                     viewModel.loginButtonTapped()
                 } label: {
                     Text("Sign In")
-                        .font(.system(size: 14, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 38)
                 }
@@ -124,20 +117,17 @@ struct LoginView: View {
                 Button("Forgot Password?") {
                     viewModel.forgotPasswordButtonTapped()
                 }
-                .font(.system(size: 13))
                 .buttonStyle(.plain)
             }
             .frame(width: 300)
 
             HStack(spacing: 4) {
                 Text("Don't have an account?")
-                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
 
                 Button("Sign Up") {
                     viewModel.signupButtonTapped()
                 }
-                .font(.system(size: 13))
                 .buttonStyle(.plain)
             }
             .padding(.top, 8)

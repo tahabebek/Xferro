@@ -19,8 +19,8 @@ struct WipRectangle: View {
                 .frame(width: 16, height: 16)
                 .overlay(
                     Text(text)
+                        .font(.tiniest)
                         .foregroundColor(.white)
-                        .font(.system(size: 8))
                 )
                 .onTapGesture {
                     onUserTapped()

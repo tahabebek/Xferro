@@ -16,7 +16,7 @@ import Observation
         !activities.isEmpty
     }
     var currentActivityName: String {
-        isActive ? activities.first?.name ?? "Processing..." : "Idle"
+        isActive ? activities.first?.name ?? "Processing.." : "Idle"
     }
 
     func startActivity(name: String) -> Activity {

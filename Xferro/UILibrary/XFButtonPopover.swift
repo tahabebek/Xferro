@@ -1,5 +1,5 @@
 //
-//  XFerroButtonPopover.swift
+//  XFButtonPopover.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 3/18/25.
@@ -9,14 +9,14 @@ import Foundation
 
 import SwiftUI
 
-struct XFerroButtonPopover<T>: View {
+struct XFButtonPopover<T>: View {
     @Binding var showingOptions: Bool
-    @Binding var options: [XFerroButtonOption<T>]
+    @Binding var options: [XFButtonOption<T>]
     @Binding var addMoreIsHovered: Bool
     @Binding var selectedOptionIndex: Int
 
     let addMoreOptionsText: String?
-    let onTapOption: (XFerroButtonOption<T>) -> Void
+    let onTapOption: (XFButtonOption<T>) -> Void
     let onTapAddMore: () -> Void
 
     var body: some View {

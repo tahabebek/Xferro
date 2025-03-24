@@ -66,7 +66,7 @@ struct SettingsView: View {
                 .padding(.bottom)
                 HStack {
                     Spacer()
-                    XFerroButton<Void>(
+                    XFButton<Void>(
                         title: "Save and Close",
                         onTap: {
                             onSave()
@@ -77,7 +77,6 @@ struct SettingsView: View {
         } header: {
             Text("Settings")
                 .padding()
-                .font(.headline)
         }
         .padding()
         .frame(minWidth: 350)

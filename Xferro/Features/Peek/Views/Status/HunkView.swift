@@ -18,17 +18,15 @@ struct HunkView: View {
                 HStack(alignment: .center) {
                     Text(hunk.hunkHeader.replacingOccurrences(of: "\n", with: " "))
                         .foregroundColor(Color(hexValue: 0xADBD42))
+                        .font(.paragraph5)
                     Spacer()
-                    XFerroButton<Void>(
-                        title: "Discard Hunk",
-                        dangerous: true,
-                        isProminent: false,
+                    XFButton<Void>(
+                        title: "Discard Hunk Below",
                         onTap: {
                             hunk.discard()
                         }
                     )
                 }
-                .font(.caption)
             }
             .padding(.vertical, 8)
             .padding(.horizontal)
@@ -40,13 +38,13 @@ struct HunkView: View {
                     onDiscardLine: onDiscardLine
                 )
                 .zIndex(0)
-                .offset(y: 3)
+                .offset(y: -1)
                 PreciseLineHeightText(
                     text: hunk.parts.flatMap(\.lines).map(\.text).joined(separator: "\n")
                 )
                 .padding(.leading, PartView.selectBoxWidth * 2 + PartView.numberBoxWidth * 2 + 16)
                 .padding(.trailing, 8)
-                .frame(height: CGFloat(hunk.parts.flatMap(\.lines).count) * 20)
+                .frame(height: CGFloat(hunk.parts.flatMap(\.lines).count) * .diffViewLineHeight)
                 .zIndex(1)
             }
         }

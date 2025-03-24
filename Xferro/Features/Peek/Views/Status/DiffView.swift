@@ -31,6 +31,7 @@ struct DiffView: View {
                         file.discardLine($0)
                     }
                 )
+                Divider()
             }
         }
         .opacity(file.diffInfo == nil ? 0 : 1)

@@ -38,7 +38,7 @@ struct VerticalHeader<Content>: View where Content: View {
     var body: some View {
         HStack {
             Text("\(title)")
-                .font(.title2)
+                .font(.heading2)
                 .foregroundColor(titleColor)
             buttons()
             infoView()
@@ -73,7 +73,7 @@ struct VerticalHeader<Content>: View where Content: View {
                     VStack(spacing: 0) {
                         ScrollView {
                             Text(info)
-                                .font(.body)
+                                .font(.paragraph3)
                                 .padding(.vertical)
                         }
                     }

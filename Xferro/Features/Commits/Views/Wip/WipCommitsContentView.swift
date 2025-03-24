@@ -20,6 +20,7 @@ struct WipCommitsContentView: View {
                 if commits.isNotEmpty {
                     HStack {
                         Text(wipDescription)
+                            .font(.paragraph3)
                             .lineLimit(2)
                         Spacer()
                     }

@@ -18,7 +18,6 @@ struct WipCommitFilesViewContainer: View {
         VStack {
             HStack {
                 Text(commit.commit.committer.time.formatted())
-                    .font(.title)
                     .padding()
                 Spacer()
             }

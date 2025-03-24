@@ -16,7 +16,7 @@ struct BranchStatusCircleView: View {
             .fill(Color.accentColor.opacity(0.7))
             .overlay {
                 Text("Status")
-                    .font(.caption)
+                    .font(.commitCircle)
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
             }
             .onTapGesture {

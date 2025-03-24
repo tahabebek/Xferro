@@ -12,6 +12,7 @@ struct RightImageLabelStyle: LabelStyle {
         HStack {
             configuration.title
             configuration.icon
+                .font(.accessoryButton)
         }
     }
 }

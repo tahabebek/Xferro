@@ -26,11 +26,10 @@ struct UntrackedPeekView: View {
                     HStack {
                         Spacer()
                         Text("\(file.statusFileName) is untracked.")
-                            .font(.title)
                         Spacer()
                     }
                     HStack {
-                        XFerroButton<Void>(
+                        XFButton<Void>(
                             title: "Track",
                             isProminent: false,
                             isSmall: true,
@@ -39,7 +38,7 @@ struct UntrackedPeekView: View {
                             }
                         )
                         .padding()
-                        XFerroButton<Void>(
+                        XFButton<Void>(
                             title: "Ignore",
                             isProminent: false,
                             isSmall: true,
@@ -48,10 +47,8 @@ struct UntrackedPeekView: View {
                             }
                         )
                         .padding()
-                        XFerroButton<Void>(
+                        XFButton<Void>(
                             title: "Discard",
-                            dangerous: true,
-                            isProminent: false,
                             isSmall: true,
                             onTap: {
                                 onTapDiscard(file)

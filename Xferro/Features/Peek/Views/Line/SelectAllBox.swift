@@ -37,7 +37,7 @@ struct SelectAllBox: View {
                 " "
             }
             Text(string)
-                .monospaced()
+                .font(.diff)
                 .opacity(isAdditionOrDeletion ? 1 : 0)
             Spacer(minLength: 0)
             Divider()

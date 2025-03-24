@@ -13,7 +13,7 @@ struct PushButton: View {
     @Binding var hasChanges: Bool
     @Binding var selectedRemoteForPush: Remote?
     @Binding var errorString: String?
-    @State var options: [XFerroButtonOption<Remote>] = []
+    @State var options: [XFButtonOption<Remote>] = []
 
     let remotes: [Remote]
     let title: String
@@ -63,13 +63,13 @@ struct PushButton: View {
         self.onCommitAndForcePushWithLease = onCommitAndForcePushWithLease
         self.onCommitAndPush = onCommitAndPush
 
-        self._options = State(wrappedValue: remotes.map { XFerroButtonOption(title: $0.name!, data: $0) })
+        self._options = State(wrappedValue: remotes.map { XFButtonOption(title: $0.name!, data: $0) })
     }
 
     var body: some View {
-        XFerroButton<Remote>(
+        XFButton<Remote>(
             title: title,
-            info: force ? XFerroButtonInfo(info: InfoTexts.forcePushWithLease) : XFerroButtonInfo(info: InfoTexts.push),
+            info: force ? XFButtonInfo(info: InfoTexts.forcePushWithLease) : XFButtonInfo(info: InfoTexts.push),
             disabled: (commitSummary.isEmptyOrWhitespace || !hasChanges) && !amend,
             options: $options,
             selectedOptionIndex: Binding<Int>(
@@ -109,7 +109,7 @@ struct PushButton: View {
             }
         )
         .onChange(of: remotes.count) {
-            options = remotes.map { XFerroButtonOption(title: $0.name!, data: $0) }
+            options = remotes.map { XFButtonOption(title: $0.name!, data: $0) }
         }
         .task {
             selectedRemoteForPush = remotes[onGetLastSelectedRemoteIndex("push")]

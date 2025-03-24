@@ -39,18 +39,17 @@ struct StatusActionView: View {
                     TextField(
                         "Summary",
                         text: $commitSummary,
-                        prompt: Text("Summary for commit, amend or stash"),
+                        prompt: Text("Summary"),
                         axis: .vertical
                     )
+                    .font(.formField)
                     .focused($isTextFieldFocused)
                     .textFieldStyle(.roundedBorder)
                 }
-                XFerroButton<Void>(
+                XFButton<Void>(
                     title: "Commit",
-                    info: XFerroButtonInfo(info: InfoTexts.commit),
+                    info: XFButtonInfo(info: InfoTexts.commit),
                     disabled: commitSummary.isEmptyOrWhitespace || canCommit || !hasChanges,
-                    dangerous: false,
-                    isProminent: true,
                     onTap: {
                         Task {
                             try await onCommitTapped()

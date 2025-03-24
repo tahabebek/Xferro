@@ -57,16 +57,16 @@ struct SwiftSpaceApp: App {
                     .environment(\.windowSize, geometry.size)
                 }
             }
+            .font(.heading0)
             //            .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
             .background(Color.fabulaBack2)
             .toolbar {
-                ToolbarItem(placement: .status) {
+                ToolbarItem(placement: .automatic) {
                     HStack(spacing: 6) {
                         if ProgressManager.shared.isActive {
                             ProgressView()
                                 .controlSize(.small)
                             Text(ProgressManager.shared.currentActivityName)
-                                .font(.body)
                         }
                         Images.infoButtonImage
                             .frame(width: 16, height: 16)

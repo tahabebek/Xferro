@@ -22,14 +22,14 @@ struct NormalCommitsView: View {
             VerticalHeader(title: "Repositories") {
                 VStack(alignment: .leading, spacing: 8) {
                     AddRepositoryButton(viewModel: viewModel)
-                    XFerroButton<Void>(
+                    XFButton<Void>(
                         title: "Add Local Repository",
                         onTap: {
                             dismiss()
                             fatalError(.unimplemented)
                         }
                     )
-                    XFerroButton<Void>(
+                    XFButton<Void>(
                         title: "Clone Repository",
                         onTap: {
                             dismiss()
@@ -49,7 +49,8 @@ struct NormalCommitsView: View {
                         onFetchTapped: onFetchTapped,
                         onAddRemoteTapped: onAddRemoteTapped,
                         onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                        onSetLastSelectedRemote: onSetLastSelectedRemote
+                        onSetLastSelectedRemote: onSetLastSelectedRemote,
+                        isSelected: viewModel.currentRepositoryInfo == repositoryInfo
                     )
                 }
                 if viewModel.currentRepositoryInfos.count == 0 {
@@ -60,13 +61,13 @@ struct NormalCommitsView: View {
                             VStack {
                                 Text("No repositories found.")
                                 AddRepositoryButton(viewModel: viewModel)
-                                XFerroButton<Void>(
+                                XFButton<Void>(
                                     title: "Add Local Repository",
                                     onTap: {
                                         fatalError(.unimplemented)
                                     }
                                 )
-                                XFerroButton<Void>(
+                                XFButton<Void>(
                                     title: "Clone Repository",
                                     onTap: {
                                         fatalError(.unimplemented)

@@ -188,4 +188,20 @@ enum InfoTexts {
     
     Tags play an important role in version management and help provide a stable reference point in an otherwise constantly evolving codebase.
     """
+
+    static let wip = """
+    We've created a Git client that automatically generates backup branches and commits changes as you work, ensuring your code is always protected without disrupting your workflow. Every time you make a change to your files, Xferro automatically commits those changes to a backup branch and pushes them to the remote repository.
+    
+    Why We Matter
+    
+    The average developer loses 5-7 hours of work monthly due to various coding mishaps. Xferro transforms this experience by making lost work a thing of the past, protecting you from common scenarios like:
+    
+    - Accidental `git reset --hard` commands
+    - Clicking "discard changes" on autopilot
+    - Losing track of good solutions when experimenting with LLMs
+    - Coffee spills and hardware failures
+    - IDE crashes after hours of uncommitted changes
+    - Power outages and system failures
+    - Merge conflicts from pulling without stashing
+    """
 }

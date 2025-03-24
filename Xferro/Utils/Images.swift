@@ -9,6 +9,6 @@ import SwiftUI
 
 enum Images {
     static let actionButtonSystemImageName = "line.3.horizontal.decrease"
-    static let actionButtonImage = Image(systemName: actionButtonSystemImageName)
-    static let infoButtonImage = Image(systemName: "info.circle")
+    static let actionButtonImage: some View = Image(systemName: actionButtonSystemImageName).font(.accessoryButton)
+    static let infoButtonImage: some View = Image(systemName: "info.circle").font(.accessoryButton)
 }

@@ -14,6 +14,7 @@ struct LineNumberBox: View {
         HStack(spacing: 0) {
             Spacer()
             Text(lineText)
+                .font(.diff)
                 .padding(.trailing, 2)
             Divider()
         }

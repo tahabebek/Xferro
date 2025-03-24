@@ -79,13 +79,13 @@ final class PushOpController: OperationController {
                         try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs + ["--force-with-lease"])
                     }
                 } catch {
-                    Task { @MainActor in
+                    await MainActor.run {
                         self.showFailureError("Git CLI fallback also failed. Original error: \(error.localizedDescription)")
                         return OperationResult.failure
                     }
                 }
             } else {
-                Task { @MainActor in
+                await MainActor.run {
                     switch error {
                     case let repoError as RepoError:
                         self.showFailureError(self.repoErrorMessage(for: repoError).rawValue)

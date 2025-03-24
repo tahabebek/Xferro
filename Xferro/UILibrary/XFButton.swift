@@ -1,5 +1,5 @@
 //
-//  XFerroButton.swift
+//  XFButton.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 3/3/25.
@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-struct XFerroButtonOption<OptionData>: Identifiable {
+struct XFButtonOption<OptionData>: Identifiable {
     var id: String { title }
     var isHovered: Bool = false
     let title: String
     let data: OptionData
 }
 
-struct XFerroButtonInfo {
+struct XFButtonInfo {
     let title: String?
     let info: String
 
@@ -24,36 +24,36 @@ struct XFerroButtonInfo {
     }
 }
 
-struct XFerroButton<OptionData>: View {
+struct XFButton<OptionData>: View {
     @Binding var selectedOptionIndex: Int
-    @Binding var options: [XFerroButtonOption<OptionData>]
+    @Binding var options: [XFButtonOption<OptionData>]
     @State var showingOptions: Bool = false
     @State var showingInfo: Bool = false
     @State var addMoreIsHovered: Bool = false
     @State private var searchText = ""
 
     let title: String
-    let info: XFerroButtonInfo?
+    let info: XFButtonInfo?
     let disabled: Bool
     let dangerous: Bool
     let isProminent: Bool
     let isSmall: Bool
     let addMoreOptionsText: String?
-    let onTapOption: (XFerroButtonOption<OptionData>) -> Void
+    let onTapOption: (XFButtonOption<OptionData>) -> Void
     let onTapAddMore: () -> Void
     let onTap: () -> Void
 
     init(
         title: String,
-        info: XFerroButtonInfo? = nil,
+        info: XFButtonInfo? = nil,
         disabled: Bool = false,
         dangerous: Bool = false,
         isProminent: Bool = true,
         isSmall: Bool = false,
-        options: Binding<[XFerroButtonOption<OptionData>]> = .constant([]),
+        options: Binding<[XFButtonOption<OptionData>]> = .constant([]),
         selectedOptionIndex: Binding<Int> = .constant(0),
         addMoreOptionsText: String? = nil,
-        onTapOption: @escaping (XFerroButtonOption<OptionData>) -> Void = { _ in },
+        onTapOption: @escaping (XFButtonOption<OptionData>) -> Void = { _ in },
         onTapAddMore: @escaping () -> Void = {},
         onTap: @escaping () -> Void
     ) {
@@ -113,28 +113,29 @@ struct XFerroButton<OptionData>: View {
                     options[selectedOptionIndex].title,
                     systemImage: Images.actionButtonSystemImageName
                 )
+                .font(.paragraph5)
                 .labelStyle(
                     RightImageLabelStyle()
                 )
-                    .lineLimit(1)
-                    .frame(maxWidth: 72)
-                    .fixedSize()
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        showingOptions.toggle()
-                    }
-                    .popover(isPresented: $showingOptions) {
-                        XFerroButtonPopover(
-                            showingOptions: $showingOptions,
-                            options: $options,
-                            addMoreIsHovered: $addMoreIsHovered,
-                            selectedOptionIndex: $selectedOptionIndex,
-                            addMoreOptionsText: addMoreOptionsText,
-                            onTapOption: onTapOption,
-                            onTapAddMore: onTapAddMore
-                        )
-                        .padding()
-                    }
+                .lineLimit(1)
+                .frame(maxWidth: 72)
+                .fixedSize()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    showingOptions.toggle()
+                }
+                .popover(isPresented: $showingOptions) {
+                    XFButtonPopover(
+                        showingOptions: $showingOptions,
+                        options: $options,
+                        addMoreIsHovered: $addMoreIsHovered,
+                        selectedOptionIndex: $selectedOptionIndex,
+                        addMoreOptionsText: addMoreOptionsText,
+                        onTapOption: onTapOption,
+                        onTapAddMore: onTapAddMore
+                    )
+                    .padding()
+                }
             }
         }
     }
@@ -151,12 +152,11 @@ struct XFerroButton<OptionData>: View {
                     VStack(spacing: 0) {
                         if let title = info.title {
                             Text(title)
-                                .font(.title)
                                 .padding(.vertical)
                         }
                         ScrollView {
                             Text(info.info)
-                                .font(.body)
+                                .font(.paragraph3)
                                 .padding(.vertical)
                         }
                     }

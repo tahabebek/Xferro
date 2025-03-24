@@ -11,7 +11,7 @@ extension CommitsViewModel {
     func getWipCommits(selectedItem: SelectedItem?, repositoryInfo: RepositoryInfo?) async {
         guard let selectedItem, let repositoryInfo else {
             Task {
-                Task { @MainActor in
+                await MainActor.run {
                     currentWipCommits = nil
                 }
             }
@@ -41,7 +41,7 @@ extension CommitsViewModel {
             owner: selectedItem.selectableItem
         )
         Task {
-            Task { @MainActor in
+            await MainActor.run {
                 currentWipCommits = WipCommitsViewModel(
                     commits: wipCommits,
                     item: selectedItem,

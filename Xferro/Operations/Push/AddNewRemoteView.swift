@@ -20,63 +20,20 @@ struct AddNewRemoteView: View {
 
     var body: some View {
         VStack(alignment: .leading) {
-            Text(title)
-            .font(.title2)
-            .padding(.horizontal)
-            .padding(.bottom)
-            .padding(.top, 8)
-            VStack(alignment: .leading) {
-                HStack {
-                    Spacer()
-                    Text("Name:")
-                    TextField(
-                        "Name",
-                        text: $name,
-                        axis: .vertical
-                    )
-                    .frame(width: 340)
-                    .focused($isTextFieldFocused)
-                }
-                HStack {
-                    Spacer()
-                    Text("Fetch URL:")
-                    TextField(
-                        "Fetch URL",
-                        text: $fetchURL,
-                        axis: .vertical
-                    )
-                    .frame(width: 340)
-                }
-                HStack {
-                    Spacer()
-                    Text("Push URL:")
-                    TextField(
-                        "Push URL",
-                        text: $pushURL,
-                        prompt: Text("Same as fetch URL"),
-                        axis: .vertical
-                    )
-                    .frame(width: 340)
-                }
-            }
+            titleView
+            settingsView
+            invalidMessageView
+                .padding(.bottom)
             HStack {
                 Spacer()
-                Text(invalidMessage ?? "")
-                    .foregroundStyle(.red)
-                    .opacity(invalidMessage == nil ? 0 : 1)
-                Spacer()
-            }
-            .padding(.bottom)
-            HStack {
-                Spacer()
-                XFerroButton<Void>(
+                XFButton<Void>(
                     title: "Cancel",
                     isProminent: false,
                     onTap: {
                         dismiss()
                     }
                 )
-                XFerroButton<Void>(
+                XFButton<Void>(
                     title: "Add Remote",
                     onTap: {
                         if name.isEmptyOrWhitespace && fetchURL.isEmptyOrWhitespace {
@@ -101,5 +58,62 @@ struct AddNewRemoteView: View {
         .onAppear {
             isTextFieldFocused = true
         }
+    }
+
+    var invalidMessageView: some View {
+        HStack {
+            Spacer()
+            Text(invalidMessage ?? "")
+                .font(.validationError)
+                .foregroundStyle(.red)
+                .opacity(invalidMessage == nil ? 0 : 1)
+            Spacer()
+        }
+    }
+
+    var settingsView: some View {
+        VStack(alignment: .leading) {
+            HStack {
+                Spacer()
+                Text("Name:")
+                TextField(
+                    "Name",
+                    text: $name,
+                    axis: .vertical
+                )
+                .frame(width: 340)
+                .focused($isTextFieldFocused)
+            }
+            HStack {
+                Spacer()
+                Text("Fetch URL:")
+                TextField(
+                    "Fetch URL",
+                    text: $fetchURL,
+                    axis: .vertical
+                )
+                .frame(width: 340)
+            }
+            HStack {
+                Spacer()
+                Text("Push URL:")
+                TextField(
+                    "Push URL",
+                    text: $pushURL,
+                    prompt: Text("Same as fetch URL"),
+                    axis: .vertical
+                )
+                .frame(width: 340)
+            }
+        }
+        .font(.formField)
+    }
+
+    var titleView: some View {
+        Text(title)
+            .font(.formHeading)
+            .padding(.horizontal)
+            .padding(.bottom)
+            .padding(.top, 8)
     }
 }

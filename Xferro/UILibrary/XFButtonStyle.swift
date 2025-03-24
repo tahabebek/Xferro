@@ -1,5 +1,5 @@
 //
-//  XFerroButtonStyle.swift
+//  XFButtonStyle.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 2/21/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct XFerroButtonStyle: ButtonStyle {
+struct XFButtonStyle: ButtonStyle {
     let foregroundColor: Color
     let regularBackgroundColor: Color
     let prominentBackgroundColor: Color
@@ -19,7 +19,7 @@ struct XFerroButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(isSmall ? .caption : .callout)
+            .font(isSmall ? .paragraph5 : .paragraph4)
             .padding(.vertical, isSmall ? 2 : 3)
             .padding(.horizontal, isSmall ? 4 : 6)
             .background(
@@ -51,7 +51,7 @@ extension View {
         isProminent: Bool = true,
         isSmall: Bool = false
     ) -> some View {
-        buttonStyle(XFerroButtonStyle(
+        buttonStyle(XFButtonStyle(
             foregroundColor: foregroundColor,
             regularBackgroundColor: regularBackgroundColor,
             prominentBackgroundColor: prominentBackgroundColor,

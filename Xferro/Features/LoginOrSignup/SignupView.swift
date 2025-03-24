@@ -30,14 +30,12 @@ struct SignupView: View {
     @ViewBuilder var content: some View {
         VStack(spacing: 30) {
             Text("Sign up to Xferro")
-                .font(.title)
             HStack(alignment: .top) {
                 Spacer()
                 VStack {
                     VStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Full Name")
-                                .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(.secondary)
 
                             TextField("", text: $viewModel.fullName)
@@ -57,7 +55,6 @@ struct SignupView: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Email")
-                                .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(.secondary)
 
                             HStack {
@@ -75,7 +72,6 @@ struct SignupView: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Password")
-                                .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(.secondary)
 
                             HStack {
@@ -105,7 +101,6 @@ struct SignupView: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Confirm Password")
-                                .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(.secondary)
 
                             HStack {
@@ -140,7 +135,6 @@ struct SignupView: View {
                         }
                     } label: {
                         Text("Sign Up")
-                            .font(.system(size: 14, weight: .semibold))
                             .frame(maxWidth: .infinity)
                             .frame(height: 38)
                     }
@@ -154,7 +148,6 @@ struct SignupView: View {
                         ForEach(viewModel.validationErrors, id: \.self) { error in
                             Text(error)
                                 .foregroundStyle(.red)
-                                .font(.title3)
                         }
                     }
                     .padding()

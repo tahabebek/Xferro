@@ -14,7 +14,7 @@ struct WipHeaderView: View {
 
     @State var errorString: String? = nil
     @State var showButtons = false
-    @State var options: [XFerroButtonOption<Remote>] = []
+    @State var options: [XFButtonOption<Remote>] = []
     @State var selectedRemoteForPush: Remote? = nil
 
     let viewModel: WipCommitsViewModel
@@ -55,8 +55,9 @@ struct WipHeaderView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            VerticalHeader( title: "Work in Progress", info: "") {
+            VerticalHeader( title: "Work in Progress", info: InfoTexts.wip) {
                 buttons
+                    .padding()
             }
         }
         .frame(height: Dimensions.verticalHeaderHeight)
@@ -66,9 +67,9 @@ struct WipHeaderView: View {
     var buttons: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !autoCommitEnabled {
-                XFerroButton<Void>(
+                XFButton<Void>(
                     title: "Commit Wip",
-                    info: XFerroButtonInfo(info: ""),
+                    info: XFButtonInfo(info: ""),
                     onTap: {
                         dismiss()
                         onAddManualWipCommitTapped()
@@ -76,7 +77,7 @@ struct WipHeaderView: View {
                 )
             }
             if !autoPushEnabled {
-                XFerroButton<Remote>(
+                XFButton<Remote>(
                     title: "Push",
                     options: $options,
                     selectedOptionIndex: Binding<Int>(
@@ -106,7 +107,7 @@ struct WipHeaderView: View {
                 )
                 .onChange(of: viewModel.repositoryInfo.remotes.count) {
                     options = viewModel.repositoryInfo.remotes.map {
-                        XFerroButtonOption(title: $0.name!, data: $0)
+                        XFButtonOption(title: $0.name!, data: $0)
                     }
                 }
                 .task {
@@ -118,14 +119,14 @@ struct WipHeaderView: View {
             if !autoPushEnabled || !autoPushEnabled {
                 Divider()
             }
-            XFerroButton<Void>(
+            XFButton<Void>(
                 title: "Delete all wip commits of \(viewModel.repositoryInfo.repository.nameOfRepo)",
                 onTap: {
                     dismiss()
                     showButtons = false
                 }
             )
-            XFerroButton<Void>(
+            XFButton<Void>(
                 title: "Delete wip commits of \(viewModel.item.selectableItem.wipDescription.uncapitalizingFirstLetter())",
                 onTap: {
                     dismiss()
@@ -152,5 +153,6 @@ struct WipHeaderView: View {
                     .toggleStyle(.switch)
             }
         }
+        .font(.formField)
     }
 }

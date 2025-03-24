@@ -16,9 +16,9 @@ struct AmendButton: View {
     let onAmend: () async throws -> Void
 
     var body: some View {
-        XFerroButton<Void>(
+        XFButton<Void>(
             title: title,
-            info: XFerroButtonInfo(info: InfoTexts.amend),
+            info: XFButtonInfo(info: InfoTexts.amend),
             disabled: canCommit || !hasChanges,
             onTap: {
                 Task {

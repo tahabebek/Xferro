@@ -53,7 +53,7 @@ import OrderedCollections
             for repository in repositories {
                 await addRepository(repository)
             }
-            Task { @MainActor in
+            await MainActor.run {
                 setupInitialCurrentSelectedItem()
             }
         }
@@ -65,14 +65,14 @@ import OrderedCollections
 
     private func updateRepositoryInfo(_ repository: Repository) async {
         let repositoryInfo = await getRepositoryInfo(repository)
-        Task { @MainActor in
+        await MainActor.run {
             currentRepositoryInfos[kRepositoryInfo(repository)] = repositoryInfo
         }
     }
 
     private func setupInitialCurrentSelectedItem() {
         Task {
-            Task { @MainActor in
+            await MainActor.run {
                 guard currentSelectedItem == nil else { return }
                 if !currentRepositoryInfos.isEmpty {
                     var repositoryInfo: RepositoryInfo?
@@ -171,7 +171,7 @@ import OrderedCollections
     // MARK: User actions
     func userTapped(item: any SelectableItem, repositoryInfo: RepositoryInfo) {
         Task {
-            Task { @MainActor in
+            await MainActor.run {
                 let selectedItem: SelectedItem
                 switch item {
                 case let status as SelectableStatus:
@@ -226,7 +226,7 @@ import OrderedCollections
             fatalError(.unexpected)
         }
         Task {
-            Task { @MainActor in
+            await MainActor.run {
                 currentRepositoryInfos.removeValue(forKey: kRepositoryInfo(repository))
                 if currentSelectedItem != nil {
                     guard let currentRepositoryInfo else {

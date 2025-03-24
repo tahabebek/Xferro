@@ -10,7 +10,6 @@ import RegexBuilder
 
 struct PartView: View {
     static let selectBoxWidth = 20.0
-    static let selectBoxHeight = 20.0
     static let numberBoxWidth = 40.0
 
     @Binding var part: DiffHunkPart

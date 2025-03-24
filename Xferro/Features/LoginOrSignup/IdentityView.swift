@@ -14,15 +14,15 @@ struct IdentityView: View {
     var body: some View {
         VStack(spacing: 30) {
             Text("Configure Git")
-                .font(.title)
+                .font(.heading1)
             Text("This information helps label and track the commits you make. Keep in mind that if you share your commits, everyone can view these details.")
-                .font(.system(size: 14))
+                .font(.paragraph4)
                 .foregroundStyle(.secondary)
                 .padding(.top, 20)
             VStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Author")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.formHeading)
                         .foregroundStyle(.secondary)
 
                     TextField("", text: $viewModel.name)
@@ -30,6 +30,7 @@ struct IdentityView: View {
                         .frame(height: 38)
                         .padding(.horizontal, 12)
                         .cornerRadius(6)
+                        .font(.formField)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
                                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
@@ -42,11 +43,12 @@ struct IdentityView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Email")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.formField)
                         .foregroundStyle(.secondary)
 
                     HStack {
                         TextField("", text: $viewModel.email)
+                            .font(.formField)
                             .textFieldStyle(.plain)
                     }
                     .frame(height: 38)
@@ -57,16 +59,9 @@ struct IdentityView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
                 }
-                Button {
+                XFButton<Void>(title: "Finish") {
                     viewModel.finishButtonTapped()
-                } label: {
-                    Text("Finish")
-                        .font(.system(size: 14, weight: .semibold))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 38)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
                 .frame(width: 300)
             }
             .frame(width: 300)

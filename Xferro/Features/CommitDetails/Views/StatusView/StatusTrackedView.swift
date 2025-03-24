@@ -33,30 +33,35 @@ struct StatusTrackedView: View {
         } header: {
             HStack {
                 Text("\(files.count) changed \(files.count == 1 ? "file" : "files")")
+                    .font(.paragraph4)
                 Spacer()
                 if files.allSatisfy({ $0.checkState == CheckboxState.checked }) {
-                    XFerroButton<Void>(
+                    XFButton<Void>(
                         title: "Unselect All",
+                        isSmall: true,
                         onTap: {
                             onTapExcludeAll()
                         }
                     )
                 } else if files.allSatisfy({ $0.checkState == CheckboxState.unchecked }) {
-                    XFerroButton<Void>(
+                    XFButton<Void>(
                         title: "Select All",
+                        isSmall: true,
                         onTap: {
                             onTapIncludeAll()
                         }
                     )
                 } else {
-                    XFerroButton<Void>(
+                    XFButton<Void>(
                         title: "Select All",
+                        isSmall: true,
                         onTap: {
                             onTapIncludeAll()
                         }
                     )
-                    XFerroButton<Void>(
+                    XFButton<Void>(
                         title: "Unselect All",
+                        isSmall: true,
                         onTap: {
                             onTapExcludeAll()
                         }

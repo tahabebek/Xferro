@@ -37,9 +37,9 @@ struct WipCommitsView: View {
                 .padding(.top, 8)
             }
         } content: {
-            if let currentSelectedItem, let viewModel {
+            if let viewModel {
                 WipCommitsContentView(
-                    wipDescription: currentSelectedItem.selectableItem.wipDescription,
+                    wipDescription: "On branch \(viewModel.branchName)",
                     commits: viewModel.commits,
                     onUserTapped: {
                         onUserTapped($0, viewModel.repositoryInfo)

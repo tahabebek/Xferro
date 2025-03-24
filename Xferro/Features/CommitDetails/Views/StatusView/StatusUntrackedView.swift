@@ -28,7 +28,7 @@ struct StatusUntrackedView: View {
                             onTapIgnore: { onTapIgnore(file.wrappedValue) },
                             onTapDiscard: { onTapDiscard(file.wrappedValue) }
                         )
-                        XFerroButton<Void>(
+                        XFButton<Void>(
                             title: "Track",
                             isProminent: false,
                             isSmall: true,
@@ -36,7 +36,7 @@ struct StatusUntrackedView: View {
                                 onTapTrack(file.wrappedValue)
                             }
                         )
-                        XFerroButton<Void>(
+                        XFButton<Void>(
                             title: "Ignore",
                             isProminent: false,
                             isSmall: true,
@@ -44,9 +44,8 @@ struct StatusUntrackedView: View {
                                 onTapIgnore(file.wrappedValue)
                             }
                         )
-                        XFerroButton<Void>(
+                        XFButton<Void>(
                             title: "Discard",
-                            dangerous: true,
                             isProminent: false,
                             isSmall: true,
                             onTap: {
@@ -59,8 +58,9 @@ struct StatusUntrackedView: View {
         } header: {
             HStack {
                 Text("\(files.count) untracked \(files.count == 1 ? "item" : "items")")
+                    .font(.paragraph4)
                 Spacer()
-                XFerroButton<Void>(
+                XFButton<Void>(
                     title: "Track All",
                     onTap: {
                         onTapTrackAll()

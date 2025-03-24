@@ -101,7 +101,7 @@ import OrderedCollections
                 guard let oldFile, let newFile else { continue }
 
                 if oldFile.status != newFile.status {
-                    Task { @MainActor in
+                    await MainActor.run {
                         unsortedTrackedFiles[key] = newFile
                     }
                 }
@@ -111,21 +111,21 @@ import OrderedCollections
                     let modifiedDate = FileManager.lastModificationDate(of: newFile.workDirNew!)!
                     if let cachedModificationDate = await lastModifiedCache[newFile.workDirNew!] {
                         if cachedModificationDate != modifiedDate {
-                            Task { @MainActor in
+                            await MainActor.run {
                                 unsortedTrackedFiles[key] = newFile
                             }
                         } else {
                             // do nothing
                         }
                     } else {
-                        Task { @MainActor in
+                        await MainActor.run {
                             unsortedTrackedFiles[key] = newFile
                         }
                         await lastModifiedCache.set(key: newFile.workDirNew!, value: modifiedDate)
                     }
                 }
             }
-            Task { @MainActor in
+            await MainActor.run {
                 for key in missingKeys {
                     unsortedTrackedFiles.removeValue(forKey: key)
                 }
@@ -138,7 +138,7 @@ import OrderedCollections
                 self.selectableStatus = newSelectableStatus
             }
         } else {
-            Task { @MainActor in
+            await MainActor.run {
                 self.unsortedTrackedFiles = newTrackedFiles
                 self.unsortedUntrackedFiles = newUntrackedFiles
                 self.repository = repository
@@ -286,7 +286,7 @@ import OrderedCollections
             switch fetchType {
             case .remote(let remote):
                 guard let remote else {
-                    Task { @MainActor in
+                    await MainActor.run {
                         addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
                         shouldAddRemoteBranch = true
                     }
@@ -296,7 +296,7 @@ import OrderedCollections
                 do {
                     try GitCLI.executeGit(repository, ["fetch", remote.name!, "--prune"])
                 } catch {
-                    Task { @MainActor in
+                    await MainActor.run {
                         AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
                     }
                 }
@@ -305,7 +305,7 @@ import OrderedCollections
                 do {
                     try GitCLI.executeGit(repository, ["fetch", "--all", "--prune"])
                 } catch {
-                    Task { @MainActor in
+                    await MainActor.run {
                         AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
                     }
                 }
@@ -332,7 +332,7 @@ import OrderedCollections
             }
 
             guard (repository.config ?? GitConfig.default)!.branchRemote(head.name) != nil else {
-                Task { @MainActor in
+                await MainActor.run {
                     AppDelegate.showErrorMessage(error: RepoError.unexpected("No remote configured for current branch"))
                 }
                 return
@@ -344,7 +344,7 @@ import OrderedCollections
                 do {
                     try GitCLI.executeGit(repository, ["pull", "--no-rebase"])
                 } catch {
-                    Task { @MainActor in
+                    await MainActor.run {
                         AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
                     }
                 }
@@ -353,7 +353,7 @@ import OrderedCollections
                 do {
                     try GitCLI.executeGit(repository, ["pull", "--rebase",])
                 } catch {
-                    Task { @MainActor in
+                    await MainActor.run {
                         AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
                     }
                 }
@@ -371,7 +371,7 @@ import OrderedCollections
             fatalError(.invalid)
         }
 
-        Task { @MainActor in
+        await MainActor.run {
             shouldAddRemoteBranch = false
         }
 
@@ -390,11 +390,11 @@ import OrderedCollections
             }
             refreshRemoteSubject?.send()
         } catch let error as RepoError {
-            Task { @MainActor in
+            await MainActor.run {
                 AppDelegate.showErrorMessage(error: error)
             }
         } catch {
-            Task { @MainActor in
+            await MainActor.run {
                 AppDelegate.showErrorMessage(error: .unexpected(error.localizedDescription))
             }
         }
@@ -416,7 +416,7 @@ import OrderedCollections
         if let remote {
             try await actuallyCommitAndPush(remote: remote, repository: repository, pushType: pushType)
         } else {
-            Task { @MainActor in
+            await MainActor.run {
                 addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
                 shouldAddRemoteBranch = true
             }
@@ -460,7 +460,7 @@ import OrderedCollections
         if let remote {
             try await actuallyAmendAndPush(remote: remote, repository: repository, pushType: pushType)
         } else {
-            Task { @MainActor in
+            await MainActor.run {
                 addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
                 shouldAddRemoteBranch = true
             }
@@ -504,7 +504,7 @@ import OrderedCollections
             )
             try await pushOperation.start()
         } else {
-            Task { @MainActor in
+            await MainActor.run {
                 addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
                 shouldAddRemoteBranch = true
             }
@@ -654,7 +654,7 @@ import OrderedCollections
             try! FileManager.default.removeItem(atPath: path)
         }
         try GitCLI.executeGit(repository, ["restore", "--staged", "."])
-        Task { @MainActor in
+        await MainActor.run {
             commitSummary = ""
             currentFile = nil
         }
@@ -706,7 +706,7 @@ import OrderedCollections
         }
 
         if file == currentFile {
-            Task { @MainActor in
+            await MainActor.run {
                 currentFile = nil
                 setInitialSelection()
             }
@@ -740,7 +740,7 @@ import OrderedCollections
         }
         try GitCLI.executeGit(repository, ["add", "."])
         try GitCLI.executeGit(repository, ["reset", "--hard"])
-        Task { @MainActor in
+        await MainActor.run {
             currentFile = nil
         }
     }

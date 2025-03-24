@@ -25,6 +25,8 @@ struct StatusTrackedRowView: View {
                     file.checkState = .unchecked
                 }
             }
+            .contentShape(Rectangle())
+            .font(.accessoryButton)
             .frame(width: 16, height: 16)
             .padding(.trailing, 4)
             Text(file.statusFileName)
@@ -32,10 +34,11 @@ struct StatusTrackedRowView: View {
             Spacer()
             Image(systemName: file.statusImageName).foregroundColor(file.statusColor)
                 .frame(width: 24, height: 24)
+                .font(.accessoryButton)
         }
         .contentShape(Rectangle())
         .frame(minHeight: 24)
-        .frame(maxHeight: 48)
+        .frame(maxHeight: 64)
         .onTapGesture {
             currentFile = file
         }

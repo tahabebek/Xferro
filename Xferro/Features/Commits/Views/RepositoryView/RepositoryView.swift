@@ -25,6 +25,7 @@ struct RepositoryView: View {
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemote: (Int, String) -> Void
+    let isSelected: Bool
 
     var body: some View {
         Group {
@@ -39,7 +40,8 @@ struct RepositoryView: View {
                     onSetLastSelectedRemote: onSetLastSelectedRemote,
                     gitDir: repositoryInfo.repository.gitDir,
                     head: repositoryInfo.head,
-                    remotes: repositoryInfo.remotes
+                    remotes: repositoryInfo.remotes,
+                    isSelected: isSelected
                 )
                 .frame(height: 36)
                 if !isCollapsed {

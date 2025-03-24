@@ -17,6 +17,7 @@ struct PeekViewHeader: View {
                 .frame(height: 36)
             Spacer()
             Text(countString)
+                .font(.small)
         }
     }
 }

@@ -20,13 +20,11 @@ struct RepositoryActualTagsView: View {
                         FlaredCircle {
                             VStack {
                                 Text("\(tagInfo.tag.tag.name)")
-                                    .font(.title)
                                     .minimumScaleFactor(0.5)
                                     .lineLimit(1)
                                     .frame(maxWidth: 70)
                                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                                 Text("\(tagInfo.tag.oid.debugOID.prefix(4))")
-                                    .font(.footnote)
                                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                             }
                         }

@@ -12,9 +12,9 @@ struct StatusRowTextModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .font(.paragraph1)
+            .lineLimit(2)
             .foregroundStyle(isCurrent ? Color.accentColor : Color.fabulaFore1)
-            .font(.title3)
-            .monospaced()
     }
 }
 
