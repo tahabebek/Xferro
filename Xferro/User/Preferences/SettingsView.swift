@@ -44,10 +44,18 @@ struct SettingsView: View {
                 HStack {
                     Spacer()
                     VStack(alignment: .leading) {
-                        Toggle("Automatically commit wip on save", isOn: $autoCommitEnabled)
-                            .toggleStyle(.switch)
-                        Toggle("Automatically push wip commits", isOn: $autoPushEnabled)
-                            .toggleStyle(.switch)
+                        HStack {
+                            Text("Automatically commit wip on save")
+                            Spacer()
+                            Toggle("", isOn: $autoCommitEnabled)
+                                .toggleStyle(.switch)
+                        }
+                        HStack {
+                            Text("Automatically push wip commits")
+                            Spacer()
+                            Toggle("", isOn: $autoPushEnabled)
+                                .toggleStyle(.switch)
+                        }
                         Divider()
                         TextField("User name:", text: $userName)
                         TextField("User email:", text: $userEmail)
@@ -68,6 +76,7 @@ struct SettingsView: View {
             }
         } header: {
             Text("Settings")
+                .padding()
                 .font(.headline)
         }
         .padding()
