@@ -15,6 +15,8 @@ struct RepositoryMenuView: View {
     @State var selectedRemoteForFetch: Remote?
     @State var options: [XFButtonOption<Remote>] = []
     @State var showCreateBranchSheet = false
+    @State var showCheckoutBranchSheet = false
+    @State var showCreateTagSheet = false
 
     let onDeleteRepositoryTapped: () -> Void
     let onPullTapped: (StatusViewModel.PullType) -> Void
@@ -24,6 +26,7 @@ struct RepositoryMenuView: View {
     let onSetLastSelectedRemote: (Int, String) -> Void
     let onCreateTagTapped: () -> Void
     let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
+    let onCheckoutBranchTapped: (String, Bool) -> Void
 
     let gitDir: URL
     let head: Head
@@ -43,6 +46,7 @@ struct RepositoryMenuView: View {
         onGetLastSelectedRemoteIndex: @escaping (String) -> Int,
         onSetLastSelectedRemote: @escaping (Int, String) -> Void,
         onCreateBranchTapped: @escaping (String, String, Bool, Bool) -> Void,
+        onCheckoutBranchTapped: @escaping (String, Bool) -> Void,
         onCreateTagTapped: @escaping () -> Void,
         gitDir: URL,
         head: Head,
@@ -61,6 +65,7 @@ struct RepositoryMenuView: View {
         self.onGetLastSelectedRemoteIndex = onGetLastSelectedRemoteIndex
         self.onSetLastSelectedRemote = onSetLastSelectedRemote
         self.onCreateBranchTapped = onCreateBranchTapped
+        self.onCheckoutBranchTapped = onCheckoutBranchTapped
         self.onCreateTagTapped = onCreateTagTapped
         self.gitDir = gitDir
         self.head = head
@@ -102,7 +107,11 @@ struct RepositoryMenuView: View {
                         onCreateBranchTapped: {
                             showCreateBranchSheet = true
                         },
+                        onCheckoutBranchTapped: {
+                            showCheckoutBranchSheet = true
+                        },
                         onCreateTagTapped: {
+                            showCreateTagSheet = true
                         }
                     )
                     .padding()
@@ -114,6 +123,21 @@ struct RepositoryMenuView: View {
                         onCreateBranch: onCreateBranchTapped,
                         currentBranch: head.name
                     )
+                    .padding()
+                    .frame(maxHeight: .infinity)
+                }
+                .sheet(isPresented: $showCheckoutBranchSheet) {
+                    CheckoutBranchView(
+                        localBranches: localBranchNames,
+                        remoteBranches: remoteBranchNames,
+                        onCheckoutBranch: onCheckoutBranchTapped,
+                        currentBranch: head.name
+                    )
+                    .padding()
+                    .frame(maxHeight: .infinity)
+                }
+                .sheet(isPresented: $showCreateTagSheet) {
+                    Text("Create Tag")
                     .padding()
                     .frame(maxHeight: .infinity)
                 }

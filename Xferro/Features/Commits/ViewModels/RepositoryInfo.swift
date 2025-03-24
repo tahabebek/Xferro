@@ -121,6 +121,49 @@ import Observation
         }
     }
 
+    func checkoutBranchTapped(branchName: String, isRemote: Bool) {
+        Task {
+            if status.isNotEmpty {
+                await MainActor.run {
+                    errorString = "Cannot checkout to a different branch while there are uncommitted changes"
+                    showError = true
+                }
+                return
+            }
+
+            var activity: Activity? = nil
+            defer {
+                if let activity {
+                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
+                }
+            }
+
+            if isRemote {
+                activity = ProgressManager.shared.startActivity(name: "Checking out to remote branch \(branchName)")
+
+            } else {
+                activity = ProgressManager.shared.startActivity(name: "Checking out to local branch \(branchName)")
+            }
+
+            do {
+                if isRemote {
+                    if localBranchInfos.map(\.branch.name).contains(branchName) {
+                        try GitCLI.execute(repository, ["checkout", branchName])
+                    } else {
+                        try GitCLI.execute(repository, ["checkout", "-b", branchName])
+                    }
+                } else {
+                    try GitCLI.execute(repository, ["checkout", branchName])
+                }
+            } catch {
+                await MainActor.run {
+                    errorString = error.localizedDescription
+                    showError = true
+                }
+            }
+        }
+    }
+
     func createTagTapped() {
         print("create tag tapped")
     }

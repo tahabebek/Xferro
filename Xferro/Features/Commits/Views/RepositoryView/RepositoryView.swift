@@ -41,6 +41,7 @@ struct RepositoryView: View {
                     onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemote: onSetLastSelectedRemote,
                     onCreateBranchTapped: repositoryInfo.createBranchTapped,
+                    onCheckoutBranchTapped: repositoryInfo.checkoutBranchTapped,
                     onCreateTagTapped: repositoryInfo.createTagTapped,
                     gitDir: repositoryInfo.repository.gitDir,
                     head: repositoryInfo.head,

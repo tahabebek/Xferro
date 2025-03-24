@@ -56,11 +56,12 @@ struct AddNewBranchView: View {
                             invalidMessage = "Please enter a name"
                             return
                         }
-                        if isRemote {
-                            onCreateBranch(name, selectedRemoteBranchName, true, shouldCheckout)
-                        } else {
-                            onCreateBranch(name, selectedLocalBranchName, false, shouldCheckout)
-                        }
+                        onCreateBranch(
+                            name,
+                            isRemote ? selectedRemoteBranchName : selectedLocalBranchName,
+                            isRemote,
+                            shouldCheckout
+                        )
                         dismiss()
                     }
                 )
@@ -117,28 +118,23 @@ struct AddNewBranchView: View {
                     text: $name,
                     axis: .vertical
                 )
-                .frame(width: 300)
                 .focused($isTextFieldFocused)
             }
             HStack {
-                Text("Based on:")
-                Spacer()
-                Picker("", selection: $selectedRemoteBranchName) {
-                    ForEach(remoteBranches, id: \.self) { item in
-                        Text(item)
-                            .tag(item)
-                    }
-                }
-                .frame(width: 310)
-                .pickerStyle(.menu)
+                SearchablePickerView(
+                    items: remoteBranches,
+                    selectedItem: $selectedRemoteBranchName,
+                    title: "Based on:"
+                )
+                .padding(.vertical)
             }
             HStack {
                 Text("Checkout:")
-                    .padding(.trailing, 60)
                 Toggle("", isOn: $shouldCheckout)
                 Spacer()
             }
         }
+        .padding(.leading, 8)
     }
 
     var localSettingsView: some View {
@@ -151,28 +147,23 @@ struct AddNewBranchView: View {
                     text: $name,
                     axis: .vertical
                 )
-                .frame(width: 300)
                 .focused($isTextFieldFocused)
             }
             HStack {
-                Text("Based on:")
-                Spacer()
-                Picker("", selection: $selectedLocalBranchName) {
-                    ForEach(localBranches, id: \.self) { item in
-                        Text(item)
-                            .tag(item)
-                    }
-                }
-                .frame(width: 310)
-                .pickerStyle(.menu)
+                SearchablePickerView(
+                    items: localBranches,
+                    selectedItem: $selectedLocalBranchName,
+                    title: "Based on:"
+                )
             }
+            .padding(.vertical)
             HStack {
                 Text("Checkout:")
-                    .padding(.trailing, 60)
                 Toggle("", isOn: $shouldCheckout)
                 Spacer()
             }
         }
+        .padding(.leading, 8)
     }
 
     var titleView: some View {

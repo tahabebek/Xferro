@@ -21,6 +21,7 @@ struct RepositoryMenuViewButtons: View {
     let onFetchTapped: (StatusViewModel.FetchType) -> Void
     let onPullTapped: (StatusViewModel.PullType) -> Void
     let onCreateBranchTapped: () -> Void
+    let onCheckoutBranchTapped: () -> Void
     let onCreateTagTapped: () -> Void
 
     var body: some View {
@@ -85,7 +86,7 @@ struct RepositoryMenuViewButtons: View {
                 info: XFButtonInfo(info: InfoTexts.branch),
                 onTap: {
                     showButtons = false
-                    fatalError(.unimplemented)
+                    onCheckoutBranchTapped()
                 }
             )
             XFButton<Void>(
