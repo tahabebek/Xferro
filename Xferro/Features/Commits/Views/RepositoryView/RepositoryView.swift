@@ -16,7 +16,7 @@ struct RepositoryView: View {
         case history = 3
     }
 
-    let repositoryInfo: RepositoryInfo
+    @Bindable var repositoryInfo: RepositoryInfo
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
 
@@ -32,15 +32,21 @@ struct RepositoryView: View {
             VStack(spacing: 0) {
                 RepositoryMenuView(
                     isCollapsed: $isCollapsed,
+                    errorString: $repositoryInfo.errorString,
+                    showError: $repositoryInfo.showError,
                     onDeleteRepositoryTapped: repositoryInfo.deleteRepositoryTapped,
                     onPullTapped: onPullTapped,
                     onFetchTapped: onFetchTapped,
                     onAddRemoteTapped: onAddRemoteTapped,
                     onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemote: onSetLastSelectedRemote,
+                    onCreateBranchTapped: repositoryInfo.createBranchTapped,
+                    onCreateTagTapped: repositoryInfo.createTagTapped,
                     gitDir: repositoryInfo.repository.gitDir,
                     head: repositoryInfo.head,
                     remotes: repositoryInfo.remotes,
+                    localBranches: repositoryInfo.localBranchInfos,
+                    remoteBranches: repositoryInfo.remoteBranchInfos,
                     isSelected: isSelected
                 )
                 .frame(height: 36)

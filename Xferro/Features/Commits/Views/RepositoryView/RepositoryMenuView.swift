@@ -9,9 +9,12 @@ import SwiftUI
 
 struct RepositoryMenuView: View {
     @Binding var isCollapsed: Bool
+    @Binding var errorString: String?
+    @Binding var showError: Bool
     @State var showButtons = false
     @State var selectedRemoteForFetch: Remote?
     @State var options: [XFButtonOption<Remote>] = []
+    @State var showCreateBranchSheet = false
 
     let onDeleteRepositoryTapped: () -> Void
     let onPullTapped: (StatusViewModel.PullType) -> Void
@@ -19,35 +22,51 @@ struct RepositoryMenuView: View {
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemote: (Int, String) -> Void
+    let onCreateTagTapped: () -> Void
+    let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
 
     let gitDir: URL
     let head: Head
     let remotes: [Remote]
     let isSelected: Bool
+    let localBranchNames: [String]
+    let remoteBranchNames: [String]
 
     init(
         isCollapsed: Binding<Bool>,
+        errorString: Binding<String?>,
+        showError: Binding<Bool>,
         onDeleteRepositoryTapped: @escaping () -> Void,
         onPullTapped: @escaping (StatusViewModel.PullType) -> Void,
         onFetchTapped: @escaping  (StatusViewModel.FetchType) -> Void,
         onAddRemoteTapped: @escaping  () -> Void,
         onGetLastSelectedRemoteIndex: @escaping (String) -> Int,
         onSetLastSelectedRemote: @escaping (Int, String) -> Void,
+        onCreateBranchTapped: @escaping (String, String, Bool, Bool) -> Void,
+        onCreateTagTapped: @escaping () -> Void,
         gitDir: URL,
         head: Head,
         remotes: [Remote],
+        localBranches: [BranchInfo],
+        remoteBranches: [BranchInfo],
         isSelected: Bool
     ) {
         self._isCollapsed = isCollapsed
+        self._errorString = errorString
+        self._showError = showError
         self.onDeleteRepositoryTapped = onDeleteRepositoryTapped
         self.onPullTapped = onPullTapped
         self.onFetchTapped = onFetchTapped
         self.onAddRemoteTapped = onAddRemoteTapped
         self.onGetLastSelectedRemoteIndex = onGetLastSelectedRemoteIndex
         self.onSetLastSelectedRemote = onSetLastSelectedRemote
+        self.onCreateBranchTapped = onCreateBranchTapped
+        self.onCreateTagTapped = onCreateTagTapped
         self.gitDir = gitDir
         self.head = head
         self.remotes = remotes
+        self.localBranchNames = localBranches.map(\.branch.name)
+        self.remoteBranchNames = remoteBranches.map(\.branch.name)
         self.isSelected = isSelected
 
         self._options = State(wrappedValue: remotes.map { XFButtonOption(title: $0.name!, data: $0) })
@@ -69,103 +88,41 @@ struct RepositoryMenuView: View {
                     showButtons.toggle()
                 }
                 .popover(isPresented: $showButtons) {
-                    buttons
-                        .padding()
+                    RepositoryMenuViewButtons(
+                        options: $options,
+                        selectedRemoteForFetch: $selectedRemoteForFetch,
+                        showButtons: $showButtons,
+                        remotes: remotes,
+                        head: head,
+                        onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                        onSetLastSelectedRemote: onSetLastSelectedRemote,
+                        onAddRemoteTapped: onAddRemoteTapped,
+                        onFetchTapped: onFetchTapped,
+                        onPullTapped: onPullTapped,
+                        onCreateBranchTapped: {
+                            showCreateBranchSheet = true
+                        },
+                        onCreateTagTapped: {
+                        }
+                    )
+                    .padding()
+                }
+                .sheet(isPresented: $showCreateBranchSheet) {
+                    AddNewBranchView(
+                        localBranches: localBranchNames,
+                        remoteBranches: remoteBranchNames,
+                        onCreateBranch: onCreateBranchTapped,
+                        currentBranch: head.name
+                    )
+                    .padding()
+                    .frame(maxHeight: .infinity)
                 }
             Spacer()
             RepositoryNavigationView(isCollapsed: $isCollapsed, deleteRepositoryTapped: onDeleteRepositoryTapped)
                 .font(.accessoryButton)
         }
-    }
-
-    var buttons: some View {
-        VStack(alignment: .leading, spacing: 8){
-            XFButton<Remote>(
-                title: "Fetch",
-                info: XFButtonInfo(info: InfoTexts.fetch),
-                options: $options,
-                selectedOptionIndex: Binding<Int>(
-                    get: {
-                        return onGetLastSelectedRemoteIndex("push")
-                    }, set: { value, _ in
-                        onSetLastSelectedRemote(value, "push")
-                    }
-                ),
-                addMoreOptionsText: "Add Remote...",
-                onTapOption: { option in
-                    selectedRemoteForFetch = option.data
-                },
-                onTapAddMore: {
-                    onAddRemoteTapped()
-                },
-                onTap: {
-                    showButtons = false
-                    onFetchTapped(.remote(selectedRemoteForFetch))
-                }
-            )
-            .onChange(of: remotes.count) {
-                options = remotes.map { XFButtonOption(title: $0.name!, data: $0) }
-            }
-            .task {
-                selectedRemoteForFetch = remotes[onGetLastSelectedRemoteIndex("push")]
-            }
-            XFButton<Void>(
-                title: "Fetch all remotes (origin, upstream, etc.)",
-                info: XFButtonInfo(info: InfoTexts.fetch),
-                onTap: {
-                    showButtons = false
-                    onFetchTapped(.all)
-                }
-            )
-            Divider()
-            XFButton<Void>(
-                title: "Pull \(head.name) branch (merge)",
-                info: XFButtonInfo(info: InfoTexts.pull),
-                onTap: {
-                    showButtons = false
-                    onPullTapped(.merge)
-                }
-            )
-            XFButton<Void>(
-                title: "Pull \(head.name) branch (rebase)",
-                info: XFButtonInfo(info: InfoTexts.pull),
-                onTap: {
-                    showButtons = false
-                    onPullTapped(.rebase)
-                }
-            )
-            Divider()
-            XFButton<Void>(
-                title: "Create new branch",
-                info: XFButtonInfo(info: InfoTexts.branch),
-                onTap: {
-                    showButtons = false
-                    fatalError(.unimplemented)
-                }
-            )
-            XFButton<Void>(
-                title: "Create and check out to a new branch",
-                onTap: {
-                    showButtons = false
-                    fatalError(.unimplemented)
-                }
-            )
-            XFButton<Void>(
-                title: "Chekout to a remote branch",
-                onTap: {
-                    showButtons = false
-                    fatalError(.unimplemented)
-                }
-            )
-            Divider()
-            XFButton<Void>(
-                title: "Create new tag",
-                info: XFButtonInfo(info: InfoTexts.tag),
-                onTap: {
-                    showButtons = false
-                    fatalError(.unimplemented)
-                }
-            )
+        .alert(isPresented: $showError) {
+            Alert(title: Text("Error"), message: Text(errorString!), dismissButton: .default(Text("OK")))
         }
     }
 }

@@ -47,6 +47,8 @@ import Observation
 
     var observers: Set<AnyCancellable> = []
     var refreshRemoteSubject: PassthroughSubject<Void, Never> = .init()
+    var errorString: String? = nil
+    var showError: Bool = false
 
     var wipWorktree: WipWorktree {
         WipWorktree.worktree(for: self)
@@ -73,6 +75,18 @@ import Observation
         onDeleteRepositoryTapped?(repository)
     }
 
+    func createBranchTapped(
+        branchName: String,
+        baseBranchName: String,
+        isRemote: Bool,
+        shouldCheckout: Bool
+    ) {
+    }
+
+    func createTagTapped() {
+        print("create tag tapped")
+    }
+    
     deinit {
         headChangeObserver?.cancel()
         indexChangeObserver?.cancel()
