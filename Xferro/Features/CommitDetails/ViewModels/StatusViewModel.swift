@@ -294,7 +294,7 @@ import OrderedCollections
                 }
                 activity = ProgressManager.shared.startActivity(name: "Fetching \(remote.name ?? "remote")...")
                 do {
-                    try GitCLI.executeGit(repository, ["fetch", remote.name!, "--prune"])
+                    try GitCLI.execute(repository, ["fetch", remote.name!, "--prune"])
                 } catch {
                     await MainActor.run {
                         AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
@@ -303,7 +303,7 @@ import OrderedCollections
             case .all:
                 activity = ProgressManager.shared.startActivity(name: "Fetching all remotes")
                 do {
-                    try GitCLI.executeGit(repository, ["fetch", "--all", "--prune"])
+                    try GitCLI.execute(repository, ["fetch", "--all", "--prune"])
                 } catch {
                     await MainActor.run {
                         AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
@@ -342,7 +342,7 @@ import OrderedCollections
             case .merge:
                 activity = ProgressManager.shared.startActivity(name: "Pulling branch \(head.name) (merge)...")
                 do {
-                    try GitCLI.executeGit(repository, ["pull", "--no-rebase"])
+                    try GitCLI.execute(repository, ["pull", "--no-rebase"])
                 } catch {
                     await MainActor.run {
                         AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
@@ -351,7 +351,7 @@ import OrderedCollections
             case .rebase:
                 activity = ProgressManager.shared.startActivity(name: "Pulling branch \(head.name) (rebase)...")
                 do {
-                    try GitCLI.executeGit(repository, ["pull", "--rebase",])
+                    try GitCLI.execute(repository, ["pull", "--rebase",])
                 } catch {
                     await MainActor.run {
                         AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
@@ -566,7 +566,7 @@ import OrderedCollections
     }
 
     private func commit(repository: Repository, amend: Bool) async throws {
-        try GitCLI.executeGit(repository, ["restore", "--staged", "."])
+        try GitCLI.execute(repository, ["restore", "--staged", "."])
         var filesToWriteBack: [String: String] = [:]
         var filesToAdd: Set<String> = []
         var filesToDelete: Set<String> = []
@@ -630,15 +630,15 @@ import OrderedCollections
         }
 
         let addArguments = ["add"] + Array(filesToAdd)
-        try GitCLI.executeGit(repository, addArguments)
+        try GitCLI.execute(repository, addArguments)
         if amend {
             if commitSummary.isEmptyOrWhitespace {
-                try GitCLI.executeGit(repository, ["commit", "--amend", "--no-edit"])
+                try GitCLI.execute(repository, ["commit", "--amend", "--no-edit"])
             } else {
-                try GitCLI.executeGit(repository, ["commit", "--amend", "-m", commitSummary])
+                try GitCLI.execute(repository, ["commit", "--amend", "-m", commitSummary])
             }
         } else {
-            try GitCLI.executeGit(repository, ["commit", "-m", commitSummary])
+            try GitCLI.execute(repository, ["commit", "-m", commitSummary])
         }
 
         for file in unsortedTrackedFiles.values.elements {
@@ -653,7 +653,7 @@ import OrderedCollections
         for path in filesToDelete {
             try! FileManager.default.removeItem(atPath: path)
         }
-        try GitCLI.executeGit(repository, ["restore", "--staged", "."])
+        try GitCLI.execute(repository, ["restore", "--staged", "."])
         await MainActor.run {
             commitSummary = ""
             currentFile = nil
@@ -696,9 +696,9 @@ import OrderedCollections
                 try! FileManager.removeItem(fileURL)
             case .deleted, .modified, .renamed, .typeChange:
                 if fileURL.isDirectory {
-                    try! GitCLI.executeGit(repository, ["restore", fileURL.appendingPathComponent("*").path])
+                    try! GitCLI.execute(repository, ["restore", fileURL.appendingPathComponent("*").path])
                 } else {
-                    try! GitCLI.executeGit(repository, ["restore", fileURL.path])
+                    try! GitCLI.execute(repository, ["restore", fileURL.path])
                 }
             case .conflicted, .unreadable:
                 fatalError(.unimplemented)
@@ -738,8 +738,8 @@ import OrderedCollections
         guard let repository else {
             fatalError(.invalid)
         }
-        try GitCLI.executeGit(repository, ["add", "."])
-        try GitCLI.executeGit(repository, ["reset", "--hard"])
+        try GitCLI.execute(repository, ["add", "."])
+        try GitCLI.execute(repository, ["reset", "--hard"])
         await MainActor.run {
             currentFile = nil
         }

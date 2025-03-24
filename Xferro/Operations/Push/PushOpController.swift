@@ -72,11 +72,11 @@ final class PushOpController: OperationController {
                 do {
                     switch pushType {
                     case .normal:
-                        try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs)
+                        try GitCLI.execute(repository, ["push", remoteName] + branchSpecs)
                     case .force:
-                        try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs + ["--force"])
+                        try GitCLI.execute(repository, ["push", remoteName] + branchSpecs + ["--force"])
                     case .forceWithLease:
-                        try GitCLI.executeGit(repository, ["push", remoteName] + branchSpecs + ["--force-with-lease"])
+                        try GitCLI.execute(repository, ["push", remoteName] + branchSpecs + ["--force-with-lease"])
                     }
                 } catch {
                     await MainActor.run {

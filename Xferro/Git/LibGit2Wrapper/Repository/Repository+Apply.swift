@@ -73,9 +73,9 @@ extension Repository {
             let url = workDir.appendingPathComponent(path)
             if FileManager.fileExists(url.path) {
                 if url.isDirectory {
-                    try! GitCLI.executeGit(self, ["restore", url.appendingPathComponent("*").path])
+                    try! GitCLI.execute(self, ["restore", url.appendingPathComponent("*").path])
                 } else {
-                    try! GitCLI.executeGit(self, ["restore", url.path])
+                    try! GitCLI.execute(self, ["restore", url.path])
                 }
                 try? FileManager.removeItem(url.path)
                 stage(path: hunk.newFilePath!).mustSucceed(gitDir)
@@ -107,9 +107,9 @@ extension Repository {
             let url = workDir.appendingPathComponent(path)
             if !FileManager.fileExists(url.path) {
                 if url.isDirectory {
-                    try! GitCLI.executeGit(self, ["restore", url.appendingPathComponent("*").path])
+                    try! GitCLI.execute(self, ["restore", url.appendingPathComponent("*").path])
                 } else {
-                    try! GitCLI.executeGit(self, ["restore", url.path])
+                    try! GitCLI.execute(self, ["restore", url.path])
                 }
             } else {
                 fatalError(.invalid)

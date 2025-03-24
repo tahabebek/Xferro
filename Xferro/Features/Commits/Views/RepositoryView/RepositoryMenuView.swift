@@ -122,7 +122,13 @@ struct RepositoryMenuView: View {
                 .font(.accessoryButton)
         }
         .alert(isPresented: $showError) {
-            Alert(title: Text("Error"), message: Text(errorString!), dismissButton: .default(Text("OK")))
+            Alert(
+                title: Text("Error"),
+                message: Text(errorString!),
+                dismissButton: .default(
+                    Text("OK")
+                )
+            )
         }
     }
 }

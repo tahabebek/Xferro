@@ -298,7 +298,7 @@ extension Repository: RemoteManagement {
         // In some cases, fast-forward merging with libgit2 can clobber unrelated
         // workspace changes, so CLI is used instead for now.
         // This actually does write, but the flag is already set
-        try! GitCLI.executeGit(self, ["merge", "--ff-only", branchName])
+        try! GitCLI.execute(self, ["merge", "--ff-only", branchName])
     }
 
     /// The full path to the MERGE_HEAD file

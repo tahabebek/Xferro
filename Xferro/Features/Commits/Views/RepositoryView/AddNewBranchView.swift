@@ -16,9 +16,9 @@ struct AddNewBranchView: View {
     @State var invalidMessage: String?
     @State var localBranches: [String] = []
     @State var remoteBranches: [String] = []
-    @State var selectedRemoteName: String?
-    @State var selectedLocalBranchName: String?
-    @State var selectedRemoteBranchName: String?
+    @State var selectedRemoteName: String = ""
+    @State var selectedLocalBranchName: String = ""
+    @State var selectedRemoteBranchName: String = ""
 
     let onCreateBranch: (String, String, Bool, Bool) -> Void
     let currentBranch: String
@@ -42,12 +42,12 @@ struct AddNewBranchView: View {
                     title: "Create Branch",
                     onTap: {
                         if isRemote {
-                            if selectedRemoteBranchName == nil {
+                            if selectedRemoteBranchName.isEmptyOrWhitespace {
                                 invalidMessage = "Please select a remote branch"
                                 return
                             }
                         } else {
-                            if selectedLocalBranchName == nil {
+                            if selectedLocalBranchName.isEmptyOrWhitespace {
                                 invalidMessage = "Please select a local branch"
                                 return
                             }
@@ -57,9 +57,9 @@ struct AddNewBranchView: View {
                             return
                         }
                         if isRemote {
-                            onCreateBranch(name, selectedRemoteBranchName!, true, shouldCheckout)
+                            onCreateBranch(name, selectedRemoteBranchName, true, shouldCheckout)
                         } else {
-                            onCreateBranch(name, selectedLocalBranchName!, false, shouldCheckout)
+                            onCreateBranch(name, selectedLocalBranchName, false, shouldCheckout)
                         }
                         dismiss()
                     }
@@ -71,7 +71,7 @@ struct AddNewBranchView: View {
         .textFieldStyle(.roundedBorder)
         .onAppear {
             selectedLocalBranchName = currentBranch
-            selectedRemoteBranchName = remoteBranches.first
+            selectedRemoteBranchName = remoteBranches.first ?? ""
             isTextFieldFocused = true
         }
     }

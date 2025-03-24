@@ -85,7 +85,7 @@ extension Repository {
     func unstage(path: String) -> Result<Void, NSError> {
         lock.lock()
         defer { lock.unlock() }
-        try! GitCLI.executeGit(self, ["reset", "-q", "HEAD", path])
+        try! GitCLI.execute(self, ["reset", "-q", "HEAD", path])
         return .success(())
     }
 

@@ -81,6 +81,44 @@ import Observation
         isRemote: Bool,
         shouldCheckout: Bool
     ) {
+        Task {
+            if shouldCheckout {
+                if status.isNotEmpty {
+                    await MainActor.run {
+                        errorString = "Cannot checkout to a different branch while there are uncommitted changes"
+                        showError = true
+                    }
+                    return
+                }
+            }
+
+            var activity: Activity? = nil
+            defer {
+                if let activity {
+                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
+                }
+            }
+
+            if isRemote {
+                activity = ProgressManager.shared.startActivity(name: "Creating branch \(branchName) to track \(baseBranchName)")
+
+            } else {
+                activity = ProgressManager.shared.startActivity(name: "Creating branch \(branchName) based on \(baseBranchName)")
+            }
+
+            do {
+                if shouldCheckout {
+                    try GitCLI.execute(repository, ["checkout", "-b", branchName, baseBranchName])
+                } else {
+                    try GitCLI.execute(repository, ["branch", branchName, baseBranchName])
+                }
+            } catch {
+                await MainActor.run {
+                    errorString = error.localizedDescription
+                    showError = true
+                }
+            }
+        }
     }
 
     func createTagTapped() {

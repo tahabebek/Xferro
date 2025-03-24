@@ -39,7 +39,7 @@ enum GitCLI {
     }
 
     @discardableResult
-    static func executeGit(_ repository: Repository, _ args: [String]) throws -> String {
+    static func execute(_ repository: Repository, _ args: [String]) throws -> String {
         let process = gitProcess(repository, args)
         let pipe = Pipe()
         process.standardOutput = pipe
