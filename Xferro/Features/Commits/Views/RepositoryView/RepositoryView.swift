@@ -41,7 +41,16 @@ struct RepositoryView: View {
                     onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemote: onSetLastSelectedRemote,
                     onCreateBranchTapped: repositoryInfo.createBranchTapped,
-                    onCheckoutBranchTapped: repositoryInfo.checkoutBranchTapped,
+                    onBranchOperationTapped: {
+                        switch $2 {
+                        case .checkout:
+                            repositoryInfo.checkoutBranchTapped(branchName: $0, isRemote: $1)
+                        case .delete:
+                            repositoryInfo.deleteBranchTapped(branchName: $0, isRemote: $1)
+                        case .merge, .rebase:
+                            fatalError(.unimplemented)
+                        }
+                    },
                     onCreateTagTapped: repositoryInfo.createTagTapped,
                     gitDir: repositoryInfo.repository.gitDir,
                     head: repositoryInfo.head,

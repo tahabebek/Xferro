@@ -19,7 +19,7 @@ struct XFButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(isSmall ? .paragraph5 : .paragraph4)
+            .font(isSmall ? .paragraph6 : .paragraph5)
             .padding(.vertical, isSmall ? 2 : 3)
             .padding(.horizontal, isSmall ? 4 : 6)
             .background(

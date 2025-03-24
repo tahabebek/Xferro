@@ -21,6 +21,7 @@ extension CGFloat {
     static let paragraph3Size: CGFloat = 16
     static let paragraph4Size: CGFloat = 15
     static let paragraph5Size: CGFloat = 14
+    static let paragraph6Size: CGFloat = 13
     static let small: CGFloat = 12
     static let tiniest: CGFloat = 10
     static let diffViewFontSize: CGFloat = 16
@@ -36,6 +37,7 @@ extension Font {
     static let paragraph3 = Font.custom(String.fontName, size: CGFloat.paragraph3Size)
     static let paragraph4 = Font.custom(String.fontName, size: CGFloat.paragraph4Size)
     static let paragraph5 = Font.custom(String.fontName, size: CGFloat.paragraph5Size)
+    static let paragraph6 = Font.custom(String.fontName, size: CGFloat.paragraph6Size)
     static let small = Font.custom(String.fontName, size: CGFloat.small)
     static let tiniest = Font.custom(String.fontName, size: CGFloat.tiniest)
 

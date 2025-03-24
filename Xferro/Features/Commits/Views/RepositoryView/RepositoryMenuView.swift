@@ -17,6 +17,7 @@ struct RepositoryMenuView: View {
     @State var showCreateBranchSheet = false
     @State var showCheckoutBranchSheet = false
     @State var showCreateTagSheet = false
+    @State var showDeleteBranchSheet = false
 
     let onDeleteRepositoryTapped: () -> Void
     let onPullTapped: (StatusViewModel.PullType) -> Void
@@ -26,7 +27,7 @@ struct RepositoryMenuView: View {
     let onSetLastSelectedRemote: (Int, String) -> Void
     let onCreateTagTapped: () -> Void
     let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
-    let onCheckoutBranchTapped: (String, Bool) -> Void
+    let onBranchOperationTapped: (String, Bool, BranchOperationView.OperationType) -> Void
 
     let gitDir: URL
     let head: Head
@@ -46,7 +47,7 @@ struct RepositoryMenuView: View {
         onGetLastSelectedRemoteIndex: @escaping (String) -> Int,
         onSetLastSelectedRemote: @escaping (Int, String) -> Void,
         onCreateBranchTapped: @escaping (String, String, Bool, Bool) -> Void,
-        onCheckoutBranchTapped: @escaping (String, Bool) -> Void,
+        onBranchOperationTapped: @escaping (String, Bool, BranchOperationView.OperationType) -> Void,
         onCreateTagTapped: @escaping () -> Void,
         gitDir: URL,
         head: Head,
@@ -65,7 +66,7 @@ struct RepositoryMenuView: View {
         self.onGetLastSelectedRemoteIndex = onGetLastSelectedRemoteIndex
         self.onSetLastSelectedRemote = onSetLastSelectedRemote
         self.onCreateBranchTapped = onCreateBranchTapped
-        self.onCheckoutBranchTapped = onCheckoutBranchTapped
+        self.onBranchOperationTapped = onBranchOperationTapped
         self.onCreateTagTapped = onCreateTagTapped
         self.gitDir = gitDir
         self.head = head
@@ -112,6 +113,9 @@ struct RepositoryMenuView: View {
                         },
                         onCreateTagTapped: {
                             showCreateTagSheet = true
+                        },
+                        onDeleteBranchTapped: {
+                            showDeleteBranchSheet = true
                         }
                     )
                     .padding()
@@ -127,11 +131,23 @@ struct RepositoryMenuView: View {
                     .frame(maxHeight: .infinity)
                 }
                 .sheet(isPresented: $showCheckoutBranchSheet) {
-                    CheckoutBranchView(
+                    BranchOperationView(
                         localBranches: localBranchNames,
                         remoteBranches: remoteBranchNames,
-                        onCheckoutBranch: onCheckoutBranchTapped,
-                        currentBranch: head.name
+                        onConfirm: onBranchOperationTapped,
+                        currentBranch: head.name,
+                        operation: .checkout
+                    )
+                    .padding()
+                    .frame(maxHeight: .infinity)
+                }
+                .sheet(isPresented: $showDeleteBranchSheet) {
+                    BranchOperationView(
+                        localBranches: localBranchNames,
+                        remoteBranches: remoteBranchNames,
+                        onConfirm: onBranchOperationTapped,
+                        currentBranch: head.name,
+                        operation: .delete
                     )
                     .padding()
                     .frame(maxHeight: .infinity)

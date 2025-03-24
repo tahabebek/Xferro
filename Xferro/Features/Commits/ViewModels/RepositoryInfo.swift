@@ -164,6 +164,47 @@ import Observation
         }
     }
 
+    func deleteBranchTapped(branchName: String, isRemote: Bool) {
+        Task {
+            if head.name == branchName {
+                await MainActor.run {
+                    errorString = "Cannot delete the current branch"
+                    showError = true
+                }
+                return
+            }
+
+            var activity: Activity? = nil
+            defer {
+                if let activity {
+                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
+                }
+            }
+
+            if isRemote {
+                activity = ProgressManager.shared.startActivity(name: "Deleting remote branch \(branchName)")
+
+            } else {
+                activity = ProgressManager.shared.startActivity(name: "Deleting local branch \(branchName)")
+            }
+
+            do {
+                if isRemote {
+                    let remote = String(branchName.split(separator: "/").first!)
+                    let branch = String(branchName.split(separator: "/").last!)
+                    try GitCLI.execute(repository, ["push", "--delete", remote , branch])
+                } else {
+                    try GitCLI.execute(repository, ["branch", "-D", branchName])
+                }
+            } catch {
+                await MainActor.run {
+                    errorString = error.localizedDescription
+                    showError = true
+                }
+            }
+        }
+    }
+
     func createTagTapped() {
         print("create tag tapped")
     }

@@ -167,7 +167,7 @@ struct AddNewBranchView: View {
     }
 
     var titleView: some View {
-        Text("Create New Branch")
+        Text("Create a New Branch")
             .font(.formHeading)
             .padding(.horizontal)
             .padding(.bottom)

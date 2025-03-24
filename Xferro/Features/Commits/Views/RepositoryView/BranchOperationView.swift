@@ -1,5 +1,5 @@
 //
-//  CheckoutBranchView.swift
+//  BranchOperationView.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 3/24/25.
@@ -7,7 +7,14 @@
 
 import SwiftUI
 
-struct CheckoutBranchView: View {
+struct BranchOperationView: View {
+    enum OperationType {
+        case checkout
+        case delete
+        case merge
+        case rebase
+    }
+
     @Environment(\.dismiss) var dismiss
     @State var isRemote: Bool = false
     @State var localBranches: [String] = []
@@ -16,8 +23,47 @@ struct CheckoutBranchView: View {
     @State var selectedLocalBranchName: String = ""
     @State var selectedRemoteBranchName: String = ""
 
-    let onCheckoutBranch: (String, Bool) -> Void
+    let title: String
+    let confirmButtonTitle: String
+    let onConfirm: (String, Bool, OperationType) -> Void
     let currentBranch: String
+    let operation: OperationType
+
+    init(
+        localBranches: [String],
+        remoteBranches: [String],
+        onConfirm: @escaping (String, Bool, OperationType) -> Void,
+        currentBranch: String,
+        operation: OperationType
+    ) {
+        self.localBranches = localBranches
+        self.remoteBranches = remoteBranches
+        self.onConfirm = onConfirm
+        self.currentBranch = currentBranch
+        self.operation = operation
+
+        self.title = switch operation {
+            case .checkout:
+                "Checkout to a Branch"
+            case .delete:
+                "Delete a Branch"
+            case .merge:
+                "Merge a Branch"
+            case .rebase:
+                "Rebase a Branch"
+        }
+
+        self.confirmButtonTitle = switch operation {
+            case .checkout:
+                "Checkout"
+            case .delete:
+                "Delete"
+            case .merge:
+                "Merge"
+            case .rebase:
+                "Rebase"
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -33,11 +79,12 @@ struct CheckoutBranchView: View {
                     }
                 )
                 XFButton<Void>(
-                    title: "Checkout",
+                    title: confirmButtonTitle,
                     onTap: {
-                        onCheckoutBranch(
+                        onConfirm(
                             isRemote ? selectedRemoteBranchName : selectedLocalBranchName,
-                            isRemote
+                            isRemote,
+                            operation
                         )
                         dismiss()
                     }
@@ -92,7 +139,7 @@ struct CheckoutBranchView: View {
     }
 
     var titleView: some View {
-        Text("Checkout to a Branch")
+        Text(title)
             .font(.formHeading)
             .padding(.horizontal)
             .padding(.bottom)

@@ -23,6 +23,7 @@ struct RepositoryMenuViewButtons: View {
     let onCreateBranchTapped: () -> Void
     let onCheckoutBranchTapped: () -> Void
     let onCreateTagTapped: () -> Void
+    let onDeleteBranchTapped: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -90,16 +91,24 @@ struct RepositoryMenuViewButtons: View {
                 }
             )
             XFButton<Void>(
-                title: "Create new branch",
+                title: "Create a new branch",
                 info: XFButtonInfo(info: InfoTexts.branch),
                 onTap: {
                     showButtons = false
                     onCreateBranchTapped()
                 }
             )
+            XFButton<Void>(
+                title: "Delete a branch",
+                info: XFButtonInfo(info: InfoTexts.branch),
+                onTap: {
+                    showButtons = false
+                    onDeleteBranchTapped()
+                }
+            )
             Divider()
             XFButton<Void>(
-                title: "Create new tag",
+                title: "Create a new tag",
                 info: XFButtonInfo(info: InfoTexts.tag),
                 onTap: {
                     showButtons = false
