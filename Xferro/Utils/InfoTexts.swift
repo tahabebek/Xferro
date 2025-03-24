@@ -192,7 +192,7 @@ enum InfoTexts {
     static let wip = """
     We've created a Git client that automatically generates backup branches and commits changes as you work, ensuring your code is always protected without disrupting your workflow. Every time you make a change to your files, Xferro automatically commits those changes to a backup branch and pushes them to the remote repository.
     
-    Why We Matter
+    Why Does It Matter
     
     The average developer loses 5-7 hours of work monthly due to various coding mishaps. Xferro transforms this experience by making lost work a thing of the past, protecting you from common scenarios like:
     

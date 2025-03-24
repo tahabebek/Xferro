@@ -41,7 +41,9 @@ struct VerticalHeader<Content>: View where Content: View {
                 .font(.heading2)
                 .foregroundColor(titleColor)
             buttons()
-            infoView()
+            if let info {
+                InfoView(showingInfo: $showInfo, info: XFButtonInfo(info: info))
+            }
             Spacer()
         }
         .padding(.horizontal, horizontalPadding)
@@ -58,28 +60,6 @@ struct VerticalHeader<Content>: View where Content: View {
             }
             .buttonStyle(PlainButtonStyle())
             .popover(isPresented: $showMenu, content: buttonsView)
-        }
-    }
-
-    @ViewBuilder func infoView() -> some View {
-        if let info {
-            Images.infoButtonImage
-                .frame(width: 16, height: 16)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    showInfo.toggle()
-                }
-                .popover(isPresented: $showInfo) {
-                    VStack(spacing: 0) {
-                        ScrollView {
-                            Text(info)
-                                .font(.paragraph3)
-                                .padding(.vertical)
-                        }
-                    }
-                    .padding()
-                    .frame(maxWidth: 400, maxHeight: 600)
-                }
         }
     }
 }

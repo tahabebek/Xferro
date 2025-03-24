@@ -88,13 +88,17 @@ struct XFButton<OptionData>: View {
                         }
                         Text(title)
                         optionsView()
-                        infoView()
+                        if let info {
+                            InfoView(showingInfo: $showingInfo, info: info)
+                        }
                     }
                 } else {
                     HStack(spacing: 4) {
                         Text(title)
                         optionsView()
-                        infoView()
+                        if let info {
+                            InfoView(showingInfo: $showingInfo, info: info)
+                        }
                     }
                 }
             }
@@ -137,32 +141,6 @@ struct XFButton<OptionData>: View {
                     .padding()
                 }
             }
-        }
-    }
-
-    @ViewBuilder func infoView() -> some View {
-        if let info {
-            Images.infoButtonImage
-                .frame(width: 16, height: 16)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    showingInfo.toggle()
-                }
-                .popover(isPresented: $showingInfo) {
-                    VStack(spacing: 0) {
-                        if let title = info.title {
-                            Text(title)
-                                .padding(.vertical)
-                        }
-                        ScrollView {
-                            Text(info.info)
-                                .font(.paragraph3)
-                                .padding(.vertical)
-                        }
-                    }
-                    .padding()
-                    .frame(maxWidth: 400, maxHeight: 600)
-                }
         }
     }
 }

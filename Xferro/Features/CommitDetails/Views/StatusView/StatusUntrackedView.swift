@@ -62,6 +62,7 @@ struct StatusUntrackedView: View {
                 Spacer()
                 XFButton<Void>(
                     title: "Track All",
+                    isSmall: true,
                     onTap: {
                         onTapTrackAll()
                     }
