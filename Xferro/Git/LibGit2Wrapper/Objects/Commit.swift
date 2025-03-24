@@ -7,33 +7,18 @@
 
 import Foundation
 
-/// A git commit.
 struct Commit: ObjectType, Hashable, Codable, CustomStringConvertible, Identifiable {
     var id: String { oid.description }
     static let type = GitObjectType.commit
 
-    /// The OID of the commit.
     let oid: OID
-
-    /// The OID of the commit's tree.
     let tree: PointerTo<Tree>
-
-    /// The OIDs of the commit's parents.
     let parents: [PointerTo<Commit>]
-
-    /// The author of the commit.
     let author: Signature
-
-    /// The committer of the commit.
     let committer: Signature
-
-    /// The full message of the commit.
     let message: String
-
-    /// Summary
     let summary: String
 
-    /// Create an instance with a libgit2 `git_commit` object.
     init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
         lock.lock()
         defer { lock.unlock() }

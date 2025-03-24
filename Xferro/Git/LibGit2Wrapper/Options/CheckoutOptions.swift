@@ -7,15 +7,13 @@
 
 import Foundation
 
-/// Helper function used as the libgit2 progress callback in git_checkout_options.
-/// This is a function with a type signature of git_checkout_progress_cb.
-private func checkoutProgressCallback(path: UnsafePointer<Int8>?,
-                                      completedSteps: Int,
-                                      totalSteps: Int,
-                                      payload: UnsafeMutableRawPointer?) {
-    guard let payload = payload else {
-        return
-    }
+private func checkoutProgressCallback(
+    path: UnsafePointer<Int8>?,
+    completedSteps: Int,
+    totalSteps: Int,
+    payload: UnsafeMutableRawPointer?
+) {
+    guard let payload else { return }
     let buffer = payload.assumingMemoryBound(to: CheckoutOptions.ProgressBlock.self)
     let block: CheckoutOptions.ProgressBlock
     if completedSteps < totalSteps {
@@ -28,14 +26,9 @@ private func checkoutProgressCallback(path: UnsafePointer<Int8>?,
 }
 
 class CheckoutOptions {
-    /// The flags defining how a checkout should be performed.
-    /// More detail is available in the libgit2 documentation for `git_checkout_strategy_t`.
     struct Strategy: OptionSet {
         private let value: UInt
 
-        // MARK: - Initialization
-
-        /// Create an instance initialized with `nil`.
         init(nilLiteral: ()) {
             self.value = 0
         }
@@ -51,8 +44,6 @@ class CheckoutOptions {
         static var allZeros: Strategy {
             return self.init(rawValue: 0)
         }
-
-        // MARK: - Properties
 
         var rawValue: UInt {
             return value

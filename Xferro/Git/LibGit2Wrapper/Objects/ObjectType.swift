@@ -22,14 +22,10 @@ enum GitObjectType: Int32 {
     }
 }
 
-/// A git object.
 protocol ObjectType {
     static var type: GitObjectType { get }
 
-    /// The OID of the object.
     var oid: OID { get }
-
-    /// Create an instance with the underlying libgit2 type.
     init(_ pointer: OpaquePointer, lock: NSRecursiveLock)
 }
 

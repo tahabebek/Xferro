@@ -10,7 +10,6 @@ import Foundation
 struct Signature: Codable {
     let name: String
     let email: String
-    /// The time when the action happened.
     let time: Date
     let timeZone: TimeZone
 
@@ -28,8 +27,6 @@ struct Signature: Codable {
         timeZone = TimeZone(secondsFromGMT: 60 * Int(signature.when.offset))!
     }
 
-    /// Return an unsafe pointer to the `git_signature` struct.
-    /// Caller is responsible for freeing it with `git_signature_free`.
     func makeUnsafeSignature() -> Result<UnsafeMutablePointer<git_signature>, NSError> {
         var signature: UnsafeMutablePointer<git_signature>? = nil
         let time = git_time_t(self.time.timeIntervalSince1970)    // Unix epoch time

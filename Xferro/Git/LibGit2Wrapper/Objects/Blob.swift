@@ -7,21 +7,15 @@
 
 import Foundation
 
-/// A git blob.
 struct Blob: ObjectType, Hashable {
     static let type = GitObjectType.blob
 
-    /// The OID of the blob.
     let oid: OID
-
-    /// The contents of the blob.
     let data: Data
-
     let dataSize: UInt
     let isBinary: Bool
     let pointer: OpaquePointer
 
-    /// Create an instance with a libgit2 `git_blob`.
     init(_ pointer: OpaquePointer, lock: NSRecursiveLock) {
         lock.lock()
         defer { lock.unlock() }
@@ -33,8 +27,7 @@ struct Blob: ObjectType, Hashable {
         self.pointer = pointer
     }
 
-    func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R
-    {
+    func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R {
         try body(.init(
             start: git_blob_rawcontent(pointer),
             count: Int(git_blob_rawsize(pointer)
