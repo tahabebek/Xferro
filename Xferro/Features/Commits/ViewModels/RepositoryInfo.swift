@@ -36,7 +36,7 @@ import Observation
     var stashChangeObserver: AnyCancellable?
     var workDirChangeObserver: AnyCancellable?
 
-    var onGitChange: ((ChangeType) -> Void)?
+    var onGitChange: ((ChangeType) async -> Void)?
     var onWorkDirChange: ((RepositoryInfo, String?) -> Void)?
     var onUserTapped: ((any SelectableItem) -> Void)?
     var onIsSelected: ((any SelectableItem) -> Bool)?
@@ -73,6 +73,11 @@ import Observation
 
     func deleteRepositoryTapped() {
         onDeleteRepositoryTapped?(repository)
+    }
+
+    func refreshStatus() async {
+        status = await StatusManager.shared.status(of: self.repository)
+        await onGitChange?(.index(self))
     }
 
     func createBranchTapped(

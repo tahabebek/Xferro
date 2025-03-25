@@ -13,50 +13,48 @@ extension CommitsViewModel {
 
         newRepositoryInfo.onGitChange = { [weak self, weak newRepositoryInfo] type in
             guard let self, let newRepositoryInfo else { return }
-            Task {
-                Task { @MainActor [weak self] in
-                    guard let self else { return }
-                    switch type {
-                    case .head(let repositoryInfo):
-                        repositoryInfo.detachedCommit = self.detachedCommit(of: repositoryInfo)
-                        repositoryInfo.detachedTag = self.detachedTag(of: repositoryInfo)
-                        repositoryInfo.historyCommits = self.historyCommits(of: repositoryInfo)
-                        if let currentSelectedItem {
-                            if case .regular(let item) = currentSelectedItem.type {
-                                if case .status = item {
-                                    if newRepositoryInfo.repository.gitDir.path == repositoryInfo.repository.gitDir.path {
-                                        let selectedItem = SelectedItem(type: .regular(.status(
-                                            SelectableStatus(repositoryInfo: repositoryInfo))))
-                                        self.setCurrentSelectedItem(selectedItem, repositoryInfo)
-                                    }
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                switch type {
+                case .head(let repositoryInfo):
+                    repositoryInfo.detachedCommit = self.detachedCommit(of: repositoryInfo)
+                    repositoryInfo.detachedTag = self.detachedTag(of: repositoryInfo)
+                    repositoryInfo.historyCommits = self.historyCommits(of: repositoryInfo)
+                    if let currentSelectedItem {
+                        if case .regular(let item) = currentSelectedItem.type {
+                            if case .status = item {
+                                if newRepositoryInfo.repository.gitDir.path == repositoryInfo.repository.gitDir.path {
+                                    let selectedItem = SelectedItem(type: .regular(.status(
+                                        SelectableStatus(repositoryInfo: repositoryInfo))))
+                                    self.setCurrentSelectedItem(selectedItem, repositoryInfo)
                                 }
                             }
                         }
-                    case .index(let repositoryInfo):
-                        if let currentSelectedItem {
-                            if case .regular(let item) = currentSelectedItem.type {
-                                if case .status = item {
-                                    if repositoryInfo.repository.gitDir.path == newRepositoryInfo.repository.gitDir.path {
-                                        let selectedItem = SelectedItem(type: .regular(.status(SelectableStatus(
-                                            repositoryInfo: repositoryInfo
-                                        ))))
-                                        self.setCurrentSelectedItem(selectedItem, repositoryInfo)
-                                    }
-                                }
-                            }
-                        }
-                    case .localBranches(let repositoryInfo):
-                        repositoryInfo.localBranchInfos = self.localBranchInfos(of: repositoryInfo)
-                    case .remoteBranches(let repositoryInfo):
-                        repositoryInfo.remoteBranchInfos = self.remoteBranchInfos(of: repositoryInfo)
-                    case .tags(let repositoryInfo):
-                        repositoryInfo.tags = self.tags(of: repositoryInfo)
-                    case .reflog:
-#warning("reflog not implemented")
-                        break
-                    case .stash(let repositoryInfo):
-                        repositoryInfo.stashes = self.stashes(of: repositoryInfo)
                     }
+                case .index(let repositoryInfo):
+                    if let currentSelectedItem {
+                        if case .regular(let item) = currentSelectedItem.type {
+                            if case .status = item {
+                                if repositoryInfo.repository.gitDir.path == newRepositoryInfo.repository.gitDir.path {
+                                    let selectedItem = SelectedItem(type: .regular(.status(SelectableStatus(
+                                        repositoryInfo: repositoryInfo
+                                    ))))
+                                    self.setCurrentSelectedItem(selectedItem, repositoryInfo)
+                                }
+                            }
+                        }
+                    }
+                case .localBranches(let repositoryInfo):
+                    repositoryInfo.localBranchInfos = self.localBranchInfos(of: repositoryInfo)
+                case .remoteBranches(let repositoryInfo):
+                    repositoryInfo.remoteBranchInfos = self.remoteBranchInfos(of: repositoryInfo)
+                case .tags(let repositoryInfo):
+                    repositoryInfo.tags = self.tags(of: repositoryInfo)
+                case .reflog:
+#warning("reflog not implemented")
+                    break
+                case .stash(let repositoryInfo):
+                    repositoryInfo.stashes = self.stashes(of: repositoryInfo)
                 }
             }
         }

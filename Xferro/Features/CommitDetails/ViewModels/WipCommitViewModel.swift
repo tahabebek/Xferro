@@ -12,7 +12,7 @@ import OrderedCollections
     var files: [OldNewFile] = []
     var selectableWipCommit: SelectableWipCommit?
     var currentFile: OldNewFile? = nil
-    var repository: Repository?
+    var repositoryInfo: RepositoryInfo?
     private var unsortedFiles: OrderedDictionary<String, OldNewFile> = [:] {
         didSet {
             files = Array(unsortedFiles.values.elements).sorted { $0.statusFileName < $1.statusFileName }
@@ -21,25 +21,27 @@ import OrderedCollections
 
     func updateStatus(
         newSelectableWipCommit: SelectableWipCommit,
-        repository: Repository?,
-        head: Head
-    ) async {
+        repositoryInfo: RepositoryInfo?
+    ) {
         currentFile = nil
-        guard let repository else { return }
-        guard newSelectableWipCommit.repositoryId == repository.idOfRepo else {
+        guard let repositoryInfo else { return }
+        guard newSelectableWipCommit.repositoryId == repositoryInfo.repository.idOfRepo else {
             fatalError(.invalid)
         }
 
-        let files = await getFilesComparedFromOwnerToWip(
-            repository: repository,
-            newSelectableStatus: newSelectableWipCommit,
-            head: head
-        )
-        await MainActor.run {
-            self.unsortedFiles = files
-            self.repository = repository
-            self.selectableWipCommit = newSelectableWipCommit
-            self.setInitialSelection()
+        Task {
+            let files = await getFilesComparedFromOwnerToWip(
+                repository: repositoryInfo.repository,
+                newSelectableStatus: newSelectableWipCommit,
+                head: repositoryInfo.head
+            )
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.unsortedFiles = files
+                self.repositoryInfo = repositoryInfo
+                self.selectableWipCommit = newSelectableWipCommit
+                self.setInitialSelection()
+            }
         }
     }
 
