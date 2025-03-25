@@ -67,6 +67,7 @@ struct SwiftSpaceApp: App {
                             ProgressView()
                                 .controlSize(.small)
                             Text(ProgressManager.shared.currentActivityName)
+                                .font(.paragraph3)
                         }
                         Images.infoButtonImage
                             .frame(width: 16, height: 16)

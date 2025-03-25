@@ -20,8 +20,8 @@ struct RepositoryMenuView: View {
     @State var showDeleteBranchSheet = false
 
     let onDeleteRepositoryTapped: () -> Void
-    let onPullTapped: (StatusViewModel.PullType) -> Void
-    let onFetchTapped: (StatusViewModel.FetchType) -> Void
+    let onPullTapped: (Repository.PullType) -> Void
+    let onFetchTapped: (Repository.FetchType) -> Void
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemote: (Int, String) -> Void
@@ -41,8 +41,8 @@ struct RepositoryMenuView: View {
         errorString: Binding<String?>,
         showError: Binding<Bool>,
         onDeleteRepositoryTapped: @escaping () -> Void,
-        onPullTapped: @escaping (StatusViewModel.PullType) -> Void,
-        onFetchTapped: @escaping  (StatusViewModel.FetchType) -> Void,
+        onPullTapped: @escaping (Repository.PullType) -> Void,
+        onFetchTapped: @escaping  (Repository.FetchType) -> Void,
         onAddRemoteTapped: @escaping  () -> Void,
         onGetLastSelectedRemoteIndex: @escaping (String) -> Int,
         onSetLastSelectedRemote: @escaping (Int, String) -> Void,

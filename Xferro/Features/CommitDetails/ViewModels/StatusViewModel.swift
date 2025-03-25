@@ -97,7 +97,7 @@ import OrderedCollections
             for key in intersectionKeys {
                 let oldFile = unsortedTrackedFiles[key]
                 let newFile = newTrackedFiles[key]
-                #warning("sometimes these are nil, investigate why, they shouldn't be nil")
+#warning("sometimes these are nil, investigate why, they shouldn't be nil")
                 guard let oldFile, let newFile else { continue }
 
                 if oldFile.status != newFile.status {
@@ -257,462 +257,6 @@ import OrderedCollections
         return (trackedFiles, untrackedFiles)
     }
 
-    func onAmend() async throws {
-        try await amendTapped()
-    }
-
-    enum FetchType {
-        case remote(Remote?)
-        case all
-    }
-
-    enum PullType {
-        case merge
-        case rebase
-    }
-
-    func fetchTapped(fetchType: FetchType) {
-        Task {
-            var activity: Activity?
-            defer {
-                if let activity {
-                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
-                }
-            }
-            guard let repository else {
-                fatalError(.invalid)
-            }
-            
-            switch fetchType {
-            case .remote(let remote):
-                guard let remote else {
-                    await MainActor.run {
-                        addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
-                        shouldAddRemoteBranch = true
-                    }
-                    return false
-                }
-                activity = ProgressManager.shared.startActivity(name: "Fetching \(remote.name ?? "remote")...")
-                do {
-                    try GitCLI.execute(repository, ["fetch", remote.name!, "--prune"])
-                } catch {
-                    await MainActor.run {
-                        AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
-                    }
-                }
-            case .all:
-                activity = ProgressManager.shared.startActivity(name: "Fetching all remotes")
-                do {
-                    try GitCLI.execute(repository, ["fetch", "--all", "--prune"])
-                } catch {
-                    await MainActor.run {
-                        AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
-                    }
-                }
-            }
-            return true
-        }
-    }
-
-    func pullTapped(pullType: PullType) {
-        Task {
-            var activity: Activity?
-            defer {
-                if let activity {
-                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
-                }
-            }
-            guard let repository else {
-                fatalError(.invalid)
-            }
-
-            let head = Head.of(repository)
-            guard case .branch = head else {
-                fatalError(.invalid)
-            }
-
-            guard (repository.config ?? GitConfig.default)!.branchRemote(head.name) != nil else {
-                await MainActor.run {
-                    AppDelegate.showErrorMessage(error: RepoError.unexpected("No remote configured for current branch"))
-                }
-                return
-            }
-
-            switch pullType {
-            case .merge:
-                activity = ProgressManager.shared.startActivity(name: "Pulling branch \(head.name) (merge)...")
-                do {
-                    try GitCLI.execute(repository, ["pull", "--no-rebase"])
-                } catch {
-                    await MainActor.run {
-                        AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
-                    }
-                }
-            case .rebase:
-                activity = ProgressManager.shared.startActivity(name: "Pulling branch \(head.name) (rebase)...")
-                do {
-                    try GitCLI.execute(repository, ["pull", "--rebase",])
-                } catch {
-                    await MainActor.run {
-                        AppDelegate.showErrorMessage(error: RepoError.unexpected(error.localizedDescription))
-                    }
-                }
-            }
-        }
-    }
-
-
-    func onAddRemote(
-        fetchURLString: String,
-        pushURLString: String,
-        remoteName: String
-    ) async {
-        guard let repository else {
-            fatalError(.invalid)
-        }
-
-        await MainActor.run {
-            shouldAddRemoteBranch = false
-        }
-
-        guard let fetchURL = URL(string: fetchURLString) else {
-            return
-        }
-        do {
-            try repository.addRemote(named: remoteName, url: fetchURL)
-            if let remote = repository.remote(named: remoteName) {
-                try remote.updatePushURLString(pushURLString)
-            }
-            remotes?.append(Remote(name: remoteName, repository: repository.pointer)!)
-            remotes?.sort { $0.name! < $1.name! }
-            if let index = remotes?.firstIndex(where: { $0.name == remoteName }) {
-                setLastSelectedRemote(index, buttonTitle: "push")
-            }
-            refreshRemoteSubject?.send()
-        } catch let error as RepoError {
-            await MainActor.run {
-                AppDelegate.showErrorMessage(error: error)
-            }
-        } catch {
-            await MainActor.run {
-                AppDelegate.showErrorMessage(error: .unexpected(error.localizedDescription))
-            }
-        }
-    }
-
-    func onCommitAndPush(remote: Remote?) async throws {
-        try await tryCommitAndPush(remote: remote, pushType: .normal)
-    }
-
-    func onCommitAndForcePushWithLease(remote: Remote?) async throws {
-        try await tryCommitAndPush(remote: remote, pushType: .forceWithLease)
-    }
-
-    private func tryCommitAndPush(remote: Remote?, pushType: Repository.PushType) async throws {
-        guard let repository else {
-            fatalError(.invalid)
-        }
-
-        if let remote {
-            try await actuallyCommitAndPush(remote: remote, repository: repository, pushType: pushType)
-        } else {
-            await MainActor.run {
-                addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
-                shouldAddRemoteBranch = true
-            }
-        }
-    }
-
-    private func actuallyCommitAndPush(
-        remote: Remote,
-        repository: Repository,
-        pushType: Repository.PushType
-    ) async throws {
-        let head = Head.of(repository)
-        guard case .branch(let currentBranch, _) = head else {
-            throw RepoError.detachedHead
-        }
-
-        try await commitTapped()
-        let pushOperation = await PushOpController(
-            localBranch: currentBranch,
-            remote: remote,
-            repository: repository,
-            pushType: pushType
-        )
-        try await pushOperation.start()
-
-    }
-
-    func onAmendAndPush(remote: Remote?) async throws {
-        try await tryAmendAndPush(remote: remote, pushType: .normal)
-    }
-
-    func onAmendAndForcePushWithLease(remote: Remote?) async throws {
-        try await tryAmendAndPush(remote: remote, pushType: .forceWithLease)
-    }
-
-    private func tryAmendAndPush(remote: Remote?, pushType: Repository.PushType) async throws {
-        guard let repository else {
-            fatalError(.unimplemented)
-        }
-
-        if let remote {
-            try await actuallyAmendAndPush(remote: remote, repository: repository, pushType: pushType)
-        } else {
-            await MainActor.run {
-                addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
-                shouldAddRemoteBranch = true
-            }
-        }
-    }
-
-    private func actuallyAmendAndPush(remote: Remote, repository: Repository, pushType: Repository.PushType) async throws {
-        try await amendTapped()
-        
-        let head = Head.of(repository)
-        guard case .branch(let currentBranch, _) = head else {
-            throw RepoError.detachedHead
-        }
-        let pushOperation = await PushOpController(
-            localBranch: currentBranch,
-            remote: remote,
-            repository: repository,
-            pushType: pushType
-        )
-        try await pushOperation.start()
-    }
-
-    func onPush(
-        branchName: String,
-        remote: Remote?,
-        pushType: Repository.PushType
-    ) async throws {
-        guard let repository else {
-            fatalError(.unimplemented)
-        }
-
-        if let remote {
-            guard let branch = repository.branch(named: branchName).mustSucceed(repository.gitDir) else {
-                return
-            }
-            let pushOperation = await PushOpController(
-                localBranch: branch,
-                remote: remote,
-                repository: repository,
-                pushType: pushType
-            )
-            try await pushOperation.start()
-        } else {
-            await MainActor.run {
-                addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
-                shouldAddRemoteBranch = true
-            }
-        }
-    }
-
-    @MainActor
-    func addRemoteTapped() {
-        addRemoteTitle = "Add a new remote"
-        shouldAddRemoteBranch = true
-    }
-
-    func onStash() async throws {
-        fatalError(.unimplemented)
-    }
-
-    func onPopStash() async throws {
-        fatalError(.unimplemented)
-    }
-
-    func onApplyStash(stash: SelectableStash) async throws {
-        fatalError(.unimplemented)
-    }
-
-    func trackAllTapped() async {
-        for file in unsortedUntrackedFiles.values {
-            await trackTapped(flag: true, file: file)
-        }
-    }
-
-    func trackTapped(flag: Bool, file: OldNewFile) async {
-        guard let repository, let path = file.new else {
-            fatalError(.invalid)
-        }
-        if flag {
-            repository.stage(path: path).mustSucceed(repository.gitDir)
-        } else {
-            repository.unstage(path: path).mustSucceed(repository.gitDir)
-        }
-    }
-
-    func commitTapped() async throws {
-        guard let repository else {
-            fatalError(.invalid)
-        }
-        try await commit(repository: repository, amend: false)
-    }
-
-    func splitAndCommitTapped() async -> Commit {
-        fatalError(.unimplemented)
-    }
-
-    func amendTapped() async throws {
-        guard let repository else {
-            fatalError(.invalid)
-        }
-
-        try await commit(repository: repository, amend: true)
-    }
-
-    private func commit(repository: Repository, amend: Bool) async throws {
-        try GitCLI.execute(repository, ["restore", "--staged", "."])
-        var filesToWriteBack: [String: String] = [:]
-        var filesToAdd: Set<String> = []
-        var filesToDelete: Set<String> = []
-
-        for file in unsortedTrackedFiles.values.elements where file.checkState == .checked {
-            guard file.new != nil || file.old != nil else {
-                fatalError(.invalid)
-            }
-
-            if let new = file.new {
-                filesToAdd.insert(new)
-            }
-            if let old = file.old , old != file.new {
-                filesToAdd.insert(old)
-            }
-        }
-
-        for file in unsortedTrackedFiles.values.elements where file.checkState == .partiallyChecked {
-            guard let hunks = file.diffInfo?.hunks() else {
-                fatalError(.invalid)
-            }
-
-            let hunkCopies = hunks.map { $0.copy() }
-            let originalLines = hunks.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
-            let copyLines = hunkCopies.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
-            for i in 0..<originalLines.count {
-                copyLines[i].isSelected = !originalLines[i].isSelected
-            }
-
-            let unselectedLines = copyLines.filter(\.isSelected)
-            if unselectedLines.count == 0 {
-                fatalError(.impossible)
-            }
-
-            switch file.status {
-            case .added, .copied, .renamed, .typeChange, .modified:
-                guard let workDirNew = file.workDirNew, let new = file.new else {
-                    fatalError(.invalid)
-                }
-                if FileManager.fileExists(workDirNew) {
-                    let currentFile = try String(contentsOfFile: workDirNew, encoding: .utf8)
-                    filesToWriteBack[workDirNew] = currentFile
-                    try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
-                } else {
-                    fatalError(.impossible)
-                }
-                filesToAdd.insert(new)
-            case .deleted:
-                guard let old = file.old else {
-                    fatalError(.invalid)
-                }
-
-                try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
-                filesToAdd.insert(old)
-                filesToDelete.insert(old)
-            case .ignored, .unreadable, .unmodified, .untracked:
-                fatalError(.invalid)
-            case .conflicted:
-                fatalError(.unimplemented)
-            }
-        }
-
-        let addArguments = ["add"] + Array(filesToAdd)
-        try GitCLI.execute(repository, addArguments)
-        if amend {
-            if commitSummary.isEmptyOrWhitespace {
-                try GitCLI.execute(repository, ["commit", "--amend", "--no-edit"])
-            } else {
-                try GitCLI.execute(repository, ["commit", "--amend", "-m", commitSummary])
-            }
-        } else {
-            try GitCLI.execute(repository, ["commit", "-m", commitSummary])
-        }
-
-        for file in unsortedTrackedFiles.values.elements {
-            await diffInfoCache.removeValue(forKey: file.key)
-            if let workDirNew = file.workDirNew {
-                await lastModifiedCache.removeValue(forKey: workDirNew)
-            }
-        }
-        for (path, content) in filesToWriteBack {
-            try! content.write(toFile: path, atomically: true, encoding: .utf8)
-        }
-        for path in filesToDelete {
-            try! FileManager.default.removeItem(atPath: path)
-        }
-        try GitCLI.execute(repository, ["restore", "--staged", "."])
-        await MainActor.run {
-            commitSummary = ""
-            currentFile = nil
-        }
-    }
-
-    func ignoreTapped(file: OldNewFile) async {
-        guard let repository else {
-            fatalError(.invalid)
-        }
-        guard let path = file.new else {
-            fatalError(.illegal)
-        }
-        repository.ignore(path)
-    }
-
-    func discardTapped(file: OldNewFile) async {
-        guard let repository else {
-            fatalError(.invalid)
-        }
-        let oldFile = file.workDirOld
-        let newFile = file.workDirNew
-        var fileURLs = [URL]()
-
-        if let oldFile, let newFile, oldFile == newFile {
-            fileURLs.append(oldFile.fileURL!)
-        } else {
-            if let oldFile {
-                fileURLs.append(oldFile.fileURL!)
-            }
-            if let newFile {
-                fileURLs.append(newFile.fileURL!)
-            }
-        }
-        for fileURL in fileURLs {
-            switch file.status {
-            case .unmodified, .ignored:
-                fatalError(.invalid)
-            case .added, .copied, .untracked:
-                try! FileManager.removeItem(fileURL)
-            case .deleted, .modified, .renamed, .typeChange:
-                if fileURL.isDirectory {
-                    try! GitCLI.execute(repository, ["restore", fileURL.appendingPathComponent("*").path])
-                } else {
-                    try! GitCLI.execute(repository, ["restore", fileURL.path])
-                }
-            case .conflicted, .unreadable:
-                fatalError(.unimplemented)
-            }
-        }
-
-        if file == currentFile {
-            await MainActor.run {
-                currentFile = nil
-                setInitialSelection()
-            }
-        }
-    }
-
     func discardAlertTitle(file: OldNewFile?) -> String {
         guard let file else {
             return "Are you sure you want to discard all the changes in all the files?"
@@ -734,17 +278,6 @@ import OrderedCollections
         return title
     }
 
-    func discardAllTapped() async throws {
-        guard let repository else {
-            fatalError(.invalid)
-        }
-        try GitCLI.execute(repository, ["add", "."])
-        try GitCLI.execute(repository, ["reset", "--hard"])
-        await MainActor.run {
-            currentFile = nil
-        }
-    }
-
     func setInitialSelection() {
         if currentFile == nil {
             var item: OldNewFile?
@@ -762,16 +295,638 @@ import OrderedCollections
     var hasChanges: Bool {
         !trackedFiles.isEmpty || !untrackedFiles.isEmpty
     }
+}
 
-    func selectAll(flag: Bool) async {
-        let keys = Set(unsortedTrackedFiles.values.elements.map(\.key))
-        for key in keys {
-            if flag, unsortedTrackedFiles[key]?.checkState == .checked { continue }
-            if !flag, unsortedTrackedFiles[key]?.checkState == .unchecked { continue }
-            unsortedTrackedFiles[key]?.checkState = flag ? .checked : .unchecked
-            for line in unsortedTrackedFiles[key]?.diffInfo?.hunks().flatMap(\.parts)
-                .filter({ $0.type != .context }).flatMap(\.lines) ?? [] {
-                line.isSelected = flag
+// MARK: - User Actions
+
+extension StatusViewModel {
+    func addRemoteTapped() {
+        Task { @MainActor in
+            addRemoteTitle = "Add a new remote"
+            shouldAddRemoteBranch = true
+        }
+    }
+
+    func actualAddRemoteTapped(fetchURLString: String, pushURLString: String, remoteName: String) {
+        Task {
+            await addRemote(
+                fetchURLString: fetchURLString,
+                pushURLString: pushURLString,
+                remoteName: remoteName
+            )
+        }
+    }
+
+    func fetchTapped(fetchType: Repository.FetchType) {
+        Task {
+            await fetch(fetchType: fetchType)
+        }
+    }
+
+    func pullTapped(pullType: Repository.PullType) {
+        Task {
+            await pull(pullType: pullType)
+        }
+    }
+
+    func pushTapped(branchName: String? = nil, remote: Remote?, pushType: Repository.PushType) {
+        Task {
+            await push(branchName: branchName, remote: remote, pushType: pushType)
+        }
+    }
+
+    func forcePushWithLeaseTapped(branchName: String? = nil, remote: Remote?) {
+        Task {
+            await push(branchName: branchName, remote: remote, pushType: .forceWithLease)
+        }
+    }
+
+    func commitTapped() {
+        Task {
+            await commit()
+        }
+    }
+
+    func amendTapped() {
+        Task {
+            await amend()
+        }
+    }
+
+    func splitAndCommitTapped() {
+        Task {
+            await splitAndCommit()
+        }
+    }
+
+    func commitAndPushTapped(remote: Remote?) {
+        Task {
+            await commitAndPush(remote: remote)
+        }
+    }
+
+    func commitAndForcePushWithLeaseTapped(remote: Remote?) {
+        Task {
+            await commitAndForcePushWithLease(remote: remote)
+        }
+    }
+
+    func amendAndPushTapped(remote: Remote?) {
+        Task {
+            await tryAmendAndPush(remote: remote, pushType: .normal)
+        }
+    }
+
+    func amendAndForcePushWithLeaseTapped(remote: Remote?) {
+        Task {
+            await tryAmendAndPush(remote: remote, pushType: .forceWithLease)
+        }
+    }
+
+    func ignoreTapped(file: OldNewFile) {
+        Task {
+            await ignore(file: file)
+        }
+    }
+
+    func trackTapped(flag: Bool, file: OldNewFile) {
+        Task {
+            await track(flag: flag, file: file)
+        }
+    }
+
+    func trackAllTapped() {
+        Task {
+            await trackAll()
+        }
+    }
+
+    func stashTapped() {
+        Task {
+            await stash()
+        }
+    }
+
+    func popStashTapped() {
+        Task {
+            await popStash()
+        }
+    }
+
+    func applyStashTapped(stash: SelectableStash) {
+        Task {
+            await applyStash(stash: stash)
+        }
+    }
+
+    func discardTapped(file: OldNewFile) {
+        Task {
+            await discard(file: file)
+        }
+    }
+
+    func discardAllTapped() {
+        Task {
+            await discardAll()
+        }
+    }
+
+    func selectAllTapped(flag: Bool) {
+        Task { @MainActor in
+            let keys = Set(unsortedTrackedFiles.values.elements.map(\.key))
+            for key in keys {
+                if flag, unsortedTrackedFiles[key]?.checkState == .checked { continue }
+                if !flag, unsortedTrackedFiles[key]?.checkState == .unchecked { continue }
+                unsortedTrackedFiles[key]?.checkState = flag ? .checked : .unchecked
+                for line in unsortedTrackedFiles[key]?.diffInfo?.hunks().flatMap(\.parts)
+                    .filter({ $0.type != .context }).flatMap(\.lines) ?? [] {
+                    line.isSelected = flag
+                }
+            }
+        }
+    }
+}
+
+// MARK: Git Operations
+fileprivate extension StatusViewModel {
+    func fetch(fetchType: Repository.FetchType) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+        switch fetchType {
+        case .remote(let remote):
+            guard let remote else {
+                Task { @MainActor in
+                    addRemoteTitle = "This repository doesn't have a remote, you need to add one in order to fetch the changes"
+                    shouldAddRemoteBranch = true
+                }
+                return
+            }
+            await performOperation(
+                title: "Fetching \(remote.name ?? "remote")..",
+                successMessage: "Fetched \(remote.name ?? "remote")"
+            ) { [weak self] in
+                guard let self else { return }
+                try GitCLI.execute(repository, ["fetch", remote.name!, "--prune"])
+            }
+        case .all:
+            await performOperation(
+                title: "Fetching all remotes",
+                successMessage: "Fetched all remotes"
+            ) { [weak self] in
+                guard let self else { return }
+                try GitCLI.execute(repository, ["fetch", "--all", "--prune"])
+            }
+        }
+    }
+
+    func pull(pullType: Repository.PullType) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+
+        let head = Head.of(repository)
+        guard case .branch = head else {
+            fatalError(.invalid)
+        }
+
+        guard (repository.config ?? GitConfig.default)!.branchRemote(head.name) != nil else {
+            Task { @MainActor in
+                AppDelegate.showErrorMessage(
+                    error: RepoError.unexpected(
+                        "This repository doesn't have a remote, you need to add one in order to pull the changes"
+                    )
+                )
+            }
+            return
+        }
+
+        switch pullType {
+        case .merge:
+            await performOperation(
+                title: "Pulling branch \(head.name) (merge)..",
+                successMessage: "Pulled branch \(head.name) (merge).."
+            ) { [weak self] in
+                guard let self else { return }
+                try GitCLI.execute(repository, ["pull", "--no-rebase"])
+            }
+        case .rebase:
+            await performOperation(
+                title: "Pulling branch \(head.name) (rebase)..",
+                successMessage: "Pulling branch \(head.name) (rebase).."
+            ) { [weak self] in
+                guard let self else { return }
+                try GitCLI.execute(repository, ["pull", "--rebase",])
+            }
+        }
+    }
+
+    func push(
+        branchName: String? = nil /* pass nil to push the current branch */,
+        remote: Remote?,
+        pushType: Repository.PushType
+    ) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+
+        guard let remote else {
+            Task { @MainActor in
+                addRemoteTitle = "This repository doesn't have a remote, you need to add one in order to push the changes"
+                shouldAddRemoteBranch = true
+            }
+            return
+        }
+
+        if let branchName {
+            guard let branch = repository.branch(named: branchName).mustSucceed(repository.gitDir) else {
+                Task { @MainActor in
+                    addRemoteTitle = "There is no branch named \(branchName) in the repository"
+                    shouldAddRemoteBranch = true
+                }
+                return
+            }
+            await performOperation(
+                title: "Pushing \(branch.name) to \(remote)..",
+                successMessage: "Pushed \(branch.name) to \(remote)"
+            ) { [weak self] in
+                guard let self else { return }
+                let pushOperation = await PushOpController(
+                    localBranch: branch,
+                    remote: remote,
+                    repository: repository,
+                    pushType: pushType
+                )
+                try await pushOperation.start()
+
+            }
+        } else {
+            let head = Head.of(repository)
+            guard case .branch(let currentBranch, _) = head else {
+                Task { @MainActor in
+                    AppDelegate.showErrorMessage(error: RepoError.unexpected("Push failed, because the head is detached"))
+                }
+                return
+            }
+            await performOperation(
+                title: "Pushing \(currentBranch) to \(remote)..",
+                successMessage: "Pushed \(currentBranch) to \(remote)"
+            ) { [weak self] in
+                guard let self else { return }
+                let pushOperation = await PushOpController(
+                    localBranch: currentBranch,
+                    remote: remote,
+                    repository: repository,
+                    pushType: pushType
+                )
+                try await pushOperation.start()
+            }
+        }
+    }
+
+    func addRemote(
+        fetchURLString: String,
+        pushURLString: String,
+        remoteName: String
+    ) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+
+        Task { @MainActor in
+            shouldAddRemoteBranch = false
+        }
+
+        guard let fetchURL = URL(string: fetchURLString) else {
+            return
+        }
+        await performOperation(title: "Adding remote..", successMessage: "Remote added") { [weak self] in
+            guard let self else { return }
+            try repository.addRemote(named: remoteName, url: fetchURL)
+            if let remote = repository.remote(named: remoteName) {
+                try remote.updatePushURLString(pushURLString)
+            }
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                remotes?.append(Remote(name: remoteName, repository: repository.pointer)!)
+                remotes?.sort { $0.name! < $1.name! }
+                if let index = remotes?.firstIndex(where: { $0.name == remoteName }) {
+                    setLastSelectedRemote(index, buttonTitle: "push")
+                }
+                refreshRemoteSubject?.send()
+            }
+        }
+    }
+
+    func commitAndPush(remote: Remote?) async {
+        await tryCommitAndPush(remote: remote, pushType: .normal)
+    }
+
+    func commitAndForcePushWithLease(remote: Remote?) async {
+        await tryCommitAndPush(remote: remote, pushType: .forceWithLease)
+    }
+
+    func tryCommitAndPush(remote: Remote?, pushType: Repository.PushType) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+
+        if let remote {
+            await actuallyCommitAndPush(remote: remote, repository: repository, pushType: pushType)
+        } else {
+            Task { @MainActor in
+                addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
+                shouldAddRemoteBranch = true
+            }
+        }
+    }
+
+    func actuallyCommitAndPush(
+        remote: Remote,
+        repository: Repository,
+        pushType: Repository.PushType
+    ) async {
+        await commit()
+        await push(branchName: nil, remote: remote, pushType: pushType)
+    }
+
+    func amendAndPush(remote: Remote?) async {
+        await tryAmendAndPush(remote: remote, pushType: .normal)
+    }
+
+    func amendAndForcePushWithLease(remote: Remote?) async {
+        await tryAmendAndPush(remote: remote, pushType: .forceWithLease)
+    }
+
+    func tryAmendAndPush(remote: Remote?, pushType: Repository.PushType) async {
+        guard let repository else {
+            fatalError(.unimplemented)
+        }
+
+        if let remote {
+            await actuallyAmendAndPush(remote: remote, repository: repository, pushType: pushType)
+        } else {
+            Task { @MainActor in
+                addRemoteTitle = "This repository doesn't have a remote, add one to push changes to the server"
+                shouldAddRemoteBranch = true
+            }
+        }
+    }
+
+    func actuallyAmendAndPush(
+        remote: Remote,
+        repository: Repository,
+        pushType: Repository.PushType
+    ) async {
+        await amend()
+        await push(branchName: nil, remote: remote, pushType: pushType)
+    }
+
+    func stash() async {
+         fatalError(.unimplemented)
+    }
+
+    func popStash() async {
+        fatalError(.unimplemented)
+    }
+
+    func applyStash(stash: SelectableStash) async {
+        fatalError(.unimplemented)
+    }
+
+    func trackAll() async {
+        for file in unsortedUntrackedFiles.values {
+            await track(flag: true, file: file)
+        }
+    }
+
+    func track(flag: Bool, file: OldNewFile) async {
+        guard let repository, let path = file.new else {
+            fatalError(.invalid)
+        }
+        Task {
+            await performOperation(
+                title: "Tracking \(file.new ?? file.old!)",
+                successMessage: "Tracked \(file.new ?? file.old!)"
+            ) { [weak self] in
+                guard let self else { return }
+                if flag {
+                    repository.stage(path: path).mustSucceed(repository.gitDir)
+                } else {
+                    repository.unstage(path: path).mustSucceed(repository.gitDir)
+                }
+            }
+        }
+    }
+
+    func commit() async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+        await commit(repository: repository, amend: false)
+    }
+
+    func splitAndCommit() async -> Commit {
+        fatalError(.unimplemented)
+    }
+
+    func amend() async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+
+        await commit(repository: repository, amend: true)
+    }
+
+    func commit(repository: Repository, amend: Bool) async {
+        await performOperation(
+            title: amend ? "Amending changes.." : "Committing changes..",
+            successMessage: amend ? "Amended changes" : "Committed changes"
+        ) { [weak self] in
+            guard let self else { return }
+            try GitCLI.execute(repository, ["restore", "--staged", "."])
+            var filesToWriteBack: [String: String] = [:]
+            var filesToAdd: Set<String> = []
+            var filesToDelete: Set<String> = []
+
+            for file in unsortedTrackedFiles.values.elements where file.checkState == .checked {
+                guard file.new != nil || file.old != nil else {
+                    fatalError(.invalid)
+                }
+
+                if let new = file.new {
+                    filesToAdd.insert(new)
+                }
+                if let old = file.old , old != file.new {
+                    filesToAdd.insert(old)
+                }
+            }
+
+            for file in unsortedTrackedFiles.values.elements where file.checkState == .partiallyChecked {
+                guard let hunks = file.diffInfo?.hunks() else {
+                    fatalError(.invalid)
+                }
+
+                let hunkCopies = hunks.map { $0.copy() }
+                let originalLines = hunks.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
+                let copyLines = hunkCopies.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
+                for i in 0..<originalLines.count {
+                    copyLines[i].isSelected = !originalLines[i].isSelected
+                }
+
+                let unselectedLines = copyLines.filter(\.isSelected)
+                if unselectedLines.count == 0 {
+                    fatalError(.impossible)
+                }
+
+                switch file.status {
+                case .added, .copied, .renamed, .typeChange, .modified:
+                    guard let workDirNew = file.workDirNew, let new = file.new else {
+                        fatalError(.invalid)
+                    }
+                    if FileManager.fileExists(workDirNew) {
+                        let currentFile = try String(contentsOfFile: workDirNew, encoding: .utf8)
+                        filesToWriteBack[workDirNew] = currentFile
+                        try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
+                    } else {
+                        fatalError(.impossible)
+                    }
+                    filesToAdd.insert(new)
+                case .deleted:
+                    guard let old = file.old else {
+                        fatalError(.invalid)
+                    }
+
+                    try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
+                    filesToAdd.insert(old)
+                    filesToDelete.insert(old)
+                case .ignored, .unreadable, .unmodified, .untracked:
+                    fatalError(.invalid)
+                case .conflicted:
+                    fatalError(.unimplemented)
+                }
+            }
+
+            let addArguments = ["add"] + Array(filesToAdd)
+            try GitCLI.execute(repository, addArguments)
+            if amend {
+                if commitSummary.isEmptyOrWhitespace {
+                    try GitCLI.execute(repository, ["commit", "--amend", "--no-edit"])
+                } else {
+                    try GitCLI.execute(repository, ["commit", "--amend", "-m", commitSummary])
+                }
+            } else {
+                try GitCLI.execute(repository, ["commit", "-m", commitSummary])
+            }
+
+            for file in unsortedTrackedFiles.values.elements {
+                await diffInfoCache.removeValue(forKey: file.key)
+                if let workDirNew = file.workDirNew {
+                    await lastModifiedCache.removeValue(forKey: workDirNew)
+                }
+            }
+            for (path, content) in filesToWriteBack {
+                try! content.write(toFile: path, atomically: true, encoding: .utf8)
+            }
+            for path in filesToDelete {
+                try! FileManager.default.removeItem(atPath: path)
+            }
+            try GitCLI.execute(repository, ["restore", "--staged", "."])
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                commitSummary = ""
+                currentFile = nil
+            }
+        }
+    }
+
+    func ignore(file: OldNewFile) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+        guard let path = file.new else {
+            fatalError(.illegal)
+        }
+        Task {
+            await performOperation(
+                title: "Ignoring \(path)",
+                successMessage: "\(path) is ignored"
+            ) { [weak self] in
+                guard let self else {
+                    return
+                }
+                try repository.ignore(path)
+            }
+        }
+    }
+
+    func discard(file: OldNewFile) async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+        await performOperation(
+            title: "Discarding changes for \(file.new ?? file.old!)..",
+            successMessage: "Changes discarded for \(file.new ?? file.old!)"
+        ) { [weak self] in
+            guard let self else {
+                return
+            }
+
+            let oldFile = file.workDirOld
+            let newFile = file.workDirNew
+            var fileURLs = [URL]()
+
+            if let oldFile, let newFile, oldFile == newFile {
+                fileURLs.append(oldFile.fileURL!)
+            } else {
+                if let oldFile {
+                    fileURLs.append(oldFile.fileURL!)
+                }
+                if let newFile {
+                    fileURLs.append(newFile.fileURL!)
+                }
+            }
+            for fileURL in fileURLs {
+                switch file.status {
+                case .unmodified, .ignored:
+                    fatalError(.invalid)
+                case .added, .copied, .untracked:
+                    try! FileManager.removeItem(fileURL)
+                case .deleted, .modified, .renamed, .typeChange:
+                    if fileURL.isDirectory {
+                        try GitCLI.execute(repository, ["restore", fileURL.appendingPathComponent("*").path])
+                    } else {
+                        try GitCLI.execute(repository, ["restore", fileURL.path])
+                    }
+                case .conflicted, .unreadable:
+                    fatalError(.unimplemented)
+                }
+            }
+
+            if file == currentFile {
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    currentFile = nil
+                    setInitialSelection()
+                }
+            }
+        }
+    }
+
+    func discardAll() async {
+        guard let repository else {
+            fatalError(.invalid)
+        }
+        await performOperation(
+            title: "Discarding all changes..",
+            successMessage: "All changes are discarded"
+        ) { [weak self] in
+            guard let self else { return }
+            try GitCLI.execute(repository, ["add", "."])
+            try GitCLI.execute(repository, ["reset", "--hard"])
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                currentFile = nil
             }
         }
     }

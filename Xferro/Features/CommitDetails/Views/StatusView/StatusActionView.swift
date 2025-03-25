@@ -12,25 +12,24 @@ struct StatusActionView: View {
     @Binding var commitSummary: String
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
-    let remotes: [Remote]
-    let stashes: [SelectableStash]
     @State private var horizontalAlignment: HorizontalAlignment = .leading
     @State private var verticalAlignment: VerticalAlignment = .top
-    let onCommitTapped: () async throws -> Void
-    @State var errorString: String?
 
-    let onAmend: () async throws -> Void
-    let onApplyStash: (SelectableStash) async throws -> Void
-    let onStash: () async throws -> Void
-    let onDiscardAll: () async throws -> Void
-    let onPopStash: () async throws -> Void
+    let remotes: [Remote]
+    let stashes: [SelectableStash]
+    let onCommitTapped: () -> Void
+    let onAmend: () -> Void
+    let onApplyStash: (SelectableStash) -> Void
+    let onStash: () -> Void
+    let onDiscardAll: () -> Void
+    let onPopStash: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
-    let onAmendAndForcePushWithLease: (Remote?) async throws -> Void
-    let onAmendAndPush: (Remote?) async throws -> Void
-    let onCommitAndForcePushWithLease: (Remote?) async throws -> Void
-    let onCommitAndPush: (Remote?) async throws -> Void
+    let onAmendAndForcePushWithLease: (Remote?) -> Void
+    let onAmendAndPush: (Remote?) -> Void
+    let onCommitAndForcePushWithLease: (Remote?) -> Void
+    let onCommitAndPush: (Remote?) -> Void
 
     var body: some View {
         VStack {
@@ -51,10 +50,8 @@ struct StatusActionView: View {
                     info: XFButtonInfo(info: InfoTexts.commit),
                     disabled: commitSummary.isEmptyOrWhitespace || canCommit || !hasChanges,
                     onTap: {
-                        Task {
-                            try await onCommitTapped()
-                            isTextFieldFocused = false
-                        }
+                        onCommitTapped()
+                        isTextFieldFocused = false
                     }
                 )
             }
@@ -66,7 +63,6 @@ struct StatusActionView: View {
                     hasChanges: $hasChanges,
                     remotes: remotes,
                     stashes: stashes,
-                    errorString: $errorString,
                     onAmend: onAmend,
                     onApplyStash: onApplyStash,
                     onStash: onStash,
@@ -86,18 +82,6 @@ struct StatusActionView: View {
         }
         .onAppear {
             isTextFieldFocused = true
-        }
-        .alert("Error", isPresented: .init(
-            get: { errorString != nil },
-            set: { if !$0 { errorString = nil } }
-        )) {
-            Button("OK") {
-                errorString = nil
-            }
-        } message: {
-            if let message = errorString {
-                Text(message)
-            }
         }
     }
 }

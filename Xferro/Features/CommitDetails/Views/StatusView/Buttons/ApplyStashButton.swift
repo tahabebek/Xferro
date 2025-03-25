@@ -9,22 +9,19 @@ import SwiftUI
 
 struct ApplyStashButton: View {
     @Binding var selectedStashToApply: SelectableStash?
-    @Binding var errorString: String?
     @State var stashOptions: [XFButtonOption<SelectableStash>] = []
 
     let title: String
     let stashes: [SelectableStash]
-    let onApplyStash: (SelectableStash) async throws -> Void
+    let onApplyStash: (SelectableStash) -> Void
 
     init(
         selectedStashToApply: Binding<SelectableStash?> = .constant(nil),
-        errorString: Binding<String?> = .constant(nil),
         title: String,
         stashes: [SelectableStash],
-        onApplyStash: @escaping (SelectableStash) async throws -> Void
+        onApplyStash: @escaping (SelectableStash) -> Void
     ) {
         self._selectedStashToApply = selectedStashToApply
-        self._errorString = errorString
         self.title = title
         self.stashes = stashes
         self.onApplyStash = onApplyStash
@@ -46,14 +43,7 @@ struct ApplyStashButton: View {
             },
             onTap: {
                 if let selectedStashToApply {
-                    Task {
-                        do {
-                            try await onApplyStash(selectedStashToApply)
-                        } catch {
-                            errorString = error.localizedDescription
-                        }
-                    }
-
+                    onApplyStash(selectedStashToApply)
                 }
             }
         )

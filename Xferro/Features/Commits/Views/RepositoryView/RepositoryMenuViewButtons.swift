@@ -18,8 +18,8 @@ struct RepositoryMenuViewButtons: View {
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemote: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
-    let onFetchTapped: (StatusViewModel.FetchType) -> Void
-    let onPullTapped: (StatusViewModel.PullType) -> Void
+    let onFetchTapped: (Repository.FetchType) -> Void
+    let onPullTapped: (Repository.PullType) -> Void
     let onCreateBranchTapped: () -> Void
     let onCheckoutBranchTapped: () -> Void
     let onCreateTagTapped: () -> Void

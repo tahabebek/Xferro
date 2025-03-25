@@ -11,7 +11,6 @@ struct StatusViewChangeView: View {
     @Binding var currentFile: OldNewFile?
     @Binding var trackedFiles: [OldNewFile]
     @Binding var untrackedFiles: [OldNewFile]
-    @Binding var hasChanges: Bool
 
     let onTapExcludeAll: () -> Void
     let onTapIncludeAll: () -> Void
@@ -20,15 +19,12 @@ struct StatusViewChangeView: View {
     let onTapTrackAll: () -> Void
     let onTapIgnore: (OldNewFile) -> Void
     let onTapDiscard: (OldNewFile) -> Void
-    
+
     var body: some View {
         ZStack {
             Color(hexValue: 0x15151A)
                 .cornerRadius(8)
             ScrollView(showsIndicators: false) {
-                Text("No changes.")
-                    .opacity(hasChanges ? 0 : 1)
-                    .frame(height: hasChanges ? 0 : 48)
                 LazyVStack(spacing: 4) {
                     if trackedFiles.isNotEmpty {
                         StatusTrackedView(
@@ -52,7 +48,6 @@ struct StatusViewChangeView: View {
                     }
                 }
             }
-            .animation(.default, value: hasChanges)
             .padding(.bottom)
             .padding(.horizontal)
             .padding(.top, 8)

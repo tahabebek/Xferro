@@ -10,10 +10,9 @@ import SwiftUI
 struct AmendButton: View {
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
-    @Binding var errorString: String?
 
     let title: String
-    let onAmend: () async throws -> Void
+    let onAmend: () -> Void
 
     var body: some View {
         XFButton<Void>(
@@ -21,13 +20,7 @@ struct AmendButton: View {
             info: XFButtonInfo(info: InfoTexts.amend),
             disabled: canCommit || !hasChanges,
             onTap: {
-                Task {
-                    do {
-                        try await onAmend()
-                    } catch {
-                        errorString = error.localizedDescription
-                    }
-                }
+                onAmend()
             }
         )
     }

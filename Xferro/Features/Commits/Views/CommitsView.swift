@@ -10,8 +10,8 @@ import SwiftUI
 struct CommitsView: View {
     let commitsViewModel: CommitsViewModel
 
-    let onPullTapped: (StatusViewModel.PullType) -> Void
-    let onFetchTapped: (StatusViewModel.FetchType) -> Void
+    let onPullTapped: (Repository.PullType) -> Void
+    let onFetchTapped: (Repository.FetchType) -> Void
     let onPushTapped: (String, Remote?, Repository.PushType) async throws -> Void
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int

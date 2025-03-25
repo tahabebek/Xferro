@@ -17,7 +17,7 @@ struct StatusFilesViewContainer: View {
     let remotes: [Remote]
     let stashes: [SelectableStash]
 
-    let onCommitTapped: () async throws -> Void
+    let onCommitTapped: () -> Void
     let onTapExcludeAll: () -> Void
     let onTapIncludeAll: () -> Void
     let onTapTrack: (OldNewFile) -> Void
@@ -26,18 +26,20 @@ struct StatusFilesViewContainer: View {
     let onTapIgnore: (OldNewFile) -> Void
     let onTapDiscard: (OldNewFile) -> Void
 
-    let onAmend: () async throws -> Void
-    let onApplyStash: (SelectableStash) async throws -> Void
-    let onStash: () async throws -> Void
-    let onDiscardAll: () async throws -> Void
-    let onPopStash: () async throws -> Void
+    let onAmend: () -> Void
+    let onApplyStash: (SelectableStash) -> Void
+    let onStash: () -> Void
+    let onDiscardAll: () -> Void
+    let onPopStash: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
-    let onAmendAndForcePushWithLease: (Remote?) async throws -> Void
-    let onAmendAndPush: (Remote?) async throws -> Void
-    let onCommitAndForcePushWithLease: (Remote?) async throws -> Void
-    let onCommitAndPush: (Remote?) async throws -> Void
+    let onAmendAndForcePushWithLease: (Remote?) -> Void
+    let onAmendAndPush: (Remote?) -> Void
+    let onCommitAndForcePushWithLease: (Remote?) -> Void
+    let onCommitAndPush: (Remote?) -> Void
+    let onTapPush: (Remote?) -> Void
+    let onTapForcePushWithLease: (Remote?) -> Void
 
     var body: some View {
         VStack {
@@ -48,8 +50,8 @@ struct StatusFilesViewContainer: View {
                 remotes: remotes,
                 stashes: stashes,
                 onCommitTapped: {
-                    try await onCommitTapped()
-                    await MainActor.run {
+                    onCommitTapped()
+                    Task { @MainActor in
                         currentFile = nil
                     }
                 },
@@ -69,19 +71,30 @@ struct StatusFilesViewContainer: View {
             .padding()
             .background(Color(hexValue: 0x15151A))
             .cornerRadius(8)
-            StatusViewChangeView(
-                currentFile: $currentFile,
-                trackedFiles: $trackedFiles,
-                untrackedFiles: $untrackedFiles,
-                hasChanges: $hasChanges,
-                onTapExcludeAll: onTapExcludeAll,
-                onTapIncludeAll: onTapIncludeAll,
-                onTapTrack: onTapTrack,
-                onTapUntrack: onTapUntrack,
-                onTapTrackAll: onTapTrackAll,
-                onTapIgnore: onTapIgnore,
-                onTapDiscard: onTapDiscard
-            )
+            if hasChanges {
+                StatusViewChangeView(
+                    currentFile: $currentFile,
+                    trackedFiles: $trackedFiles,
+                    untrackedFiles: $untrackedFiles,
+                    onTapExcludeAll: onTapExcludeAll,
+                    onTapIncludeAll: onTapIncludeAll,
+                    onTapTrack: onTapTrack,
+                    onTapUntrack: onTapUntrack,
+                    onTapTrackAll: onTapTrackAll,
+                    onTapIgnore: onTapIgnore,
+                    onTapDiscard: onTapDiscard
+                )
+            } else {
+                StatusViewNoChangeView(
+                    remotes: remotes,
+                    onTapPush: onTapPush,
+                    onTapForcePushWithLease: onTapForcePushWithLease,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: onAddRemoteTapped
+                )
+            }
         }
+        .animation(.default, value: hasChanges)
     }
 }

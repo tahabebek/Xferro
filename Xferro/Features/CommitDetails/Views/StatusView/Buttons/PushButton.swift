@@ -8,53 +8,57 @@
 import SwiftUI
 
 struct PushButton: View {
-    @Binding var commitSummary: String
+    var commitSummary: Binding<String>?
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
     @Binding var selectedRemoteForPush: Remote?
-    @Binding var errorString: String?
     @State var options: [XFButtonOption<Remote>] = []
 
     let remotes: [Remote]
     let title: String
     let amend: Bool
     let force: Bool
+    let pushOnly: Bool
 
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
-    let onAmendAndForcePushWithLease: (Remote?) async throws -> Void
-    let onAmendAndPush: (Remote?) async throws -> Void
-    let onCommitAndForcePushWithLease: (Remote?) async throws -> Void
-    let onCommitAndPush: (Remote?) async throws -> Void
+    let onAmendAndForcePushWithLease: ((Remote?) -> Void)?
+    let onAmendAndPush: ((Remote?) -> Void)?
+    let onCommitAndForcePushWithLease: ((Remote?) -> Void)?
+    let onCommitAndPush: ((Remote?) -> Void)?
+    let onPush: ((Remote?) -> Void)?
+    let onForcePushWithLease: ((Remote?) -> Void)?
 
     init(
-        commitSummary: Binding<String>,
-        canCommit: Binding<Bool>,
-        hasChanges: Binding<Bool>,
-        selectedRemoteForPush: Binding<Remote?> = .constant(nil),
-        errorString: Binding<String?> = .constant(nil),
+        commitSummary: Binding<String>? = nil,
+        canCommit: Binding<Bool> = .constant(true),
+        hasChanges: Binding<Bool> = .constant(true),
+        selectedRemoteForPush: Binding<Remote?>,
         remotes: [Remote],
         title: String,
-        amend: Bool,
-        force: Bool,
+        amend: Bool = false,
+        force: Bool = false,
+        pushOnly: Bool = false,
         onGetLastSelectedRemoteIndex: @escaping (String) -> Int,
         onSetLastSelectedRemoteIndex: @escaping (Int, String) -> Void,
         onAddRemoteTapped: @escaping () -> Void,
-        onAmendAndForcePushWithLease: @escaping (Remote?) async throws -> Void,
-        onAmendAndPush: @escaping (Remote?) async throws -> Void,
-        onCommitAndForcePushWithLease: @escaping (Remote?) async throws -> Void,
-        onCommitAndPush: @escaping (Remote?) async throws -> Void
+        onAmendAndForcePushWithLease: ((Remote?) -> Void)? = nil,
+        onAmendAndPush: ((Remote?) -> Void)? = nil,
+        onCommitAndForcePushWithLease: ((Remote?) -> Void)? = nil,
+        onCommitAndPush: ((Remote?) -> Void)? = nil,
+        onPush: ((Remote?) -> Void)? = nil,
+        onForcePushWithLease: ((Remote?) -> Void)? = nil
     ) {
-        self._commitSummary = commitSummary
+        self.commitSummary = commitSummary
         self._canCommit = canCommit
         self._hasChanges = hasChanges
         self._selectedRemoteForPush = selectedRemoteForPush
-        self._errorString = errorString
         self.remotes = remotes
         self.title = title
         self.amend = amend
         self.force = force
+        self.pushOnly = pushOnly
         self.onGetLastSelectedRemoteIndex = onGetLastSelectedRemoteIndex
         self.onSetLastSelectedRemoteIndex = onSetLastSelectedRemoteIndex
         self.onAddRemoteTapped = onAddRemoteTapped
@@ -62,6 +66,8 @@ struct PushButton: View {
         self.onAmendAndPush = onAmendAndPush
         self.onCommitAndForcePushWithLease = onCommitAndForcePushWithLease
         self.onCommitAndPush = onCommitAndPush
+        self.onPush = onPush
+        self.onForcePushWithLease = onForcePushWithLease
 
         self._options = State(wrappedValue: remotes.map { XFButtonOption(title: $0.name!, data: $0) })
     }
@@ -70,7 +76,7 @@ struct PushButton: View {
         XFButton<Remote>(
             title: title,
             info: force ? XFButtonInfo(info: InfoTexts.forcePushWithLease) : XFButtonInfo(info: InfoTexts.push),
-            disabled: (commitSummary.isEmptyOrWhitespace || !hasChanges) && !amend,
+            disabled: ((commitSummary?.wrappedValue.isEmptyOrWhitespace ?? false) || !hasChanges) && !amend,
             options: $options,
             selectedOptionIndex: Binding<Int>(
                 get: {
@@ -87,23 +93,25 @@ struct PushButton: View {
                 onAddRemoteTapped()
             },
             onTap: {
-                Task {
-                    do {
-                        if amend {
-                            if force {
-                                try await onAmendAndForcePushWithLease(selectedRemoteForPush)
-                            } else {
-                                try await onAmendAndPush(selectedRemoteForPush)
-                            }
+                if pushOnly {
+                    if force {
+                        onForcePushWithLease?(selectedRemoteForPush)
+                    } else {
+                        onPush?(selectedRemoteForPush)
+                    }
+                } else {
+                    if amend {
+                        if force {
+                            onAmendAndForcePushWithLease?(selectedRemoteForPush)
                         } else {
-                            if force {
-                                try await onCommitAndForcePushWithLease(selectedRemoteForPush)
-                            } else {
-                                try await onCommitAndPush(selectedRemoteForPush)
-                            }
+                            onAmendAndPush?(selectedRemoteForPush)
                         }
-                    } catch {
-                        errorString = error.localizedDescription
+                    } else {
+                        if force {
+                            onCommitAndForcePushWithLease?(selectedRemoteForPush)
+                        } else {
+                            onCommitAndPush?(selectedRemoteForPush)
+                        }
                     }
                 }
             }

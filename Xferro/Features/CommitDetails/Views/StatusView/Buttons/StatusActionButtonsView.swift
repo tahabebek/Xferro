@@ -25,24 +25,23 @@ struct StatusActionButtonsView: View {
     @Binding var commitSummary: String
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
-    let remotes: [Remote]
-    let stashes: [SelectableStash]
-    @Binding var errorString: String?
     @State var selectedRemoteForPush: Remote?
     @State var selectedStashToApply: SelectableStash?
 
-    let onAmend: () async throws -> Void
-    let onApplyStash: (SelectableStash) async throws -> Void
-    let onStash: () async throws -> Void
-    let onDiscardAll: () async throws -> Void
-    let onPopStash: () async throws -> Void
+    let remotes: [Remote]
+    let stashes: [SelectableStash]
+    let onAmend: () -> Void
+    let onApplyStash: (SelectableStash) -> Void
+    let onStash: () -> Void
+    let onDiscardAll: () -> Void
+    let onPopStash: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
-    let onAmendAndForcePushWithLease: (Remote?) async throws -> Void
-    let onAmendAndPush: (Remote?) async throws -> Void
-    let onCommitAndForcePushWithLease: (Remote?) async throws -> Void
-    let onCommitAndPush: (Remote?) async throws -> Void
+    let onAmendAndForcePushWithLease: (Remote?) -> Void
+    let onAmendAndPush: (Remote?) -> Void
+    let onCommitAndForcePushWithLease: (Remote?) -> Void
+    let onCommitAndPush: (Remote?) -> Void
 
     var body: some View {
         ForEach(boxActions) { boxAction in
@@ -51,7 +50,6 @@ struct StatusActionButtonsView: View {
                 AmendButton(
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
-                    errorString: $errorString,
                     title: boxAction.rawValue,
                     onAmend: onAmend
                 )
@@ -61,11 +59,8 @@ struct StatusActionButtonsView: View {
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
                     selectedRemoteForPush: $selectedRemoteForPush,
-                    errorString: $errorString,
                     remotes: remotes,
                     title: boxAction.rawValue,
-                    amend: false,
-                    force: false,
                     onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                     onAddRemoteTapped: onAddRemoteTapped,
@@ -80,11 +75,9 @@ struct StatusActionButtonsView: View {
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
                     selectedRemoteForPush: $selectedRemoteForPush,
-                    errorString: $errorString,
                     remotes: remotes,
                     title: boxAction.rawValue,
                     amend: true,
-                    force: false,
                     onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                     onAddRemoteTapped: onAddRemoteTapped,
@@ -99,10 +92,8 @@ struct StatusActionButtonsView: View {
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
                     selectedRemoteForPush: $selectedRemoteForPush,
-                    errorString: $errorString,
                     remotes: remotes,
                     title: boxAction.rawValue,
-                    amend: false,
                     force: true,
                     onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
@@ -118,7 +109,6 @@ struct StatusActionButtonsView: View {
                     canCommit: $canCommit,
                     hasChanges: $hasChanges,
                     selectedRemoteForPush: $selectedRemoteForPush,
-                    errorString: $errorString,
                     remotes: remotes,
                     title: boxAction.rawValue,
                     amend: true,
@@ -134,21 +124,18 @@ struct StatusActionButtonsView: View {
             case .stash:
                 StashButton(
                     hasChanges: $hasChanges,
-                    errorString: $errorString,
                     title: boxAction.rawValue,
                     onStash: onStash
                 )
             case .popStash:
                 PopStashButton(
                     stashes: stashes,
-                    errorString: $errorString,
                     title: boxAction.rawValue,
                     onPopStash: onPopStash
                 )
             case .applyStash:
                 ApplyStashButton(
                     selectedStashToApply: $selectedStashToApply,
-                    errorString: $errorString,
                     title: boxAction.rawValue,
                     stashes: stashes,
                     onApplyStash: onApplyStash
@@ -156,7 +143,6 @@ struct StatusActionButtonsView: View {
             case .discardAll:
                 DiscardAllButton(
                     hasChanges: $hasChanges,
-                    errorString: $errorString,
                     title: boxAction.rawValue,
                     onDiscardAll: onDiscardAll
                 )

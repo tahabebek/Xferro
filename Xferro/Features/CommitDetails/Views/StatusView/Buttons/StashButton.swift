@@ -9,10 +9,9 @@ import SwiftUI
 
 struct StashButton: View {
     @Binding var hasChanges: Bool
-    @Binding var errorString: String?
 
     let title: String
-    let onStash: () async throws -> Void
+    let onStash: () -> Void
 
     var body: some View {
         XFButton<Void>(
@@ -20,13 +19,7 @@ struct StashButton: View {
             info: XFButtonInfo(info: InfoTexts.stash),
             disabled: !hasChanges,
             onTap: {
-                Task {
-                    do {
-                        try await onStash()
-                    } catch {
-                        errorString = error.localizedDescription
-                    }
-                }
+                onStash()
             }
         )
     }

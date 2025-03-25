@@ -9,10 +9,9 @@ import SwiftUI
 
 struct PopStashButton: View {
     let stashes: [SelectableStash]
-    @Binding var errorString: String?
     
     let title: String
-    let onPopStash: () async throws -> Void
+    let onPopStash: () -> Void
 
     var body: some View {
         XFButton<Void>(
@@ -20,13 +19,7 @@ struct PopStashButton: View {
             info: XFButtonInfo(info: InfoTexts.stash),
             disabled: stashes.isEmpty,
             onTap: {
-                Task {
-                    do {
-                        try await onPopStash()
-                    } catch {
-                        errorString = error.localizedDescription
-                    }
-                }
+                onPopStash()
             }
         )
     }

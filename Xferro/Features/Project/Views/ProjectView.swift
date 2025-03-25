@@ -29,9 +29,7 @@ struct ProjectView: View {
                     statusViewModel.fetchTapped(fetchType: type)
                 },
                 onPushTapped: { branchName, remote, type in
-                    Task {
-                        try await statusViewModel.onPush(branchName: branchName, remote:remote, pushType:type)
-                    }
+                    statusViewModel.pushTapped(branchName: branchName, remote:remote, pushType: type)
                 },
                 onAddRemoteTapped: {
                     statusViewModel.addRemoteTapped()

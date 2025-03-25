@@ -8,7 +8,7 @@
 import Foundation
 
 extension Repository {
-    func ignore(_ pattern: String) {
+    func ignore(_ pattern: String) throws {
         lock.lock()
         defer { lock.unlock() }
         let ignoreURL = workDir.appendingPathComponent(".gitignore")
@@ -26,7 +26,7 @@ extension Repository {
             }
             updatedIgnoreContent += pattern
         } else {
-            fatalError("Pattern '\(pattern)' already exists in .gitignore")
+            throw(RepoError.unexpected("Pattern '\(pattern)' already exists in .gitignore"))
         }
 
         do {

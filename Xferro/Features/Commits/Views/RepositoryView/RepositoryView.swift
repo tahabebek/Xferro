@@ -20,8 +20,8 @@ struct RepositoryView: View {
     @State private var isCollapsed = false
     @State private var selection: Section = .commits
 
-    let onPullTapped: (StatusViewModel.PullType) -> Void
-    let onFetchTapped: (StatusViewModel.FetchType) -> Void
+    let onPullTapped: (Repository.PullType) -> Void
+    let onFetchTapped: (Repository.FetchType) -> Void
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemote: (Int, String) -> Void

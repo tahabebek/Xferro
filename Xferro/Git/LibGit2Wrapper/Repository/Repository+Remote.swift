@@ -112,6 +112,11 @@ extension Repository: RemoteManagement {
         try RepoError.throwIfGitError(result)
     }
 
+    enum FetchType {
+        case remote(Remote?)
+        case all
+    }
+    
     func fetch(remote: Remote, options: FetchOptions) throws {
         lock.lock()
         defer { lock.unlock() }
@@ -142,7 +147,12 @@ extension Repository: RemoteManagement {
         }
     }
 
-    public func pull(branch: Branch, remote: Remote, options: FetchOptions) throws {
+    enum PullType {
+        case merge
+        case rebase
+    }
+
+    func pull(branch: Branch, remote: Remote, options: FetchOptions) throws {
         lock.lock()
         defer { lock.unlock() }
         try fetch(remote: remote, options: options)
