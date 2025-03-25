@@ -11,8 +11,8 @@ struct BranchOperationView: View {
     enum OperationType {
         case checkout
         case delete
-        case merge
-        case rebase
+        case merge(String?, String?)
+        case rebase(String?, String?)
     }
 
     @Environment(\.dismiss) var dismiss
@@ -22,53 +22,79 @@ struct BranchOperationView: View {
     @State var selectedRemoteName: String = ""
     @State var selectedLocalBranchName: String = ""
     @State var selectedRemoteBranchName: String = ""
+    @State var mergeOrRebaseSourceBranch: String = ""
+    @State var mergeOrRebaseTargetBranch: String = ""
 
     let title: String
     let confirmButtonTitle: String
-    let onConfirm: (String, Bool, OperationType) -> Void
+    let onCheckoutOrDelete: (String, Bool, OperationType) -> Void
+    let onMergeOrRebase: (String, String, OperationType) -> Void
     let currentBranch: String
     let operation: OperationType
 
     init(
         localBranches: [String],
         remoteBranches: [String],
-        onConfirm: @escaping (String, Bool, OperationType) -> Void,
+        onCheckoutOrDelete: @escaping (String, Bool, OperationType) -> Void,
+        onMergeOrRebase: @escaping (String, String, OperationType) -> Void,
         currentBranch: String,
         operation: OperationType
     ) {
         self.localBranches = localBranches
         self.remoteBranches = remoteBranches
-        self.onConfirm = onConfirm
+        self.onCheckoutOrDelete = onCheckoutOrDelete
+        self.onMergeOrRebase = onMergeOrRebase
         self.currentBranch = currentBranch
         self.operation = operation
 
-        self.title = switch operation {
-            case .checkout:
-                "Checkout to a Branch"
-            case .delete:
-                "Delete a Branch"
-            case .merge:
-                "Merge a Branch"
-            case .rebase:
-                "Rebase a Branch"
-        }
-
-        self.confirmButtonTitle = switch operation {
-            case .checkout:
-                "Checkout"
-            case .delete:
-                "Delete"
-            case .merge:
-                "Merge"
-            case .rebase:
-                "Rebase"
+        switch operation {
+        case .checkout:
+            self.title = "Checkout to a Branch"
+            self.confirmButtonTitle = "Checkout"
+        case .delete:
+            self.title = "Delete a Branch"
+            self.confirmButtonTitle = "Delete"
+        case .merge(let source, let target):
+            self.title = "Merge Branches"
+            self.confirmButtonTitle = "Merge"
+            if let source {
+                self._mergeOrRebaseSourceBranch = State(initialValue: source)
+            }
+            if let target {
+                self._mergeOrRebaseTargetBranch = State(initialValue: target)
+            }
+        case .rebase(let source, let target):
+            self.title = "Rebase Branches"
+            self.confirmButtonTitle = "Rebase"
+            if let source {
+                self._mergeOrRebaseSourceBranch = State(initialValue: source)
+            }
+            if let target {
+                self._mergeOrRebaseTargetBranch = State(initialValue: target)
+            }
         }
     }
 
     var body: some View {
         VStack(alignment: .leading) {
             titleView
-            settingsView
+            switch operation {
+            case .checkout, .delete:
+                CheckoutOrDeleteBranchView(
+                    isRemote: $isRemote,
+                    selectedLocalBranchName: $selectedLocalBranchName,
+                    selectedRemoteBranchName: $selectedRemoteBranchName,
+                    localBranches: localBranches,
+                    remoteBranches: remoteBranches,
+                    currentBranch: currentBranch
+                )
+            case .merge, .rebase:
+                MergeOrRebaseBranchView(
+                    mergeOrRebaseSourceBranch: $mergeOrRebaseSourceBranch,
+                    mergeOrRebaseTargetBranch: $mergeOrRebaseTargetBranch,
+                    localBranches: localBranches
+                )
+            }
             HStack {
                 Spacer()
                 XFButton<Void>(
@@ -81,61 +107,26 @@ struct BranchOperationView: View {
                 XFButton<Void>(
                     title: confirmButtonTitle,
                     onTap: {
-                        onConfirm(
-                            isRemote ? selectedRemoteBranchName : selectedLocalBranchName,
-                            isRemote,
-                            operation
-                        )
+                        switch operation {
+                        case .checkout, .delete:
+                            onCheckoutOrDelete(
+                                isRemote ? selectedRemoteBranchName : selectedLocalBranchName,
+                                isRemote,
+                                operation
+                            )
+                        case .merge, .rebase:
+                            onMergeOrRebase(
+                                mergeOrRebaseSourceBranch,
+                                mergeOrRebaseTargetBranch,
+                                operation
+                            )
+                        }
                         dismiss()
                     }
                 )
             }
             .padding(.bottom)
         }
-        .onAppear {
-            selectedLocalBranchName = currentBranch
-            selectedRemoteBranchName = remoteBranches.first ?? ""
-        }
-    }
-
-    var settingsView: some View {
-        VStack(alignment: .leading) {
-            Picker("", selection: $isRemote) {
-                Text("Local branch").tag(false)
-                Text("Remote branch").tag(true)
-            }
-            .pickerStyle(.menu)
-            .padding(.bottom)
-            Group {
-                if !isRemote {
-                    localSettingsView
-                }
-                else {
-                    remoteSettingsView
-                }
-            }
-        }
-        .font(.formField)
-    }
-
-    var remoteSettingsView: some View {
-        SearchablePickerView(
-            items: remoteBranches,
-            selectedItem: $selectedRemoteBranchName,
-            title: "Select Branch:"
-        )
-        .padding(.leading, 8)
-        .padding(.bottom)
-    }
-
-    var localSettingsView: some View {
-        SearchablePickerView(
-            items: localBranches,
-            selectedItem: $selectedLocalBranchName,
-            title: "Select Branch:"
-        )
-        .padding(.leading, 8)
-        .padding(.bottom)
     }
 
     var titleView: some View {

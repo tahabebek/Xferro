@@ -189,7 +189,16 @@ import Observation
             }
         }
     }
-    
+
+    func mergeBranchTapped(source: String, target: String) {
+
+    }
+
+    func rebaseBranchTapped(source: String, target: String) {
+
+    }
+
+
     deinit {
         headChangeObserver?.cancel()
         indexChangeObserver?.cancel()

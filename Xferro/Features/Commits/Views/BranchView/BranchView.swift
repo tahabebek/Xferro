@@ -25,12 +25,17 @@ struct BranchView: View {
                     name: viewModel.branchInfo.branch.name,
                     isDetached: false,
                     branchCount: viewModel.branchCount,
+                    localBranches: viewModel.localBranches,
+                    remoteBranches: viewModel.remoteBranches,
+                    currentBranch: viewModel.currentBranch,
                     onDeleteBranchTapped: viewModel.onDeleteBranchTapped,
                     onTapPush: viewModel.onTapPush,
                     onGetLastSelectedRemoteIndex: viewModel.onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: viewModel.onSetLastSelectedRemoteIndex,
                     onAddRemoteTapped: viewModel.onAddRemoteTapped,
-                    onCreateBranchTapped: viewModel.onCreateBranchTapped
+                    onCreateBranchTapped: viewModel.onCreateBranchTapped,
+                    onCheckoutOrDelete: viewModel.onCheckoutOrDelete,
+                    onMergeOrRebase: viewModel.onMergeOrRebase
                 )
                     .frame(maxWidth: 120)
                     .padding(.trailing, 8)

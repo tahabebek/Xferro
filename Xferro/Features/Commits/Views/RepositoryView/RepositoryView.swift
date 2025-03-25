@@ -63,6 +63,8 @@ struct RepositoryView: View {
             detachedTag: repositoryInfo.detachedTag,
             detachedCommit: repositoryInfo.detachedCommit,
             localBranches: repositoryInfo.localBranchInfos,
+            remoteBranches: repositoryInfo.remoteBranchInfos,
+            currentBranch: repositoryInfo.head.name,
             selectableStatus: SelectableStatus(repositoryInfo: repositoryInfo),
             head: repositoryInfo.head,
             remotes: repositoryInfo.remotes,
@@ -74,37 +76,67 @@ struct RepositoryView: View {
             onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
             onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
             onAddRemoteTapped: onAddRemoteTapped,
-            onCreateBranchTapped: repositoryInfo.createBranchTapped
+            onCreateBranchTapped: repositoryInfo.createBranchTapped,
+            onCheckoutOrDelete: {
+                switch $2 {
+                case .checkout:
+                    repositoryInfo.checkoutBranchTapped(branchName: $0, isRemote: $1)
+                case .delete:
+                    repositoryInfo.deleteBranchTapped(branchName: $0, isRemote: $1)
+                default:
+                    fatalError(.invalid)
+                }
+            },
+            onMergeOrRebase: {
+                switch $2 {
+                case .merge:
+                    repositoryInfo.rebaseBranchTapped(source: $0, target: $1)
+                case .rebase:
+                    repositoryInfo.rebaseBranchTapped(source: $0, target: $1)
+                default:
+                    fatalError(.invalid)
+                }
+            }
         )
     }
 
     var menuView: some View {
         RepositoryMenuView(
             isCollapsed: $isCollapsed,
+            gitDir: repositoryInfo.repository.gitDir,
+            head: repositoryInfo.head,
+            remotes: repositoryInfo.remotes,
+            isSelected: isSelected,
+            localBranchNames: repositoryInfo.localBranchInfos.map(\.branch.name),
+            remoteBranchNames: repositoryInfo.remoteBranchInfos.map(\.branch.name),
             onDeleteRepositoryTapped: repositoryInfo.deleteRepositoryTapped,
             onPullTapped: onPullTapped,
             onFetchTapped: onFetchTapped,
             onAddRemoteTapped: onAddRemoteTapped,
             onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
             onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+            onCreateTagTapped: repositoryInfo.createTagTapped,
             onCreateBranchTapped: repositoryInfo.createBranchTapped,
-            onBranchOperationTapped: {
+            onCheckoutOrDelete: {
                 switch $2 {
                 case .checkout:
                     repositoryInfo.checkoutBranchTapped(branchName: $0, isRemote: $1)
                 case .delete:
                     repositoryInfo.deleteBranchTapped(branchName: $0, isRemote: $1)
-                case .merge, .rebase:
+                default:
                     fatalError(.unimplemented)
                 }
             },
-            onCreateTagTapped: repositoryInfo.createTagTapped,
-            gitDir: repositoryInfo.repository.gitDir,
-            head: repositoryInfo.head,
-            remotes: repositoryInfo.remotes,
-            localBranches: repositoryInfo.localBranchInfos,
-            remoteBranches: repositoryInfo.remoteBranchInfos,
-            isSelected: isSelected
+            onMergeOrRebase: {
+                switch $2 {
+                case .merge:
+                    repositoryInfo.rebaseBranchTapped(source: $0, target: $1)
+                case .rebase:
+                    repositoryInfo.rebaseBranchTapped(source: $0, target: $1)
+                default:
+                    fatalError(.unimplemented)
+                }
+            }
         )
     }
 }

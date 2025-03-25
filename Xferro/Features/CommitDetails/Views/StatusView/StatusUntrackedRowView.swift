@@ -19,6 +19,9 @@ struct StatusUntrackedRowView: View {
     var body: some View {
         HStack {
             Image(systemName: file.statusImageName).foregroundColor(file.statusColor)
+                .contentShape(Rectangle())
+                .font(.accessoryButton)
+                .frame(width: 16, height: 16)
             Text(file.statusFileName)
                 .statusRowText(isCurrent: $isCurrent)
             Spacer()

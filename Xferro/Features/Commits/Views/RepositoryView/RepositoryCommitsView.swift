@@ -11,9 +11,11 @@ struct RepositoryCommitsView: View {
     let detachedTag: TagInfo?
     let detachedCommit: DetachedCommitInfo?
     let localBranches: [BranchInfo]
+    let remoteBranches: [BranchInfo]
     let selectableStatus: SelectableStatus
     let head: Head
     let remotes: [Remote]
+    let currentBranch: String
 
     let onUserTapped: ((any SelectableItem)) -> Void
     let onIsSelected: ((any SelectableItem)) -> Bool
@@ -24,6 +26,8 @@ struct RepositoryCommitsView: View {
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
     let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
+    let onCheckoutOrDelete: (String, Bool, BranchOperationView.OperationType) -> Void
+    let onMergeOrRebase: (String, String, BranchOperationView.OperationType) -> Void
 
     var body: some View {
         guard detachedTag == nil || detachedCommit == nil else {
@@ -36,6 +40,9 @@ struct RepositoryCommitsView: View {
                         tagInfo: detachedTag,
                         branchCount: localBranches.count,
                         selectableStatus: selectableStatus,
+                        localBranches: localBranches.map(\.branch.name),
+                        remoteBranches: remoteBranches.map(\.branch.name),
+                        currentBranch: currentBranch,
                         onUserTapped: onUserTapped,
                         onIsSelected: onIsSelected,
                         onDeleteBranchTapped: onDeleteBranchTapped,
@@ -44,7 +51,9 @@ struct RepositoryCommitsView: View {
                         onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                         onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                         onAddRemoteTapped: onAddRemoteTapped,
-                        onCreateBranchTapped: onCreateBranchTapped
+                        onCreateBranchTapped: onCreateBranchTapped,
+                        onCheckoutOrDelete: onCheckoutOrDelete,
+                        onMergeOrRebase: onMergeOrRebase
                     ),
                     remotes: remotes
                 )
@@ -55,6 +64,9 @@ struct RepositoryCommitsView: View {
                         detachedCommitInfo: detachedCommit,
                         selectableStatus: selectableStatus,
                         branchCount: localBranches.count,
+                        localBranches: localBranches.map(\.branch.name),
+                        remoteBranches: remoteBranches.map(\.branch.name),
+                        currentBranch: currentBranch,
                         onUserTapped: onUserTapped,
                         onIsSelected: onIsSelected,
                         onDeleteBranchTapped: onDeleteBranchTapped,
@@ -63,7 +75,9 @@ struct RepositoryCommitsView: View {
                         onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                         onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                         onAddRemoteTapped: onAddRemoteTapped,
-                        onCreateBranchTapped: onCreateBranchTapped
+                        onCreateBranchTapped: onCreateBranchTapped,
+                        onCheckoutOrDelete: onCheckoutOrDelete,
+                        onMergeOrRebase: onMergeOrRebase
                     ),
                     remotes: remotes
                 )
@@ -77,6 +91,9 @@ struct RepositoryCommitsView: View {
                         isCurrent: (detachedTag != nil || detachedCommit != nil) ? false :
                             onIsCurrentBranch(branchInfo.branch, head),
                         branchCount: localBranches.count,
+                        localBranches: localBranches.map(\.branch.name),
+                        remoteBranches: remoteBranches.map(\.branch.name),
+                        currentBranch: currentBranch,
                         onUserTapped: onUserTapped,
                         onIsSelected: onIsSelected,
                         onDeleteBranchTapped: onDeleteBranchTapped,
@@ -85,7 +102,9 @@ struct RepositoryCommitsView: View {
                         onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                         onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                         onAddRemoteTapped: onAddRemoteTapped,
-                        onCreateBranchTapped: onCreateBranchTapped
+                        onCreateBranchTapped: onCreateBranchTapped,
+                        onCheckoutOrDelete: onCheckoutOrDelete,
+                        onMergeOrRebase: onMergeOrRebase
                     ),
                     remotes: remotes
                 )

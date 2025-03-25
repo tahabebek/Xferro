@@ -11,6 +11,9 @@ struct DetachedCommitBranchViewModel {
     let detachedCommitInfo: DetachedCommitInfo
     let selectableStatus: SelectableStatus
     let branchCount: Int
+    let localBranches: [String]
+    let remoteBranches: [String]
+    let currentBranch: String
 
     let onUserTapped: (any SelectableItem) -> Void
     let onIsSelected: (any SelectableItem) -> Bool
@@ -21,4 +24,6 @@ struct DetachedCommitBranchViewModel {
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
     let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
+    let onCheckoutOrDelete: (String, Bool, BranchOperationView.OperationType) -> Void
+    let onMergeOrRebase: (String, String, BranchOperationView.OperationType) -> Void
 }

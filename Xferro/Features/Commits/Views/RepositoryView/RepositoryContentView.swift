@@ -17,6 +17,8 @@ struct RepositoryContentView: View {
     let detachedTag: TagInfo?
     let detachedCommit: DetachedCommitInfo?
     let localBranches: [BranchInfo]
+    let remoteBranches: [BranchInfo]
+    let currentBranch: String
     let selectableStatus: SelectableStatus
     let head: Head
     let remotes: [Remote]
@@ -30,6 +32,8 @@ struct RepositoryContentView: View {
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
     let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
+    let onCheckoutOrDelete: (String, Bool, BranchOperationView.OperationType) -> Void
+    let onMergeOrRebase: (String, String, BranchOperationView.OperationType) -> Void
 
     var body: some View {
         Group {
@@ -39,9 +43,11 @@ struct RepositoryContentView: View {
                     detachedTag: detachedTag,
                     detachedCommit: detachedCommit,
                     localBranches: localBranches,
+                    remoteBranches: remoteBranches,
                     selectableStatus: selectableStatus,
                     head: head,
                     remotes: remotes,
+                    currentBranch: currentBranch,
                     onUserTapped: onUserTapped,
                     onIsSelected: onIsSelected,
                     onDeleteBranchTapped: onDeleteBranchTapped,
@@ -50,7 +56,9 @@ struct RepositoryContentView: View {
                     onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                     onAddRemoteTapped: onAddRemoteTapped,
-                    onCreateBranchTapped: onCreateBranchTapped
+                    onCreateBranchTapped: onCreateBranchTapped,
+                    onCheckoutOrDelete: onCheckoutOrDelete,
+                    onMergeOrRebase: onMergeOrRebase
                 )
                     .matchedGeometryEffect(id: "contentView", in: animation)
             case .tags:
