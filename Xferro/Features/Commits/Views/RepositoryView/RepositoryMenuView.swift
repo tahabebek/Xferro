@@ -25,7 +25,7 @@ struct RepositoryMenuView: View {
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemote: (Int, String) -> Void
-    let onCreateTagTapped: () -> Void
+    let onCreateTagTapped: (String, String?, String, Bool) -> Void
     let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
     let onBranchOperationTapped: (String, Bool, BranchOperationView.OperationType) -> Void
 
@@ -48,7 +48,7 @@ struct RepositoryMenuView: View {
         onSetLastSelectedRemote: @escaping (Int, String) -> Void,
         onCreateBranchTapped: @escaping (String, String, Bool, Bool) -> Void,
         onBranchOperationTapped: @escaping (String, Bool, BranchOperationView.OperationType) -> Void,
-        onCreateTagTapped: @escaping () -> Void,
+        onCreateTagTapped: @escaping (String, String?, String, Bool) -> Void,
         gitDir: URL,
         head: Head,
         remotes: [Remote],
@@ -153,7 +153,10 @@ struct RepositoryMenuView: View {
                     .frame(maxHeight: .infinity)
                 }
                 .sheet(isPresented: $showCreateTagSheet) {
-                    Text("Create Tag")
+                    AddTagView(
+                        remotes: remotes.map(\.name!),
+                        onCreateTag: onCreateTagTapped
+                    )
                     .padding()
                     .frame(maxHeight: .infinity)
                 }

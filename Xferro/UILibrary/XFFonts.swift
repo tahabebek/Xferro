@@ -45,7 +45,7 @@ extension Font {
     static let formField = paragraph4
     static let commitCircle = small
     static let wipCommitCircle = tiniest
-    static let accessoryButton = paragraph3
+    static let accessoryButton = paragraph6
     static let validationError = Font.custom(String.fontName, size: CGFloat.small)
     static let diff = Font.custom(String.diffViewFontName, size: CGFloat.diffViewFontSize)
 }

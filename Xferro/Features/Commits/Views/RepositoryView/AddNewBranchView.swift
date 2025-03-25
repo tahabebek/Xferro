@@ -16,7 +16,6 @@ struct AddNewBranchView: View {
     @State var invalidMessage: String?
     @State var localBranches: [String] = []
     @State var remoteBranches: [String] = []
-    @State var selectedRemoteName: String = ""
     @State var selectedLocalBranchName: String = ""
     @State var selectedRemoteBranchName: String = ""
 

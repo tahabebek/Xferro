@@ -205,8 +205,31 @@ import Observation
         }
     }
 
-    func createTagTapped() {
-        print("create tag tapped")
+    func createTagTapped(name: String, message: String?, remote: String, push: Bool) {
+        Task {
+            let activity: Activity = ProgressManager.shared.startActivity(name: "Creating tag \(name) on remote \(remote)")
+            defer {
+                ProgressManager.shared.updateProgress(activity, progress: 1.0)
+            }
+
+            do {
+                var args = ["tag"]
+                if let message {
+                    args.append(contentsOf: ["-a", name, "-m", message])
+                } else {
+                    args.append(name)
+                }
+                try GitCLI.execute(repository, args)
+                if push {
+                    try GitCLI.execute(repository, ["push", remote, name])
+                }
+            } catch {
+                await MainActor.run {
+                    errorString = error.localizedDescription
+                    showError = true
+                }
+            }
+        }
     }
     
     deinit {
