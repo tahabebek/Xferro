@@ -556,8 +556,8 @@ fileprivate extension StatusViewModel {
                 return
             }
             await ActivityOperation.perform(
-                title: "Pushing \(currentBranch) to \(remote)..",
-                successMessage: "Pushed \(currentBranch) to \(remote)"
+                title: "Pushing \(currentBranch.name) to \(remote.name!)..",
+                successMessage: "Pushed \(currentBranch.name) to \(remote.name!)"
             ) {
                 let pushOperation = await PushOpController(
                     localBranch: currentBranch,
