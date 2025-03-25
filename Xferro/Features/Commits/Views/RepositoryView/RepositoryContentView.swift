@@ -17,13 +17,18 @@ struct RepositoryContentView: View {
     let detachedTag: TagInfo?
     let detachedCommit: DetachedCommitInfo?
     let localBranches: [BranchInfo]
-    let onUserTapped: (((any SelectableItem)) -> Void)?
-    let onIsSelected: (((any SelectableItem)) -> Bool)?
-    let onDeleteBranchTapped: ((String) -> Void)?
-    let onIsCurrentBranch: ((Branch, Head) -> Bool)?
-    let onPushBranchToRemoteTapped: ((String) -> Void)?
     let selectableStatus: SelectableStatus
     let head: Head
+    let remotes: [Remote]
+
+    let onUserTapped: ((any SelectableItem)) -> Void
+    let onIsSelected: ((any SelectableItem)) -> Bool
+    let onDeleteBranchTapped: (String) -> Void
+    let onIsCurrentBranch: (Branch, Head) -> Bool
+    let onTapPush: (String, Remote?, Repository.PushType) -> Void
+    let onGetLastSelectedRemoteIndex: (String) -> Int
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
+    let onAddRemoteTapped: () -> Void
 
     var body: some View {
         Group {
@@ -33,13 +38,17 @@ struct RepositoryContentView: View {
                     detachedTag: detachedTag,
                     detachedCommit: detachedCommit,
                     localBranches: localBranches,
+                    selectableStatus: selectableStatus,
+                    head: head,
+                    remotes: remotes,
                     onUserTapped: onUserTapped,
                     onIsSelected: onIsSelected,
                     onDeleteBranchTapped: onDeleteBranchTapped,
                     onIsCurrentBranch: onIsCurrentBranch,
-                    onPushBranchToRemoteTapped: onPushBranchToRemoteTapped,
-                    selectableStatus: selectableStatus,
-                    head: head
+                    onTapPush: onTapPush,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: onAddRemoteTapped
                 )
                     .matchedGeometryEffect(id: "contentView", in: animation)
             case .tags:

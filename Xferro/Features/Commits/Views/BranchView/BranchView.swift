@@ -15,18 +15,23 @@ struct BranchView: View {
     static let commitNodeSize: CGFloat = 54
     @State private var showingBranchOptions = false
     let viewModel: BranchViewModel
+    let remotes: [Remote]
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .verticalAlignment) {
                 BranchMenuView(
                     showingBranchOptions: $showingBranchOptions,
+                    remotes: remotes,
                     isCurrent: viewModel.isCurrent,
                     name: viewModel.branchInfo.branch.name,
                     isDetached: false,
+                    branchCount: viewModel.branchCount,
                     onDeleteBranchTapped: viewModel.onDeleteBranchTapped,
-                    onPushBranchToRemoteTapped: viewModel.onPushBranchToRemoteTapped,
-                    branchCount: viewModel.branchCount
+                    onTapPush: viewModel.onTapPush,
+                    onGetLastSelectedRemoteIndex: viewModel.onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: viewModel.onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: viewModel.onAddRemoteTapped
                 )
                     .frame(maxWidth: 120)
                     .padding(.trailing, 8)

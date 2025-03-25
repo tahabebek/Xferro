@@ -37,7 +37,7 @@ struct ProjectView: View {
                 onGetLastSelectedRemoteIndex: {
                     statusViewModel.getLastSelectedRemoteIndex(buttonTitle: $0)
                 },
-                onSetLastSelectedRemote: { value, buttonTitle in
+                onSetLastSelectedRemoteIndex: { value, buttonTitle in
                     statusViewModel.setLastSelectedRemote(value, buttonTitle: buttonTitle)
                 }
             )

@@ -43,7 +43,6 @@ import Observation
     var onDeleteRepositoryTapped: ((Repository) -> Void)?
     var onDeleteBranchTapped: ((String) -> Void)?
     var onIsCurrentBranch: ((Branch, Head) -> Bool)?
-    var onPushBranchToRemoteTapped: ((String) -> Void)?
 
     var observers: Set<AnyCancellable> = []
     var refreshRemoteSubject: PassthroughSubject<Void, Never> = .init()

@@ -16,7 +16,7 @@ struct RepositoryMenuViewButtons: View {
     let head: Head
 
     let onGetLastSelectedRemoteIndex: (String) -> Int
-    let onSetLastSelectedRemote: (Int, String) -> Void
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
     let onFetchTapped: (Repository.FetchType) -> Void
     let onPullTapped: (Repository.PullType) -> Void
@@ -35,7 +35,7 @@ struct RepositoryMenuViewButtons: View {
                     get: {
                         onGetLastSelectedRemoteIndex("push")
                     }, set: { value, _ in
-                        onSetLastSelectedRemote(value, "push")
+                        onSetLastSelectedRemoteIndex(value, "push")
                     }
                 ),
                 addMoreOptionsText: "Add Remote...",

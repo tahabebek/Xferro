@@ -240,11 +240,4 @@ import OrderedCollections
             }
         }
     }
-
-    func pushBranchToRemoteTapped(repository: Repository, branchName: String) {
-//        Task {
-//            let pushOpController = await PushOpController(localBranchName: branchName, repository: repository)
-//            try await pushOpController.start()
-//        }
-    }
 }

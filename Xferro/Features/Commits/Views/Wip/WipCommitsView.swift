@@ -16,8 +16,8 @@ struct WipCommitsView: View {
     let onDeleteWipWorktreeTapped: (Repository) -> Void
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
-    let onSetLastSelectedRemote: (Int, String) -> Void
-    let onPushTapped: (String, Remote?, Repository.PushType) async throws -> Void
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
+    let onPushTapped:  (String, Remote?, Repository.PushType) -> Void
 
     var body: some View {
         PinnedScrollableView(showsIndicators: false) {
@@ -31,7 +31,7 @@ struct WipCommitsView: View {
                     },
                     onAddRemoteTapped: onAddRemoteTapped,
                     onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                    onSetLastSelectedRemote: onSetLastSelectedRemote,
+                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                     onPushTapped: onPushTapped
                 )
                 .padding(.top, 8)

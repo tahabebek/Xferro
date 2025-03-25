@@ -10,18 +10,23 @@ import SwiftUI
 struct DetachedTagBranchView: View {
     @State private var showingBranchOptions = false
     let viewModel: DetachedTagBranchViewModel
+    let remotes: [Remote]
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .verticalAlignment) {
                 BranchMenuView(
                     showingBranchOptions: $showingBranchOptions,
+                    remotes: remotes,
                     isCurrent: true,
                     name: "Detached tag \(viewModel.tagInfo.tag.tag.name)",
                     isDetached: true,
+                    branchCount: viewModel.branchCount,
                     onDeleteBranchTapped: viewModel.onDeleteBranchTapped,
-                    onPushBranchToRemoteTapped: nil,
-                    branchCount: viewModel.branchCount
+                    onTapPush: viewModel.onTapPush,
+                    onGetLastSelectedRemoteIndex: viewModel.onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: viewModel.onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: viewModel.onAddRemoteTapped
                 )
                 .frame(maxWidth: 120)
                 .padding(.trailing, 8)

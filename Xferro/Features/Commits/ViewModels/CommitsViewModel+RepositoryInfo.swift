@@ -83,10 +83,6 @@ extension CommitsViewModel {
             guard let self else { return false }
             return isCurrentBranch($0, head: $1)
         }
-        newRepositoryInfo.onPushBranchToRemoteTapped = { [weak self] in
-            guard let self else { return }
-            pushBranchToRemoteTapped(repository: repository, branchName: $0)
-        }
         let (localBranches, remoteBranches) = branchInfos(of: newRepositoryInfo)
         newRepositoryInfo.localBranchInfos = localBranches
         newRepositoryInfo.remoteBranchInfos = remoteBranches

@@ -22,7 +22,7 @@ struct RepositoryMenuView: View {
     let onFetchTapped: (Repository.FetchType) -> Void
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
-    let onSetLastSelectedRemote: (Int, String) -> Void
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onCreateTagTapped: (String, String?, String, Bool) -> Void
     let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
     let onBranchOperationTapped: (String, Bool, BranchOperationView.OperationType) -> Void
@@ -41,7 +41,7 @@ struct RepositoryMenuView: View {
         onFetchTapped: @escaping  (Repository.FetchType) -> Void,
         onAddRemoteTapped: @escaping  () -> Void,
         onGetLastSelectedRemoteIndex: @escaping (String) -> Int,
-        onSetLastSelectedRemote: @escaping (Int, String) -> Void,
+        onSetLastSelectedRemoteIndex: @escaping (Int, String) -> Void,
         onCreateBranchTapped: @escaping (String, String, Bool, Bool) -> Void,
         onBranchOperationTapped: @escaping (String, Bool, BranchOperationView.OperationType) -> Void,
         onCreateTagTapped: @escaping (String, String?, String, Bool) -> Void,
@@ -58,7 +58,7 @@ struct RepositoryMenuView: View {
         self.onFetchTapped = onFetchTapped
         self.onAddRemoteTapped = onAddRemoteTapped
         self.onGetLastSelectedRemoteIndex = onGetLastSelectedRemoteIndex
-        self.onSetLastSelectedRemote = onSetLastSelectedRemote
+        self.onSetLastSelectedRemoteIndex = onSetLastSelectedRemoteIndex
         self.onCreateBranchTapped = onCreateBranchTapped
         self.onBranchOperationTapped = onBranchOperationTapped
         self.onCreateTagTapped = onCreateTagTapped
@@ -87,7 +87,7 @@ struct RepositoryMenuView: View {
                 .onTapGesture {
                     showButtons.toggle()
                 }
-                .popover(isPresented: $showButtons) {
+                .xfPopover(isPresented: $showButtons) {
                     RepositoryMenuViewButtons(
                         options: $options,
                         selectedRemoteForFetch: $selectedRemoteForFetch,
@@ -95,7 +95,7 @@ struct RepositoryMenuView: View {
                         remotes: remotes,
                         head: head,
                         onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                        onSetLastSelectedRemote: onSetLastSelectedRemote,
+                        onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                         onAddRemoteTapped: onAddRemoteTapped,
                         onFetchTapped: onFetchTapped,
                         onPullTapped: onPullTapped,

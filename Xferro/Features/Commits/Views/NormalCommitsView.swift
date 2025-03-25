@@ -13,9 +13,10 @@ struct NormalCommitsView: View {
 
     let onPullTapped: (Repository.PullType) -> Void
     let onFetchTapped: (Repository.FetchType) -> Void
+    let onTapPush: (String, Remote?, Repository.PushType) -> Void
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
-    let onSetLastSelectedRemote: (Int, String) -> Void
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
 
     var body: some View {
         PinnedScrollableView(showsIndicators: false) {
@@ -47,9 +48,10 @@ struct NormalCommitsView: View {
                         repositoryInfo: repositoryInfo,
                         onPullTapped: onPullTapped,
                         onFetchTapped: onFetchTapped,
+                        onTapPush: onTapPush,
                         onAddRemoteTapped: onAddRemoteTapped,
                         onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                        onSetLastSelectedRemote: onSetLastSelectedRemote,
+                        onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                         isSelected: viewModel.currentRepositoryInfo == repositoryInfo
                     )
                 }

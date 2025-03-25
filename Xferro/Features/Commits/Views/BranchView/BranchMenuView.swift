@@ -9,12 +9,17 @@ import SwiftUI
 
 struct BranchMenuView: View {
     @Binding var showingBranchOptions: Bool
+    let remotes: [Remote]
     let isCurrent: Bool
     let name: String
     let isDetached: Bool
-    let onDeleteBranchTapped: ((String) -> Void)?
-    let onPushBranchToRemoteTapped: ((String)-> Void)?
     let branchCount: Int
+
+    let onDeleteBranchTapped: (String) -> Void
+    let onTapPush: (String, Remote?, Repository.PushType) -> Void
+    let onGetLastSelectedRemoteIndex: (String) -> Int
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
+    let onAddRemoteTapped: () -> Void
 
     var body: some View {
         Button(action: {
@@ -30,77 +35,21 @@ struct BranchMenuView: View {
         .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
         .background(Color.clear)
         .frame(minWidth: 40)
-        .popover(isPresented: $showingBranchOptions) {
-            VStack(alignment: .leading, spacing: 8) {
-                if !isCurrent {
-                    XFButton<Void>(
-                        title: "Switch to \(name)",
-                        onTap: {
-                            showingBranchOptions = false
-                            fatalError(.unimplemented)
-                        }
-                    )
-                    if !isDetached {
-                        XFButton<Void>(
-                            title: "Delete \(name)",
-                            onTap: {
-                                showingBranchOptions = false
-                                onDeleteBranchTapped?(name)
-                            }
-                        )
-                    }
-                }
-
-                XFButton<Void>(
-                    title: "Push to remote",
-                    onTap: {
-                        showingBranchOptions = false
-                        onPushBranchToRemoteTapped?(name)
-                    }
-                )
-                XFButton<Void>(
-                    title: "Create a new branch based on \(name)",
-                    onTap: {
-                        showingBranchOptions = false
-                        fatalError(.unimplemented)
-                    }
-                )
-
-                if !isDetached, branchCount > 1 {
-                    Divider()
-                    XFButton<Void>(
-                        title: "Merge a branch into \(name)",
-                        onTap: {
-                            showingBranchOptions = false
-                            fatalError(.unimplemented)
-                        }
-                    )
-                    XFButton<Void>(
-                        title: "Merge \(name) into another branch",
-                        onTap: {
-                            showingBranchOptions = false
-                            fatalError(.unimplemented)
-                        }
-                    )
-                    Divider()
-                    XFButton<Void>(
-                        title: "Rebase a branch into \(name)",
-                        onTap: {
-                            showingBranchOptions = false
-                            fatalError(.unimplemented)
-                        }
-                    )
-                    XFButton<Void>(
-                        title: "Rebase \(name) into another branch",
-                        onTap: {
-                            showingBranchOptions = false
-                            fatalError(.unimplemented)
-                        }
-                    )
-                }
-            }
+        .xfPopover(isPresented: $showingBranchOptions) {
+            BranchMenuPopover(
+                showingBranchOptions: $showingBranchOptions,
+                remotes: remotes,
+                isCurrent: isCurrent,
+                name: name,
+                isDetached: isDetached,
+                branchCount: branchCount,
+                onDeleteBranchTapped: onDeleteBranchTapped,
+                onTapPush: onTapPush,
+                onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                onAddRemoteTapped: onAddRemoteTapped
+            )
             .padding()
-            .frame(minWidth: 250)
         }
     }
 }

@@ -22,6 +22,7 @@ struct StatusViewNoChangeView: View {
                 .cornerRadius(8)
             VStack {
                 Text("No changes.")
+                    .font(.heading1)
                     .padding(.all)
                     .padding(.top, 8)
                 HStack {

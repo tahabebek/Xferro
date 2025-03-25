@@ -12,10 +12,10 @@ struct CommitsView: View {
 
     let onPullTapped: (Repository.PullType) -> Void
     let onFetchTapped: (Repository.FetchType) -> Void
-    let onPushTapped: (String, Remote?, Repository.PushType) async throws -> Void
+    let onPushTapped: (String, Remote?, Repository.PushType) -> Void
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
-    let onSetLastSelectedRemote: (Int, String) -> Void
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
 
     var body: some View {
         VSplitView {
@@ -23,9 +23,10 @@ struct CommitsView: View {
                 viewModel: commitsViewModel,
                 onPullTapped: onPullTapped,
                 onFetchTapped: onFetchTapped,
+                onTapPush: onPushTapped,
                 onAddRemoteTapped: onAddRemoteTapped,
                 onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                onSetLastSelectedRemote: onSetLastSelectedRemote
+                onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex
             )
                 .padding(.trailing, 6)
             WipCommitsView(
@@ -41,7 +42,7 @@ struct CommitsView: View {
                     commitsViewModel.deleteWipWorktreeTapped(for: $0)
                 }, onAddRemoteTapped: onAddRemoteTapped,
                 onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                onSetLastSelectedRemote: onSetLastSelectedRemote,
+                onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                 onPushTapped: onPushTapped
             )
             .padding(.trailing, 6)

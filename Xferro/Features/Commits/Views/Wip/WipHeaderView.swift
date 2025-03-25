@@ -22,8 +22,8 @@ struct WipHeaderView: View {
     let onDeleteWipWorktreeTapped: () -> Void
     let onAddRemoteTapped: () -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
-    let onSetLastSelectedRemote: (Int, String) -> Void
-    let onPushTapped: (String, Remote?, Repository.PushType) async throws -> Void
+    let onSetLastSelectedRemoteIndex: (Int, String) -> Void
+    let onPushTapped:  (String, Remote?, Repository.PushType) -> Void
 
     init(
         viewModel: WipCommitsViewModel,
@@ -31,8 +31,8 @@ struct WipHeaderView: View {
         onDeleteWipWorktreeTapped: @escaping () -> Void,
         onAddRemoteTapped: @escaping () -> Void,
         onGetLastSelectedRemoteIndex: @escaping (String) -> Int,
-        onSetLastSelectedRemote: @escaping (Int, String) -> Void,
-        onPushTapped: @escaping (String, Remote?, Repository.PushType) async throws -> Void
+        onSetLastSelectedRemoteIndex: @escaping (Int, String) -> Void,
+        onPushTapped: @escaping  (String, Remote?, Repository.PushType) -> Void
     ) {
         self._autoCommitEnabled = .init(
             wrappedValue: false,
@@ -49,7 +49,7 @@ struct WipHeaderView: View {
         self.onDeleteWipWorktreeTapped = onDeleteWipWorktreeTapped
         self.onAddRemoteTapped = onAddRemoteTapped
         self.onGetLastSelectedRemoteIndex = onGetLastSelectedRemoteIndex
-        self.onSetLastSelectedRemote = onSetLastSelectedRemote
+        self.onSetLastSelectedRemoteIndex = onSetLastSelectedRemoteIndex
         self.onPushTapped = onPushTapped
     }
 
@@ -84,7 +84,7 @@ struct WipHeaderView: View {
                         get: {
                             onGetLastSelectedRemoteIndex("push")
                         }, set: { value, _ in
-                            onSetLastSelectedRemote(value, "push")
+                            onSetLastSelectedRemoteIndex(value, "push")
                         }
                     ),
                     addMoreOptionsText: "Add Remote...",
@@ -95,14 +95,8 @@ struct WipHeaderView: View {
                         onAddRemoteTapped()
                     },
                     onTap: {
-                        Task {
-                            do {
-                                dismiss()
-                                try await onPushTapped(viewModel.branchName, selectedRemoteForPush, .force)
-                            } catch {
-                                errorString = error.localizedDescription
-                            }
-                        }
+                        dismiss()
+                        onPushTapped(viewModel.branchName, selectedRemoteForPush, .force)
                     }
                 )
                 .onChange(of: viewModel.repositoryInfo.remotes.count) {
