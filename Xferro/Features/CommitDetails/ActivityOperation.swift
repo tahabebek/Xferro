@@ -1,5 +1,5 @@
 //
-//  StatusViewModel+ActivityOperation.swift
+//  ActivityOperation.swift
 //  Xferro
 //
 //  Created by Taha Bebek on 3/25/25.
@@ -7,16 +7,18 @@
 
 import Foundation
 
-extension StatusViewModel {
-    func performOperation(
+enum ActivityOperation {
+    static func perform(
         title: String,
         successMessage: String,
         _ operation: @escaping () async throws -> Void
     ) async {
         Task {
-            var activity: Activity = ProgressManager.shared.startActivity(name: title)
+            let activity = ProgressManager.shared.startActivity(name: title)
             defer {
-                ProgressManager.shared.updateProgress(activity, progress: 1.0)
+                Task { @MainActor in
+                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
+                }
             }
             do {
                 try await operation()

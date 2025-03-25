@@ -47,8 +47,6 @@ import Observation
 
     var observers: Set<AnyCancellable> = []
     var refreshRemoteSubject: PassthroughSubject<Void, Never> = .init()
-    var errorString: String? = nil
-    var showError: Bool = false
 
     var wipWorktree: WipWorktree {
         WipWorktree.worktree(for: self)
@@ -89,38 +87,25 @@ import Observation
         Task {
             if shouldCheckout {
                 if status.isNotEmpty {
-                    await MainActor.run {
-                        errorString = "Cannot checkout to a different branch while there are uncommitted changes"
-                        showError = true
+                    Task { @MainActor in
+                        AppDelegate.showErrorMessage(
+                            error: RepoError.unexpected("Cannot checkout to a different branch when there are uncommitted changes")
+                        )
                     }
                     return
                 }
             }
 
-            var activity: Activity? = nil
-            defer {
-                if let activity {
-                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
-                }
-            }
-
-            if isRemote {
-                activity = ProgressManager.shared.startActivity(name: "Creating branch \(branchName) to track \(baseBranchName)")
-
-            } else {
-                activity = ProgressManager.shared.startActivity(name: "Creating branch \(branchName) based on \(baseBranchName)")
-            }
-
-            do {
+            await ActivityOperation.perform(
+                title: isRemote ? "Creating remote branch \(branchName) to track \(baseBranchName)"
+                    : "Creating local branch \(branchName) based on \(baseBranchName)",
+                successMessage: "Created branch \(branchName)"
+            ) { [weak self] in
+                guard let self else { return }
                 if shouldCheckout {
                     try GitCLI.execute(repository, ["checkout", "-b", branchName, baseBranchName])
                 } else {
                     try GitCLI.execute(repository, ["branch", branchName, baseBranchName])
-                }
-            } catch {
-                await MainActor.run {
-                    errorString = error.localizedDescription
-                    showError = true
                 }
             }
         }
@@ -129,28 +114,20 @@ import Observation
     func checkoutBranchTapped(branchName: String, isRemote: Bool) {
         Task {
             if status.isNotEmpty {
-                await MainActor.run {
-                    errorString = "Cannot checkout to a different branch while there are uncommitted changes"
-                    showError = true
+                Task { @MainActor in
+                    AppDelegate.showErrorMessage(
+                        error: RepoError.unexpected("Cannot checkout to a different branch when there are uncommitted changes")
+                    )
                 }
                 return
             }
 
-            var activity: Activity? = nil
-            defer {
-                if let activity {
-                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
-                }
-            }
-
-            if isRemote {
-                activity = ProgressManager.shared.startActivity(name: "Checking out to remote branch \(branchName)")
-
-            } else {
-                activity = ProgressManager.shared.startActivity(name: "Checking out to local branch \(branchName)")
-            }
-
-            do {
+            await ActivityOperation.perform(
+                title: isRemote ? "Checking out to remote branch \(branchName)"
+                : "Checking out to local branch \(branchName)",
+                successMessage: "Checked out to \(branchName)"
+            ) { [weak self] in
+                guard let self else { return }
                 if isRemote {
                     if localBranchInfos.map(\.branch.name).contains(branchName) {
                         try GitCLI.execute(repository, ["checkout", branchName])
@@ -160,11 +137,7 @@ import Observation
                 } else {
                     try GitCLI.execute(repository, ["checkout", branchName])
                 }
-            } catch {
-                await MainActor.run {
-                    errorString = error.localizedDescription
-                    showError = true
-                }
+
             }
         }
     }
@@ -172,39 +145,26 @@ import Observation
     func deleteBranchTapped(branchName: String, isRemote: Bool) {
         Task {
             if head.name == branchName {
-                await MainActor.run {
-                    errorString = "Cannot delete the current branch"
-                    showError = true
+                Task { @MainActor in
+                    AppDelegate.showErrorMessage(
+                        error: RepoError.unexpected("Cannot delete the current branch")
+                    )
                 }
                 return
             }
 
-            var activity: Activity? = nil
-            defer {
-                if let activity {
-                    ProgressManager.shared.updateProgress(activity, progress: 1.0)
-                }
-            }
-
-            if isRemote {
-                activity = ProgressManager.shared.startActivity(name: "Deleting remote branch \(branchName)")
-
-            } else {
-                activity = ProgressManager.shared.startActivity(name: "Deleting local branch \(branchName)")
-            }
-
-            do {
-                if isRemote {
+            await ActivityOperation.perform(
+                title: isRemote ? "Deleting remote branch \(branchName)"
+                : "Deleting local branch \(branchName)",
+                successMessage: "Deleted branch \(branchName)"
+            ) { [weak self] in
+                guard let self else { return }
+                 if isRemote {
                     let remote = String(branchName.split(separator: "/").first!)
                     let branch = String(branchName.split(separator: "/").last!)
                     try GitCLI.execute(repository, ["push", "--delete", remote , branch])
                 } else {
                     try GitCLI.execute(repository, ["branch", "-D", branchName])
-                }
-            } catch {
-                await MainActor.run {
-                    errorString = error.localizedDescription
-                    showError = true
                 }
             }
         }
@@ -212,12 +172,11 @@ import Observation
 
     func createTagTapped(name: String, message: String?, remote: String, push: Bool) {
         Task {
-            let activity: Activity = ProgressManager.shared.startActivity(name: "Creating tag \(name) on remote \(remote)")
-            defer {
-                ProgressManager.shared.updateProgress(activity, progress: 1.0)
-            }
-
-            do {
+            await ActivityOperation.perform(
+                title: "Creating tag \(name) on remote \(remote)",
+                successMessage: "Created tag \(name)"
+            ) { [weak self] in
+                guard let self else { return }
                 var args = ["tag"]
                 if let message {
                     args.append(contentsOf: ["-a", name, "-m", message])
@@ -227,11 +186,6 @@ import Observation
                 try GitCLI.execute(repository, args)
                 if push {
                     try GitCLI.execute(repository, ["push", remote, name])
-                }
-            } catch {
-                await MainActor.run {
-                    errorString = error.localizedDescription
-                    showError = true
                 }
             }
         }

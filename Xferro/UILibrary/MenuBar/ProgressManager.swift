@@ -20,12 +20,13 @@ import Observation
     }
 
     func startActivity(name: String) -> Activity {
-        let activity = Activity(name: name, progress: 0)
+        let activity = Activity(name: name)
         activities.insert(activity)
         return activity
     }
     func updateProgress(_ activity: Activity, progress: Double) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             if progress >= 1.0 {
                 activities.remove(activity)
             }

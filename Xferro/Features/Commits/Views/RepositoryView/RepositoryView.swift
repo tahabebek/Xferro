@@ -32,8 +32,6 @@ struct RepositoryView: View {
             VStack(spacing: 0) {
                 RepositoryMenuView(
                     isCollapsed: $isCollapsed,
-                    errorString: $repositoryInfo.errorString,
-                    showError: $repositoryInfo.showError,
                     onDeleteRepositoryTapped: repositoryInfo.deleteRepositoryTapped,
                     onPullTapped: onPullTapped,
                     onFetchTapped: onFetchTapped,

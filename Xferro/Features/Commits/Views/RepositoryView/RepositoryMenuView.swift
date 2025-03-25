@@ -9,8 +9,6 @@ import SwiftUI
 
 struct RepositoryMenuView: View {
     @Binding var isCollapsed: Bool
-    @Binding var errorString: String?
-    @Binding var showError: Bool
     @State var showButtons = false
     @State var selectedRemoteForFetch: Remote?
     @State var options: [XFButtonOption<Remote>] = []
@@ -38,8 +36,6 @@ struct RepositoryMenuView: View {
 
     init(
         isCollapsed: Binding<Bool>,
-        errorString: Binding<String?>,
-        showError: Binding<Bool>,
         onDeleteRepositoryTapped: @escaping () -> Void,
         onPullTapped: @escaping (Repository.PullType) -> Void,
         onFetchTapped: @escaping  (Repository.FetchType) -> Void,
@@ -57,8 +53,6 @@ struct RepositoryMenuView: View {
         isSelected: Bool
     ) {
         self._isCollapsed = isCollapsed
-        self._errorString = errorString
-        self._showError = showError
         self.onDeleteRepositoryTapped = onDeleteRepositoryTapped
         self.onPullTapped = onPullTapped
         self.onFetchTapped = onFetchTapped
@@ -163,15 +157,6 @@ struct RepositoryMenuView: View {
             Spacer()
             RepositoryNavigationView(isCollapsed: $isCollapsed, deleteRepositoryTapped: onDeleteRepositoryTapped)
                 .font(.accessoryButton)
-        }
-        .alert(isPresented: $showError) {
-            Alert(
-                title: Text("Error"),
-                message: Text(errorString!),
-                dismissButton: .default(
-                    Text("OK")
-                )
-            )
         }
     }
 }

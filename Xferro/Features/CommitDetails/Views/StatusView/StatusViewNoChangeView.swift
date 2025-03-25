@@ -23,7 +23,7 @@ struct StatusViewNoChangeView: View {
             VStack {
                 Text("No changes.")
                     .padding(.all)
-                    .padding(.top)
+                    .padding(.top, 8)
                 HStack {
                     PushButton(
                         selectedRemoteForPush: $selectedRemoteForPush,

@@ -461,14 +461,14 @@ fileprivate extension StatusViewModel {
                 }
                 return
             }
-            await performOperation(
+            await ActivityOperation.perform(
                 title: "Fetching \(remote.name ?? "remote")..",
                 successMessage: "Fetched \(remote.name ?? "remote")"
             ) {
                 try GitCLI.execute(repositoryInfo.repository, ["fetch", remote.name!, "--prune"])
             }
         case .all:
-            await performOperation(
+            await ActivityOperation.perform(
                 title: "Fetching all remotes",
                 successMessage: "Fetched all remotes"
             ) {
@@ -494,14 +494,14 @@ fileprivate extension StatusViewModel {
 
         switch pullType {
         case .merge:
-            await performOperation(
+            await ActivityOperation.perform(
                 title: "Pulling branch \(repositoryInfo.head.name) (merge)..",
                 successMessage: "Pulled branch \(repositoryInfo.head.name) (merge).."
             ) {
                 try GitCLI.execute(repositoryInfo.repository, ["pull", "--no-rebase"])
             }
         case .rebase:
-            await performOperation(
+            await ActivityOperation.perform(
                 title: "Pulling branch \(repositoryInfo.head.name) (rebase)..",
                 successMessage: "Pulling branch \(repositoryInfo.head.name) (rebase).."
             ) {
@@ -535,7 +535,7 @@ fileprivate extension StatusViewModel {
                 }
                 return
             }
-            await performOperation(
+            await ActivityOperation.perform(
                 title: "Pushing \(branch.name) to \(remote)..",
                 successMessage: "Pushed \(branch.name) to \(remote)"
             ) {
@@ -555,7 +555,7 @@ fileprivate extension StatusViewModel {
                 }
                 return
             }
-            await performOperation(
+            await ActivityOperation.perform(
                 title: "Pushing \(currentBranch) to \(remote)..",
                 successMessage: "Pushed \(currentBranch) to \(remote)"
             ) {
@@ -582,7 +582,7 @@ fileprivate extension StatusViewModel {
         }
 
         guard let fetchURL = URL(string: fetchURLString) else { return }
-        await performOperation(
+        await ActivityOperation.perform(
             title: "Adding remote..",
             successMessage: "Remote added"
         ) { [weak self] in
@@ -639,8 +639,6 @@ fileprivate extension StatusViewModel {
     }
 
     func tryAmendAndPush(remote: Remote?, pushType: Repository.PushType) async {
-        guard let repositoryInfo else { fatalError(.unimplemented) }
-
         if let remote {
             await actuallyAmendAndPush(remote: remote, pushType: pushType)
         } else {
@@ -683,7 +681,7 @@ fileprivate extension StatusViewModel {
 
     func track(flag: Bool, file: OldNewFile, shouldRefreshStatus: Bool = true) async {
         guard let repositoryInfo, let path = file.new else { fatalError(.invalid) }
-        await performOperation(
+        await ActivityOperation.perform(
             title: "Tracking \(file.new ?? file.old!)",
             successMessage: "Tracked \(file.new ?? file.old!)"
         ) {
@@ -714,7 +712,7 @@ fileprivate extension StatusViewModel {
 
     func commit(amend: Bool) async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await performOperation(
+        await ActivityOperation.perform(
             title: amend ? "Amending changes.." : "Committing changes..",
             successMessage: amend ? "Amended changes" : "Committed changes"
         ) { [weak self] in
@@ -821,7 +819,7 @@ fileprivate extension StatusViewModel {
     func ignore(file: OldNewFile) async {
         guard let repositoryInfo else { fatalError(.invalid) }
         guard let path = file.new else { fatalError(.illegal) }
-        await performOperation(
+        await ActivityOperation.perform(
             title: "Ignoring \(path)",
             successMessage: "\(path) is ignored"
         ) {
@@ -834,11 +832,10 @@ fileprivate extension StatusViewModel {
 
     func discard(file: OldNewFile) async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await performOperation(
+        await ActivityOperation.perform(
             title: "Discarding changes for \(file.new ?? file.old!)..",
             successMessage: "Changes discarded for \(file.new ?? file.old!)"
-        ) { [weak self] in
-            guard let self else { return }
+        ) {
             let oldFile = file.workDirOld
             let newFile = file.workDirNew
             var fileURLs = [URL]()
@@ -881,11 +878,10 @@ fileprivate extension StatusViewModel {
 
     func discardAll() async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await performOperation(
+        await ActivityOperation.perform(
             title: "Discarding all changes..",
             successMessage: "All changes are discarded"
-        ) { [weak self] in
-            guard let self else { return }
+        ) {
             try GitCLI.execute(repositoryInfo.repository, ["add", "."])
             try GitCLI.execute(repositoryInfo.repository, ["reset", "--hard"])
         }
