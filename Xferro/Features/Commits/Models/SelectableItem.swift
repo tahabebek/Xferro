@@ -61,11 +61,11 @@ struct SelectableStatus: SelectableItem, Identifiable {
     var wipDescription: String {
         switch type {
         case .branch(_, let branch):
-            "Branch \(branch.name) of \(repositoryName)"
+            "\"\(branch.name)\" branch of \(repositoryName)"
         case .tag(_, let tag):
-            "Tag \(tag.name) of \(repositoryName)"
+            "\"\(tag.name)\" tag of \(repositoryName)"
         case .detached(_, let commit):
-            "Detached commit \(commit.oid.debugOID.prefix(4)) of \(repositoryName)"
+            "detached commit \"\(commit.oid.debugOID.prefix(4))\" of \(repositoryName)"
         }
     }
 
@@ -143,7 +143,7 @@ struct SelectableCommit: SelectableItem, Identifiable, BranchItem {
     let repositoryId: String
     let branch: Branch
     let commit: Commit
-    var wipDescription: String { "Branch \(branch.name) of \(repositoryName)" }
+    var wipDescription: String { "\"\(branch.name)\" branch of \(repositoryName)" }
     var oid: OID { commit.oid }
 }
 
@@ -200,7 +200,7 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
 
         var name: String {
             switch self {
-            case .tag(let tag): return "Tag \(tag.name)"
+            case .tag(let tag): return "tag \(tag.name)"
             case .commit(let commit): return "Detached commit \(commit.oid.debugOID)"
             }
         }
@@ -222,7 +222,7 @@ struct SelectableDetachedCommit: SelectableItem, Identifiable, BranchItem {
     let repositoryGitDir: String
     let commit: Commit
     let owner: Owner
-    var wipDescription: String { "\(owner.name) of \(repositoryName)" }
+    var wipDescription: String { "\"\(owner.name)\" of \(repositoryName)" }
     var oid: OID { commit.oid }
 
     init(
@@ -256,7 +256,7 @@ struct SelectableDetachedTag: SelectableItem, Identifiable {
     let repositoryName: String
     let repositoryId: String
     let tag: TagReference
-    var wipDescription: String { "Tag \(tag.name) of \(repositoryName)" }
+    var wipDescription: String { "\"\(tag.name)\" tag of \(repositoryName)" }
     var oid: OID { tag.oid }
 
     init(
