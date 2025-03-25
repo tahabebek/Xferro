@@ -15,13 +15,7 @@ struct XFButtonOption<OptionData>: Identifiable {
 }
 
 struct XFButtonInfo {
-    let title: String?
     let info: String
-
-    init(title: String? = nil, info: String) {
-        self.title = title
-        self.info = info
-    }
 }
 
 struct XFButton<OptionData>: View {

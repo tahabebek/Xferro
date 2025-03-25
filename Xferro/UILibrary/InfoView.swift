@@ -20,10 +20,6 @@ struct InfoView: View {
             }
             .popover(isPresented: $showingInfo) {
                 VStack(spacing: 0) {
-                    if let title = info.title {
-                        Text(title)
-                            .padding(.vertical)
-                    }
                     ScrollView {
                         Text(info.info)
                             .font(.paragraph3)
