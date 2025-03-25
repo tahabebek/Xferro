@@ -14,20 +14,45 @@ struct AddNewBranchView: View {
     @State var isRemote: Bool = false
     @State var shouldCheckout: Bool = false
     @State var invalidMessage: String?
-    @State var localBranches: [String] = []
-    @State var remoteBranches: [String] = []
     @State var selectedLocalBranchName: String = ""
     @State var selectedRemoteBranchName: String = ""
 
+    let localBranches: [String]
+    let remoteBranches: [String]
     let onCreateBranch: (String, String, Bool, Bool) -> Void
-    let currentBranch: String
+    let currentBranch: String?
+    let preselectedLocalBranch: String?
+
+    init(
+        localBranches: [String] = [],
+        remoteBranches: [String] = [],
+        onCreateBranch: @escaping (String, String, Bool, Bool) -> Void,
+        currentBranch: String? = nil,
+        preselectedLocalBranch: String? = nil
+    ) {
+        self.localBranches = localBranches
+        self.remoteBranches = remoteBranches
+        self.onCreateBranch = onCreateBranch
+        self.currentBranch = currentBranch
+        self.preselectedLocalBranch = preselectedLocalBranch
+        if let currentBranch {
+            isRemote = false
+            selectedLocalBranchName = currentBranch
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading) {
             titleView
-            settingsView
-            invalidMessageView
-                .padding(.bottom)
+            Group {
+                if preselectedLocalBranch == nil {
+                    settingsView
+                    invalidMessageView
+                } else {
+                    preselectedSettingsView
+                }
+            }
+            .padding(.bottom)
             HStack {
                 Spacer()
                 XFButton<Void>(
@@ -40,20 +65,20 @@ struct AddNewBranchView: View {
                 XFButton<Void>(
                     title: "Create Branch",
                     onTap: {
-                        if isRemote {
-                            if selectedRemoteBranchName.isEmptyOrWhitespace {
-                                invalidMessage = "Please select a remote branch"
-                                return
-                            }
+                        if let preselectedLocalBranch {
+                            selectedLocalBranchName = preselectedLocalBranch
                         } else {
-                            if selectedLocalBranchName.isEmptyOrWhitespace {
-                                invalidMessage = "Please select a local branch"
-                                return
+                            if isRemote {
+                                if selectedRemoteBranchName.isEmptyOrWhitespace {
+                                    invalidMessage = "Please select a remote branch"
+                                    return
+                                }
+                            } else {
+                                if selectedLocalBranchName.isEmptyOrWhitespace {
+                                    invalidMessage = "Please select a local branch"
+                                    return
+                                }
                             }
-                        }
-                        if name.isEmpty {
-                            invalidMessage = "Please enter a name"
-                            return
                         }
                         onCreateBranch(
                             name,
@@ -70,7 +95,6 @@ struct AddNewBranchView: View {
         .animation(.default, value: invalidMessage)
         .textFieldStyle(.roundedBorder)
         .onAppear {
-            selectedLocalBranchName = currentBranch
             selectedRemoteBranchName = remoteBranches.first ?? ""
             isTextFieldFocused = true
         }
@@ -85,6 +109,29 @@ struct AddNewBranchView: View {
                 .opacity(invalidMessage == nil ? 0 : 1)
             Spacer()
         }
+    }
+
+    var preselectedSettingsView: some View {
+        VStack(alignment: .leading) {
+            HStack {
+                Text("Name:")
+                Spacer()
+                TextField(
+                    "Name",
+                    text: $name,
+                    axis: .vertical
+                )
+                .focused($isTextFieldFocused)
+            }
+
+            HStack {
+                Text("Checkout:")
+                Toggle("", isOn: $shouldCheckout)
+                Spacer()
+            }
+        }
+        .padding(.leading, 8)
+        .font(.formField)
     }
 
     var settingsView: some View {
@@ -166,10 +213,13 @@ struct AddNewBranchView: View {
     }
 
     var titleView: some View {
-        Text("Create a New Branch")
-            .font(.formHeading)
-            .padding(.horizontal)
-            .padding(.bottom)
-            .padding(.top, 8)
+        Text(
+            preselectedLocalBranch != nil ? "Create a New Branch Based on \(preselectedLocalBranch!)"
+            : "Create a New Branch"
+        )
+        .font(.formHeading)
+        .padding(.horizontal)
+        .padding(.bottom)
+        .padding(.top, 8)
     }
 }

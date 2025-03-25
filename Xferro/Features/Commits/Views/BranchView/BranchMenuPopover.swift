@@ -9,7 +9,9 @@ import SwiftUI
 
 struct BranchMenuPopover: View {
     @Binding var showingBranchOptions: Bool
+    @Binding var showingCreateBranchSheet: Bool
     @State var selectedRemoteForPush: Remote?
+
     let remotes: [Remote]
     let isCurrent: Bool
     let name: String
@@ -21,6 +23,7 @@ struct BranchMenuPopover: View {
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
+    let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -72,7 +75,7 @@ struct BranchMenuPopover: View {
                     title: "Create a new branch based on \(name)",
                     onTap: {
                         showingBranchOptions = false
-                        fatalError(.unimplemented)
+                        showingCreateBranchSheet = true
                     }
                 )
 

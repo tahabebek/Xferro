@@ -73,7 +73,8 @@ struct RepositoryView: View {
             onTapPush: onTapPush,
             onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
             onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-            onAddRemoteTapped: onAddRemoteTapped
+            onAddRemoteTapped: onAddRemoteTapped,
+            onCreateBranchTapped: repositoryInfo.createBranchTapped
         )
     }
 

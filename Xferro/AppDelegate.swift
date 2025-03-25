@@ -195,29 +195,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @MainActor static func showErrorMessage(error: RepoError) {
         let alert = NSAlert()
-        alert.messageText = "Something went wrong"
-        alert.informativeText = ""
-        alert.alertStyle = .informational
+        if error.localizedDescription.lines.count < 4 {
+            alert.messageText = error.localizedDescription
+            alert.informativeText = ""
+            alert.alertStyle = .informational
+        } else {
+            alert.messageText = "Something went wrong"
+            alert.informativeText = ""
+            alert.alertStyle = .informational
 
-        // Create a scroll view with text view inside
-        let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 450, height: 300))
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
-        scrollView.autohidesScrollers = true
-        scrollView.borderType = .noBorder
+            // Create a scroll view with text view inside
+            let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 450, height: 300))
+            scrollView.hasVerticalScroller = true
+            scrollView.hasHorizontalScroller = false
+            scrollView.autohidesScrollers = true
+            scrollView.borderType = .noBorder
 
-        let contentView = NSTextView(frame: scrollView.bounds)
-        contentView.isEditable = false
-        contentView.isSelectable = true
-        contentView.string = error.message.rawValue
-        contentView.textContainer?.widthTracksTextView = true
-        contentView.textContainer?.containerSize = NSSize(width: scrollView.bounds.width, height: CGFloat.greatestFiniteMagnitude)
-        contentView.isVerticallyResizable = true
-        contentView.autoresizingMask = [.width]
+            let contentView = NSTextView(frame: scrollView.bounds)
+            contentView.isEditable = false
+            contentView.isSelectable = true
+            contentView.string = error.message.rawValue
+            contentView.textContainer?.widthTracksTextView = true
+            contentView.textContainer?.containerSize = NSSize(width: scrollView.bounds.width, height: CGFloat.greatestFiniteMagnitude)
+            contentView.isVerticallyResizable = true
+            contentView.autoresizingMask = [.width]
 
-        scrollView.documentView = contentView
+            scrollView.documentView = contentView
 
-        alert.accessoryView = scrollView
+            alert.accessoryView = scrollView
+        }
 
         // Add default button
         alert.addButton(withTitle: "Dismiss")

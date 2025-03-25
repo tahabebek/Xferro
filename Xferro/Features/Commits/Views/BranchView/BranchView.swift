@@ -13,7 +13,6 @@ protocol BranchItem: SelectableItem {
 
 struct BranchView: View {
     static let commitNodeSize: CGFloat = 54
-    @State private var showingBranchOptions = false
     let viewModel: BranchViewModel
     let remotes: [Remote]
 
@@ -21,7 +20,6 @@ struct BranchView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .verticalAlignment) {
                 BranchMenuView(
-                    showingBranchOptions: $showingBranchOptions,
                     remotes: remotes,
                     isCurrent: viewModel.isCurrent,
                     name: viewModel.branchInfo.branch.name,
@@ -31,7 +29,8 @@ struct BranchView: View {
                     onTapPush: viewModel.onTapPush,
                     onGetLastSelectedRemoteIndex: viewModel.onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: viewModel.onSetLastSelectedRemoteIndex,
-                    onAddRemoteTapped: viewModel.onAddRemoteTapped
+                    onAddRemoteTapped: viewModel.onAddRemoteTapped,
+                    onCreateBranchTapped: viewModel.onCreateBranchTapped
                 )
                     .frame(maxWidth: 120)
                     .padding(.trailing, 8)

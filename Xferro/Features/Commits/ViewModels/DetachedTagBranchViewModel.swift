@@ -21,4 +21,5 @@ struct DetachedTagBranchViewModel {
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
+    let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
 }

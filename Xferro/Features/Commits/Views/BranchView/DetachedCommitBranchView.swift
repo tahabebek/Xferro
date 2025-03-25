@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct DetachedCommitBranchView: View {
-    @State private var showingBranchOptions = false
     let viewModel: DetachedCommitBranchViewModel
     let remotes: [Remote]
     
@@ -16,7 +15,6 @@ struct DetachedCommitBranchView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .verticalAlignment) {
                 BranchMenuView(
-                    showingBranchOptions: $showingBranchOptions,
                     remotes: remotes,
                     isCurrent: true,
                     name: "Detached Commit",
@@ -26,7 +24,8 @@ struct DetachedCommitBranchView: View {
                     onTapPush: viewModel.onTapPush,
                     onGetLastSelectedRemoteIndex: viewModel.onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: viewModel.onSetLastSelectedRemoteIndex,
-                    onAddRemoteTapped: viewModel.onAddRemoteTapped
+                    onAddRemoteTapped: viewModel.onAddRemoteTapped,
+                    onCreateBranchTapped: viewModel.onCreateBranchTapped
                 )
                 .frame(maxWidth: 120)
                 .padding(.trailing, 8)

@@ -29,6 +29,7 @@ struct RepositoryContentView: View {
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
+    let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
 
     var body: some View {
         Group {
@@ -48,7 +49,8 @@ struct RepositoryContentView: View {
                     onTapPush: onTapPush,
                     onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                    onAddRemoteTapped: onAddRemoteTapped
+                    onAddRemoteTapped: onAddRemoteTapped,
+                    onCreateBranchTapped: onCreateBranchTapped
                 )
                     .matchedGeometryEffect(id: "contentView", in: animation)
             case .tags:

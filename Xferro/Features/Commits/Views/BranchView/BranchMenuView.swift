@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct BranchMenuView: View {
-    @Binding var showingBranchOptions: Bool
+    @State var showingBranchOptions = false
+    @State var showingCreateBranchSheet = false
     let remotes: [Remote]
     let isCurrent: Bool
     let name: String
@@ -20,6 +21,7 @@ struct BranchMenuView: View {
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
+    let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
 
     var body: some View {
         Button(action: {
@@ -38,6 +40,7 @@ struct BranchMenuView: View {
         .xfPopover(isPresented: $showingBranchOptions) {
             BranchMenuPopover(
                 showingBranchOptions: $showingBranchOptions,
+                showingCreateBranchSheet: $showingCreateBranchSheet,
                 remotes: remotes,
                 isCurrent: isCurrent,
                 name: name,
@@ -47,9 +50,18 @@ struct BranchMenuView: View {
                 onTapPush: onTapPush,
                 onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                 onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                onAddRemoteTapped: onAddRemoteTapped
+                onAddRemoteTapped: onAddRemoteTapped,
+                onCreateBranchTapped: onCreateBranchTapped
             )
             .padding()
+        }
+        .sheet(isPresented: $showingCreateBranchSheet) {
+            AddNewBranchView(
+                onCreateBranch: onCreateBranchTapped,
+                preselectedLocalBranch: name
+            )
+            .padding()
+            .frame(maxHeight: .infinity)
         }
     }
 }

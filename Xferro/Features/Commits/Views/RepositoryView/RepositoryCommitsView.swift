@@ -23,7 +23,7 @@ struct RepositoryCommitsView: View {
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
-
+    let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
 
     var body: some View {
         guard detachedTag == nil || detachedCommit == nil else {
@@ -43,7 +43,8 @@ struct RepositoryCommitsView: View {
                         onTapPush: onTapPush,
                         onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                         onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                        onAddRemoteTapped: onAddRemoteTapped
+                        onAddRemoteTapped: onAddRemoteTapped,
+                        onCreateBranchTapped: onCreateBranchTapped
                     ),
                     remotes: remotes
                 )
@@ -61,7 +62,8 @@ struct RepositoryCommitsView: View {
                         onTapPush: onTapPush,
                         onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                         onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                        onAddRemoteTapped: onAddRemoteTapped
+                        onAddRemoteTapped: onAddRemoteTapped,
+                        onCreateBranchTapped: onCreateBranchTapped
                     ),
                     remotes: remotes
                 )
@@ -82,7 +84,8 @@ struct RepositoryCommitsView: View {
                         onTapPush: onTapPush,
                         onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                         onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                        onAddRemoteTapped: onAddRemoteTapped
+                        onAddRemoteTapped: onAddRemoteTapped,
+                        onCreateBranchTapped: onCreateBranchTapped
                     ),
                     remotes: remotes
                 )
