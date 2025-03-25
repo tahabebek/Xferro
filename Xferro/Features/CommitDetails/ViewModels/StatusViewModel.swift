@@ -784,12 +784,12 @@ fileprivate extension StatusViewModel {
             try GitCLI.execute(repositoryInfo.repository, addArguments)
             if amend {
                 if commitSummary.isEmptyOrWhitespace {
-                    try GitCLI.execute(repositoryInfo.repository, ["commit", "--amend", "--no-edit"])
+                    try GitCLI.execute(repositoryInfo.repository, ["commit", "--amend", "--no-edit", "--allow-empty"])
                 } else {
-                    try GitCLI.execute(repositoryInfo.repository, ["commit", "--amend", "-m", commitSummary])
+                    try GitCLI.execute(repositoryInfo.repository, ["commit", "--amend", "--allow-empty", "-m", commitSummary])
                 }
             } else {
-                try GitCLI.execute(repositoryInfo.repository, ["commit", "-m", commitSummary])
+                try GitCLI.execute(repositoryInfo.repository, ["commit", "--allow-empty", "-m", commitSummary])
             }
 
             for file in unsortedTrackedFiles.values.elements {
