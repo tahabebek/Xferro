@@ -37,32 +37,24 @@ import Observation
         }
     }
 
+    private var __checkedState: CheckboxState = .checked
+
     var checkState: CheckboxState {
         get {
-            let lines = allHunks.flatMap(\.parts).filter { $0.type != .context }.flatMap(\.lines)
-            if lines.count == 0 {
-                // means renamed but not modified, or binary.
-                return .checked
-            }
-            let selectedLinesCount = lines.filter(\.isSelected).count
-            if selectedLinesCount == 0 {
-                return .unchecked
-            } else if selectedLinesCount == lines.count {
-                return .checked
-            } else {
-                return .partiallyChecked
-            }
+            __checkedState
         } set {
-            for line in allHunks.flatMap(\.parts).filter({ $0.type != .context }).flatMap(\.lines) {
+            for part in allHunks.flatMap(\.parts) {
                 switch newValue {
                 case .checked:
-                    line.isSelected = true
+                    part.selectAll()
                 case .unchecked:
-                    line.isSelected = false
+                    part.unselectAll()
                 case .partiallyChecked:
                     break
                 }
             }
+
+            __checkedState = newValue
         }
     }
 }

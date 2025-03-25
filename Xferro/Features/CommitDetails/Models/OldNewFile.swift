@@ -116,10 +116,11 @@ import OrderedCollections
         get {
             diffInfo?.checkState ?? .checked
         } set {
-            if diffInfo != nil {
-                diffInfo!.checkState = newValue
-            } else {
-                Task {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if diffInfo != nil {
+                    diffInfo!.checkState = newValue
+                } else {
                     await setDiffInfoForStatus()
                     guard diffInfo != nil else {
                         fatalError(.invalid)

@@ -18,7 +18,7 @@ struct InfoView: View {
             .onTapGesture {
                 showingInfo.toggle()
             }
-            .popover(isPresented: $showingInfo) {
+            .xfPopover(isPresented: $showingInfo) {
                 VStack(spacing: 0) {
                     ScrollView {
                         Text(info.info)

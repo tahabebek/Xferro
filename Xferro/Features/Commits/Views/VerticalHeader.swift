@@ -59,7 +59,9 @@ struct VerticalHeader<Content>: View where Content: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(PlainButtonStyle())
-            .popover(isPresented: $showMenu, content: buttonsView)
+            .xfPopover(isPresented: $showMenu) {
+                buttonsView()
+            }
         }
     }
 }
