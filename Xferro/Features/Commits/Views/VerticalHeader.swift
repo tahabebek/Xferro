@@ -38,7 +38,7 @@ struct VerticalHeader<Content>: View where Content: View {
     var body: some View {
         HStack {
             Text("\(title)")
-                .font(.heading2)
+                .font(.paragraph1)
                 .foregroundColor(titleColor)
             buttons()
             if let info {
