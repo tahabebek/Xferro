@@ -24,6 +24,7 @@ import OrderedCollections
     var selectableStatus: SelectableStatus?
     var refreshRemoteSubject: PassthroughSubject<Void, Never>?
     var addRemoteTitle: String = ""
+    @ObservationIgnored private(set) var conflictType: ConflictType?
 
     func getLastSelectedRemoteIndex(buttonTitle: String) -> Int {
         guard let remotes = repositoryInfo?.remotes else {
@@ -91,20 +92,22 @@ import OrderedCollections
             })
         }
 
-        guard conflictedEntries.isEmpty else {
-            updateStatusWithConflicts(
-                newSelectableStatus: newSelectableStatus,
-                repositoryInfo: repositoryInfo,
-                conflictedEntries: conflictedEntries
-            )
-            return
-        }
-
         Task {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.refreshRemoteSubject = refreshRemoteSubject
             }
+
+            guard conflictedEntries.isEmpty else {
+                await updateStatusWithConflicts(
+                    newSelectableStatus: newSelectableStatus,
+                    repositoryInfo: repositoryInfo,
+                    conflictedEntries: conflictedEntries
+                )
+                return
+            }
+
+            conflictType = nil
 
             let (newTrackedFiles, newUntrackedFiles) = await getTrackedAndUntrackedFiles(
                 repository: repositoryInfo.repository,
@@ -188,7 +191,7 @@ import OrderedCollections
             }
             addedFiles.insert(key)
             switch delta.status {
-            case .unmodified, .ignored:
+            case .unmodified, .ignored, .conflicted:
                 fatalError(.invalid)
             case .untracked:
                 if let newPath = delta.newFilePath {
@@ -204,8 +207,6 @@ import OrderedCollections
                     }
                 }
             case .unreadable:
-                fatalError(.unimplemented)
-            case .conflicted:
                 fatalError(.unimplemented)
             case .added:
                 if let newPath = delta.newFilePath {
@@ -285,7 +286,13 @@ import OrderedCollections
         newSelectableStatus: SelectableStatus,
         repositoryInfo: RepositoryInfo,
         conflictedEntries: [StatusEntry]
-    ) {
+    ) async {
+        guard let conflictOperationInProgress = repositoryInfo.repository.conflictOperationInProgress() else {
+            fatalError(.invalid)
+        }
+
+        conflictType = conflictOperationInProgress
+
         var addedFiles: Set<String> = []
         var conflictedFiles: OrderedDictionary<String, OldNewFile> = [:]
 
@@ -516,6 +523,18 @@ extension StatusViewModel {
                 }
             }
         }
+    }
+
+    func continueMergeTapped() {
+    }
+
+    func abortMergeTapped() {
+    }
+
+    func continueRebaseTapped() {
+    }
+
+    func abortRebaseTapped() {
     }
 }
 
@@ -846,10 +865,8 @@ fileprivate extension StatusViewModel {
                     try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
                     filesToAdd.insert(old)
                     filesToDelete.insert(old)
-                case .ignored, .unreadable, .unmodified, .untracked:
+                case .ignored, .unreadable, .unmodified, .untracked, .conflicted:
                     fatalError(.invalid)
-                case .conflicted:
-                    fatalError(.unimplemented)
                 }
             }
 
@@ -935,7 +952,9 @@ fileprivate extension StatusViewModel {
                     } else {
                         try GitCLI.execute(repositoryInfo.repository, ["restore", fileURL.path])
                     }
-                case .conflicted, .unreadable:
+                case .conflicted:
+                    fatalError(.invalid)
+                case .unreadable:
                     fatalError(.unimplemented)
                 }
             }

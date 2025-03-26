@@ -212,4 +212,72 @@ enum InfoTexts {
     static let rebase = """
     Rebase is the command used to move or combine a sequence of commits to a new base commit. It rewrites the commit history, changing the base commit of the branch and creating new commits on top of the new base.
     """
+
+    static let continueMerge = """
+    "Continue Merge" is a command used to resume a merge operation after resolving conflicts. When you encounter conflicts during a merge, Git pauses the process and requires you to resolve the conflicts manually. Once you've resolved the conflicts, you can use the continue merge command to proceed with the merge operation.
+    """
+
+    static let abortMerge = """
+    "Abort Merge" is a command used to cancel a merge operation and return your repository to its state before the merge began. If you've started a merge but encounter issues or decide not to proceed, you can use the abort merge command to exit the merge process and revert your repository to its pre-merge state.
+    """
+
+    static let continueRebase = """
+    "Continue Rebase" is a command used to resume a rebase operation after resolving conflicts. When you encounter conflicts during a rebase, Git pauses the process and requires you to resolve the conflicts manually. Once you've resolved the conflicts, you can use the continue rebase command to proceed with the rebase operation.
+    """
+
+    static let abortRebase = """
+    "Abort Rebase" is a command used to cancel a rebase operation and return your repository to its state before the rebase began. If you've started a rebase but encounter issues or decide not to proceed, you can use the abort rebase command to exit the rebase process and revert your repository to its pre-rebase state.
+    """
+
+    static let cherryPick = """
+    "Cherry-Pick" is the command used to copy a specific commit from one branch and apply it to another branch. It allows you to select individual commits and move them to a different branch, creating a new commit with the same changes.
+    """
+
+    static let continueCherryPick = """
+    "Continue Cherry-Pick" is a command used to resume a cherry-pick operation after resolving conflicts. When you encounter conflicts during a cherry-pick, Git pauses the process and requires you to resolve the conflicts manually. Once you've resolved the conflicts, you can use the continue cherry-pick command to proceed with the cherry-pick operation.
+    """
+
+    static let abortCherryPick = """
+    "Abort Cherry-Pick" is a command used to cancel a cherry-pick operation and return your repository to its state before the cherry-pick began. If you've started a cherry-pick but encounter issues or decide not to proceed, you can use the abort cherry-pick command to exit the cherry-pick process and revert your repository to its pre-cherry-pick state.
+    """
+
+    static let revert = """
+    "Revert" is the command used to undo a commit by creating a new commit that undoes the changes introduced by the original commit. It's a safe way to remove changes from the project history without altering the existing commits.
+    """
+
+    static let continueRevert = """
+    "Continue Revert" is a command used to resume a revert operation after resolving conflicts. When you encounter conflicts during a revert, Git pauses the process and requires you to resolve the conflicts manually. Once you've resolved the conflicts, you can use the continue revert command to proceed with the revert operation.
+    """
+
+    static let abortRevert = """
+    "Abort Revert" is a command used to cancel a revert operation and return your repository to its state before the revert began. If you've started a revert but encounter issues or decide not to proceed, you can use the abort revert command to exit the revert process and revert your repository to its pre-revert state.
+    """
+
+    static let squash = """
+    "Squash" is the command used to combine multiple commits into a single commit. It condenses the commit history by merging multiple commits into one, creating a cleaner and more concise history.
+    """
+
+    static let continueSquash = """
+    "Continue Squash" is a command used to resume a squash operation after resolving conflicts. When you encounter conflicts during a squash, Git pauses the process and requires you to resolve the conflicts manually. Once you've resolved the conflicts, you can use the continue squash command to proceed with the squash operation.
+    """
+
+    static let abortSquash = """
+    "Abort Squash" is a command used to cancel a squash operation and return your repository to its state before the squash began. If you've started a squash but encounter issues or decide not to proceed, you can use the abort squash command to exit the squash process and revert your repository to its pre-squash state.
+    """
+
+    static let bisect = """
+    "Bisect" is the command used to find the commit that introduced a bug by performing a binary search through the commit history. It helps you identify the commit that caused a regression by systematically narrowing down the range of commits to test.
+    """
+
+    static let continueBisect = """
+    "Continue Bisect" is a command used to resume a bisect operation after testing a commit. When you've tested a commit and determined whether it's good or bad, you can use the continue bisect command to move to the next commit in the search.
+    """
+
+    static let abortBisect = """
+    "Abort Bisect" is a command used to cancel a bisect operation and return your repository to its state before the bisect began. If you've started a bisect but encounter issues or decide not to proceed, you can use the abort bisect command to exit the bisect process and revert your repository to its pre-bisect state.
+    """
+
+    static let reset = """
+    "Reset" is the command used to move the current branch to a specific commit, resetting the branch's state to that commit. It allows you to undo changes, move the branch pointer, and update the staging area in different ways.
+    """
 }

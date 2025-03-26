@@ -386,8 +386,7 @@ extension Repository {
 
     func getConflictDiffHunks() throws -> [String: [UnsafePointer<git_diff_hunk>]] {
         var index: OpaquePointer? = nil
-        guard git_repository_index(&index, pointer) == 0,
-              let idx = index else {
+        guard git_repository_index(&index, pointer) == 0, let index else {
             throw RepoError.unexpected("Unable to get index")
         }
         defer { git_index_free(index) }
@@ -397,7 +396,7 @@ extension Repository {
         var conflictIterator: OpaquePointer? = nil
         defer { git_index_conflict_iterator_free(conflictIterator) }
 
-        var result = git_index_conflict_iterator_new(&conflictIterator, index)
+        let result = git_index_conflict_iterator_new(&conflictIterator, index)
         guard result == GIT_OK.rawValue else {
             throw NSError(gitError: result, pointOfFailure: "git_index_conflict_iterator_new")
         }

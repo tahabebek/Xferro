@@ -135,10 +135,8 @@ extension Repository {
             } catch {
                 fatalError(error.localizedDescription)
             }
-        case .unreadable, .ignored, .unmodified:
+        case .unreadable, .ignored, .unmodified, .conflicted:
             fatalError(.invalid)
-        case .conflicted:
-            fatalError(.unimplemented)
         }
     }
     

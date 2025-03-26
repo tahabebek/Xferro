@@ -321,6 +321,56 @@ extension Repository: RemoteManagement {
         gitDir.path +/ "CHERRY_PICK_HEAD"
     }
 
+    var rebaseMergeDirPath: String {
+        gitDir.path +/ "rebase-merge"
+    }
+
+    var rebaseApplyDirPath: String {
+        gitDir.path +/ "rebase-apply"
+    }
+
+    var revertHeadPath: String {
+        gitDir.path +/ "REVERT_HEAD"
+    }
+
+    var squashMsgPath: String {
+        gitDir.path +/ "SQUASH_MSG"
+    }
+
+    var mergeMsgPath: String {
+        gitDir.path +/ "MERGE_MSG"
+    }
+
+    func conflictOperationInProgress() -> ConflictType? {
+        if FileManager.default.fileExists(atPath: mergeHeadPath) {
+            return .merge
+        }
+
+        if FileManager.default.fileExists(atPath: cherryPickHeadPath) {
+            return .cherryPick
+        }
+
+        if FileManager.default.fileExists(atPath: rebaseMergeDirPath) {
+            // Interactive rebase creates a rebase-merge directory
+            return .interactiveRebase
+        }
+
+        if FileManager.default.fileExists(atPath: rebaseApplyDirPath) {
+            // Non-interactive rebase creates a rebase-apply directory
+            return .rebase
+        }
+
+        if FileManager.default.fileExists(atPath: revertHeadPath) {
+            return .revert
+        }
+
+        if FileManager.default.fileExists(atPath: squashMsgPath) {
+            return .squash
+        }
+
+        return nil
+    }
+
     private func mergePreCheck() throws {
         if hasConflicts().mustSucceed(gitDir) {
             throw RepoError.localConflict
@@ -334,8 +384,7 @@ extension Repository: RemoteManagement {
         }
     }
 
-    struct MergeAnalysis: OptionSet, Sendable
-    {
+    struct MergeAnalysis: OptionSet, Sendable {
         let rawValue: UInt32
 
         /// No merge possible

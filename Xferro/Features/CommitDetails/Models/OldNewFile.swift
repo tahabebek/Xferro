@@ -226,10 +226,8 @@ import OrderedCollections
                 allHunks: hunks
             ).resultingFileLines.joined(separator: "\n")
             try result.data(using: .utf8)?.write(to: repository.workDir +/ oldFilePath)
-        case .ignored, .unreadable, .unmodified, .untracked:
+        case .ignored, .unreadable, .unmodified, .untracked, .conflicted:
             fatalError(.invalid)
-        case .conflicted:
-            fatalError(.unimplemented)
         }
     }
 
@@ -303,10 +301,8 @@ import OrderedCollections
                         atomically: true,
                         encoding: .utf8
                     )
-                case .ignored, .unreadable, .unmodified, .untracked:
+                case .ignored, .unreadable, .unmodified, .untracked, .conflicted:
                     fatalError(.invalid)
-                case .conflicted:
-                    fatalError(.unimplemented)
                 }
             } catch {
                 fatalError(error.localizedDescription)
@@ -383,7 +379,9 @@ import OrderedCollections
                     }
                 }
             }
-        case .unreadable, .conflicted:
+        case .conflicted:
+            fatalError(.invalid)
+        case .unreadable:
             fatalError(.unimplemented)
         }
     }

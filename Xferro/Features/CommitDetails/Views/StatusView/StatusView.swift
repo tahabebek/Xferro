@@ -16,7 +16,24 @@ struct StatusView: View {
         Group {
             if viewModel.selectableStatus != nil {
                 HStack(spacing: 0) {
-                    filesView
+                    Group {
+                        if let conflictType = viewModel.conflictType {
+                            StatusConflictedFilesView(
+                                currentFile: $viewModel.currentFile,
+                                conflictedFiles: Binding<[OldNewFile]>(
+                                    get: { viewModel.conflictedFiles },
+                                    set: { _ in }
+                                ),
+                                conflictType: conflictType,
+                                onContinueMergeTapped: viewModel.continueMergeTapped,
+                                onAbortMergeTapped: viewModel.abortMergeTapped,
+                                onContinueRebaseTapped: viewModel.continueRebaseTapped,
+                                onAbortRebaseTapped: viewModel.continueRebaseTapped
+                            )
+                        } else {
+                            filesView
+                        }
+                    }
                     .frame(width: Dimensions.commitDetailsViewMaxWidth)
                     peekView
                     Spacer(minLength: 0)

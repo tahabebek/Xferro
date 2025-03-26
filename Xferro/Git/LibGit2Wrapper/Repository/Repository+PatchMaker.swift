@@ -109,10 +109,8 @@ extension Repository {
             }
 
             return .diff(PatchMaker(repository: self, from: fromSource, to: toSource, path: newFile))
-        case .ignored, .unreadable:
+        case .ignored, .unreadable, .conflicted:
             fatalError(.invalid)
-        case .conflicted:
-            fatalError(.unimplemented)
         }
     }
 
@@ -177,10 +175,8 @@ extension Repository {
                 to: PatchMaker.SourceType(indexBlob),
                 path: newFile)
              )
-        case .ignored, .unreadable:
+        case .ignored, .unreadable, .conflicted:
             fatalError(.invalid)
-        case .conflicted:
-            fatalError(.unimplemented)
         }
     }
 
@@ -264,10 +260,8 @@ extension Repository {
                 to: .data(newFileData),
                 path: newFile)
             )
-        case .ignored, .unreadable:
+        case .ignored, .unreadable, .conflicted:
             fatalError(.invalid)
-        case .conflicted:
-            fatalError(.unimplemented)
         }
     }
 
