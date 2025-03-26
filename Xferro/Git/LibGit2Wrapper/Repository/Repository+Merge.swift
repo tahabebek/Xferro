@@ -384,7 +384,7 @@ extension Repository {
         }
     }
 
-    func getConflictDiffHunks(repoPath: String) throws -> [String: [UnsafePointer<git_diff_hunk>]] {
+    func getConflictDiffHunks() throws -> [String: [UnsafePointer<git_diff_hunk>]] {
         var index: OpaquePointer? = nil
         guard git_repository_index(&index, pointer) == 0,
               let idx = index else {

@@ -69,6 +69,12 @@ import OrderedCollections
         }
     }
 
+    private var unsortedConflictedFiles: OrderedDictionary<String, OldNewFile> = [:]{
+        didSet {
+            conflictedFiles = Array(unsortedConflictedFiles.values.elements).sorted { $0.key < $1.key }
+        }
+    }
+
     func updateStatus(
         newSelectableStatus: SelectableStatus,
         repositoryInfo: RepositoryInfo?,
@@ -87,6 +93,7 @@ import OrderedCollections
 
         guard conflictedEntries.isEmpty else {
             updateStatusWithConflicts(
+                newSelectableStatus: newSelectableStatus,
                 repositoryInfo: repositoryInfo,
                 conflictedEntries: conflictedEntries
             )
@@ -275,38 +282,50 @@ import OrderedCollections
     }
 
     private func updateStatusWithConflicts(
+        newSelectableStatus: SelectableStatus,
         repositoryInfo: RepositoryInfo,
         conflictedEntries: [StatusEntry]
     ) {
         var addedFiles: Set<String> = []
-        let handleDelta: (Repository, Diff.Delta) -> Void = { repository, delta in
+        var conflictedFiles: OrderedDictionary<String, OldNewFile> = [:]
+
+        let handleDelta: (RepositoryInfo, Diff.Delta) -> Void = { repositoryInfo, delta in
             let key = (delta.oldFilePath ?? "") + (delta.newFilePath ?? "")
             if addedFiles.contains(key) {
                 return
             }
             addedFiles.insert(key)
-            switch delta.status {
-            case .conflicted:
-                fatalError(.unimplemented)
-            default:
-                fatalError(.unimplemented)
-            }
+            conflictedFiles[key] = OldNewFile(
+                old: delta.oldFilePath,
+                new: delta.newFilePath,
+                status: delta.status,
+                repository: repositoryInfo.repository,
+                head: repositoryInfo.head,
+                key: key
+            )
         }
+
         for statusEntry in conflictedEntries {
             var handled: Bool = false
             if let stagedDelta = statusEntry.stagedDelta {
                 handled = true
-                handleDelta(repositoryInfo.repository, stagedDelta)
+                handleDelta(repositoryInfo, stagedDelta)
             }
 
             if let unstagedDelta = statusEntry.unstagedDelta {
                 handled = true
-                handleDelta(repositoryInfo.repository,unstagedDelta)
+                handleDelta(repositoryInfo,unstagedDelta)
             }
 
             guard handled else {
                 fatalError(.unimplemented)
             }
+        }
+
+        Task { @MainActor in
+            self.unsortedConflictedFiles = conflictedFiles
+            self.repositoryInfo = repositoryInfo
+            self.selectableStatus = newSelectableStatus
         }
     }
 
