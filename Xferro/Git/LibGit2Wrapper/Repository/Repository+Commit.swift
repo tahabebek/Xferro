@@ -217,7 +217,7 @@ extension Repository {
             lock.lock()
         }
         let commit = withGitObject(oid, type: GIT_OBJECT_COMMIT, staticLock: staticLock) {
-            Commit($0, lock: lock)
+            Commit($0, lock: staticLock ?? lock)
         }
         if let staticLock {
             staticLock.unlock()

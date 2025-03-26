@@ -16,12 +16,12 @@ struct ConflictedPeekView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     PeekViewHeader(statusFileName: file.statusFileName, countString: "Conflicted")
-                        .background(Color.red).opacity(0.6)
                         .padding(.horizontal, 8)
                     Divider()
                     ZStack {
                         ScrollView {
                             Text(text)
+                                .padding()
                                 .font(.diff)
                         }
                         ProgressView()
@@ -43,10 +43,6 @@ struct ConflictedPeekView: View {
                     y: 3
                 )
             }
-        }
-        .border(Color.red, width: 2)
-        .onAppear {
-            print(text)
         }
     }
 }

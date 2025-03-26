@@ -30,6 +30,7 @@ struct StatusView: View {
                                 onContinueRebaseTapped: viewModel.continueRebaseTapped,
                                 onAbortRebaseTapped: viewModel.continueRebaseTapped
                             )
+                            .frame(width: Dimensions.commitDetailsViewMaxWidth)
                         } else {
                             filesView
                         }
@@ -45,7 +46,6 @@ struct StatusView: View {
                                 file: file,
                                 text: conflictText
                             )
-                            .border(.blue)
                             .id("\(file.id)$\(conflictType)")
                         } else {
                             let _ = print(
@@ -68,6 +68,9 @@ struct StatusView: View {
                     )
                         .padding()
                         .frame(maxHeight: .infinity)
+                }
+                .onChange(of: viewModel.conflictedFiles) { oldValue, newValue in
+                    viewModel.setInitialSelection()
                 }
                 .onChange(of: viewModel.selectableStatus!) { oldValue, newValue in
                     if oldValue.oid != newValue.oid {

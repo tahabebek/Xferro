@@ -30,11 +30,13 @@ struct StatusConflictedFilesView: View {
             .padding()
             .background(Color(hexValue: 0x15151A))
             .cornerRadius(8)
+            .frame(maxWidth: .infinity)
             StatusConflictedFileView(
                 currentFile: $currentFile,
                 files: $conflictedFiles,
                 conflictType: conflictType
             )
+            .frame(maxWidth: .infinity)
         }
 
     }

@@ -533,15 +533,27 @@ extension StatusViewModel {
     }
 
     func continueMergeTapped() {
+        Task {
+            await continueMerge()
+        }
     }
 
     func abortMergeTapped() {
+        Task {
+            await abortMerge()
+        }
     }
 
     func continueRebaseTapped() {
+        Task {
+            await continueRebase()
+        }
     }
 
     func abortRebaseTapped() {
+        Task {
+            await abortRebase()
+        }
     }
 }
 
@@ -986,8 +998,82 @@ fileprivate extension StatusViewModel {
         }
         Task { @MainActor [weak self] in
             guard let self else { return }
-            await repositoryInfo.refreshStatus()
             currentFile = nil
+            await repositoryInfo.refreshStatus()
+        }
+    }
+
+    func continueMerge() async {
+        guard let repositoryInfo else { fatalError(.invalid) }
+        await withActivityOperation(
+            title: "Continuing merge..",
+            successMessage: "Merge done"
+        ) { [weak self] in
+            guard let self else { return }
+            var files = conflictedFiles.map(\.new!)
+            try GitCLI.execute(repositoryInfo.repository, ["add"] + files)
+            try GitCLI.execute(repositoryInfo.repository, ["merge", "--continue"])
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            currentFile = nil
+            conflictType = nil
+            conflictedFiles = []
+            await repositoryInfo.refreshStatus()
+        }
+    }
+
+    func abortMerge() async {
+        guard let repositoryInfo else { fatalError(.invalid) }
+        await withActivityOperation(
+            title: "Aborting merge..",
+            successMessage: "Merge aborted"
+        ) {
+            try GitCLI.execute(repositoryInfo.repository, ["merge", "--abort"])
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            currentFile = nil
+            conflictType = nil
+            conflictedFiles = []
+            await repositoryInfo.refreshStatus()
+        }
+    }
+
+    func continueRebase() async {
+        guard let repositoryInfo else { fatalError(.invalid) }
+        await withActivityOperation(
+            title: "Continuing rebase..",
+            successMessage: "Rebase done"
+        ) { [weak self] in
+            guard let self else { return }
+            var files = conflictedFiles.map(\.new!)
+            try GitCLI.execute(repositoryInfo.repository, ["add"] + files)
+            try GitCLI.execute(repositoryInfo.repository, ["rebase", "--continue"])
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            currentFile = nil
+            conflictType = nil
+            conflictedFiles = []
+            await repositoryInfo.refreshStatus()
+        }
+    }
+
+    func abortRebase() async {
+        guard let repositoryInfo else { fatalError(.invalid) }
+        await withActivityOperation(
+            title: "Aborting rebase..",
+            successMessage: "Rebase aborted"
+        ) {
+            try GitCLI.execute(repositoryInfo.repository, ["rebase", "--abort"])
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            currentFile = nil
+            conflictType = nil
+            conflictedFiles = []
+            await repositoryInfo.refreshStatus()
         }
     }
 }
