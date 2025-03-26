@@ -54,7 +54,7 @@ import OrderedCollections
         self.statusFileName = switch status {
         case .unmodified:
             fatalError(.impossible)
-        case .added, .modified, .copied, .untracked:
+        case .added, .modified, .copied, .untracked, .conflicted:
             if let new {
                 URL(filePath: new).lastPathComponent
             } else {
@@ -72,17 +72,6 @@ import OrderedCollections
             } else {
                 fatalError(.impossible)
             }
-        case .conflicted:
-            if let old, let new {
-                "\(URL(filePath: old).lastPathComponent) -> \(URL(filePath: new).lastPathComponent)"
-            } else if let new {
-                URL(filePath: new).lastPathComponent
-            } else if let old {
-                URL(filePath: old).lastPathComponent
-            } else {
-                fatalError(.impossible)
-            }
-
         case .ignored, .unreadable:
             fatalError(.unimplemented)
         }
@@ -94,12 +83,10 @@ import OrderedCollections
                 .green
         case .modified:
                 .blue
-        case .untracked, .deleted:
+        case .untracked, .deleted, .conflicted:
                 .red
         case .renamed, .typeChange:
                 .yellow
-        case .conflicted:
-                .red
         case .ignored, .unreadable:
             fatalError(.unimplemented)
         }
