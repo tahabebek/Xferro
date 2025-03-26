@@ -72,7 +72,18 @@ import OrderedCollections
             } else {
                 fatalError(.impossible)
             }
-        case .ignored, .unreadable, .conflicted:
+        case .conflicted:
+            if let old, let new {
+                "\(URL(filePath: old).lastPathComponent) -> \(URL(filePath: new).lastPathComponent)"
+            } else if let new {
+                URL(filePath: new).lastPathComponent
+            } else if let old {
+                URL(filePath: old).lastPathComponent
+            } else {
+                fatalError(.impossible)
+            }
+
+        case .ignored, .unreadable:
             fatalError(.unimplemented)
         }
 
@@ -87,7 +98,9 @@ import OrderedCollections
                 .red
         case .renamed, .typeChange:
                 .yellow
-        case .ignored, .unreadable, .conflicted:
+        case .conflicted:
+                .red
+        case .ignored, .unreadable:
             fatalError(.unimplemented)
         }
 
@@ -106,7 +119,9 @@ import OrderedCollections
                 "d.square"
             case .renamed, .typeChange:
                 "r.square"
-            case .ignored, .unreadable, .conflicted:
+            case .conflicted:
+                "exclamationmark.square"
+            case .ignored, .unreadable:
                 fatalError(.unimplemented)
         }
         self.key = key
