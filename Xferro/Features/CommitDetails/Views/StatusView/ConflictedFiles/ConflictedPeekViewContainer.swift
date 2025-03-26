@@ -21,10 +21,8 @@ struct ConflictedPeekViewContainer: View {
                     await file.setDiffInfoForStatus()
                 }
             }
-            .onChange(of: file) {
-                Task {
-                    await file.setDiffInfoForStatus()
-                }
+            .task {
+                await file.setDiffInfoForStatus()
             }
     }
 }

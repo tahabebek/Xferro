@@ -33,7 +33,7 @@ struct StatusConflictedActionView: View {
                 horizontal: horizontalAlignment,
                 vertical: verticalAlignment))) {
                 switch conflictType {
-                case .merge, .interactiveRebase:
+                case .merge:
                     XFButton<Void>(
                         title: "Continue Merge",
                         info: XFButtonInfo(info: InfoTexts.continueMerge),
@@ -48,7 +48,7 @@ struct StatusConflictedActionView: View {
                             onAbortMergeTapped()
                         }
                     )
-                case .rebase:
+                case .rebase, .interactiveRebase:
                     XFButton<Void>(
                         title: "Continue Rebase",
                         info: XFButtonInfo(info: InfoTexts.continueMerge),
