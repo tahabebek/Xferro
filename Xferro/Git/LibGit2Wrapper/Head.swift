@@ -30,7 +30,7 @@ enum Head: Codable, Equatable {
         case .tag(let tagReference, _):
             tagReference.name
         case .reference(let reference, _):
-            reference.shortName!
+            reference.shortName ?? reference.longName
         }
     }
 
