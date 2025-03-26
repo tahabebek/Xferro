@@ -230,7 +230,7 @@ extension Repository {
                 to: .data(Data()),
                 path: oldFile)
             )
-        case .modified:
+        case .modified, .conflicted:
             guard let newFile = oldNewFile.new else {
                 fatalError(.invalid)
             }
@@ -260,7 +260,7 @@ extension Repository {
                 to: .data(newFileData),
                 path: newFile)
             )
-        case .ignored, .unreadable, .conflicted:
+        case .ignored, .unreadable:
             fatalError(.invalid)
         }
     }

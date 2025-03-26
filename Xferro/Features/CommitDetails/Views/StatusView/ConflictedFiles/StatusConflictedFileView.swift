@@ -27,7 +27,7 @@ struct StatusConflictedFileView: View {
                         }
                     } header: {
                         HStack {
-                            Text("\(files.count) conflicted \(files.count == 1 ? "file" : "files"). Fix the  conflicts below and then continue, or abort the \(conflictType).")
+                            Text("\(files.count) conflicted \(files.count == 1 ? "file" : "files"). Fix the  conflicts in the files below and then continue, or abort the \(conflictType).")
                                 .font(.paragraph4)
                                 .padding()
                             Spacer()

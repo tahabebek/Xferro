@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ConflictedPeekView: View {
     let file: OldNewFile
-    let text: String
 
     var body: some View {
         Group {
@@ -19,15 +18,13 @@ struct ConflictedPeekView: View {
                         .padding(.horizontal, 8)
                     Divider()
                     ZStack {
-                        ScrollView {
-                            Text(text)
+                        ZStack {
+                            DiffView(file: file)
+                            ProgressView()
+                                .controlSize(.small)
                                 .padding()
-                                .font(.diff)
+                                .opacity(file.diffInfo == nil ? 1 : 0)
                         }
-                        ProgressView()
-                            .controlSize(.small)
-                            .padding()
-                            .opacity(file.diffInfo == nil ? 1 : 0)
                     }
                 }
                 .background(Color.clear)

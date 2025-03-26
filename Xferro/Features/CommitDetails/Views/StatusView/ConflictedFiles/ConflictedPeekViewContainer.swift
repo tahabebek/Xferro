@@ -12,11 +12,20 @@ struct ConflictedPeekViewContainer: View {
     @State var intitalDiffLoadIsComplete: Bool = false
 
     let file: OldNewFile
-    let text: String
 
     var body: some View {
-        ConflictedPeekView(file: file, text: text)
+        ConflictedPeekView(file: file)
             .padding(.leading, 8)
+            .onChange(of: timeStamp) {
+                Task {
+                    await file.setDiffInfoForStatus()
+                }
+            }
+            .onChange(of: file) {
+                Task {
+                    await file.setDiffInfoForStatus()
+                }
+            }
     }
 }
 

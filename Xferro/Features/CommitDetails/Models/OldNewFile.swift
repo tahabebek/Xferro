@@ -32,7 +32,6 @@ import OrderedCollections
     let key: String
     var diffInfo: (any DiffInformation)?
     var isUntracked: Bool = false
-    var conflictText: String?
 
     init(
         old: String?,
@@ -318,7 +317,7 @@ import OrderedCollections
                 diffInfo = nil
                 return
             }
-        case .added, .modified, .renamed, .copied, .typeChange:
+        case .added, .modified, .renamed, .copied, .typeChange, .conflicted:
             guard let workDirNew else {
                 fatalError(.invalid)
             }
@@ -367,8 +366,6 @@ import OrderedCollections
                     }
                 }
             }
-        case .conflicted:
-            fatalError(.invalid)
         case .unreadable:
             fatalError(.unimplemented)
         }
