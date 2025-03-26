@@ -288,7 +288,9 @@ import OrderedCollections
         conflictedEntries: [StatusEntry]
     ) async {
         guard let conflictOperationInProgress = repositoryInfo.repository.conflictOperationInProgress() else {
-            fatalError(.invalid)
+            try? await Task.sleep(for: .seconds(1))
+            await repositoryInfo.refreshStatus()
+            return
         }
 
         conflictType = conflictOperationInProgress

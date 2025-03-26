@@ -81,7 +81,7 @@ extension Repository {
             } else {
                 fatalError(.invalid)
             }
-        case .modified, .renamed:
+        case .modified, .renamed, .conflicted:
             guard let path = hunk.newFilePath else {
                 fatalError(.invalid)
             }
@@ -135,7 +135,7 @@ extension Repository {
             } catch {
                 fatalError(error.localizedDescription)
             }
-        case .unreadable, .ignored, .unmodified, .conflicted:
+        case .unreadable, .ignored, .unmodified:
             fatalError(.invalid)
         }
     }

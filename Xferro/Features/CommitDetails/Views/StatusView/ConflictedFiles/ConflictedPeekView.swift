@@ -20,10 +20,6 @@ struct ConflictedPeekView: View {
                     ZStack {
                         ZStack {
                             DiffView(file: file)
-                            ProgressView()
-                                .controlSize(.small)
-                                .padding()
-                                .opacity(file.diffInfo == nil ? 1 : 0)
                         }
                     }
                 }
