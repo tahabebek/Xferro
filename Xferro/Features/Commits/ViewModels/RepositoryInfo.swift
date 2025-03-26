@@ -285,8 +285,7 @@ extension RepositoryInfo {
 #warning("triple check with git, maybe do not use status if there is a risk of race conditions")
     static let workDirDebounce = 5
 
-    static func taskQueueID(path: String) -> String
-    {
+    static func taskQueueID(path: String) -> String {
         let identifier = Bundle.main.bundleIdentifier ?? "com.xferro.workdirwatcher"
         return "\(identifier).\(path)"
     }
