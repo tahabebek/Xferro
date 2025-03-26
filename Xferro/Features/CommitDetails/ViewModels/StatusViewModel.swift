@@ -302,7 +302,7 @@ import OrderedCollections
                 return
             }
             addedFiles.insert(key)
-            conflictedFiles[key] = OldNewFile(
+            let file = OldNewFile(
                 old: delta.oldFilePath,
                 new: delta.newFilePath,
                 status: delta.status,
@@ -310,6 +310,8 @@ import OrderedCollections
                 head: repositoryInfo.head,
                 key: key
             )
+            file.conflictText = try! String(contentsOfFile: file.workDirNew!, encoding: .utf8)
+            conflictedFiles[key] = file
         }
 
         for statusEntry in conflictedEntries {

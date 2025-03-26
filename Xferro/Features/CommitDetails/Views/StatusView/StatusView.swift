@@ -35,7 +35,16 @@ struct StatusView: View {
                         }
                     }
                     .frame(width: Dimensions.commitDetailsViewMaxWidth)
-                    peekView
+                    if let conflictType = viewModel.conflictType {
+                        if let file = viewModel.currentFile, let conflictText = file.conflictText {
+                            ConflictedPeekView(file: file, text: conflictText)
+                                .id("\(file.id)$\(conflictType)")
+                        } else {
+                            EmptyView()
+                        }
+                    } else {
+                        peekView
+                    }
                     Spacer(minLength: 0)
                 }
                 .task {

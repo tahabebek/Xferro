@@ -32,6 +32,7 @@ import OrderedCollections
     let key: String
     var diffInfo: (any DiffInformation)?
     var isUntracked: Bool = false
+    var conflictText: String?
 
     init(
         old: String?,
