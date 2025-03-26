@@ -169,7 +169,7 @@ import OrderedCollections
                 allHunks: hunks
             ).resultingFileLines.joined(separator: "\n")
             try result.data(using: .utf8)?.write(to: repository.workDir +/ newFilePath)
-        case .modified, .renamed, .typeChange:
+        case .modified, .renamed, .typeChange, .conflicted:
             guard let oldFilePath = old, let newFilePath = new else {
                 fatalError(.invalid)
             }
@@ -213,7 +213,7 @@ import OrderedCollections
                 allHunks: hunks
             ).resultingFileLines.joined(separator: "\n")
             try result.data(using: .utf8)?.write(to: repository.workDir +/ oldFilePath)
-        case .ignored, .unreadable, .unmodified, .untracked, .conflicted:
+        case .ignored, .unreadable, .unmodified, .untracked:
             fatalError(.invalid)
         }
     }
@@ -240,7 +240,7 @@ import OrderedCollections
 
             do {
                 switch status {
-                case .modified, .renamed, .typeChange:
+                case .modified, .renamed, .typeChange, .conflicted:
                     guard let newFilePath = new, let oldFilePath = old else {
                         fatalError(.invalid)
                     }
@@ -288,7 +288,7 @@ import OrderedCollections
                         atomically: true,
                         encoding: .utf8
                     )
-                case .ignored, .unreadable, .unmodified, .untracked, .conflicted:
+                case .ignored, .unreadable, .unmodified, .untracked:
                     fatalError(.invalid)
                 }
             } catch {
