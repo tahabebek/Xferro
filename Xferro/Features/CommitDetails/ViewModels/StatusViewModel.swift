@@ -609,14 +609,26 @@ fileprivate extension StatusViewModel {
                 title: "Pulling branch \(repositoryInfo.head.name) (merge)..",
                 successMessage: "Pulled branch \(repositoryInfo.head.name) (merge).."
             ) {
-                try GitCLI.execute(repositoryInfo.repository, ["pull", "--no-rebase"])
+                do {
+                    try GitCLI.execute(repositoryInfo.repository, ["pull", "--no-rebase"])
+                } catch {
+                    Task { @MainActor in
+                        await repositoryInfo.refreshStatus()
+                    }
+                }
             }
         case .rebase:
             await withActivityOperation(
                 title: "Pulling branch \(repositoryInfo.head.name) (rebase)..",
                 successMessage: "Pulling branch \(repositoryInfo.head.name) (rebase).."
             ) {
-                try GitCLI.execute(repositoryInfo.repository, ["pull", "--rebase",])
+                do {
+                    try GitCLI.execute(repositoryInfo.repository, ["pull", "--rebase",])
+                } catch {
+                    Task { @MainActor in
+                        await repositoryInfo.refreshStatus()
+                    }
+                }
             }
         }
         Task { @MainActor in
@@ -1010,7 +1022,7 @@ fileprivate extension StatusViewModel {
             successMessage: "Merge done"
         ) { [weak self] in
             guard let self else { return }
-            var files = conflictedFiles.map(\.new!)
+            let files = conflictedFiles.map(\.new!)
             try GitCLI.execute(repositoryInfo.repository, ["add"] + files)
             try GitCLI.execute(repositoryInfo.repository, ["merge", "--continue"])
         }
@@ -1047,7 +1059,7 @@ fileprivate extension StatusViewModel {
             successMessage: "Rebase done"
         ) { [weak self] in
             guard let self else { return }
-            var files = conflictedFiles.map(\.new!)
+            let files = conflictedFiles.map(\.new!)
             try GitCLI.execute(repositoryInfo.repository, ["add"] + files)
             try GitCLI.execute(repositoryInfo.repository, ["rebase", "--continue"])
         }
