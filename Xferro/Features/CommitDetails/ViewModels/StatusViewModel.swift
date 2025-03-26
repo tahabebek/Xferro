@@ -452,27 +452,29 @@ extension StatusViewModel {
 fileprivate extension StatusViewModel {
     func fetch(fetchType: Repository.FetchType) async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        switch fetchType {
-        case .remote(let remote):
-            guard let remote else {
-                Task { @MainActor in
-                    addRemoteTitle = "This repository doesn't have a remote, you need to add one in order to fetch the changes"
-                    shouldAddRemoteBranch = true
+        Task {
+            switch fetchType {
+            case .remote(let remote):
+                guard let remote else {
+                    Task { @MainActor in
+                        addRemoteTitle = "This repository doesn't have a remote, you need to add one in order to fetch the changes"
+                        shouldAddRemoteBranch = true
+                    }
+                    return
                 }
-                return
-            }
-            await ActivityOperation.perform(
-                title: "Fetching \(remote.name ?? "remote")..",
-                successMessage: "Fetched \(remote.name ?? "remote")"
-            ) {
-                try GitCLI.execute(repositoryInfo.repository, ["fetch", remote.name!, "--prune"])
-            }
-        case .all:
-            await ActivityOperation.perform(
-                title: "Fetching all remotes",
-                successMessage: "Fetched all remotes"
-            ) {
-                try GitCLI.execute(repositoryInfo.repository, ["fetch", "--all", "--prune"])
+                await ActivityOperation.perform(
+                    title: "Fetching \(remote.name ?? "remote")..",
+                    successMessage: "Fetched \(remote.name ?? "remote")"
+                ) {
+                    try GitCLI.execute(repositoryInfo.repository, ["fetch", remote.name!, "--prune"])
+                }
+            case .all:
+                await ActivityOperation.perform(
+                    title: "Fetching all remotes",
+                    successMessage: "Fetched all remotes"
+                ) {
+                    try GitCLI.execute(repositoryInfo.repository, ["fetch", "--all", "--prune"])
+                }
             }
         }
     }

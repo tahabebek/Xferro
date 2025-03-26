@@ -33,7 +33,6 @@ struct RepositoryMenuView: View {
     let onCreateTagTapped: (String, String?, String, Bool) -> Void
     let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
     let onCheckoutOrDelete: (String, Bool, BranchOperationView.OperationType) -> Void
-    let onMergeOrRebase: (String, String, BranchOperationView.OperationType) -> Void
 
     var body: some View {
         HStack {
@@ -95,7 +94,7 @@ struct RepositoryMenuView: View {
                         localBranches: localBranchNames,
                         remoteBranches: remoteBranchNames,
                         onCheckoutOrDelete: onCheckoutOrDelete,
-                        onMergeOrRebase: onMergeOrRebase,
+                        onMergeOrRebase: { _, _, _ in },
                         currentBranch: head.name,
                         operation: .checkout
                     )
@@ -107,7 +106,7 @@ struct RepositoryMenuView: View {
                         localBranches: localBranchNames,
                         remoteBranches: remoteBranchNames,
                         onCheckoutOrDelete: onCheckoutOrDelete,
-                        onMergeOrRebase: onMergeOrRebase,
+                        onMergeOrRebase: { _, _, _ in },
                         currentBranch: head.name,
                         operation: .delete
                     )

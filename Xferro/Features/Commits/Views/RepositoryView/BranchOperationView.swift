@@ -11,8 +11,8 @@ struct BranchOperationView: View {
     enum OperationType {
         case checkout
         case delete
-        case merge(String?, String?)
-        case rebase(String?, String?)
+        case merge(target: String?, destination: String?)
+        case rebase(target: String?, destination: String?)
     }
 
     @Environment(\.dismiss) var dismiss

@@ -204,4 +204,12 @@ enum InfoTexts {
     - Power outages and system failures
     - Merge conflicts from pulling without stashing
     """
+
+    static let merge = """
+    Merge is the command used to combine changes from different branches into your current branch. It takes the contents of a source branch and integrates them with your target branch, creating a new commit that combines the changes.
+    """
+
+    static let rebase = """
+    Rebase is the command used to move or combine a sequence of commits to a new base commit. It rewrites the commit history, changing the base commit of the branch and creating new commits on top of the new base.
+    """
 }

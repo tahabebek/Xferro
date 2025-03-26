@@ -34,7 +34,7 @@ struct MergeOrRebaseBranchView: View {
         SearchablePickerView(
             items: localBranches,
             selectedItem: $mergeOrRebaseTargetBranch,
-            title: "Select Branch:"
+            title: "Destination Branch:"
         )
         .padding(.leading, 8)
         .padding(.bottom)

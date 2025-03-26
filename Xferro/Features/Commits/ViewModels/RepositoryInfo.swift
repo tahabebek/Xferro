@@ -94,7 +94,7 @@ import Observation
                     return
                 }
             }
-
+            
             await ActivityOperation.perform(
                 title: isRemote ? "Creating remote branch \(branchName) to track \(baseBranchName)"
                     : "Creating local branch \(branchName) based on \(baseBranchName)",
@@ -190,12 +190,63 @@ import Observation
         }
     }
 
-    func mergeBranchTapped(source: String, target: String) {
+    func mergeBranchTapped(target: String, destination: String) {
+        Task {
+            if head.name != destination {
+                Task { @MainActor in
+                    AppDelegate.showErrorMessage(
+                        error: RepoError.unexpected("You need to be on the destination branch when merging because Git's merge command integrates changes from a specified branch into your current branch.")
+                    )
+                }
+                return
+            }
 
+            if status.isNotEmpty {
+                Task { @MainActor in
+                    AppDelegate.showErrorMessage(
+                        error: RepoError.unexpected("Please commit your changes or stash them before you merge.")
+                    )
+                }
+                return
+            }
+            await ActivityOperation.perform(
+                title: "Merging branch \(target) into \(destination)",
+                successMessage: "Merged branch \(target) into \(destination)"
+            ) { [weak self] in
+                guard let self else { return }
+                try GitCLI.execute(repository, ["merge", target])
+            }
+        }
     }
 
-    func rebaseBranchTapped(source: String, target: String) {
+    func rebaseBranchTapped(target: String, destination: String) {
+        Task {
+            if head.name != destination {
+                Task { @MainActor in
+                    AppDelegate.showErrorMessage(
+                        error: RepoError.unexpected("You need to be on the destination branch when rebasing because Git's rebase command integrates changes from a specified branch into your current branch.")
+                    )
+                }
+                return
+            }
 
+            if status.isNotEmpty {
+                Task { @MainActor in
+                    AppDelegate.showErrorMessage(
+                        error: RepoError.unexpected("Please commit your changes or stash them before you rebase.")
+                    )
+                }
+                return
+            }
+
+            await ActivityOperation.perform(
+                title: "Rebasing branch \(target) into \(destination)",
+                successMessage: "Rebasing branch \(target) into \(destination)"
+            ) { [weak self] in
+                guard let self else { return }
+                try GitCLI.execute(repository, ["merge", target])
+            }
+        }
     }
 
 

@@ -9,12 +9,8 @@ import SwiftUI
 
 struct BranchMenuView: View {
     @State var showingBranchOptions = false
-    @State var showingCheckoutBranchSheet = false
     @State var showingCreateBranchSheet = false
-    @State var showingDeleteBranchSheet = false
-    @State var showingMergeSourceBranchSheet = false
     @State var showingMergeTargetBranchSheet = false
-    @State var showingRebaseSourceBranchSheet = false
     @State var showingRebaseTargetBranchSheet = false
 
     let remotes: [Remote]
@@ -53,11 +49,7 @@ struct BranchMenuView: View {
             BranchMenuPopover(
                 showingBranchOptions: $showingBranchOptions,
                 showingCreateBranchSheet: $showingCreateBranchSheet,
-                showingCheckoutBranchSheet: $showingCheckoutBranchSheet,
-                showingDeleteBranchSheet: $showingDeleteBranchSheet,
-                showingMergeSourceBranchSheet: $showingMergeSourceBranchSheet,
                 showingMergeTargetBranchSheet: $showingMergeTargetBranchSheet,
-                showingRebaseSourceBranchSheet: $showingRebaseSourceBranchSheet,
                 showingRebaseTargetBranchSheet: $showingRebaseTargetBranchSheet,
                 remotes: remotes,
                 isCurrent: isCurrent,
@@ -65,11 +57,11 @@ struct BranchMenuView: View {
                 isDetached: isDetached,
                 branchCount: branchCount,
                 onDeleteBranchTapped: onDeleteBranchTapped,
+                onCheckoutBranchTapped: { onCheckoutOrDelete($0, false, .checkout) },
                 onTapPush: onTapPush,
                 onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                 onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                onAddRemoteTapped: onAddRemoteTapped,
-                onCreateBranchTapped: onCreateBranchTapped
+                onAddRemoteTapped: onAddRemoteTapped
             )
             .padding()
         }
@@ -81,74 +73,26 @@ struct BranchMenuView: View {
             .padding()
             .frame(maxHeight: .infinity)
         }
-        .sheet(isPresented: $showingDeleteBranchSheet) {
+        .sheet(isPresented: $showingMergeTargetBranchSheet) {
             BranchOperationView(
                 localBranches: localBranches,
                 remoteBranches: remoteBranches,
                 onCheckoutOrDelete: onCheckoutOrDelete,
                 onMergeOrRebase: onMergeOrRebase,
                 currentBranch: currentBranch,
-                operation: .delete
+                operation: .merge(target: nil, destination: name)
             )
             .padding()
             .frame(maxHeight: .infinity)
         }
-        .sheet(isPresented: $showingMergeSourceBranchSheet) {
+        .sheet(isPresented: $showingRebaseTargetBranchSheet) {
             BranchOperationView(
                 localBranches: localBranches,
                 remoteBranches: remoteBranches,
                 onCheckoutOrDelete: onCheckoutOrDelete,
                 onMergeOrRebase: onMergeOrRebase,
                 currentBranch: currentBranch,
-                operation: .merge(currentBranch, nil)
-            )
-            .padding()
-            .frame(maxHeight: .infinity)
-        }
-        .sheet(isPresented: $showingMergeSourceBranchSheet) {
-            BranchOperationView(
-                localBranches: localBranches,
-                remoteBranches: remoteBranches,
-                onCheckoutOrDelete: onCheckoutOrDelete,
-                onMergeOrRebase: onMergeOrRebase,
-                currentBranch: currentBranch,
-                operation: .merge(nil, currentBranch)
-            )
-            .padding()
-            .frame(maxHeight: .infinity)
-        }
-        .sheet(isPresented: $showingRebaseSourceBranchSheet) {
-            BranchOperationView(
-                localBranches: localBranches,
-                remoteBranches: remoteBranches,
-                onCheckoutOrDelete: onCheckoutOrDelete,
-                onMergeOrRebase: onMergeOrRebase,
-                currentBranch: currentBranch,
-                operation: .rebase(currentBranch, nil)
-            )
-            .padding()
-            .frame(maxHeight: .infinity)
-        }
-        .sheet(isPresented: $showingRebaseSourceBranchSheet) {
-            BranchOperationView(
-                localBranches: localBranches,
-                remoteBranches: remoteBranches,
-                onCheckoutOrDelete: onCheckoutOrDelete,
-                onMergeOrRebase: onMergeOrRebase,
-                currentBranch: currentBranch,
-                operation: .rebase(nil, currentBranch)
-            )
-            .padding()
-            .frame(maxHeight: .infinity)
-        }
-        .sheet(isPresented: $showingCheckoutBranchSheet) {
-            BranchOperationView(
-                localBranches: localBranches,
-                remoteBranches: remoteBranches,
-                onCheckoutOrDelete: onCheckoutOrDelete,
-                onMergeOrRebase: onMergeOrRebase,
-                currentBranch: currentBranch,
-                operation: .checkout
+                operation: .rebase(target: nil, destination: name)
             )
             .padding()
             .frame(maxHeight: .infinity)

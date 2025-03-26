@@ -90,9 +90,9 @@ struct RepositoryView: View {
             onMergeOrRebase: {
                 switch $2 {
                 case .merge:
-                    repositoryInfo.rebaseBranchTapped(source: $0, target: $1)
+                    repositoryInfo.mergeBranchTapped(target: $0, destination: $1)
                 case .rebase:
-                    repositoryInfo.rebaseBranchTapped(source: $0, target: $1)
+                    repositoryInfo.rebaseBranchTapped(target: $0, destination: $1)
                 default:
                     fatalError(.invalid)
                 }
@@ -123,16 +123,6 @@ struct RepositoryView: View {
                     repositoryInfo.checkoutBranchTapped(branchName: $0, isRemote: $1)
                 case .delete:
                     repositoryInfo.deleteBranchTapped(branchName: $0, isRemote: $1)
-                default:
-                    fatalError(.unimplemented)
-                }
-            },
-            onMergeOrRebase: {
-                switch $2 {
-                case .merge:
-                    repositoryInfo.rebaseBranchTapped(source: $0, target: $1)
-                case .rebase:
-                    repositoryInfo.rebaseBranchTapped(source: $0, target: $1)
                 default:
                     fatalError(.unimplemented)
                 }

@@ -10,11 +10,7 @@ import SwiftUI
 struct BranchMenuPopover: View {
     @Binding var showingBranchOptions: Bool
     @Binding var showingCreateBranchSheet: Bool
-    @Binding var showingCheckoutBranchSheet: Bool
-    @Binding var showingDeleteBranchSheet: Bool
-    @Binding var showingMergeSourceBranchSheet: Bool
     @Binding var showingMergeTargetBranchSheet: Bool
-    @Binding var showingRebaseSourceBranchSheet: Bool
     @Binding var showingRebaseTargetBranchSheet: Bool
     @State var selectedRemoteForPush: Remote?
 
@@ -25,11 +21,11 @@ struct BranchMenuPopover: View {
     let branchCount: Int
 
     let onDeleteBranchTapped: (String) -> Void
+    let onCheckoutBranchTapped: (String) -> Void
     let onTapPush: (String, Remote?, Repository.PushType) -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
-    let onCreateBranchTapped: (String, String, Bool, Bool) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -38,7 +34,7 @@ struct BranchMenuPopover: View {
                     title: "Checkout to \(name)",
                     onTap: {
                         showingBranchOptions = false
-                        showingCheckoutBranchSheet = true
+                        onCheckoutBranchTapped(name)
                     }
                 )
             }
@@ -80,29 +76,15 @@ struct BranchMenuPopover: View {
                 Divider()
                 XFButton<Void>(
                     title: "Merge a branch into \(name)",
+                    info: XFButtonInfo(info: InfoTexts.merge),
                     onTap: {
-                        showingBranchOptions = false
-                        showingMergeSourceBranchSheet = true
-                        fatalError(.unimplemented)
-                    }
-                )
-                XFButton<Void>(
-                    title: "Merge \(name) into another branch",
-                    onTap: {
-                        showingBranchOptions = false
                         showingMergeTargetBranchSheet = true
+                        showingBranchOptions = false
                     }
                 )
-                Divider()
                 XFButton<Void>(
                     title: "Rebase a branch into \(name)",
-                    onTap: {
-                        showingBranchOptions = false
-                        showingRebaseSourceBranchSheet = true
-                    }
-                )
-                XFButton<Void>(
-                    title: "Rebase \(name) into another branch",
+                    info: XFButtonInfo(info: InfoTexts.rebase),
                     onTap: {
                         showingBranchOptions = false
                         showingRebaseTargetBranchSheet = true
@@ -115,7 +97,7 @@ struct BranchMenuPopover: View {
                     title: "Delete \(name)",
                     onTap: {
                         showingBranchOptions = false
-                        showingDeleteBranchSheet = true
+                        onDeleteBranchTapped(name)
                     }
                 )
             }
