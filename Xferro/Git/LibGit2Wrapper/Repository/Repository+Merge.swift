@@ -97,15 +97,19 @@ extension Repository {
             return .failure(NSError(gitError: result, pointOfFailure: "git_annotated_commit_lookup"))
         }
 
-        let referenceResult = reference(longName: targetBranch.longName) { targetRef -> Result<GitMergeAnalysisStatus, NSError> in
+        let referenceResult = reference(
+            longName: targetBranch.longName
+        ) { targetRef -> Result<GitMergeAnalysisStatus, NSError> in
             var preference = GIT_MERGE_PREFERENCE_NONE
             var analysisResult: git_merge_analysis_t = GIT_MERGE_ANALYSIS_NONE
-            result = git_merge_analysis_for_ref(&analysisResult,
-                                                &preference,
-                                                self.pointer,
-                                                targetRef,
-                                                &annotatedCommit,
-                                                1)
+            result = git_merge_analysis_for_ref(
+                &analysisResult,
+                &preference,
+                self.pointer,
+                targetRef,
+                &annotatedCommit,
+                1
+            )
             guard result == GIT_OK.rawValue else {
                 return .failure(NSError(gitError: result, pointOfFailure: "git_merge_analysis_for_ref"))
             }

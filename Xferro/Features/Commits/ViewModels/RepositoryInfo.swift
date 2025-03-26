@@ -217,8 +217,9 @@ import Observation
                 do {
                     try GitCLI.execute(repository, ["merge", target])
                 } catch {
-                    Task { @MainActor in
-                        print(error.localizedDescription)
+                    Task { @MainActor [weak self] in
+                        guard let self else { return }
+                        await refreshStatus()
                     }
                 }
             }
