@@ -31,11 +31,10 @@ final class GitWatcher {
     private var lastIndexChangeGuarded = Date()
     var lastIndexChange: Date
     {
-        get
-        { mutex.withLock { lastIndexChangeGuarded } }
-        set
-        {
-            mutex.withLock { lastIndexChangeGuarded = newValue }
+        get {
+            lastIndexChangeGuarded
+        } set {
+            lastIndexChangeGuarded = newValue
             indexChangePublisher.send()
         }
     }
