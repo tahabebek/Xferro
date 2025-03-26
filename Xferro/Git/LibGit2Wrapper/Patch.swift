@@ -14,15 +14,22 @@ final class Patch
     // Data buffers need to be kept because the patch references them
     let oldData, newData: Data?
 
-    init(gitPatch: OpaquePointer)
-    {
+    init(gitPatch: OpaquePointer) {
         self.patch = gitPatch
         self.oldData = nil
         self.newData = nil
+        self.hunkCount = git_patch_num_hunks(patch)
+        
+        var addedResult: Int = 0
+        _ = git_patch_line_stats(nil, &addedResult, nil, patch)
+        self.addedLinesCount = addedResult
+
+        var deletedResult: Int = 0
+        _ = git_patch_line_stats(nil, nil, &deletedResult, patch)
+        self.deletedLinesCount = deletedResult
     }
 
-    init(repository: Repository, oldBlob: Blob, newBlob: Blob, options: DiffOptions? = nil)
-    {
+    init(repository: Repository, oldBlob: Blob, newBlob: Blob, options: DiffOptions? = nil) {
         var oldBlobPointer: OpaquePointer? = nil
         var newBlobPointer: OpaquePointer? = nil
 
@@ -43,10 +50,18 @@ final class Patch
         self.patch = patch
         self.oldData = nil
         self.newData = nil
+        self.hunkCount = git_patch_num_hunks(patch)
+
+        var addedResult: Int = 0
+        _ = git_patch_line_stats(nil, &addedResult, nil, patch)
+        self.addedLinesCount = addedResult
+
+        var deletedResult: Int = 0
+        _ = git_patch_line_stats(nil, nil, &deletedResult, patch)
+        self.deletedLinesCount = deletedResult
     }
 
-    init(repository: Repository, oldBlob: Blob, newData: Data, options: DiffOptions? = nil)
-    {
+    init(repository: Repository, oldBlob: Blob, newData: Data, options: DiffOptions? = nil) {
         var oldBlobPointer: OpaquePointer? = nil
         var oldBlobOid = oldBlob.oid.oid
         let oldBlobResult = git_object_lookup_prefix(&oldBlobPointer, repository.pointer, &oldBlobOid, oldBlob.oid.length, GIT_OBJECT_BLOB)
@@ -74,10 +89,18 @@ final class Patch
         self.patch = patch
         self.oldData = nil
         self.newData = newData
+        self.hunkCount = git_patch_num_hunks(patch)
+
+        var addedResult: Int = 0
+        _ = git_patch_line_stats(nil, &addedResult, nil, patch)
+        self.addedLinesCount = addedResult
+
+        var deletedResult: Int = 0
+        _ = git_patch_line_stats(nil, nil, &deletedResult, patch)
+        self.deletedLinesCount = deletedResult
     }
 
-    init(oldData: Data, newData: Data, options: DiffOptions? = nil)
-    {
+    init(oldData: Data, newData: Data, options: DiffOptions? = nil) {
         let patch = try! OpaquePointer.from({
             (patch) in
             DiffOptions.unwrappingOptions(options) {
@@ -98,31 +121,24 @@ final class Patch
         self.patch = patch
         self.oldData = oldData
         self.newData = newData
+        self.hunkCount = git_patch_num_hunks(patch)
+
+        var addedResult: Int = 0
+        _ = git_patch_line_stats(nil, &addedResult, nil, patch)
+        self.addedLinesCount = addedResult
+
+        var deletedResult: Int = 0
+        _ = git_patch_line_stats(nil, nil, &deletedResult, patch)
+        self.deletedLinesCount = deletedResult
     }
 
-    deinit
-    {
+    deinit {
         git_patch_free(patch)
     }
 
-    var hunkCount: Int {
-        git_patch_num_hunks(patch)
-    }
-
+    var hunkCount: Int
     var addedLinesCount: Int
-    {
-        var result: Int = 0
-
-        _ = git_patch_line_stats(nil, &result, nil, patch)
-        return result
-    }
     var deletedLinesCount: Int
-    {
-        var result: Int = 0
-
-        _ = git_patch_line_stats(nil, nil, &result, patch)
-        return result
-    }
 
     func hunk(
         at index: Int,
@@ -130,8 +146,7 @@ final class Patch
         newFilePath: String? = nil,
         status: Diff.Delta.Status,
         repository: Repository
-    ) -> DiffHunk?
-    {
+    ) -> DiffHunk? {
         guard let hunk: UnsafePointer<git_diff_hunk> = try? .from({
             git_patch_get_hunk(&$0, nil, patch, index)
         })

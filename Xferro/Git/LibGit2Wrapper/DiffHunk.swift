@@ -6,9 +6,18 @@ import Foundation
 import Observation
 
 @Observable final class DiffHunk: Identifiable, Copyable {
+    enum HunkType {
+        case ancestorToOurs
+        case ancestorToTheirs
+        case oursToTheirs
+        case regular
+    }
+
     let id = UUID()
 
     var parts: [DiffHunkPart]
+    var hunkHeader: String = ""
+    
     let hunk: git_diff_hunk
     let hunkIndex: Int
     let patch: Patch
@@ -16,23 +25,17 @@ import Observation
     let newFilePath: String?
     let status: Diff.Delta.Status
     let repository: Repository
+    let hunkType: HunkType = .regular
 
     let oldStart: Int
     let oldLines: Int
     let newStart: Int
     let newLines: Int
     let lineCount: Int
-    var hunkHeader: String = ""
+
     private(set) var selectedLines: [DiffLine] = []
-    private func updateSelectedLines() {
-        selectedLines = parts.flatMap { $0.lines }.filter { $0.isSelected }
-    }
     private(set) var lineCache: [Int: DiffLine] = [:]
     private var selectedLinesCount: Int = 0
-
-    private func updateSelectedLinesCount() {
-        selectedLinesCount = parts.map { $0.selectedLinesCount }.reduce(0, +)
-    }
 
     init(
         hunk: git_diff_hunk,
@@ -205,6 +208,13 @@ import Observation
         let line = DiffLine(linePointer.pointee)
         lineCache[lineIndex] = line
         return line
+    }
+
+    private func updateSelectedLines() {
+        selectedLines = parts.flatMap { $0.lines }.filter { $0.isSelected }
+    }
+    private func updateSelectedLinesCount() {
+        selectedLinesCount = parts.map { $0.selectedLinesCount }.reduce(0, +)
     }
 
     func copy() -> DiffHunk {

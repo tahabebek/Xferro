@@ -116,8 +116,7 @@ extension Repository {
         }
     }
 
-    func patchMakerForAStagedFileComparedToHEAD(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult
-    {
+    func patchMakerForAStagedFileComparedToHEAD(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult {
         switch oldNewFile.status {
         case .unmodified:
             return .noDifference
@@ -185,8 +184,7 @@ extension Repository {
         }
     }
 
-    func patchMakerForAStagedFileComparedToHEAD1(head: Head, file: String) -> PatchMaker.PatchResult?
-    {
+    func patchMakerForAStagedFileComparedToHEAD1(head: Head, file: String) -> PatchMaker.PatchResult? {
         guard isTextFile(file, context: .index)
         else { return .binary }
 
@@ -204,8 +202,7 @@ extension Repository {
         )
     }
 
-    func patchMakerForAFileInTeWorkspaceComparedToHead(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult
-    {
+    func patchMakerForAFileInTeWorkspaceComparedToHead(head: Head, oldNewFile: OldNewFile) -> PatchMaker.PatchResult {
         switch oldNewFile.status {
         case .unmodified:
             return .noDifference
@@ -274,18 +271,15 @@ extension Repository {
         }
     }
 
-    func blame(for path: String, from startOID: OID?, to endOID: OID?) -> Blame?
-    {
+    func blame(for path: String, from startOID: OID?, to endOID: OID?) -> Blame? {
         Blame(repository: self, path: path, from: startOID, to: endOID)
     }
 
-    func blame(for path: String, data fromData: Data?, to endOID: OID?) -> Blame?
-    {
+    func blame(for path: String, data fromData: Data?, to endOID: OID?) -> Blame? {
         Blame(repository: self, path: path, data: fromData ?? Data(), to: endOID)
     }
 
-    func stagedBlob(file: String) -> Blob?
-    {
+    func stagedBlob(file: String) -> Blob? {
         let index = index().mustSucceed(gitDir)
         guard let entryOID = index.entry(at: file)?.oid else { return nil }
         return withGitObject(entryOID, type: GIT_OBJECT_BLOB) {
@@ -293,13 +287,11 @@ extension Repository {
         }.mustSucceed(gitDir)
     }
 
-    func fileBlob(head: Head, path: String) -> Blob?
-    {
+    func fileBlob(head: Head, path: String) -> Blob? {
         commitBlob(commit: head.commit, path: path)
     }
 
-    func commitBlob(commit: Commit, path: String) -> Blob?
-    {
+    func commitBlob(commit: Commit, path: String) -> Blob? {
         var treePointer: OpaquePointer? = nil
         var git_oid = commit.tree.oid.oid
         let result = git_object_lookup_prefix(&treePointer, self.pointer, &git_oid, commit.tree.oid.length, GIT_OBJECT_TREE)
@@ -324,8 +316,7 @@ extension Repository {
     /// Returns true if the file seems to be text, based on its name or its content.
     /// - parameter path: File path relative to the repository
     /// - parameter context: Where to look for the specified file
-    func isTextFile(_ path: String, context: FileContext) -> Bool
-    {
+    func isTextFile(_ path: String, context: FileContext) -> Bool {
         let name = (path as NSString).lastPathComponent
         guard !name.isEmpty
         else { return false }

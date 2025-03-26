@@ -59,8 +59,7 @@ extension Repository {
         }
     }
 
-    func discard(hunk: DiffHunk)
-    {
+    func discard(hunk: DiffHunk) {
         lock.lock()
         defer { lock.unlock() }
         var encoding = String.Encoding.utf8
@@ -143,8 +142,7 @@ extension Repository {
         }
     }
     
-    func stageHunk(filePath: String, hunkIndex: Int) async throws
-    {
+    func stageHunk(filePath: String, hunkIndex: Int) async throws {
         var index: OpaquePointer?
         var diff: OpaquePointer?
         var patch: OpaquePointer?

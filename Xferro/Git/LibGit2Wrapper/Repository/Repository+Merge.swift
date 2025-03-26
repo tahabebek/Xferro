@@ -384,4 +384,199 @@ extension Repository {
         }
     }
 
+    func getConflictDiffHunks(repoPath: String) throws -> [String: [UnsafePointer<git_diff_hunk>]] {
+        var index: OpaquePointer? = nil
+        guard git_repository_index(&index, pointer) == 0,
+              let idx = index else {
+            throw RepoError.unexpected("Unable to get index")
+        }
+        defer { git_index_free(index) }
+
+        var conflictHunks: [String: [UnsafePointer<git_diff_hunk>]] = [:]
+
+        var conflictIterator: OpaquePointer? = nil
+        defer { git_index_conflict_iterator_free(conflictIterator) }
+
+        var result = git_index_conflict_iterator_new(&conflictIterator, index)
+        guard result == GIT_OK.rawValue else {
+            throw NSError(gitError: result, pointOfFailure: "git_index_conflict_iterator_new")
+        }
+
+        var ancestor: UnsafePointer<git_index_entry>? = nil
+        var ours: UnsafePointer<git_index_entry>? = nil
+        var theirs: UnsafePointer<git_index_entry>? = nil
+
+        while git_index_conflict_next(&ancestor, &ours, &theirs, conflictIterator) == 0 {
+            let path: String? = {
+                if let theirs {
+                    return String(cString: theirs.pointee.path)
+                } else if let ours {
+                    return String(cString: ours.pointee.path)
+                } else if let ancestor {
+                    return String(cString: ancestor.pointee.path)
+                }
+                return nil
+            }()
+
+            guard let path else {
+                continue
+            }
+
+            // Get diff hunks for this conflicted file
+            if let hunks = try getDiffHunksForConflict(
+                path: path,
+                ancestor: ancestor,
+                ours: ours,
+                theirs: theirs
+            ) {
+                conflictHunks[path] = hunks
+            }
+        }
+
+        return conflictHunks
+    }
+
+    func getDiffHunksForConflict(
+        path: String,
+        ancestor: UnsafePointer<git_index_entry>?,
+        ours: UnsafePointer<git_index_entry>?,
+        theirs: UnsafePointer<git_index_entry>?
+    ) throws -> [UnsafePointer<git_diff_hunk>]? {
+        var hunks: [UnsafePointer<git_diff_hunk>] = []
+
+        let ancestorBlob = try getBlob(entry: ancestor?.pointee)
+        defer { if ancestorBlob != nil { git_blob_free(ancestorBlob) } }
+
+        let ourBlob = try getBlob(entry: ours?.pointee)
+        defer { if ourBlob != nil { git_blob_free(ourBlob) } }
+
+        let theirBlob = try getBlob(entry: theirs?.pointee)
+        defer { if theirBlob != nil { git_blob_free(theirBlob) } }
+
+        // Create diffs between versions
+        // 1. Ancestor to ours
+        var diffOurs: OpaquePointer? = nil
+        if let ancestorBlob, let ourBlob {
+            let result = createDiffBetweenBlobs(
+                oldBlob: ancestorBlob,
+                newBlob: ourBlob,
+                path: path,
+                diff: &diffOurs
+            )
+            if result != 0 {
+                throw RepoError.unexpected("Failed to create diff between blobs")
+            }
+        }
+        defer { if diffOurs != nil { git_diff_free(diffOurs) } }
+
+        // 2. Ancestor to theirs
+        var diffTheirs: OpaquePointer? = nil
+        if let ancestorBlob = ancestorBlob, let theirBlob = theirBlob {
+            let result = createDiffBetweenBlobs(
+                oldBlob: ancestorBlob,
+                newBlob: theirBlob,
+                path: path,
+                diff: &diffTheirs
+            )
+            if result != 0 {
+                throw RepoError.unexpected("Failed to create diff between blobs")
+            }
+        }
+        defer { if diffTheirs != nil { git_diff_free(diffTheirs) } }
+
+        // 3. Ours to theirs (direct comparison between branches)
+        var diffOursToTheirs: OpaquePointer? = nil
+        if let ourBlob = ourBlob, let theirBlob = theirBlob {
+            let result = createDiffBetweenBlobs(
+                oldBlob: ourBlob,
+                newBlob: theirBlob,
+                path: path,
+                diff: &diffOursToTheirs
+            )
+            if result != 0 {
+                throw RepoError.unexpected("Failed to create diff between blobs")
+            }
+        }
+        defer { if diffOursToTheirs != nil { git_diff_free(diffOursToTheirs) } }
+
+        if let diffOurs {
+            hunks.append(contentsOf: try collectHunks(from: diffOurs, hunkType: .ancestorToOurs))
+        }
+
+        if let diffTheirs {
+            hunks.append(contentsOf: try collectHunks(from: diffTheirs, hunkType: .ancestorToTheirs))
+        }
+
+        if let diffOursToTheirs{
+            hunks.append(contentsOf: try collectHunks(from: diffOursToTheirs, hunkType: .oursToTheirs))
+        }
+
+        return hunks
+    }
+
+    func getBlob(entry: git_index_entry?) throws -> OpaquePointer? {
+        guard let entry else { return nil }
+
+        var blob: OpaquePointer? = nil
+        var oid = entry.id
+        let result = git_blob_lookup(&blob, pointer, &oid)
+
+        if result != 0 {
+            throw RepoError.unexpected("Failed to get blob for index entry")
+        }
+
+        return blob
+    }
+
+    func collectHunks(
+        from diff: OpaquePointer,
+        hunkType: DiffHunk.HunkType
+    ) throws -> [UnsafePointer<git_diff_hunk>] {
+        let contextPtr = UnsafeMutablePointer<HunkContainer>.allocate(capacity: 1)
+        contextPtr.initialize(to: HunkContainer(hunkType: hunkType))
+        defer { contextPtr.deallocate() }
+
+        let result = git_diff_foreach(diff, nil, nil, hunkCallback, nil, contextPtr)
+        if result != 0 {
+            throw RepoError.unexpected("Failed to collect hunks from diff")
+        }
+
+        return contextPtr.pointee.hunks
+    }
+
+    func createDiffBetweenBlobs(
+        oldBlob: OpaquePointer?,
+        newBlob: OpaquePointer?,
+        path: String,
+        diff: inout OpaquePointer?
+    ) -> Int32 {
+        var options = git_diff_options()
+        git_diff_options_init(&options, UInt32(GIT_DIFF_OPTIONS_VERSION))
+
+        options.context_lines = 3
+        options.flags = GIT_DIFF_INCLUDE_UNMODIFIED.rawValue | GIT_DIFF_FIND_RENAMES.rawValue | GIT_DIFF_FIND_COPIES.rawValue
+
+        return git_diff_blobs(oldBlob, path, newBlob, path, &options, nil, nil, nil, nil, &diff)
+    }
 }
+
+func hunkCallback(
+    _ delta: UnsafePointer<git_diff_delta>?,
+    _ hunk: UnsafePointer<git_diff_hunk>?,
+    _ payload: UnsafeMutableRawPointer?
+) -> Int32 {
+    guard let payload, let hunk else { return 0 }
+    let container = payload.bindMemory(to: HunkContainer.self, capacity: 1)
+    container.pointee.hunks.append(hunk)
+    return 0
+}
+
+// Context struct for the callback
+struct HunkContainer {
+    var hunks: [UnsafePointer<git_diff_hunk>] = []
+    var hunkType: DiffHunk.HunkType
+
+    init(hunkType: DiffHunk.HunkType) {
+        self.hunkType = hunkType
+    }
+    }

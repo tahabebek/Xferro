@@ -13,6 +13,8 @@ import OrderedCollections
 @Observable final class StatusViewModel {
     var trackedFiles: [OldNewFile] = []
     var untrackedFiles: [OldNewFile] = []
+    var conflictedFiles: [OldNewFile] = []
+
     var currentFile: OldNewFile? = nil
 
     var commitSummary: String = ""
@@ -67,7 +69,6 @@ import OrderedCollections
         }
     }
 
-    // this func needs to be async because
     func updateStatus(
         newSelectableStatus: SelectableStatus,
         repositoryInfo: RepositoryInfo?,
@@ -77,6 +78,21 @@ import OrderedCollections
         guard newSelectableStatus.repositoryId == repositoryInfo.repository.idOfRepo else {
             fatalError(.invalid)
         }
+
+        let conflictedEntries =  newSelectableStatus.statusEntries.filter { entry in
+            entry.deltas.contains(where: { delta in
+                delta.status == .conflicted
+            })
+        }
+
+        guard conflictedEntries.isEmpty else {
+            updateStatusWithConflicts(
+                repositoryInfo: repositoryInfo,
+                conflictedEntries: conflictedEntries
+            )
+            return
+        }
+
         Task {
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -256,6 +272,42 @@ import OrderedCollections
             }
         }
         return (trackedFiles, untrackedFiles)
+    }
+
+    private func updateStatusWithConflicts(
+        repositoryInfo: RepositoryInfo,
+        conflictedEntries: [StatusEntry]
+    ) {
+        var addedFiles: Set<String> = []
+        let handleDelta: (Repository, Diff.Delta) -> Void = { repository, delta in
+            let key = (delta.oldFilePath ?? "") + (delta.newFilePath ?? "")
+            if addedFiles.contains(key) {
+                return
+            }
+            addedFiles.insert(key)
+            switch delta.status {
+            case .conflicted:
+                fatalError(.unimplemented)
+            default:
+                fatalError(.unimplemented)
+            }
+        }
+        for statusEntry in conflictedEntries {
+            var handled: Bool = false
+            if let stagedDelta = statusEntry.stagedDelta {
+                handled = true
+                handleDelta(repositoryInfo.repository, stagedDelta)
+            }
+
+            if let unstagedDelta = statusEntry.unstagedDelta {
+                handled = true
+                handleDelta(repositoryInfo.repository,unstagedDelta)
+            }
+
+            guard handled else {
+                fatalError(.unimplemented)
+            }
+        }
     }
 
     func discardAlertTitle(file: OldNewFile?) -> String {
