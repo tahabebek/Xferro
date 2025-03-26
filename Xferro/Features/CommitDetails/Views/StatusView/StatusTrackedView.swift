@@ -20,14 +20,12 @@ struct StatusTrackedView: View {
         Section {
             Group {
                 ForEach($files) { file in
-                    HStack {
-                        StatusTrackedRowView(
-                            currentFile: $currentFile,
-                            file: file,
-                            onTapDiscard: { onTapDiscard(file.wrappedValue) },
-                            onTapUntrack: { onTapUntrack(file.wrappedValue) }
-                        )
-                    }
+                    StatusTrackedRowView(
+                        currentFile: $currentFile,
+                        file: file,
+                        onTapDiscard: { onTapDiscard(file.wrappedValue) },
+                        onTapUntrack: { onTapUntrack(file.wrappedValue) }
+                    )
                 }
             }
         } header: {

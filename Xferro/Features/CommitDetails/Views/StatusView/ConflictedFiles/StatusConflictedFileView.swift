@@ -21,9 +21,7 @@ struct StatusConflictedFileView: View {
                     Section {
                         Group {
                             ForEach($files) { file in
-                                HStack {
-                                    StatusConflictedRowView(currentFile: $currentFile, file: file)
-                                }
+                                StatusConflictedRowView(currentFile: $currentFile, file: file)
                             }
                         }
                     } header: {
