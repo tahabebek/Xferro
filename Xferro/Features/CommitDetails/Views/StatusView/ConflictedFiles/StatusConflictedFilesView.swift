@@ -27,6 +27,9 @@ struct StatusConflictedFilesView: View {
                 onContinueRebaseTapped: onContinueRebaseTapped,
                 onAbortRebaseTapped: onAbortRebaseTapped
             )
+            .padding()
+            .background(Color(hexValue: 0x15151A))
+            .cornerRadius(8)
             StatusConflictedFileView(
                 currentFile: $currentFile,
                 files: $conflictedFiles,
