@@ -44,6 +44,10 @@ struct ConflictedPeekView: View {
                 )
             }
         }
+        .border(Color.red, width: 2)
+        .onAppear {
+            print(text)
+        }
     }
 }
 

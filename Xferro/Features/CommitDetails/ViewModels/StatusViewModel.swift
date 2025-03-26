@@ -362,10 +362,15 @@ import OrderedCollections
     func setInitialSelection() {
         if currentFile == nil {
             var item: OldNewFile?
-            if let firstItem = trackedFiles.first {
-                item = firstItem
-            } else if let firstItem = untrackedFiles.first {
-                item = firstItem
+            if conflictType != nil {
+                item = conflictedFiles.first
+            }
+            else {
+                if let firstItem = trackedFiles.first {
+                    item = firstItem
+                } else if let firstItem = untrackedFiles.first {
+                    item = firstItem
+                }
             }
             if let item {
                 currentFile = item

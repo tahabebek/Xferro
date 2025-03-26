@@ -45,8 +45,12 @@ struct StatusView: View {
                                 file: file,
                                 text: conflictText
                             )
+                            .border(.blue)
                             .id("\(file.id)$\(conflictType)")
                         } else {
+                            let _ = print(
+                                "current file \(viewModel.currentFile?.statusFileName ?? "nil") or conflict text \(viewModel.currentFile?.conflictText ?? "nil")"
+                            )
                             EmptyView()
                         }
                     } else {
