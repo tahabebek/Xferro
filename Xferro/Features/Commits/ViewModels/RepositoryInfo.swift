@@ -95,7 +95,7 @@ import Observation
                 }
             }
             
-            await ActivityOperation.perform(
+            await withActivityOperation(
                 title: isRemote ? "Creating remote branch \(branchName) to track \(baseBranchName)"
                     : "Creating local branch \(branchName) based on \(baseBranchName)",
                 successMessage: "Created branch \(branchName)"
@@ -121,7 +121,7 @@ import Observation
                 return
             }
 
-            await ActivityOperation.perform(
+            await withActivityOperation(
                 title: isRemote ? "Checking out to remote branch \(branchName)"
                 : "Checking out to local branch \(branchName)",
                 successMessage: "Checked out to \(branchName)"
@@ -152,7 +152,7 @@ import Observation
                 return
             }
 
-            await ActivityOperation.perform(
+            await withActivityOperation(
                 title: isRemote ? "Deleting remote branch \(branchName)"
                 : "Deleting local branch \(branchName)",
                 successMessage: "Deleted branch \(branchName)"
@@ -171,7 +171,7 @@ import Observation
 
     func createTagTapped(name: String, message: String?, remote: String, push: Bool) {
         Task {
-            await ActivityOperation.perform(
+            await withActivityOperation(
                 title: "Creating tag \(name) on remote \(remote)",
                 successMessage: "Created tag \(name)"
             ) { [weak self] in
@@ -209,12 +209,18 @@ import Observation
                 }
                 return
             }
-            await ActivityOperation.perform(
+            await withActivityOperation(
                 title: "Merging branch \(target) into \(destination)",
                 successMessage: "Merged branch \(target) into \(destination)"
             ) { [weak self] in
                 guard let self else { return }
-                try GitCLI.execute(repository, ["merge", target])
+                do {
+                    try GitCLI.execute(repository, ["merge", target])
+                } catch {
+                    Task { @MainActor in
+                        print(error.localizedDescription)
+                    }
+                }
             }
         }
     }
@@ -239,7 +245,7 @@ import Observation
                 return
             }
 
-            await ActivityOperation.perform(
+            await withActivityOperation(
                 title: "Rebasing branch \(target) into \(destination)",
                 successMessage: "Rebasing branch \(target) into \(destination)"
             ) { [weak self] in
