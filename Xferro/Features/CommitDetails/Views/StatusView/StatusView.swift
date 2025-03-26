@@ -37,8 +37,15 @@ struct StatusView: View {
                     .frame(width: Dimensions.commitDetailsViewMaxWidth)
                     if let conflictType = viewModel.conflictType {
                         if let file = viewModel.currentFile, let conflictText = file.conflictText {
-                            ConflictedPeekView(file: file, text: conflictText)
-                                .id("\(file.id)$\(conflictType)")
+                            ConflictedPeekViewContainer(
+                                timeStamp: Binding<Date>(
+                                    get: { viewModel.selectableStatus!.timestamp },
+                                    set: {_ in }
+                                ),
+                                file: file,
+                                text: conflictText
+                            )
+                            .id("\(file.id)$\(conflictType)")
                         } else {
                             EmptyView()
                         }

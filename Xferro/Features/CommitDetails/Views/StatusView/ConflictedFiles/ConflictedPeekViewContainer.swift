@@ -15,33 +15,8 @@ struct ConflictedPeekViewContainer: View {
     let text: String
 
     var body: some View {
-        Group {
-            if file.isUntracked {
-                ConflictedPeekView(
-                    file: file,
-                    text: text
-                )
-            } else {
-                PeekView(file: file)
-            }
-        }
-        .padding(.leading, 8)
-        .onChange(of: timeStamp) {
-            Task {
-                await file.setDiffInfoForStatus()
-            }
-        }
-        .onChange(of: file) {
-            Task {
-                await file.setDiffInfoForStatus()
-            }
-        }
-        .task(id: timeStamp) {
-            if !intitalDiffLoadIsComplete {
-                intitalDiffLoadIsComplete = true
-                await file.setDiffInfoForStatus()
-            }
-        }
+        ConflictedPeekView(file: file, text: text)
+            .padding(.leading, 8)
     }
 }
 
