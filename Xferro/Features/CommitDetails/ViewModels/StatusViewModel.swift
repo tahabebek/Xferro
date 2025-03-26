@@ -645,7 +645,7 @@ fileprivate extension StatusViewModel {
                 return
             }
             await withActivityOperation(
-                title: "Pushing \(branch.name) to \(remote)..",
+                title: "\(pushType == .forceWithLease ? "Force Pushing" : "Pushing") \(branch.name) to \(remote)..",
                 successMessage: "Pushed \(branch.name) to \(remote)"
             ) {
                 let pushOperation = await PushOpController(
