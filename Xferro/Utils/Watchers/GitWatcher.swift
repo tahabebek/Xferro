@@ -24,9 +24,8 @@ final class GitWatcher {
     let remoteBranchesChangePublisher: PassthroughSubject<[RefKey: Set<String>], Never>
     let tagsChangePublisher: PassthroughSubject<[RefKey: Set<String>], Never>
     let stashChangePublisher: PassthroughSubject<Void, Never>
-    
+
     var changeObserver: AnyCancellable?
-    let mutex = NSRecursiveLock()
 
     private var lastIndexChangeGuarded = Date()
     var lastIndexChange: Date
@@ -122,11 +121,9 @@ final class GitWatcher {
 
     func checkRefs(changedPaths: [String])
     {
-        mutex.withLock {
-            if packedRefsWatcher == nil,
-               changedPaths.contains(repository.gitDir.path) {
-                makePackedRefsWatcher()
-            }
+        if packedRefsWatcher == nil,
+           changedPaths.contains(repository.gitDir.path) {
+            makePackedRefsWatcher()
         }
 
         if paths(changedPaths, includeSubpaths: ["refs/heads"]) {
@@ -141,9 +138,6 @@ final class GitWatcher {
     }
 
     func checkRemoteBranches() {
-        mutex.lock()
-        defer { mutex.unlock() }
-
         var newRefCache = [String: OID]()
         repository.references(withPrefix: "refs/remotes").mustSucceed(repository.gitDir).forEach { newRefCache[$0.longName] = $0.oid }
         let newKeys = Set(newRefCache.keys)
@@ -178,9 +172,6 @@ final class GitWatcher {
         remoteBranchCache = newRefCache
     }
     func checkTags() {
-        mutex.lock()
-        defer { mutex.unlock() }
-
         var newRefCache = [String: OID]()
         repository.references(withPrefix: "refs/tags").mustSucceed(repository.gitDir).forEach { newRefCache[$0.longName] = $0.oid }
         let newKeys = Set(newRefCache.keys)
@@ -216,9 +207,6 @@ final class GitWatcher {
     }
     func checkLocalBranches()
     {
-        mutex.lock()
-        defer { mutex.unlock() }
-
         var newRefCache = [String: OID]()
         repository.references(withPrefix: "refs/heads").mustSucceed(repository.gitDir).forEach { newRefCache[$0.longName] = $0.oid }
         let newKeys = Set(newRefCache.keys)
@@ -258,7 +246,7 @@ final class GitWatcher {
         let watcher = FileMonitor(path: repository.gitDir.path +/ "packed-refs")
 
         if let watcher {
-            mutex.withLock { packedRefsWatcher = watcher }
+            packedRefsWatcher = watcher
             packedRefsSink = watcher.eventPublisher.sink {
                 [weak self] (_, _) in
                 self?.checkLocalBranches()
