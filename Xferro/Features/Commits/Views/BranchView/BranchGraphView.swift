@@ -32,9 +32,6 @@ struct BranchGraphView: View {
                         onIsSelected: onIsSelected
                     )
                 }
-            } else {
-                ProgressView()
-                    .controlSize(.small)
             }
         }
         .task {

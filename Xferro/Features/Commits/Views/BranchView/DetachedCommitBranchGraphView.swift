@@ -31,9 +31,6 @@ struct DetachedCommitBranchGraphView: View {
                         onIsSelected: onIsSelected
                     )
                 }
-            } else {
-                ProgressView()
-                    .controlSize(.small)
             }
         }
         .task {
