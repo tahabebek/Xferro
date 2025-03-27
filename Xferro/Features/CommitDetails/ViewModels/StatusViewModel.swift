@@ -606,8 +606,8 @@ fileprivate extension StatusViewModel {
         switch pullType {
         case .merge:
             await withActivityOperation(
-                title: "Pulling branch \(repositoryInfo.head.name) (merge)..",
-                successMessage: "Pulled branch \(repositoryInfo.head.name) (merge).."
+                title: "Pulling \(repositoryInfo.head.name) branch (merge)..",
+                successMessage: "Pulled \(repositoryInfo.head.name) branch (merge).."
             ) {
                 do {
                     try GitCLI.execute(repositoryInfo.repository, ["pull", "--no-rebase"])
@@ -619,8 +619,8 @@ fileprivate extension StatusViewModel {
             }
         case .rebase:
             await withActivityOperation(
-                title: "Pulling branch \(repositoryInfo.head.name) (rebase)..",
-                successMessage: "Pulling branch \(repositoryInfo.head.name) (rebase).."
+                title: "Pulling \(repositoryInfo.head.name) branch (rebase)..",
+                successMessage: "Pulling \(repositoryInfo.head.name) branch (rebase).."
             ) {
                 do {
                     try GitCLI.execute(repositoryInfo.repository, ["pull", "--rebase=merges",])
