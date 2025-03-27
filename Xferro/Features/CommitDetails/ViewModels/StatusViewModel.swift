@@ -1060,8 +1060,14 @@ fileprivate extension StatusViewModel {
         ) { [weak self] in
             guard let self else { return }
             let files = conflictedFiles.map(\.new!)
-            try GitCLI.execute(repositoryInfo.repository, ["add"] + files)
-            try GitCLI.execute(repositoryInfo.repository, ["rebase", "--continue"])
+            do {
+                try GitCLI.execute(repositoryInfo.repository, ["add"] + files)
+                try GitCLI.execute(repositoryInfo.repository, ["rebase", "--continue"])
+            } catch {
+                Task { @MainActor in
+                    await repositoryInfo.refreshStatus()
+                }
+            }
         }
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -1078,7 +1084,13 @@ fileprivate extension StatusViewModel {
             title: "Aborting rebase..",
             successMessage: "Rebase aborted"
         ) {
-            try GitCLI.execute(repositoryInfo.repository, ["rebase", "--abort"])
+            do {
+                try GitCLI.execute(repositoryInfo.repository, ["rebase", "--abort"])
+            } catch {
+                Task { @MainActor in
+                    await repositoryInfo.refreshStatus()
+                }
+            }
         }
         Task { @MainActor [weak self] in
             guard let self else { return }

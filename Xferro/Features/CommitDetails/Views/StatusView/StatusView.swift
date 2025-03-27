@@ -28,7 +28,7 @@ struct StatusView: View {
                                 onContinueMergeTapped: viewModel.continueMergeTapped,
                                 onAbortMergeTapped: viewModel.abortMergeTapped,
                                 onContinueRebaseTapped: viewModel.continueRebaseTapped,
-                                onAbortRebaseTapped: viewModel.continueRebaseTapped
+                                onAbortRebaseTapped: viewModel.abortRebaseTapped
                             )
                             .frame(width: Dimensions.commitDetailsViewMaxWidth)
                         } else {

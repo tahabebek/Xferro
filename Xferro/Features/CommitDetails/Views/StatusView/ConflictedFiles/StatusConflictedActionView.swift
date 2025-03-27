@@ -51,14 +51,14 @@ struct StatusConflictedActionView: View {
                 case .rebase, .interactiveRebase:
                     XFButton<Void>(
                         title: "Continue Rebase",
-                        info: XFButtonInfo(info: InfoTexts.continueMerge),
+                        info: XFButtonInfo(info: InfoTexts.continueRebase),
                         onTap: {
                             onContinueRebaseTapped()
                         }
                     )
                     XFButton<Void>(
                         title: "Abort Rebase",
-                        info: XFButtonInfo(info: InfoTexts.abortMerge),
+                        info: XFButtonInfo(info: InfoTexts.abortRebase),
                         onTap: {
                             onAbortRebaseTapped()
                         }

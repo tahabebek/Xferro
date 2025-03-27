@@ -251,7 +251,14 @@ import Observation
                 successMessage: "Rebasing branch \(target) into \(destination)"
             ) { [weak self] in
                 guard let self else { return }
-                try GitCLI.execute(repository, ["rebase", target])
+                do {
+                    try GitCLI.execute(repository, ["rebase", target])
+                } catch {
+                    Task { @MainActor [weak self] in
+                        guard let self else { return }
+                        await refreshStatus()
+                    }
+                }
             }
         }
     }
