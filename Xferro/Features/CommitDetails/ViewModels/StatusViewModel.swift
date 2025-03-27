@@ -623,7 +623,7 @@ fileprivate extension StatusViewModel {
                 successMessage: "Pulling branch \(repositoryInfo.head.name) (rebase).."
             ) {
                 do {
-                    try GitCLI.execute(repositoryInfo.repository, ["pull", "--rebase",])
+                    try GitCLI.execute(repositoryInfo.repository, ["pull", "--rebase=merges",])
                 } catch {
                     Task { @MainActor in
                         await repositoryInfo.refreshStatus()

@@ -251,7 +251,7 @@ import Observation
                 successMessage: "Rebasing branch \(target) into \(destination)"
             ) { [weak self] in
                 guard let self else { return }
-                try GitCLI.execute(repository, ["merge", target])
+                try GitCLI.execute(repository, ["rebase", target])
             }
         }
     }
