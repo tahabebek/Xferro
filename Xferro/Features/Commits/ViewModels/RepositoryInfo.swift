@@ -289,7 +289,7 @@ extension RepositoryInfo: Equatable {
 // MARK: Static
 extension RepositoryInfo {
     static let commitCountLimit: Int = 10
-#warning("10 check with git, maybe do not use status if there is a risk of race conditions")
+#warning("13 check with git, maybe do not use status if there is a risk of race conditions")
     static let workDirDebounce = 5
 
     static func taskQueueID(path: String) -> String {
