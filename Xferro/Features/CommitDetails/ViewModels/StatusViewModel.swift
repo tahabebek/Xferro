@@ -932,6 +932,7 @@ fileprivate extension StatusViewModel {
                 currentFile = nil
             }
         }
+        try? await Task.sleep(for: .seconds(1))
         Task { @MainActor in
             await repositoryInfo.refreshStatus()
         }
