@@ -116,51 +116,10 @@ extension Repository: RemoteManagement {
         case remote(Remote?)
         case all
     }
-    
-    func fetch(remote: Remote, options: FetchOptions) throws {
-        lock.lock()
-        defer { lock.unlock() }
-        var refspecs = git_strarray.init()
-        var result: Int32
-
-        result = git_remote_get_fetch_refspecs(&refspecs, remote.remote)
-        guard result == GIT_OK.rawValue else {
-            let err = NSError(gitError: result, pointOfFailure: "git_remote_get_fetch_refspecs")
-            throw err
-        }
-        defer {
-            git_strarray_free(&refspecs)
-        }
-
-        let message = "fetching remote \(remote.name ?? "[unknown]")"
-
-        result = git_fetch_options.withOptions(options) {
-            withUnsafePointer(to: $0) { options in
-                Signpost.interval(.networkOperation) {
-                    git_remote_fetch(remote.remote, &refspecs, options, message)
-                }
-            }
-        }
-        guard result == GIT_OK.rawValue else {
-            let err = NSError(gitError: result, pointOfFailure: "git_remote_fetch")
-            throw err
-        }
-    }
 
     enum PullType {
         case merge
         case rebase
-    }
-
-    func pull(branch: Branch, remote: Remote, options: FetchOptions) throws {
-        lock.lock()
-        defer { lock.unlock() }
-        try fetch(remote: remote, options: options)
-        let remoteBranch = try remoteBranch(named: "\(remote)/\(branch)").get()
-        guard let remoteBranch else {
-            throw NSError(gitError: 1, pointOfFailure: "git_config_get_string", description: "Could not find the upstream branch.")
-        }
-        try merge(branch: remoteBranch)
     }
 
     // What git does: (merge.c:cmd_merge)
@@ -481,53 +440,6 @@ extension Repository: RemoteManagement {
         try RepoError.throwIfGitError(result)
     }
 
-    @discardableResult
-    public func clone(
-        from source: URL,
-        to destination: URL,
-        branch: String,
-        recurseSubmodules: Bool,
-        publisher: RemoteProgressPublisher
-    ) throws -> Repository? {
-        try branch.withCString { cBranch in
-            try git_remote_callbacks.withCallbacks(publisher.callbacks) { gitCallbacks in
-                var options = git_clone_options.defaultOptions()
-
-                options.bare = 0
-                options.checkout_branch = cBranch
-                options.fetch_opts.callbacks = gitCallbacks
-
-                let gitRepo: OpaquePointer
-
-                do {
-                    gitRepo = try OpaquePointer.from {
-                        git_clone(&$0, source.absoluteString, destination.path, &options)
-                    }
-                }
-                catch let error as RepoError {
-                    publisher.error(error)
-                    throw error
-                }
-                catch let error  {
-                    publisher.error(.unexpected(error.localizedDescription))
-                    throw error
-                }
-
-                let repo = Repository(gitRepo)
-                if recurseSubmodules {
-                    fatalError(.unimplemented)
-//                    for sub in repo.submodules() {
-//                        try sub.update(callbacks: publisher.callbacks)
-                        // recurse
-//                    }
-                }
-
-                publisher.finished()
-                return repo
-            }
-        }
-    }
-
     /// Clone the repository from a given URL.
     ///
     /// remoteURL   - The URL of the remote repository
@@ -535,37 +447,41 @@ extension Repository: RemoteManagement {
     /// options     - The options will be used
     ///
     /// Returns a `Result` with a `Repository` or an error.
-//    class func clone(from remoteURL: URL,
-//                     to localURL: URL,
-//                     options: CloneOptions? = nil,
-//                     recurseSubmodules: Bool? = nil) -> Result<Repository, NSError> {
-//        Repository.staticLock.lock()
-//        defer { staticLock.unlock() }
-//        let options = options ?? CloneOptions(fetchOptions: FetchOptions(url: remoteURL.absoluteString))
-//        var opt = options.toGitOptions()
-//
-//        var pointer: OpaquePointer? = nil
-//        let remoteURLString = (remoteURL as NSURL).isFileReferenceURL() ? remoteURL.path : remoteURL.absoluteString
-//        let result = localURL.withUnsafeFileSystemRepresentation { localPath in
-//            git_clone(&pointer, remoteURLString, localPath, &opt)
-//        }
-//
-//        guard result == GIT_OK.rawValue else {
-//            return Result.failure(NSError(gitError: result, pointOfFailure: "git_clone"))
-//        }
-//
-//        let repository = Repository(pointer!)
-//        if recurseSubmodules != false {
-//            let submoduleOptions = Submodule.UpdateOptions(fetchOptions: options.fetchOptions, checkoutOptions: options.checkoutOptions)
-//            repository.eachSubmodule { (submodule) -> Int32 in
-//                if recurseSubmodules == true || submodule.recurseFetch != .no {
-//                    submodule.update(options: submoduleOptions, init: true, rescurse: recurseSubmodules)
-//                }
-//                return GIT_OK.rawValue
-//            }
-//        }
-//        return Result.success(repository)
-//    }
+    class func clone(
+        from remoteURL: URL,
+        to localURL: URL,
+        options: CloneOptions? = nil,
+        recurseSubmodules: Bool? = nil
+    ) -> Result<Repository, NSError> {
+        Repository.staticLock.lock()
+        defer {
+            staticLock.unlock()
+        }
+        let options = options ?? CloneOptions(fetchOptions: FetchOptions(url: remoteURL.absoluteString))
+        var opt = options.toGitOptions()
+
+        var pointer: OpaquePointer? = nil
+        let remoteURLString = (remoteURL as NSURL).isFileReferenceURL() ? remoteURL.path : remoteURL.absoluteString
+        let result = localURL.withUnsafeFileSystemRepresentation { localPath in
+            git_clone(&pointer, remoteURLString, localPath, &opt)
+        }
+
+        guard result == GIT_OK.rawValue else {
+            return Result.failure(NSError(gitError: result, pointOfFailure: "git_clone"))
+        }
+
+        let repository = Repository(pointer!)
+        if recurseSubmodules != false {
+            let submoduleOptions = Submodule.UpdateOptions(fetchOptions: options.fetchOptions, checkoutOptions: options.checkoutOptions)
+            repository.eachSubmodule { (submodule) -> Int32 in
+                if recurseSubmodules == true || submodule.recurseFetch != .no {
+                    submodule.update(options: submoduleOptions, init: true, rescurse: recurseSubmodules)
+                }
+                return GIT_OK.rawValue
+            }
+        }
+        return Result.success(repository)
+    }
 
 //    class func preProcessURL(_ url: URL) -> Result<String, NSError> {
 //        Repository.staticLock.lock()

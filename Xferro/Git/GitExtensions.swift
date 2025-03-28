@@ -7,24 +7,6 @@
 
 import Foundation
 
-extension git_fetch_options {
-    static func withOptions<T>(
-        _ fetchOptions: FetchOptions,
-        action: (git_fetch_options) throws -> T
-    ) rethrows -> T {
-        var options = git_fetch_options.defaultOptions()
-
-        options.prune = fetchOptions.pruneBranches ?
-        GIT_FETCH_PRUNE : GIT_FETCH_NO_PRUNE
-        options.download_tags = fetchOptions.downloadTags ?
-        GIT_REMOTE_DOWNLOAD_TAGS_ALL : GIT_REMOTE_DOWNLOAD_TAGS_AUTO
-        return try git_remote_callbacks.withCallbacks(fetchOptions.remoteCallbacks) { callbacks in
-            options.callbacks = callbacks
-            return try action(options)
-        }
-    }
-}
-
 extension git_index_entry {
     /// The stage value is stored in certain bits of the `flags` field.
     var stage: UInt16 {

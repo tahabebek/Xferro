@@ -272,13 +272,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor static func showCloneRepositoryView() {
         let cloneView = CloneRepositoryView {
             dismissCloneView()
-        } onClone: { destinationPath, sourcePath, isRemote in
+        } onClone: {
+            destinationPath,// add some comments
+            sourcePath,
+            destinationFolderName,
+            isRemote in
             dismissCloneView()
+            let destinationPath = destinationPath + "/" + destinationFolderName
             print("Clone repository to \(destinationPath) from \(sourcePath), isREMOTE: \(isRemote)")
-            if isRemote {
-                
-            } else {
-                
+            Task {
+                await withActivityOperation(
+                    title: "Cloning \(sourcePath).. to \(destinationPath)",
+                    successMessage: "Cloned \(sourcePath) to \(destinationPath)"
+                ) {
+                    do {
+                        try GitCLI.clone(
+                            sourcePath: sourcePath,
+                            destinationPath: destinationPath,
+                            progressHandler: { progressText in
+                                print("\(progressText)")
+                            },
+                            completion: { success, message in
+                                Task { @MainActor in
+                                    if success {
+                                        print("Cloned successfully")
+                                    } else {
+                                        print("Error cloning")
+                                        showErrorAlert(message: message ?? "Clone failed")
+                                    }
+                                }
+                            }
+                        )
+                    } catch {
+                        showErrorAlert(message: error.localizedDescription)
+                    }
+                }
             }
         }
         .frame(width: 600, height: 300)

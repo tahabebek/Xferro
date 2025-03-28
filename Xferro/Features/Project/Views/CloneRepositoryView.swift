@@ -13,11 +13,12 @@ struct CloneRepositoryView: View {
     @State var remoteSource: String = ""
     @State var localSource: String = ""
     @State var destinationPath: String = ""
+    @State var destinationFolderName: String = ""
     @State var invalidMessage: String?
     @State var isRemote: Bool = true
 
     let onCancel: () -> Void
-    let onClone: (String, String, Bool) -> Void
+    let onClone: (String, String, String, Bool) -> Void
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -51,7 +52,11 @@ struct CloneRepositoryView: View {
                             invalidMessage = "Please enter a destination folder"
                             return
                         }
-                        onClone(destinationPath, isRemote ? remoteSource : localSource, isRemote)
+                        if destinationFolderName.isEmptyOrWhitespace {
+                            invalidMessage = "Please enter a destination folder name"
+                            return
+                        }
+                        onClone(destinationPath, isRemote ? remoteSource : localSource, destinationFolderName, isRemote)
                     }
                 )
             }
@@ -62,6 +67,21 @@ struct CloneRepositoryView: View {
         .textFieldStyle(.roundedBorder)
         .onAppear {
             isTextFieldFocused = true
+        }
+        .onChange(of: remoteSource) {
+            destinationFolderName = (remoteSource.components(separatedBy: "/").last ?? "")
+                .replacingOccurrences(of: ".git", with: "")
+        }
+        .onChange(of: localSource) {
+            destinationFolderName = (localSource.components(separatedBy: "/").last ?? "")
+        }
+        .onChange(of: isRemote) {
+            if isRemote {
+                destinationFolderName = (remoteSource.components(separatedBy: "/").last ?? "")
+                    .replacingOccurrences(of: ".git", with: "")
+            } else {
+                destinationFolderName = (localSource.components(separatedBy: "/").last ?? "")
+            }
         }
     }
     
@@ -102,6 +122,11 @@ struct CloneRepositoryView: View {
                             chooseDestinationFolder()
                         }
                     )
+                }
+                HStack {
+                    Text("Clone as:")
+                    Spacer()
+                    TextField("Clone as", text: $destinationFolderName)
                 }
             }
         }

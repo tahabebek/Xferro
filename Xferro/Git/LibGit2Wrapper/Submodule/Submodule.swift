@@ -84,27 +84,27 @@ class Submodule {
         return OID(oid)
     }
 
-//    @discardableResult
-//    func update(options: UpdateOptions, init: Bool = true, rescurse: Bool? = nil) -> Result<Void, NSError> {
-//        lock.lock()
-//        defer { lock.unlock() }
-//        let msgBlock = options.fetchOptions.remoteCallback.messageBlock
-//        msgBlock?("\nClone submodule `\(self.name)`:\n")
-//        var gitOptions = options.toGitOptions()
-//        let result = git_submodule_update(git_submodule, `init` ? 1 : 0, &gitOptions)
-//        guard result == GIT_OK.rawValue else {
-//            let error = NSError(gitError: result, pointOfFailure: "git_submodule_update")
-//            msgBlock?(error.localizedDescription)
-//            return .failure(error)
-//        }
-//        if rescurse != false || self.recurseFetch != .no {
-//            self.repository?.eachSubmodule {
-//                $0.update(options: options, init: `init`, rescurse: rescurse)
-//                return GIT_OK.rawValue
-//            }
-//        }
-//        return .success(())
-//    }
+    @discardableResult
+    func update(options: UpdateOptions, init: Bool = true, rescurse: Bool? = nil) -> Result<Void, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
+        let msgBlock = options.fetchOptions.remoteCallback.messageBlock
+        msgBlock?("\nClone submodule `\(self.name)`:\n")
+        var gitOptions = options.toGitOptions()
+        let result = git_submodule_update(git_submodule, `init` ? 1 : 0, &gitOptions)
+        guard result == GIT_OK.rawValue else {
+            let error = NSError(gitError: result, pointOfFailure: "git_submodule_update")
+            msgBlock?(error.localizedDescription)
+            return .failure(error)
+        }
+        if rescurse != false || self.recurseFetch != .no {
+            self.repository?.eachSubmodule {
+                $0.update(options: options, init: `init`, rescurse: rescurse)
+                return GIT_OK.rawValue
+            }
+        }
+        return .success(())
+    }
 
     func sync() -> Bool {
         lock.lock()
@@ -118,18 +118,18 @@ class Submodule {
         return git_submodule_reload(git_submodule, force ? 1 : 0) == 0
     }
 
-//    @discardableResult
-//    func clone(options: UpdateOptions) -> Result<Repository, NSError> {
-//        lock.lock()
-//        defer { lock.unlock() }
-//        var repo: OpaquePointer?
-//        var options = options.toGitOptions()
-//        let result = git_submodule_clone(&repo, git_submodule, &options)
-//        guard result == GIT_OK.rawValue else {
-//            return .failure(NSError(gitError: result, pointOfFailure: "git_submodule_clone"))
-//        }
-//        return .success(Repository(repo!))
-//    }
+    @discardableResult
+    func clone(options: UpdateOptions) -> Result<Repository, NSError> {
+        lock.lock()
+        defer { lock.unlock() }
+        var repo: OpaquePointer?
+        var options = options.toGitOptions()
+        let result = git_submodule_clone(&repo, git_submodule, &options)
+        guard result == GIT_OK.rawValue else {
+            return .failure(NSError(gitError: result, pointOfFailure: "git_submodule_clone"))
+        }
+        return .success(Repository(repo!))
+    }
 
     var recurseFetch: Recurse {
         set {
