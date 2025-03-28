@@ -73,7 +73,7 @@ import Observation
     }
 
     func refreshStatus() async {
-        status = StatusManager.shared.status(of: self.repository)
+        status = await StatusManager.shared.status(of: self.repository)
         await onGitChange?(.index(self))
     }
 

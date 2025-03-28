@@ -27,7 +27,7 @@ extension RepositoryInfo {
                 #warning("collect after updating the status, status update is urgent")
                 Task { [weak self] in
                     guard let self else { return }
-                    self.status = StatusManager.shared.status(of: repository)
+                    self.status = await StatusManager.shared.status(of: repository)
                     let paths = Set(batchPaths
                         .flatMap { batch in
                             batch.map { path in

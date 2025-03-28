@@ -33,7 +33,7 @@ extension RepositoryInfo {
 //                print("index changed for repository \(repository.nameOfRepo)")
                 Task { @MainActor  [weak self] in
                     guard let self else { return }
-                    self.status = StatusManager.shared.status(of: self.repository)
+                    self.status = await StatusManager.shared.status(of: self.repository)
                     await self.onGitChange?(.index(self))
                 }
             }
