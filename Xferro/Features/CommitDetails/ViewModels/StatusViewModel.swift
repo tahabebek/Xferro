@@ -926,15 +926,17 @@ fileprivate extension StatusViewModel {
                 try! FileManager.default.removeItem(atPath: path)
             }
             try GitCLI.execute(repositoryInfo.repository, ["restore", "--staged", "."])
-            Task { @MainActor [weak self] in
+            await MainActor.run { [weak self] in
                 guard let self else { return }
                 commitSummary = ""
                 currentFile = nil
             }
         }
         try? await Task.sleep(for: .seconds(1))
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             await repositoryInfo.refreshStatus()
+            setInitialSelection()
         }
     }
 
