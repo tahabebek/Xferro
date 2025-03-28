@@ -936,7 +936,6 @@ fileprivate extension StatusViewModel {
         Task { @MainActor [weak self] in
             guard let self else { return }
             await repositoryInfo.refreshStatus()
-            setInitialSelection()
         }
     }
 
