@@ -12,7 +12,7 @@ final class StatusManager {
     let lock = NSRecursiveLock()
 
     private init() {}
-    func status(of repository: Repository) async -> [StatusEntry] {
+    func status(of repository: Repository) -> [StatusEntry] {
         repository.status(options: [
             .includeUntracked,
             .renamesFromRewrites,

@@ -15,12 +15,16 @@ extension Repository {
         } else {
             lock.lock()
         }
-        let commit: Commit = commit(message: "Initial Commit", staticLock: staticLock).mustSucceed(gitDir)
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
         }
+        
+        let commit: Commit = commit(message: "Initial Commit", staticLock: staticLock).mustSucceed(gitDir)
+        
         return commit
     }
 
@@ -37,6 +41,15 @@ extension Repository {
         } else {
             lock.lock()
         }
+
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
+        
         var msgBuf = git_buf()
         git_message_prettify(&msgBuf, message, 0, /* ascii for # */ 35)
         defer { git_buf_dispose(&msgBuf) }
@@ -62,11 +75,6 @@ extension Repository {
             }
             return .success(commitOID)
         }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return result
     }
 
@@ -82,6 +90,15 @@ extension Repository {
         } else {
             lock.lock()
         }
+        
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
+        
         var tree: OpaquePointer? = nil
         var treeOIDCopy = oid
         let lookupResult = git_tree_lookup(&tree, self.pointer, &treeOIDCopy)
@@ -97,11 +114,6 @@ extension Repository {
             signature: signature,
             staticLock: staticLock
         )
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return commit
     }
 
@@ -117,6 +129,13 @@ extension Repository {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         var treeOID = git_oid()
         let result = git_index_write_tree(&treeOID, index)
         guard result == GIT_OK.rawValue else {
@@ -130,11 +149,6 @@ extension Repository {
             signature: signature,
             staticLock: staticLock
         )
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return commit
     }
 
@@ -148,6 +162,14 @@ extension Repository {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
+        
         let unborn: Bool
         let result = git_repository_head_unborn(self.pointer)
         if result == 1 {
@@ -185,11 +207,6 @@ extension Repository {
                 message: message,
                 signature: signature)
         }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return oid
     }
 
@@ -216,13 +233,15 @@ extension Repository {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         let commit = withGitObject(oid, type: GIT_OBJECT_COMMIT, staticLock: staticLock) {
             Commit($0, lock: staticLock ?? lock)
-        }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
         }
         return commit
     }
@@ -312,6 +331,13 @@ extension Repository {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         let sign: Signature
         do {
             sign = try signature ?? Signature.default(self, staticLock: staticLock).get()
@@ -322,11 +348,6 @@ extension Repository {
             self.commit(message: message, signature: $0, staticLock: staticLock).flatMap {
                 commit(OID($0), staticLock: staticLock)
             }
-        }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
         }
         return result
     }

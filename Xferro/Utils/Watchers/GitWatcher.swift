@@ -241,8 +241,7 @@ final class GitWatcher {
         localBranchCache = newRefCache
     }
 
-    func makePackedRefsWatcher()
-    {
+    func makePackedRefsWatcher() {
         let watcher = FileMonitor(path: repository.gitDir.path +/ "packed-refs")
 
         if let watcher {

@@ -134,6 +134,14 @@ fileprivate extension Repository {
         } else {
             lock.lock()
         }
+        
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         var pointer: OpaquePointer? = nil
         defer { git_reference_free(pointer) }
         let result = git_repository_head(&pointer, self.pointer)
@@ -141,11 +149,6 @@ fileprivate extension Repository {
             return Result.failure(NSError(gitError: result, pointOfFailure: "git_repository_head"))
         }
         let value = referenceWithLibGit2Reference(pointer!, lock: staticLock ?? lock)
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return .success(value)
     }
 

@@ -99,6 +99,13 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         var pointer: OpaquePointer? = nil
         var git_oid = oid.oid
         let result = git_object_lookup_prefix(&pointer, self.pointer, &git_oid, oid.length, type)
@@ -109,11 +116,7 @@ class Repository: Identifiable {
 
         let value = transform(pointer!)
         git_object_free(pointer)
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
+        
         return value
     }
 
@@ -128,13 +131,15 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         let result = withGitObject(oid, type: type, staticLock: staticLock) { Result.success(transform($0)) }
 
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return result
     }
 
@@ -148,6 +153,13 @@ class Repository: Identifiable {
             staticLock.lock()
         } else {
             lock.lock()
+        }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
         }
         var pointers = [OpaquePointer]()
         defer {
@@ -168,11 +180,6 @@ class Repository: Identifiable {
                         pointOfFailure: "git_object_lookup"
                     )
                 )
-                if let staticLock {
-                    staticLock.unlock()
-                } else {
-                    lock.unlock()
-                }
                 return result
             }
 
@@ -180,11 +187,6 @@ class Repository: Identifiable {
         }
 
         let result = transform(pointers)
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return result
     }
 
@@ -199,13 +201,15 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         let result = withGitObject(oid, type: GIT_OBJECT_ANY, staticLock: staticLock) { object in
             return self.object(from: object, staticLock: staticLock)
-        }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
         }
         return result
     }
@@ -221,13 +225,15 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         let result = withGitObject(pointer.oid, type: pointer.type.git_type, staticLock: staticLock) {
             T($0, lock: lock)
-        }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
         }
         return result
     }
@@ -243,6 +249,13 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         let result =
         switch pointer {
         case let .blob(oid):
@@ -253,11 +266,6 @@ class Repository: Identifiable {
             tag(oid, staticLock: staticLock).map { $0 as ObjectType }
         case let .tree(oid):
             tree(oid, staticLock: staticLock).map { $0 as ObjectType }
-        }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
         }
         return result
     }
@@ -272,6 +280,13 @@ class Repository: Identifiable {
             staticLock.lock()
         } else {
             lock.lock()
+        }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
         }
         let type = git_object_type(object)
         let result: Result<ObjectType, NSError>
@@ -289,11 +304,6 @@ class Repository: Identifiable {
                                 userInfo: [NSLocalizedDescriptionKey: "Unrecognized git_object_t '\(type)'."])
             result =  .failure(error)
         }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return result
     }
 
@@ -308,13 +318,15 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         let result = withGitObject(oid, type: GIT_OBJECT_BLOB, staticLock: staticLock) {
             Blob($0, lock: staticLock ?? lock)
-        }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
         }
         return result
     }
@@ -330,14 +342,15 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         let result = withGitObject(oid, type: GIT_OBJECT_TREE, staticLock: staticLock) {
             Tree($0, lock: staticLock ?? lock)
-        }
-
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
         }
         return result
     }
@@ -353,6 +366,13 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         let options = options ?? .includeUntracked
         var returnArray = [StatusEntry]()
 
@@ -363,11 +383,6 @@ class Repository: Identifiable {
             let result: Result<[StatusEntry], NSError> = .failure(
                 NSError(gitError: optionsResult, pointOfFailure: "git_status_init_options")
             )
-            if let staticLock {
-                staticLock.unlock()
-            } else {
-                lock.unlock()
-            }
             return result
         }
         var opts = statusOptionsPointer.move()
@@ -382,11 +397,6 @@ class Repository: Identifiable {
             let result: Result<[StatusEntry], NSError> = .failure(
                 NSError(gitError: statusResult, pointOfFailure: "git_status_list_new")
             )
-            if let staticLock {
-                staticLock.unlock()
-            } else {
-                lock.unlock()
-            }
             return result
         }
 
@@ -403,11 +413,6 @@ class Repository: Identifiable {
         }
 
         let result: Result<[StatusEntry], NSError> = .success(returnArray)
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return result
     }
 
@@ -417,17 +422,19 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         var flags: UInt32 = 0
         let result = path.withCString { cpath in
             git_status_file(&flags, self.pointer, cpath)
         }
         if result == GIT_ENOTFOUND.rawValue {
             let result: Result<Diff.Status?, NSError> = .success(nil)
-            if let staticLock {
-                staticLock.unlock()
-            } else {
-                lock.unlock()
-            }
             return result
         }
         guard result == GIT_OK.rawValue else {
@@ -437,19 +444,9 @@ class Repository: Identifiable {
                     pointOfFailure: "git_status_file"
                 )
             )
-            if let staticLock {
-                staticLock.unlock()
-            } else {
-                lock.unlock()
-            }
             return result
         }
         let status: Result<Diff.Status?, NSError>  = .success(Diff.Status(rawValue: flags))
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         return status
     }
 
@@ -488,13 +485,15 @@ class Repository: Identifiable {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
         var status: Int32 = 0
         let result = git_reference_name_is_valid(&status, refname)
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
         guard result == GIT_OK.rawValue else {
             return false
         }

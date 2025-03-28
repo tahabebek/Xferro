@@ -45,6 +45,13 @@ struct Signature: Codable {
         } else {
             repository.lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                repository.lock.unlock()
+            }
+        }
         var signature: UnsafeMutablePointer<git_signature>? = nil
         let signatureResult = git_signature_default(&signature, repository.pointer)
         if signatureResult == GIT_OK.rawValue, let signatureUnwrap = signature {
@@ -57,11 +64,6 @@ struct Signature: Codable {
         }
         let name = repository.config?.userName ?? NSUserName()
         let email = repository.config?.userEmail ?? "\(NSUserName())@\(ProcessInfo.processInfo.hostName)"
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            repository.lock.unlock()
-        }
         return .success(Signature(name: name, email: email))
     }
 }

@@ -37,17 +37,21 @@ extension Repository {
         } else {
             lock.lock()
         }
+        defer {
+            if let staticLock {
+                staticLock.unlock()
+            } else {
+                lock.unlock()
+            }
+        }
+        
         var index: OpaquePointer? = nil
         let result = git_repository_index(&index, self.pointer)
         guard result == GIT_OK.rawValue && index != nil else {
             let err = NSError(gitError: result, pointOfFailure: "git_repository_index")
             return .failure(err)
         }
-        if let staticLock {
-            staticLock.unlock()
-        } else {
-            lock.unlock()
-        }
+        
         return .success(index!)
     }
 
