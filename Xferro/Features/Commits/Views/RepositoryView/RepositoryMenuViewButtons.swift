@@ -66,7 +66,7 @@ struct RepositoryMenuViewButtons: View {
             )
             Divider()
             XFButton<Void>(
-                title: "Pull \(head.name) branch (merge)",
+                title: "Pull \(head.name) branch with merge",
                 info: XFButtonInfo(info: InfoTexts.pull),
                 onTap: {
                     showButtons = false
@@ -74,7 +74,7 @@ struct RepositoryMenuViewButtons: View {
                 }
             )
             XFButton<Void>(
-                title: "Pull \(head.name) branch (rebase)",
+                title: "Pull \(head.name) branch with rebase",
                 info: XFButtonInfo(info: InfoTexts.pull),
                 onTap: {
                     showButtons = false

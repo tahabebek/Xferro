@@ -24,6 +24,7 @@ struct BranchMenuView: View {
 
     let onDeleteBranchTapped: (String) -> Void
     let onTapPush: (String, Remote?, Repository.PushType) -> Void
+    let onPullTapped: (Repository.PullType) -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
@@ -59,6 +60,7 @@ struct BranchMenuView: View {
                 onDeleteBranchTapped: onDeleteBranchTapped,
                 onCheckoutBranchTapped: { onCheckoutOrDelete($0, false, .checkout) },
                 onTapPush: onTapPush,
+                onPullTapped: onPullTapped,
                 onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
                 onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
                 onAddRemoteTapped: onAddRemoteTapped

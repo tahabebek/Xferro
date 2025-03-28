@@ -73,6 +73,7 @@ struct RepositoryView: View {
             onDeleteBranchTapped: repositoryInfo.onDeleteBranchTapped ?? { _ in },
             onIsCurrentBranch: repositoryInfo.onIsCurrentBranch ?? { _, _ in false },
             onTapPush: onTapPush,
+            onPullTapped: onPullTapped,
             onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
             onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
             onAddRemoteTapped: onAddRemoteTapped,

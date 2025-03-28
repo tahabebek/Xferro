@@ -288,8 +288,7 @@ import OrderedCollections
         conflictedEntries: [StatusEntry]
     ) async {
         guard let conflictOperationInProgress = repositoryInfo.repository.conflictOperationInProgress() else {
-            try? await Task.sleep(for: .seconds(1))
-            await repositoryInfo.refreshStatus()
+            await refreshStatus()
             return
         }
 
@@ -606,34 +605,38 @@ fileprivate extension StatusViewModel {
         switch pullType {
         case .merge:
             await withActivityOperation(
-                title: "Pulling \(repositoryInfo.head.name) branch (merge)..",
-                successMessage: "Pulled \(repositoryInfo.head.name) branch (merge).."
-            ) {
+                title: "Pulling \(repositoryInfo.head.name) branch with merge..",
+                successMessage: "Pulled \(repositoryInfo.head.name) branch with merge.."
+            ) { [weak self] in
+                guard let self else { return }
                 do {
                     try GitCLI.execute(repositoryInfo.repository, ["pull", "--no-rebase"])
                 } catch {
-                    Task { @MainActor in
-                        await repositoryInfo.refreshStatus()
-                    }
+                    await refreshStatus()
                 }
             }
         case .rebase:
+            if repositoryInfo.status.isNotEmpty {
+                Task { @MainActor in
+                    AppDelegate.showErrorMessage(
+                        error: RepoError.unexpected("Please commit your changes or stash them before you pull with rebase.")
+                    )
+                }
+                return
+            }
             await withActivityOperation(
-                title: "Pulling \(repositoryInfo.head.name) branch (rebase)..",
-                successMessage: "Pulling \(repositoryInfo.head.name) branch (rebase).."
-            ) {
+                title: "Pulling \(repositoryInfo.head.name) branch with rebase..",
+                successMessage: "Pulling \(repositoryInfo.head.name) branch with rebase.."
+            ) { [weak self] in
+                guard let self else { return }
                 do {
                     try GitCLI.execute(repositoryInfo.repository, ["pull", "--rebase=merges",])
                 } catch {
-                    Task { @MainActor in
-                        await repositoryInfo.refreshStatus()
-                    }
+                    await refreshStatus()
                 }
             }
         }
-        Task { @MainActor in
-            await repositoryInfo.refreshStatus()
-        }
+        await refreshStatus()
     }
 
     func push(
@@ -797,9 +800,7 @@ fileprivate extension StatusViewModel {
         for file in unsortedUntrackedFiles.values {
             await track(flag: true, file: file, shouldRefreshStatus: false)
         }
-        Task { @MainActor in
-            await repositoryInfo.refreshStatus()
-        }
+        await refreshStatus()
     }
 
     func track(flag: Bool, file: OldNewFile, shouldRefreshStatus: Bool = true) async {
@@ -815,9 +816,7 @@ fileprivate extension StatusViewModel {
             }
         }
         if shouldRefreshStatus {
-            Task { @MainActor in
-                await repositoryInfo.refreshStatus()
-            }
+            await refreshStatus()
         }
     }
 
@@ -844,12 +843,12 @@ fileprivate extension StatusViewModel {
             var filesToWriteBack: [String: String] = [:]
             var filesToAdd: Set<String> = []
             var filesToDelete: Set<String> = []
-
+            
             for file in unsortedTrackedFiles.values.elements where file.checkState == .checked {
                 guard file.new != nil || file.old != nil else {
                     fatalError(.invalid)
                 }
-
+                
                 if let new = file.new {
                     filesToAdd.insert(new)
                 }
@@ -857,24 +856,24 @@ fileprivate extension StatusViewModel {
                     filesToAdd.insert(old)
                 }
             }
-
+            
             for file in unsortedTrackedFiles.values.elements where file.checkState == .partiallyChecked {
                 guard let hunks = file.diffInfo?.hunks else {
                     fatalError(.invalid)
                 }
-
+                
                 let hunkCopies = hunks.map { $0.copy() }
                 let originalLines = hunks.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
                 let copyLines = hunkCopies.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
                 for i in 0..<originalLines.count {
                     copyLines[i].isSelected = !originalLines[i].isSelected
                 }
-
+                
                 let unselectedLines = copyLines.filter(\.isSelected)
                 if unselectedLines.count == 0 {
                     fatalError(.impossible)
                 }
-
+                
                 switch file.status {
                 case .added, .copied, .renamed, .typeChange, .modified:
                     guard let workDirNew = file.workDirNew, let new = file.new else {
@@ -892,7 +891,7 @@ fileprivate extension StatusViewModel {
                     guard let old = file.old else {
                         fatalError(.invalid)
                     }
-
+                    
                     try! await file.discardLines(lines: unselectedLines, hunks: hunkCopies)
                     filesToAdd.insert(old)
                     filesToDelete.insert(old)
@@ -900,7 +899,7 @@ fileprivate extension StatusViewModel {
                     fatalError(.invalid)
                 }
             }
-
+            
             let addArguments = ["add"] + Array(filesToAdd)
             try GitCLI.execute(repositoryInfo.repository, addArguments)
             if amend {
@@ -912,7 +911,7 @@ fileprivate extension StatusViewModel {
             } else {
                 try GitCLI.execute(repositoryInfo.repository, ["commit", "--allow-empty", "-m", commitSummary])
             }
-
+            
             for file in unsortedTrackedFiles.values.elements {
                 await diffInfoCache.removeValue(forKey: file.key)
                 if let workDirNew = file.workDirNew {
@@ -932,13 +931,9 @@ fileprivate extension StatusViewModel {
                 currentFile = nil
             }
         }
-        try? await Task.sleep(for: .seconds(1))
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            await repositoryInfo.refreshStatus()
-        }
+        await refreshStatus()
     }
-
+    
     func ignore(file: OldNewFile) async {
         guard let repositoryInfo else { fatalError(.invalid) }
         guard let path = file.new else { fatalError(.illegal) }
@@ -948,9 +943,7 @@ fileprivate extension StatusViewModel {
         ) {
             try repositoryInfo.repository.ignore(path)
         }
-        Task { @MainActor in
-            await repositoryInfo.refreshStatus()
-        }
+        await refreshStatus()
     }
 
     func discard(file: OldNewFile) async {
@@ -993,7 +986,7 @@ fileprivate extension StatusViewModel {
             }
         }
         Task { @MainActor in
-            await repositoryInfo.refreshStatus()
+            await refreshStatus()
             if file == currentFile {
                 currentFile = nil
                 setInitialSelection()
@@ -1013,7 +1006,7 @@ fileprivate extension StatusViewModel {
         Task { @MainActor [weak self] in
             guard let self else { return }
             currentFile = nil
-            await repositoryInfo.refreshStatus()
+            await refreshStatus()
         }
     }
 
@@ -1033,7 +1026,7 @@ fileprivate extension StatusViewModel {
             currentFile = nil
             conflictType = nil
             conflictedFiles = []
-            await repositoryInfo.refreshStatus()
+            await refreshStatus()
         }
     }
 
@@ -1050,7 +1043,7 @@ fileprivate extension StatusViewModel {
             currentFile = nil
             conflictType = nil
             conflictedFiles = []
-            await repositoryInfo.refreshStatus()
+            await refreshStatus()
         }
     }
 
@@ -1066,9 +1059,7 @@ fileprivate extension StatusViewModel {
                 try GitCLI.execute(repositoryInfo.repository, ["add"] + files)
                 try GitCLI.execute(repositoryInfo.repository, ["rebase", "--continue"])
             } catch {
-                Task { @MainActor in
-                    await repositoryInfo.refreshStatus()
-                }
+                await refreshStatus()
             }
         }
         Task { @MainActor [weak self] in
@@ -1076,7 +1067,7 @@ fileprivate extension StatusViewModel {
             currentFile = nil
             conflictType = nil
             conflictedFiles = []
-            await repositoryInfo.refreshStatus()
+            await refreshStatus()
         }
     }
 
@@ -1085,13 +1076,12 @@ fileprivate extension StatusViewModel {
         await withActivityOperation(
             title: "Aborting rebase..",
             successMessage: "Rebase aborted"
-        ) {
+        ) { [weak self] in
+            guard let self else { return }
             do {
                 try GitCLI.execute(repositoryInfo.repository, ["rebase", "--abort"])
             } catch {
-                Task { @MainActor in
-                    await repositoryInfo.refreshStatus()
-                }
+                await refreshStatus()
             }
         }
         Task { @MainActor [weak self] in
@@ -1099,7 +1089,12 @@ fileprivate extension StatusViewModel {
             currentFile = nil
             conflictType = nil
             conflictedFiles = []
-            await repositoryInfo.refreshStatus()
+            await refreshStatus()
         }
+    }
+    
+    @MainActor private func refreshStatus() async {
+        try? await Task.sleep(for: .seconds(1))
+        await repositoryInfo?.refreshStatus()
     }
 }

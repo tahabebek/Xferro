@@ -30,7 +30,6 @@ struct LineView: View {
     let onDiscardPart: () -> Void
     let onDiscardLine: () -> Void
     let onHoverPart: (Bool) -> Void
-    let showText: Bool
     let color: Color
 
     init(
@@ -70,7 +69,6 @@ struct LineView: View {
         self.onDiscardPart = onDiscardPart
         self.onDiscardLine = onDiscardLine
         self.onHoverPart = onHoverPart
-        self.showText = showText
         self.color = switch lineType {
         case .addition:
             Color(hexValue: 0x28A745)
@@ -133,6 +131,6 @@ struct LineView: View {
     }
 
     func lineNumber(_ line: Int) -> String {
-        line == -1 ? "" : line.formatted()
+        line == -1 ? "" : String(line)
     }
 }

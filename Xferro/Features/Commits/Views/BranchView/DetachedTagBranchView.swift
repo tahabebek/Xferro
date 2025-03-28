@@ -25,6 +25,7 @@ struct DetachedTagBranchView: View {
                     currentBranch: viewModel.currentBranch,
                     onDeleteBranchTapped: viewModel.onDeleteBranchTapped,
                     onTapPush: viewModel.onTapPush,
+                    onPullTapped: { _ in },
                     onGetLastSelectedRemoteIndex: viewModel.onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: viewModel.onSetLastSelectedRemoteIndex,
                     onAddRemoteTapped: viewModel.onAddRemoteTapped,

@@ -23,6 +23,7 @@ struct BranchMenuPopover: View {
     let onDeleteBranchTapped: (String) -> Void
     let onCheckoutBranchTapped: (String) -> Void
     let onTapPush: (String, Remote?, Repository.PushType) -> Void
+    let onPullTapped: (Repository.PullType) -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void
@@ -37,7 +38,25 @@ struct BranchMenuPopover: View {
                         onCheckoutBranchTapped(name)
                     }
                 )
+                Divider()
             }
+            XFButton<Void>(
+                title: "Pull \(name) branch with merge",
+                info: XFButtonInfo(info: InfoTexts.pull),
+                onTap: {
+                    showingBranchOptions = false
+                    onPullTapped(.merge)
+                }
+            )
+            XFButton<Void>(
+                title: "Pull \(name) branch with rebase",
+                info: XFButtonInfo(info: InfoTexts.pull),
+                onTap: {
+                    showingBranchOptions = false
+                    onPullTapped(.rebase)
+                }
+            )
+            Divider()
             PushButton(
                 selectedRemoteForPush: $selectedRemoteForPush,
                 remotes: remotes,

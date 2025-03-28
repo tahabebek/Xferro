@@ -23,14 +23,15 @@ struct DetachedCommitBranchView: View {
                     localBranches: viewModel.localBranches,
                     remoteBranches: viewModel.remoteBranches,
                     currentBranch: viewModel.currentBranch,
-                    onDeleteBranchTapped: viewModel.onDeleteBranchTapped,
-                    onTapPush: viewModel.onTapPush,
-                    onGetLastSelectedRemoteIndex: viewModel.onGetLastSelectedRemoteIndex,
-                    onSetLastSelectedRemoteIndex: viewModel.onSetLastSelectedRemoteIndex,
-                    onAddRemoteTapped: viewModel.onAddRemoteTapped,
+                    onDeleteBranchTapped: { _ in },
+                    onTapPush: { _, _, _ in },
+                    onPullTapped: { _ in },
+                    onGetLastSelectedRemoteIndex: { _ in 0 },
+                    onSetLastSelectedRemoteIndex: { _, _ in },
+                    onAddRemoteTapped: { },
                     onCreateBranchTapped: viewModel.onCreateBranchTapped,
-                    onCheckoutOrDelete: viewModel.onCheckoutOrDelete,
-                    onMergeOrRebase: viewModel.onMergeOrRebase
+                    onCheckoutOrDelete: { _, _, _ in },
+                    onMergeOrRebase: { _, _, _ in }
                 )
                 .frame(maxWidth: 120)
                 .padding(.trailing, 8)

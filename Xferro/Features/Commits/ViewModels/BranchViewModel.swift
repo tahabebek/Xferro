@@ -21,6 +21,7 @@ struct BranchViewModel {
     let onDeleteBranchTapped: (String) -> Void
     let onIsCurrentBranch: (Branch, Head) -> Bool
     let onTapPush: (String, Remote?, Repository.PushType) -> Void
+    let onPullTapped: (Repository.PullType) -> Void
     let onGetLastSelectedRemoteIndex: (String) -> Int
     let onSetLastSelectedRemoteIndex: (Int, String) -> Void
     let onAddRemoteTapped: () -> Void

@@ -30,6 +30,7 @@ struct BranchView: View {
                     currentBranch: viewModel.currentBranch,
                     onDeleteBranchTapped: viewModel.onDeleteBranchTapped,
                     onTapPush: viewModel.onTapPush,
+                    onPullTapped: viewModel.onPullTapped,
                     onGetLastSelectedRemoteIndex: viewModel.onGetLastSelectedRemoteIndex,
                     onSetLastSelectedRemoteIndex: viewModel.onSetLastSelectedRemoteIndex,
                     onAddRemoteTapped: viewModel.onAddRemoteTapped,
