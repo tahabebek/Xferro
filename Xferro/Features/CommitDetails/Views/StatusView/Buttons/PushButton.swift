@@ -120,7 +120,10 @@ struct PushButton: View {
             options = remotes.map { XFButtonOption(title: $0.name!, data: $0) }
         }
         .task {
-            selectedRemoteForPush = remotes[onGetLastSelectedRemoteIndex("push")]
+            let index = onGetLastSelectedRemoteIndex("push")
+            if index < remotes.count {
+                selectedRemoteForPush = remotes[index]
+            }
         }
     }
 }

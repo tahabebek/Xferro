@@ -61,6 +61,11 @@ import OrderedCollections
 
     func addRepository(_ repository: Repository) async {
         await updateRepositoryInfo(repository)
+        if currentRepositoryInfos.count == 1 {
+            await MainActor.run {
+                setupInitialCurrentSelectedItem()
+            }
+        }
     }
 
     private func updateRepositoryInfo(_ repository: Repository) async {
@@ -200,25 +205,6 @@ import OrderedCollections
 
     func deleteBranchTapped(repository: Repository, branchName: String) {
         repository.deleteBranch(branchName).mustSucceed(repository.gitDir)
-    }
-
-    func usedDidSelectFolder(_ folder: URL) {
-        let gotAccess = folder.startAccessingSecurityScopedResource()
-        if !gotAccess { return }
-        do {
-            let bookmarkData = try folder.bookmarkData(
-                options: .withSecurityScope,
-                includingResourceValuesForKeys: nil,
-                relativeTo: nil
-            )
-
-            UserDefaults.standard.set(bookmarkData, forKey: folder.path)
-        } catch {
-            fatalError("Failed to create bookmark: \(error)")
-        }
-
-        folder.stopAccessingSecurityScopedResource()
-        userDidSelectFolder(folder, self)
     }
 
     func deleteRepositoryTapped(_ repository: Repository) {

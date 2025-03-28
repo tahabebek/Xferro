@@ -73,29 +73,24 @@ extension String {
         replaceSubrange(range, with: string)
     }
 
-    func droppingPrefix(_ prefix: String) -> String
-    {
+    func droppingPrefix(_ prefix: String) -> String {
         guard hasPrefix(prefix)
         else { return self }
 
         return String(self[prefix.endIndex...])
     }
 
-    var lines: [String]
-    {
+    var lines: [String] {
         components(separatedBy: .newlines)
     }
 
-    enum LineEndingStyle: String
-    {
+    enum LineEndingStyle: String {
         case crlf
         case lf
         case unknown
 
-        var string: String
-        {
-            switch self
-            {
+        var string: String {
+            switch self {
             case .crlf: return "\r\n"
             case .lf:   return "\n"
             case .unknown: return "\n"
@@ -103,8 +98,7 @@ extension String {
         }
     }
 
-    var lineEndingStyle: LineEndingStyle
-    {
+    var lineEndingStyle: LineEndingStyle {
         if range(of: "\r\n") != nil {
             return .crlf
         }

@@ -2,10 +2,6 @@ import Foundation
 import Combine
 import Siesta
 
-extension Notification.Name {
-    static let authenticationStatusChanged = Self("AuthStatusChanged")
-}
-
 protocol BasicAuthenticatorDelegate: AnyObject {
     func didAuthenticate(responseResource: Resource)
 }

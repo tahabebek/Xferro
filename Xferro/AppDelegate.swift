@@ -97,7 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         repositoriesMenu.addItem(withTitle: "New Repository", action: #selector(newRepository), keyEquivalent: "x")
         repositoriesMenu.addItem(withTitle: "Add Local Repository", action: #selector(addLocalRepository), keyEquivalent: "o")
-        repositoriesMenu.addItem(withTitle: "Clone Repository", action: #selector(addLocalRepository), keyEquivalent: "O")
+        repositoriesMenu.addItem(withTitle: "Clone Repository", action: #selector(cloneRepository), keyEquivalent: "O")
         mainMenu.addItem(repositoriesMenuItem)
 
         let editMenu = NSMenu(title: "Edit")
@@ -150,11 +150,91 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func newRepository(_ sender: Any?) {
     }
-
-    @objc private func addLocalRepository(_ sender: Any?) {
+    
+    static func newRepository() {
+        let openPanel = NSOpenPanel()
+        openPanel.title = "Select A Folder to Initialize as a Git Repository"
+        openPanel.prompt = "New Repository"
+        openPanel.allowsMultipleSelection = false
+        openPanel.canChooseDirectories = true
+        openPanel.canChooseFiles = false
+        openPanel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+        openPanel.canCreateDirectories = true
+        
+        openPanel.begin { result in
+            guard result == .OK, let selectedURL = openPanel.url else { return }
+            usedDidSelectFolder(selectedURL)
+            
+            NotificationCenter.default.post(
+                name: .newRepositoryAdded,
+                object: nil,
+                userInfo: [.repositoryURL: selectedURL]
+            )
+        }
     }
 
+    @objc private func addLocalRepository(_ sender: Any?) {
+        Self.addLocalRepository()
+    }
+    
+    static func addLocalRepository() {
+        let openPanel = NSOpenPanel()
+        openPanel.title = "Select Local Git Repository"
+        openPanel.message = "Choose a folder containing a Git repository"
+        openPanel.prompt = "Add Repository"
+        openPanel.allowsMultipleSelection = false
+        openPanel.canChooseDirectories = true
+        openPanel.canChooseFiles = false
+        openPanel.canCreateDirectories = false
+        openPanel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+        
+        openPanel.begin { result in
+            guard result == .OK, let selectedURL = openPanel.url else { return }
+            usedDidSelectFolder(selectedURL)
+            
+            Task {
+                let result = Repository.isValid(url: selectedURL)
+                switch result {
+                case .success(let isValid):
+                    if isValid {
+                        NotificationCenter.default.post(
+                            name: .localRepositoryAdded,
+                            object: nil,
+                            userInfo: [.repositoryURL: selectedURL]
+                        )
+                    } else {
+                        await showErrorAlert(message: "The selected directory is not a valid Git repository.")
+                    }
+                case .failure(let error):
+                    await showErrorAlert(message: error.localizedDescription)
+                }
+            }
+        }
+    }
+    
     @objc private func cloneRepository(_ sender: Any?) {
+        Self.cloneRepository()
+    }
+    
+    static func cloneRepository() {
+    }
+    
+    private static func usedDidSelectFolder(_ folder: URL) {
+        let gotAccess = folder.startAccessingSecurityScopedResource()
+        if !gotAccess { return }
+        do {
+            let bookmarkData = try folder.bookmarkData(
+                options: .withSecurityScope,
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+            )
+
+            UserDefaults.standard.set(bookmarkData, forKey: folder.path)
+        } catch {
+            fatalError("Failed to create bookmark: \(error)")
+        }
+
+        folder.stopAccessingSecurityScopedResource()
     }
 
     @objc func toggleSidebar(_ sender: NSMenuItem) {
@@ -230,6 +310,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Add default button
         alert.addButton(withTitle: "Dismiss")
         alert.beginSheetModal(for: Self.firstWindow)
+    }
+    
+    @MainActor private static func showErrorAlert(message: String, informativeText: String? = nil) {
+        let alert = NSAlert()
+        alert.messageText = message
+        if let informativeText {
+            alert.informativeText = informativeText
+        }
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     static var firstWindow: NSWindow {

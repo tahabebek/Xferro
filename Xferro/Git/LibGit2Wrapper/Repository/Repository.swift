@@ -26,8 +26,7 @@ class Repository: Identifiable {
         self.queue = TaskQueue(id: Self.taskQueueID(path: id.uuidString))
     }
 
-    static func taskQueueID(path: String) -> String
-    {
+    static func taskQueueID(path: String) -> String {
         let identifier = Bundle.main.bundleIdentifier ?? "com.xferro"
 
         return "\(identifier).\(path)"

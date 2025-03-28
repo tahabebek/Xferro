@@ -30,6 +30,7 @@ struct SignupView: View {
     @ViewBuilder var content: some View {
         VStack(spacing: 30) {
             Text("Sign up to Xferro")
+                .font(.heading0)
             HStack(alignment: .top) {
                 Spacer()
                 VStack {
@@ -127,20 +128,15 @@ struct SignupView: View {
                             )
                         }
                     }
+                    .font(.formField)
                     .frame(width: 300)
-                    Button {
+                    XFButton<Void>(title: "Sign Up") {
                         triedSignup = true
                         if viewModel.isValidForm {
                             viewModel.signupButtonTapped()
                         }
-                    } label: {
-                        Text("Sign Up")
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 38)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .frame(width: 300)
+                    .padding()
                 }
 
                 if !viewModel.validationErrors.isEmpty, triedSignup {

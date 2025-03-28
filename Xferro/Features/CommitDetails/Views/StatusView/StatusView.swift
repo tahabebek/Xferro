@@ -73,6 +73,9 @@ struct StatusView: View {
                         viewModel.setInitialSelection()
                     }
                 }
+                .onChange(of: viewModel.repositoryInfo?.repository.gitDir) { oldValue, newValue in
+                    viewModel.setInitialSelection()
+                }
                 .animation(.default, value: viewModel.selectableStatus)
                 .animation(.default, value: viewModel.commitSummary)
                 .opacity(viewModel.selectableStatus == nil ? 0 : 1)

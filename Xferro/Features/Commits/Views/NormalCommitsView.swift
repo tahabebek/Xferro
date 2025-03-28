@@ -21,23 +21,19 @@ struct NormalCommitsView: View {
     var body: some View {
         PinnedScrollableView(showsIndicators: false) {
             VerticalHeader(title: "Repositories") {
-                VStack(alignment: .leading, spacing: 8) {
-                    AddRepositoryButton(viewModel: viewModel)
-                    XFButton<Void>(
-                        title: "Add Local Repository",
-                        onTap: {
-                            dismiss()
-                            fatalError(.unimplemented)
-                        }
-                    )
-                    XFButton<Void>(
-                        title: "Clone Repository",
-                        onTap: {
-                            dismiss()
-                            fatalError(.unimplemented)
-                        }
-                    )
-                }
+                AddRepositoryButton(
+                    onTapNewRepository: {
+                        dismiss()
+                        AppDelegate.newRepository()
+                    },
+                    onTapAddLocalRepository: {
+                        dismiss()
+                        AppDelegate.addLocalRepository()
+                    },
+                    onTapCloneRepository: {
+                        dismiss()
+                        AppDelegate.cloneRepository()
+                    })
                 .padding()
             }
             .frame(height: Dimensions.verticalHeaderHeight)
@@ -60,26 +56,25 @@ struct NormalCommitsView: View {
                         Spacer()
                         HStack {
                             Spacer()
-                            VStack {
-                                Text("No repositories found.")
-                                AddRepositoryButton(viewModel: viewModel)
-                                XFButton<Void>(
-                                    title: "Add Local Repository",
-                                    onTap: {
-                                        fatalError(.unimplemented)
-                                    }
-                                )
-                                XFButton<Void>(
-                                    title: "Clone Repository",
-                                    onTap: {
-                                        fatalError(.unimplemented)
-                                    }
-                                )
-                            }
+                            AddRepositoryButton(
+                                onTapNewRepository: {
+                                    dismiss()
+                                    AppDelegate.newRepository()
+                                },
+                                onTapAddLocalRepository: {
+                                    dismiss()
+                                    AppDelegate.addLocalRepository()
+                                },
+                                onTapCloneRepository: {
+                                    dismiss()
+                                    AppDelegate.cloneRepository()
+                                })
+                                .padding()
                             Spacer()
                         }
                         Spacer()
                     }
+                    .border(.blue)
                 }
                 Spacer()
             }

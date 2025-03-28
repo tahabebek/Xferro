@@ -30,7 +30,7 @@ struct LoginView: View {
                     } message: {
                         Text(viewModel.errorMessage ?? "Something went wrong.")
                     }
-
+                
                 Spacer()
             }
             Spacer()
@@ -40,17 +40,22 @@ struct LoginView: View {
     @ViewBuilder var contents: some View {
         VStack(spacing: 30) {
             Text("Welcome to Xferro")
+                .font(.heading0)
             Text("A superior git client.")
+                .font(.paragraph1)
+                .offset(y: -10)
             VStack(spacing: 15) {
                 Image(systemName: "lock.circle.fill")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 64, height: 64)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Color.accentColor)
                 Text("Sign in to your account")
+                    .font(.paragraph1)
                     .foregroundStyle(.secondary)
                 if viewModel.showCheckYourEmailMessage {
                     Text("Check your email for a verification link.")
+                        .font(.paragraph4)
                         .foregroundStyle(.purple)
                 }
             }
@@ -101,23 +106,17 @@ struct LoginView: View {
                     )
                 }
             }
+            .font(.formField)
             .frame(width: 300)
 
             VStack(spacing: 16) {
-                Button {
+                XFButton<Void>(title: "Sign In") {
                     viewModel.loginButtonTapped()
-                } label: {
-                    Text("Sign In")
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 38)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                Button("Forgot Password?") {
+                
+                XFButton<Void>(title: "Forgot Password", isProminent: false) {
                     viewModel.forgotPasswordButtonTapped()
                 }
-                .buttonStyle(.plain)
             }
             .frame(width: 300)
 
@@ -131,6 +130,7 @@ struct LoginView: View {
                 .buttonStyle(.plain)
             }
             .padding(.top, 8)
+            .font(.formField)
         }
         .frame(width: 400, height: 500)
     }

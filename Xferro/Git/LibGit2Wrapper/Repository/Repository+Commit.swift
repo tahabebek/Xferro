@@ -24,7 +24,6 @@ extension Repository {
         }
         
         let commit: Commit = commit(message: "Initial Commit", staticLock: staticLock).mustSucceed(gitDir)
-        
         return commit
     }
 

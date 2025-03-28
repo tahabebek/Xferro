@@ -8,19 +8,31 @@
 import SwiftUI
 
 struct AddRepositoryButton: View {
-    let viewModel: CommitsViewModel
-    @State private var showFolderSelector: Bool = false
+    
+    let onTapNewRepository: () -> Void
+    let onTapAddLocalRepository: () -> Void
+    let onTapCloneRepository: () -> Void
 
     var body: some View {
-        XFButton<Void>(
-            title: "New Repository",
-            onTap: {
-                showFolderSelector = true
-            }
-        )
-        .fileImporter(isPresented: $showFolderSelector, allowedContentTypes: [.directory], allowsMultipleSelection: false) { result in
-            guard let directory = try? result.get().first else { return }
-            viewModel.usedDidSelectFolder(directory)
+        VStack(alignment: .leading, spacing: 8) {
+            XFButton<Void>(
+                title: "New Repository",
+                onTap: {
+                    onTapNewRepository()
+                }
+            )
+            XFButton<Void>(
+                title: "Add Local Repository",
+                onTap: {
+                    onTapAddLocalRepository()
+                }
+            )
+            XFButton<Void>(
+                title: "Clone Repository",
+                onTap: {
+                    onTapCloneRepository()
+                }
+            )
         }
     }
 }

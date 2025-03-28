@@ -52,10 +52,10 @@ import OrderedCollections
     }
 
     private func selectedRemoteKey(buttonTitle: String) -> String {
-        guard let selectableStatus else {
+        guard let repositoryInfo, let selectableStatus else {
             fatalError(.illegal)
         }
-        return selectableStatus.id + ".\(buttonTitle)"
+        return repositoryInfo.repository.idOfRepo + ".\(selectableStatus.id)" + ".\(buttonTitle)"
     }
 
     private var unsortedTrackedFiles: OrderedDictionary<String, OldNewFile> = [:] {
@@ -82,6 +82,12 @@ import OrderedCollections
         refreshRemoteSubject: PassthroughSubject<Void, Never>
     ) {
         guard let repositoryInfo else { return }
+        if repositoryInfo.repository.idOfRepo != self.repositoryInfo?.repository.idOfRepo {
+            currentFile = nil
+            unsortedTrackedFiles = [:]
+            unsortedUntrackedFiles = [:]
+            unsortedConflictedFiles = [:]
+        }
         guard newSelectableStatus.repositoryId == repositoryInfo.repository.idOfRepo else {
             fatalError(.invalid)
         }
@@ -163,6 +169,7 @@ import OrderedCollections
                     unsortedUntrackedFiles = newUntrackedFiles
                     self.repositoryInfo = repositoryInfo
                     self.selectableStatus = newSelectableStatus
+                    setInitialSelection()
                 }
             } else {
                 await MainActor.run {
@@ -170,6 +177,7 @@ import OrderedCollections
                     self.unsortedUntrackedFiles = newUntrackedFiles
                     self.repositoryInfo = repositoryInfo
                     self.selectableStatus = newSelectableStatus
+                    setInitialSelection()
                 }
             }
         }
@@ -560,6 +568,15 @@ extension StatusViewModel {
 fileprivate extension StatusViewModel {
     func fetch(fetchType: Repository.FetchType) async {
         guard let repositoryInfo else { fatalError(.invalid) }
+        
+        guard repositoryInfo.remotes.isNotEmpty else {
+            Task { @MainActor in
+                addRemoteTitle = "This repository doesn't have a remote, you need to add one in order to fetch the changes"
+                shouldAddRemoteBranch = true
+            }
+            return
+        }
+        
         Task {
             switch fetchType {
             case .remote(let remote):
@@ -590,6 +607,14 @@ fileprivate extension StatusViewModel {
     func pull(pullType: Repository.PullType) async {
         guard let repositoryInfo else { fatalError(.invalid) }
         guard case .branch = repositoryInfo.head else { fatalError(.invalid) }
+        
+        guard repositoryInfo.remotes.isNotEmpty else {
+            Task { @MainActor in
+                addRemoteTitle = "This repository doesn't have a remote, you need to add one in order to pull the changes"
+                shouldAddRemoteBranch = true
+            }
+            return
+        }
 
         guard (repositoryInfo.repository.config ?? GitConfig.default)!.branchRemote(repositoryInfo.head.name) != nil else {
             Task { @MainActor in

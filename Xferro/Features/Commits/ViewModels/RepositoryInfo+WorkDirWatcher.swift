@@ -79,7 +79,7 @@ extension RepositoryInfo {
                                 }
                             } else {
                                 if destinationURL.isDirectory {
-                                    try? FileManager.createDirectory(destinationURL.path, withIntermediateDirectories: true)
+                                    try? FileManager.createDirectory(destinationURL, withIntermediateDirectories: true)
                                 } else {
                                     let contents = try! String(contentsOfFile: path, encoding: .utf8)
                                     let hash = contents.hash
@@ -90,7 +90,6 @@ extension RepositoryInfo {
                                     } else {
                                         continue
                                     }
-                                    //                                print("file added or modified", relativePath)
                                     try? FileManager.createDirectory(destinationURL.deletingLastPathComponent().path, withIntermediateDirectories: true)
                                     FileManager.createFile(destinationPath, contents: contents.data(using: .utf8))
                                     changes.insert("Wip - \(changeFileName) is modified")

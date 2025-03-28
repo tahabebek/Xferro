@@ -12,52 +12,57 @@ struct WelcomeView: View {
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
-        Group {
-            VStack(spacing: 0) {
-                Spacer()
-                HStack(spacing: 0) {
+        ZStack {
+            Color(hexValue: 0x15151A)
+                .cornerRadius(8)
+            Group {
+                VStack(spacing: 0) {
                     Spacer()
-                    if viewModel.showProgress {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Group {
-                            switch viewModel.currentStep {
-                            case .login:
-                                LoginView(viewModel: viewModel.loginViewModel)
-                                    .padding()
-                            case .signup:
-                                SignupView(viewModel: viewModel.signupViewModel)
-                                    .padding()
-                            case .identity:
-                                IdentityView(viewModel: viewModel.identityViewModel)
-                                    .frame(maxHeight: 500)
-                                    .padding()
+                    HStack(spacing: 0) {
+                        Spacer()
+                        if viewModel.showProgress {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Group {
+                                switch viewModel.currentStep {
+                                case .login:
+                                    LoginView(viewModel: viewModel.loginViewModel)
+                                        .padding()
+                                case .signup:
+                                    SignupView(viewModel: viewModel.signupViewModel)
+                                        .padding()
+                                case .identity:
+                                    IdentityView(viewModel: viewModel.identityViewModel)
+                                        .frame(maxHeight: 500)
+                                        .padding()
+                                }
                             }
                         }
+                        Spacer()
                     }
                     Spacer()
                 }
-                Spacer()
             }
         }
+        .padding()
         .animation(.default, value: viewModel.currentStep)
         .background(colorScheme == .dark ? Color(NSColor.windowBackgroundColor) : Color(NSColor.controlBackgroundColor))
         .overlay(alignment: .topTrailing) {
             if !viewModel.showProgress {
-                Button("Skip") {
+                XFButton<Void>(title: "Skip", isProminent: false) {
                     viewModel.skipButtonTapped()
                 }
-                .buttonStyle(.plain)
+                .padding()
                 .padding()
             }
         }
         .overlay(alignment: .topLeading) {
             if case .signup = viewModel.currentStep, !viewModel.showProgress {
-                Button("Back") {
+                XFButton<Void>(title: "Back", isProminent: false) {
                     viewModel.backButtonTapped()
                 }
-                .buttonStyle(.plain)
+                .padding()
                 .padding()
             }
         }

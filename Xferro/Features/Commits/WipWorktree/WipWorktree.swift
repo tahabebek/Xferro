@@ -16,13 +16,19 @@ final class WipWorktree {
     let name: String
 
     static func worktreeName(for originalRepository: Repository) -> String {
-        Self.worktreeRepositoryURL(originalRepository: originalRepository).path.replacingOccurrences(of: "file://", with: "").replacingOccurrences(of: "/", with: "_")
+        Self.worktreeRepositoryURL(
+            originalRepository: originalRepository
+        ).resolvingSymlinksInPath().path.replacingOccurrences(of: "file://", with: "")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: " ", with: "_")
     }
 
     static func get(for originalRepository: Repository) -> WipWorktree? {
         let name = worktreeName(for: originalRepository)
-        guard let worktreeRepository = try? originalRepository.worktree(named: name).get()
-        else { return nil }
+        guard let worktreeRepository = try? originalRepository.worktree(named: name).get() else {
+            print("Worktree not found for \(name)")
+            return nil
+        }
         return WipWorktree(
             worktreeRepository: worktreeRepository,
             originalRepository: originalRepository,
@@ -58,7 +64,7 @@ final class WipWorktree {
             repository
                 .addWorkTree(
                     name: worktreeName,
-                    path: worktreeRepositoryURL.path
+                    path: worktreeRepositoryURL.resolvingSymlinksInPath().standardized.path
                 ).mustSucceed(repository.gitDir)
             let worktreeRepository = try! Repository.at(worktreeRepositoryURL).get()
             Head.checkout(repository: worktreeRepository, longName: newBranch.longName).mustSucceed(worktreeRepository.gitDir)
@@ -81,13 +87,13 @@ final class WipWorktree {
     }
 
     static func worktreeRepositoryURL(originalRepository: Repository)  -> URL {
-        let originalRepositoryPath =  originalRepository.gitDir.deletingLastPathComponent().path()
+        let originalRepositoryPath =  originalRepository.gitDir.deletingLastPathComponent().standardized.path
 
         let worktreeRepositoryURL = DataManager.appDir.appendingPathComponent(Self.wipWorktreeFolder)
             .appendingPathComponent(String(originalRepositoryPath.dropFirst()))
             .appendingPathComponent("WipWorktree")
         try? FileManager.createDirectory(
-            worktreeRepositoryURL.deletingLastPathComponent(),
+            worktreeRepositoryURL.deletingLastPathComponent().path.replacingOccurrences(of: "%20", with: " "),
             withIntermediateDirectories: true,
             attributes: nil
         )
@@ -125,7 +131,6 @@ final class WipWorktree {
     static func deleteWipWorktree(for repository: Repository) {
         let worktreeName = WipWorktree.worktreeName(for: repository)
         let worktreePath = Self.worktreeRepositoryURL(originalRepository: repository).path
-        repository.pruneWorkTree(worktreeName, force: true).mustSucceed(repository.gitDir)
         if FileManager.fileExists(worktreePath) {
             try! FileManager.removeItem(URL(filePath: worktreePath, directoryHint: .isDirectory))
         }
