@@ -92,6 +92,7 @@ struct AddNewBranchView: View {
             }
             .padding(.bottom)
         }
+        .frame(width: 600, height: 400)
         .animation(.default, value: invalidMessage)
         .textFieldStyle(.roundedBorder)
         .onAppear {

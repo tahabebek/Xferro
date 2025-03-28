@@ -30,7 +30,7 @@ struct ProjectsView: View {
                                 AppDelegate.addLocalRepository()
                             },
                             onTapCloneRepository: {
-                                AppDelegate.cloneRepository()
+                                AppDelegate.showCloneRepositoryView()
                             })
                             .padding()
                     }

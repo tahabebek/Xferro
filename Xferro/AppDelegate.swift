@@ -14,6 +14,8 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var users: Users?
     static var settingsViewController: NSHostingController<SettingsView>?
+    static var cloneRepositoryViewController: NSHostingController<AnyView>?
+    
     var window: NSWindow!
 
     override init() {
@@ -213,10 +215,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc private func cloneRepository(_ sender: Any?) {
-        Self.cloneRepository()
-    }
-    
-    static func cloneRepository() {
+        Task { @MainActor in
+            Self.showCloneRepositoryView()
+        }
     }
     
     private static func usedDidSelectFolder(_ folder: URL) {
@@ -267,6 +268,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         settingsViewController = NSHostingController(rootView: contentView)
         Self.firstWindow.contentViewController?.presentAsSheet(settingsViewController!)
     }
+    
+    @MainActor static func showCloneRepositoryView() {
+        let cloneView = CloneRepositoryView {
+            dismissCloneView()
+        } onClone: { destinationPath, sourcePath, isRemote in
+            dismissCloneView()
+            print("Clone repository to \(destinationPath) from \(sourcePath), isREMOTE: \(isRemote)")
+            if isRemote {
+                
+            } else {
+                
+            }
+        }
+        .frame(width: 600, height: 300)
+
+        cloneRepositoryViewController = NSHostingController(
+            rootView: AnyView(cloneView)
+        )
+        Self.firstWindow.contentViewController?.presentAsSheet(cloneRepositoryViewController!)
+    }
 
     @MainActor static func dismissSettings() {
         if let controller = settingsViewController,
@@ -275,6 +296,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @MainActor static func dismissCloneView() {
+        if let controller = cloneRepositoryViewController,
+           let presentingViewController = controller.presentingViewController {
+            presentingViewController.dismiss(controller)
+        }
+    }
+    
     @MainActor static func showErrorMessage(error: RepoError) {
         let alert = NSAlert()
         if error.localizedDescription.lines.count < 4 {

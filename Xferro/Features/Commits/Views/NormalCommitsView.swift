@@ -32,7 +32,7 @@ struct NormalCommitsView: View {
                     },
                     onTapCloneRepository: {
                         dismiss()
-                        AppDelegate.cloneRepository()
+                        AppDelegate.showCloneRepositoryView()
                     })
                 .padding()
             }
@@ -67,7 +67,7 @@ struct NormalCommitsView: View {
                                 },
                                 onTapCloneRepository: {
                                     dismiss()
-                                    AppDelegate.cloneRepository()
+                                    AppDelegate.showCloneRepositoryView()
                                 })
                                 .padding()
                             Spacer()
