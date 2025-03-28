@@ -55,12 +55,12 @@ struct ProjectView: View {
                             stashes: commitsViewModel.currentRepositoryInfo?.stashes ?? []
                         )
                     default:
-                        EmptyView()
+                        Color.clear
                     }
                 case .wip:
                     WipCommitView(viewModel: wipCommitViewModel)
                 default:
-                    EmptyView()
+                    Color.clear
                 }
             }
             .frame(maxWidth: .infinity)

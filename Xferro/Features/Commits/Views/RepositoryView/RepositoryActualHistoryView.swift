@@ -11,7 +11,7 @@ struct RepositoryActualHistoryView: View {
     let historyCommits: [SelectableHistoryCommit]
     
     var body: some View {
-        EmptyView()
+        Color.clear
             .animation(.default, value: historyCommits)
     }
 }

@@ -31,10 +31,12 @@ struct DetachedCommitBranchGraphView: View {
                         onIsSelected: onIsSelected
                     )
                 }
+            } else {
+                Color.clear
+                    .task {
+                        selectableCommits = await detachedCommitInfo.commits()
+                    }
             }
-        }
-        .task {
-            selectableCommits = await detachedCommitInfo.commits()
         }
     }
 }

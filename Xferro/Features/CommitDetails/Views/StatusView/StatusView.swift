@@ -47,7 +47,7 @@ struct StatusView: View {
                             )
                             .id("\(file.id)$\(conflictType)")
                         } else {
-                            EmptyView()
+                            Color.clear
                         }
                     } else {
                         peekView
@@ -139,7 +139,7 @@ struct StatusView: View {
             )
             .id(file.id)
         } else {
-            EmptyView()
+            Color.clear
         }
     }
 }

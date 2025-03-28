@@ -31,7 +31,7 @@ struct TriStateCheckbox: View {
                         .font(.small)
                         .foregroundColor(.accentColor)
                 case .unchecked:
-                    EmptyView()
+                    Color.clear
                 case .partiallyChecked:
                     Rectangle()
                         .fill(Color.accentColor)
@@ -56,5 +56,5 @@ struct TriStateCheckbox: View {
             checkState = .unchecked
         }
     }
-    .frame(width: 100, height: 100)
+    .frame(width: 44, height: 44)
 }
