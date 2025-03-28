@@ -134,7 +134,7 @@ import OrderedCollections
     }
 
     func discardPart(_ part: DiffHunkPart) {
-        guard case .additionOrDeletion = part.type, let hunks = diffInfo?.hunks() else {
+        guard case .additionOrDeletion = part.type, let hunks = diffInfo?.hunks else {
             fatalError(.invalid)
         }
         Task {
@@ -226,7 +226,7 @@ import OrderedCollections
             fatalError(.invalid)
         }
         Task {
-            let hunkCopies = diffInfo.hunks().map { $0.copy() }
+            let hunkCopies = diffInfo.hunks.map { $0.copy() }
             let lines = hunkCopies.flatMap(\.parts).filter({ $0.type == .additionOrDeletion }).flatMap(\.lines)
             for hunkline in lines {
                 if hunkline.id == line.id {

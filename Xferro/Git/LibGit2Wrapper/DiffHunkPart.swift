@@ -26,29 +26,33 @@ import Foundation
     let indexInHunk: Int
     let oldFilePath: String?
     let newFilePath: String?
-    let onUpdateSelectedLines: () -> Void
-
+    let onCheckStateChanged: () -> Void
+    @ObservationIgnored var checkedState: CheckboxState = .checked
+    
+    var isAdditionOrDeletion: Bool {
+        type == .additionOrDeletion
+    }
+    
     init(
         type: DiffHunkPartType,
         lines: [DiffLine],
         indexInHunk: Int,
         oldFilePath: String?,
         newFilePath: String?,
-        onUpdateSelectedLines: @escaping () -> Void
+        onCheckStateChanged: @escaping () -> Void
     ) {
         self.type = type
         self.indexInHunk = indexInHunk
         self.lines = lines
         self.oldFilePath = oldFilePath
         self.newFilePath = newFilePath
-        self.onUpdateSelectedLines = onUpdateSelectedLines
+        self.onCheckStateChanged = onCheckStateChanged
         if case .context = type {
-            isSelected = false
+            checkedState = .unchecked
+            selectedLinesCount = 0
         } else {
-            isSelected = true
-            updateSelectedLinesCount()
-            updateIsSelected()
-            onUpdateSelectedLines()
+            checkedState = .checked
+            selectedLinesCount = lines.count
         }
         for i in self.lines.indices {
             self.lines[i].indexInPart = i
@@ -56,16 +60,20 @@ import Foundation
         }
     }
     var lines: [DiffLine]
-    var isSelected: Bool
     var selectedLinesCount: Int = 0
 
-
-    func updateIsSelected() {
+    private func updateCheckedState() {
         if case .context = type {
             return
         }
 
-        isSelected = lines.allSatisfy(\.isSelected)
+        checkedState = if lines.filter(\.isAdditionOrDeletion).allSatisfy(\.isSelected) {
+            .checked
+        } else if lines.filter(\.isAdditionOrDeletion).allSatisfy( { !$0.isSelected }) {
+            .unchecked
+        } else {
+            .partiallyChecked
+        }
     }
 
 
@@ -78,9 +86,13 @@ import Foundation
             return
         }
         line.isSelected.toggle()
-        updateIsSelected()
+        updateSelectedState()
+    }
+    
+    private func updateSelectedState() {
+        updateCheckedState()
         updateSelectedLinesCount()
-        onUpdateSelectedLines()
+        onCheckStateChanged()
     }
 
     private func selectLine(line: DiffLine, flag: Bool) {
@@ -91,30 +103,33 @@ import Foundation
     }
 
     func toggle() {
-        let flag = !isSelected
+        checkedState = switch checkedState {
+        case .checked:
+            .unchecked
+        case .unchecked:
+            .checked
+        case .partiallyChecked:
+            .checked
+        }
+        
+        let flag = checkedState == .checked
         for line in lines {
             selectLine(line: line, flag: flag)
         }
-        updateIsSelected()
-        updateSelectedLinesCount()
-        onUpdateSelectedLines()
+        updateSelectedState()
     }
 
     func unselectAll() {
         for line in lines {
             selectLine(line: line, flag: false)
         }
-        updateIsSelected()
-        updateSelectedLinesCount()
-        onUpdateSelectedLines()
+        updateSelectedState()
     }
 
     func selectAll() {
         for line in lines {
             selectLine(line: line, flag: true)
         }
-        updateIsSelected()
-        updateSelectedLinesCount()
-        onUpdateSelectedLines()
+        updateSelectedState()
     }
 }

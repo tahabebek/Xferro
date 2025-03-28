@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SelectAllBox: View {
     @Environment(\.partIsHovered) var partIsHovered
-    @Binding var isPartSelected: Bool
+    @Binding var partCheckedState: CheckboxState
     @Binding var selectedLinesCount: Int
     @Binding var hoveredLine: Int?
 
@@ -26,12 +26,13 @@ struct SelectAllBox: View {
         HStack(spacing: 0) {
             Spacer(minLength: 0)
             let string: String = if isFirst {
-                if isPartSelected {
+                switch partCheckedState {
+                case .checked:
                     "✓"
-                } else if selectedLinesCount > 0 {
-                    "-"
-                } else {
+                case .unchecked:
                     " "
+                case .partiallyChecked:
+                    "-"
                 }
             } else {
                 " "

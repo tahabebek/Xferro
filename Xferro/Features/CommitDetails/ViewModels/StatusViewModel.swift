@@ -524,7 +524,7 @@ extension StatusViewModel {
                 if flag, unsortedTrackedFiles[key]?.checkState == .checked { continue }
                 if !flag, unsortedTrackedFiles[key]?.checkState == .unchecked { continue }
                 unsortedTrackedFiles[key]?.checkState = flag ? .checked : .unchecked
-                for line in unsortedTrackedFiles[key]?.diffInfo?.hunks().flatMap(\.parts)
+                for line in unsortedTrackedFiles[key]?.diffInfo?.hunks.flatMap(\.parts)
                     .filter({ $0.type != .context }).flatMap(\.lines) ?? [] {
                     line.isSelected = flag
                 }
@@ -859,7 +859,7 @@ fileprivate extension StatusViewModel {
             }
 
             for file in unsortedTrackedFiles.values.elements where file.checkState == .partiallyChecked {
-                guard let hunks = file.diffInfo?.hunks() else {
+                guard let hunks = file.diffInfo?.hunks else {
                     fatalError(.invalid)
                 }
 

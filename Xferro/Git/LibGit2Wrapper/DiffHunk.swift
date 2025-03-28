@@ -32,10 +32,13 @@ import Observation
     let newStart: Int
     let newLines: Int
     let lineCount: Int
+    @ObservationIgnored var checkedState: CheckboxState = .checked
 
     private(set) var selectedLines: [DiffLine] = []
     private(set) var lineCache: [Int: DiffLine] = [:]
     private var selectedLinesCount: Int = 0
+    
+    var onCheckStateChanged: ((CheckboxState) -> Void)?
 
     init(
         hunk: git_diff_hunk,
@@ -54,6 +57,7 @@ import Observation
         self.status = status
         self.parts = []
         self.repository = repository
+        
         self.lineCount = Int(git_patch_num_lines_in_hunk(patch.patch, hunkIndex))
         self.oldStart = Int(hunk.old_start)
         self.oldLines = Int(hunk.old_lines)
@@ -76,10 +80,9 @@ import Observation
                         indexInHunk: partIndex,
                         oldFilePath: oldFilePath,
                         newFilePath: newFilePath,
-                        onUpdateSelectedLines: { [weak self] in
+                        onCheckStateChanged: { [weak self] in
                             guard let self else { return }
-                            updateSelectedLines()
-                            updateSelectedLinesCount()
+                            updateSelectedState()
                         }
                     ))
                     partIndex += 1
@@ -98,10 +101,9 @@ import Observation
                         indexInHunk: partIndex,
                         oldFilePath: oldFilePath,
                         newFilePath: newFilePath,
-                        onUpdateSelectedLines: { [weak self] in
+                        onCheckStateChanged: { [weak self] in
                             guard let self else { return }
-                            updateSelectedLines()
-                            updateSelectedLinesCount()
+                            updateSelectedState()
                         }
                     ))
                     partIndex += 1
@@ -116,17 +118,26 @@ import Observation
             indexInHunk: partIndex,
             oldFilePath: oldFilePath,
             newFilePath: newFilePath,
-            onUpdateSelectedLines: { [weak self] in
+            onCheckStateChanged: { [weak self] in
                 guard let self else { return }
-                updateSelectedLines()
-                updateSelectedLinesCount()
+                updateSelectedState()
             }
         ))
-
-        updateSelectedLines()
-        updateSelectedLinesCount()
     }
 
+    private func updateSelectedState() {
+        updateSelectedLines()
+        updateSelectedLinesCount()
+        checkedState = if parts.filter(\.isAdditionOrDeletion).allSatisfy( { $0.checkedState == .checked }) {
+            .checked
+        } else if parts.filter(\.isAdditionOrDeletion).allSatisfy( { $0.checkedState == .unchecked }) {
+            .unchecked
+        } else {
+            .partiallyChecked
+        }
+        onCheckStateChanged?(checkedState)
+    }
+    
     private func getHunkHeader(hunk: git_diff_hunk) -> String {
         // Create a temporary UnsafeBufferPointer to access the header values
         return withUnsafePointer(to: hunk.header) { headerPtr in
@@ -149,8 +160,7 @@ import Observation
     /// patch should be reverse-applied.
     /// - returns: The modified hunk of text, or nil if the patch does not match
     /// or if an error occurs.
-    func applied(to text: String, reversed: Bool) -> String?
-    {
+    func applied(to text: String, reversed: Bool) -> String? {
         var lines = text.components(separatedBy: .newlines)
         guard Int(oldStart - 1 + oldLines) <= lines.count
         else { return nil }
@@ -214,7 +224,7 @@ import Observation
         selectedLines = parts.flatMap { $0.lines }.filter { $0.isSelected }
     }
     private func updateSelectedLinesCount() {
-        selectedLinesCount = parts.map { $0.selectedLinesCount }.reduce(0, +)
+        selectedLinesCount = selectedLines.count
     }
 
     func copy() -> DiffHunk {

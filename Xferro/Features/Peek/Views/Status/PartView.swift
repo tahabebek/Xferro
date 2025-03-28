@@ -22,7 +22,7 @@ struct PartView: View {
             ForEach($part.lines) { line in
                 LineView(
                     selectedLinesCount: $part.selectedLinesCount,
-                    isPartSelected: $part.isSelected,
+                    partCheckedState: $part.checkedState,
                     isLineSelected: line.isSelected,
                     isAdditionOrDeletion: line.wrappedValue.isAdditionOrDeletion,
                     isFirst: line.wrappedValue.indexInPart == 0,

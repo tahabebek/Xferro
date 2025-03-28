@@ -28,7 +28,7 @@ struct TriStateCheckbox: View {
                 switch state {
                 case .checked:
                     Image(systemName: "checkmark")
-                        .font(.small)
+                        .font(.small).bold()
                         .foregroundColor(.accentColor)
                 case .unchecked:
                     Color.clear
@@ -42,19 +42,4 @@ struct TriStateCheckbox: View {
                 onTap()
             }
     }
-}
-
-#Preview {
-    @Previewable @State var checkState: CheckboxState = .unchecked
-    TriStateCheckbox(state: $checkState) {
-        switch checkState {
-        case .unchecked:
-            checkState = .checked
-        case .checked:
-            checkState = .partiallyChecked
-        case .partiallyChecked:
-            checkState = .unchecked
-        }
-    }
-    .frame(width: 44, height: 44)
 }

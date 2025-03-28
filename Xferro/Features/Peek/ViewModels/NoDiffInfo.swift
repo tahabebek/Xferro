@@ -9,9 +9,7 @@ import Foundation
 import Observation
 
 @Observable final class NoDiffInfo: DiffInformation {
-    var hunks: () -> [DiffHunk] = {
-        []
-    }
+    var hunks: [DiffHunk] = []
     var statusFileName: String
     var checkState: CheckboxState
 

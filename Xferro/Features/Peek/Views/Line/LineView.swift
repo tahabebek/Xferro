@@ -15,7 +15,7 @@ struct LineView: View {
     static let hoveredPartBackgroundOpacity: CGFloat = 0.7
     @State private var hoveredLine: Int? = nil
     @Binding var selectedLinesCount: Int
-    @Binding var isPartSelected: Bool
+    @Binding var partCheckedState: CheckboxState
     @Binding var isLineSelected: Bool
     let isAdditionOrDeletion: Bool
     let isFirst: Bool
@@ -36,7 +36,7 @@ struct LineView: View {
     init(
         hoveredLine: Int? = nil,
         selectedLinesCount: Binding<Int>,
-        isPartSelected: Binding<Bool>,
+        partCheckedState: Binding<CheckboxState>,
         isLineSelected: Binding<Bool>,
         isAdditionOrDeletion: Bool,
         isFirst: Bool,
@@ -55,7 +55,7 @@ struct LineView: View {
     ) {
         self.hoveredLine = hoveredLine
         self._selectedLinesCount = selectedLinesCount
-        self._isPartSelected = isPartSelected
+        self._partCheckedState = partCheckedState
         self._isLineSelected = isLineSelected
         self.isAdditionOrDeletion = isAdditionOrDeletion
         self.isFirst = isFirst
@@ -87,7 +87,7 @@ struct LineView: View {
                 HStack {
                     HStack(spacing: 0) {
                         SelectAllBox(
-                            isPartSelected: $isPartSelected,
+                            partCheckedState: $partCheckedState,
                             selectedLinesCount: $selectedLinesCount,
                             hoveredLine: $hoveredLine,
                             isAdditionOrDeletion: isAdditionOrDeletion,

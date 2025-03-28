@@ -18,7 +18,7 @@ struct DiffView: View {
             Text("Binary files differ.")
                 .frame(height: file.diffInfo is BinaryDiffInfo ? 44 : 0)
                 .opacity(file.diffInfo is BinaryDiffInfo ? 1 : 0)
-            ForEach(file.diffInfo?.hunks() ?? []) { hunk in
+            ForEach(file.diffInfo?.hunks ?? []) { hunk in
                 HunkView(
                     hunk: Binding<DiffHunk>(
                         get: { hunk },

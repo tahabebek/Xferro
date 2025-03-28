@@ -9,8 +9,7 @@ import Foundation
 import Observation
 
 @Observable final class DiffInfo: DiffInformation {
-    var hunks: () -> [DiffHunk] = { [] }
-    var allHunks: [DiffHunk]
+    var hunks: [DiffHunk]
     let oldFilePath: String?
     let newFilePath: String?
     let addedLinesCount: Int
@@ -25,15 +24,16 @@ import Observation
         deletedLinesCount: Int,
         statusFileName: String
     ) {
-        self.allHunks = hunks
         self.oldFilePath = oldFilePath
         self.newFilePath = newFilePath
         self.addedLinesCount = addedLinesCount
         self.deletedLinesCount = deletedLinesCount
         self.statusFileName = statusFileName
-        self.hunks = { [weak self] in
-            guard let self else { return [] }
-            return allHunks
+        self.hunks = hunks
+        for i in 0..<hunks.count {
+            hunks[i].onCheckStateChanged = { [weak self] in
+                self?.overrideCheckState($0)
+            }
         }
     }
 
@@ -43,7 +43,7 @@ import Observation
         get {
             __checkedState
         } set {
-            for part in allHunks.flatMap(\.parts) {
+            for part in hunks.flatMap(\.parts) {
                 switch newValue {
                 case .checked:
                     part.selectAll()
@@ -55,6 +55,16 @@ import Observation
             }
 
             __checkedState = newValue
+        }
+    }
+    
+    private func overrideCheckState(_ partCheckedState: CheckboxState) {
+        __checkedState = if hunks.allSatisfy( { $0.checkedState == .checked }) {
+            .checked
+        } else if hunks.allSatisfy( { $0.checkedState == .unchecked }) {
+            .unchecked
+        } else {
+            .partiallyChecked
         }
     }
 }
