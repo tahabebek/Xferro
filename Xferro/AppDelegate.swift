@@ -13,8 +13,8 @@ import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var users: Users?
+    static var settingsViewController: NSHostingController<SettingsView>?
     var window: NSWindow!
-    var settingsViewController: NSHostingController<SettingsView>?
 
     override init() {
         super.init()
@@ -174,19 +174,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @MainActor @objc func showSettings(_ sender: Any?) {
+        Self.showSettings()
+    }
+
+    @MainActor static func showSettings() {
         let contentView = SettingsView(
             defaults: UserDefaults.standard,
             config: GitConfig.default!
-        ) { [weak self] in
-            guard let self else { return }
+        ) {
             dismissSettings()
         }
         settingsViewController = NSHostingController(rootView: contentView)
         Self.firstWindow.contentViewController?.presentAsSheet(settingsViewController!)
-
     }
 
-    @MainActor func dismissSettings() {
+    @MainActor static func dismissSettings() {
         if let controller = settingsViewController,
            let presentingViewController = controller.presentingViewController {
             presentingViewController.dismiss(controller)

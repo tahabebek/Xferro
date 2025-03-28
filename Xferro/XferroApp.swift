@@ -69,8 +69,16 @@ struct SwiftSpaceApp: App {
                             Text(ProgressManager.shared.currentActivityName)
                                 .font(.paragraph3)
                         }
+                        Images.settingsButtonImage
+                            .font(.paragraph3)
+                            .frame(width: 24, height: 24)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                AppDelegate.showSettings()
+                            }
                         Images.infoButtonImage
-                            .frame(width: 16, height: 16)
+                            .font(.paragraph3)
+                            .frame(width: 24, height: 24)
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 openURL(URL(string: "https://xferro.ai")!)

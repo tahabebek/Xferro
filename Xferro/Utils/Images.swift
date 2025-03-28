@@ -11,4 +11,5 @@ enum Images {
     static let actionButtonSystemImageName = "line.3.horizontal.decrease"
     static let actionButtonImage: some View = Image(systemName: actionButtonSystemImageName).font(.accessoryButton)
     static let infoButtonImage: some View = Image(systemName: "info.circle").font(.accessoryButton)
+    static let settingsButtonImage: some View = Image(systemName: "gear").font(.accessoryButton)
 }

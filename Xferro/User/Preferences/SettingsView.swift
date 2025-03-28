@@ -9,32 +9,49 @@ struct SettingsView: View {
     @AppStorage var autoCommitEnabled: Bool
     @AppStorage var autoPushEnabled: Bool
 
+    let initialUserName: String
+    let initialUserEmail: String
+    let initialAutoCommitEnabled: Bool
+    let initialAutoPushEnabled: Bool
+
     let onSave: () -> Void
 
     init(defaults: UserDefaults, config: GitConfig, onSave: @escaping () -> Void) {
         self.defaults = defaults
         self.config = config
-        self._autoCommitEnabled = .init(
+
+        let commitEnabled = AppStorage(
             wrappedValue: false,
             PreferenceKeys.autoCommitEnabled,
             store: defaults
         )
-        self._autoPushEnabled = .init(
+
+        let pushEnabled = AppStorage(
             wrappedValue: false,
             PreferenceKeys.autoPushEnabled,
             store: defaults
         )
 
-        self._userName = .init(
+        let name = ConfigValue(
             key: "user.name",
             config: config,
             default: ""
         )
-        self._userEmail = .init(
+
+        let email = ConfigValue(
             key: "user.email",
             config: config,
             default: ""
         )
+
+        self._autoCommitEnabled = commitEnabled
+        self._autoPushEnabled = pushEnabled
+        self._userName = name
+        self._userEmail = email
+        self.initialUserName = name.wrappedValue
+        self.initialUserEmail = email.wrappedValue
+        self.initialAutoPushEnabled = pushEnabled.wrappedValue
+        self.initialAutoCommitEnabled = commitEnabled.wrappedValue
         self.onSave = onSave
     }
     
@@ -67,7 +84,19 @@ struct SettingsView: View {
                 HStack {
                     Spacer()
                     XFButton<Void>(
-                        title: "Save and Close",
+                        title: "Cancel",
+                        isProminent: false,
+                        onTap: {
+                            $userName.wrappedValue = initialUserName
+                            $userEmail.wrappedValue = initialUserEmail
+                            autoCommitEnabled = initialAutoCommitEnabled
+                            autoPushEnabled = initialAutoPushEnabled
+                            onSave()
+                        }
+                    )
+
+                    XFButton<Void>(
+                        title: "Save",
                         onTap: {
                             onSave()
                         }

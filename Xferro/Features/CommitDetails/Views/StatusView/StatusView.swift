@@ -54,7 +54,7 @@ struct StatusView: View {
                     }
                     Spacer(minLength: 0)
                 }
-                .task {
+                .onAppear {
                     viewModel.setInitialSelection()
                 }
                 .sheet(isPresented: $viewModel.shouldAddRemoteBranch) {

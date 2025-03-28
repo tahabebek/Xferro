@@ -359,7 +359,7 @@ import OrderedCollections
         return title
     }
 
-    func setInitialSelection() {
+    @MainActor func setInitialSelection() {
         if currentFile == nil {
             var item: OldNewFile?
             if conflictType != nil {
