@@ -10,26 +10,18 @@ import Observation
 
 @Observable final class ProgressManager {
     static let shared = ProgressManager()
-    var activities: Set<Activity> = []
-
-    var isActive: Bool {
-        !activities.isEmpty
-    }
-    var currentActivityName: String {
-        isActive ? activities.first?.name ?? "Processing.." : "Idle"
+    var activity: Activity?
+    
+    func updateMessage(message: String) {
+        activity?.name = message
     }
 
-    func startActivity(name: String) -> Activity {
-        let activity = Activity(name: name)
-        activities.insert(activity)
-        return activity
+    func startActivity(name: String) {
+        activity = Activity(name: name)
     }
-    func updateProgress(_ activity: Activity, progress: Double) {
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            if progress >= 1.0 {
-                activities.remove(activity)
-            }
-        }
+    
+    func stopActivity() {
+        print("Activity stopped: \(activity?.name ?? "nil")")
+        activity = nil
     }
 }

@@ -587,17 +587,11 @@ fileprivate extension StatusViewModel {
                     }
                     return
                 }
-                await withActivityOperation(
-                    title: "Fetching \(remote.name ?? "remote")..",
-                    successMessage: "Fetched \(remote.name ?? "remote")"
-                ) {
+                await withActivityOperation(title: "Fetching \(remote.name ?? "remote")..") {
                     try GitCLI.execute(repositoryInfo.repository, ["fetch", remote.name!, "--prune"])
                 }
             case .all:
-                await withActivityOperation(
-                    title: "Fetching all remotes",
-                    successMessage: "Fetched all remotes"
-                ) {
+                await withActivityOperation(title: "Fetching all remotes") {
                     try GitCLI.execute(repositoryInfo.repository, ["fetch", "--all", "--prune"])
                 }
             }
@@ -629,10 +623,7 @@ fileprivate extension StatusViewModel {
 
         switch pullType {
         case .merge:
-            await withActivityOperation(
-                title: "Pulling \(repositoryInfo.head.name) branch with merge..",
-                successMessage: "Pulled \(repositoryInfo.head.name) branch with merge.."
-            ) { [weak self] in
+            await withActivityOperation(title: "Pulling \(repositoryInfo.head.name) branch with merge..") { [weak self] in
                 guard let self else { return }
                 do {
                     try GitCLI.execute(repositoryInfo.repository, ["pull", "--no-rebase"])
@@ -649,10 +640,7 @@ fileprivate extension StatusViewModel {
                 }
                 return
             }
-            await withActivityOperation(
-                title: "Pulling \(repositoryInfo.head.name) branch with rebase..",
-                successMessage: "Pulling \(repositoryInfo.head.name) branch with rebase.."
-            ) { [weak self] in
+            await withActivityOperation(title: "Pulling \(repositoryInfo.head.name) branch with rebase..") { [weak self] in
                 guard let self else { return }
                 do {
                     try GitCLI.execute(repositoryInfo.repository, ["pull", "--rebase=merges",])
@@ -686,10 +674,7 @@ fileprivate extension StatusViewModel {
                 }
                 return
             }
-            await withActivityOperation(
-                title: "\(pushType == .forceWithLease ? "Force Pushing" : "Pushing") \(branch.name) to \(remote)..",
-                successMessage: "Pushed \(branch.name) to \(remote)"
-            ) {
+            await withActivityOperation(title: "\(pushType == .forceWithLease ? "Force Pushing" : "Pushing") \(branch.name) to \(remote)..") {
                 let pushOperation = await PushOpController(
                     localBranch: branch,
                     remote: remote,
@@ -706,10 +691,7 @@ fileprivate extension StatusViewModel {
                 }
                 return
             }
-            await withActivityOperation(
-                title: "Pushing \(currentBranch.name) to \(remote.name!)..",
-                successMessage: "Pushed \(currentBranch.name) to \(remote.name!)"
-            ) {
+            await withActivityOperation(title: "Pushing \(currentBranch.name) to \(remote.name!)..") {
                 let pushOperation = await PushOpController(
                     localBranch: currentBranch,
                     remote: remote,
@@ -733,10 +715,7 @@ fileprivate extension StatusViewModel {
         }
 
         guard let fetchURL = URL(string: fetchURLString) else { return }
-        await withActivityOperation(
-            title: "Adding remote..",
-            successMessage: "Remote added"
-        ) { [weak self] in
+        await withActivityOperation(title: "Adding remote..") { [weak self] in
             guard let self else { return }
             try repositoryInfo.repository.addRemote(named: remoteName, url: fetchURL)
             if let remote = repositoryInfo.repository.remote(named: remoteName) {
@@ -821,7 +800,6 @@ fileprivate extension StatusViewModel {
     }
 
     func trackAll() async {
-        guard let repositoryInfo else { fatalError(.invalid) }
         for file in unsortedUntrackedFiles.values {
             await track(flag: true, file: file, shouldRefreshStatus: false)
         }
@@ -830,10 +808,7 @@ fileprivate extension StatusViewModel {
 
     func track(flag: Bool, file: OldNewFile, shouldRefreshStatus: Bool = true) async {
         guard let repositoryInfo, let path = file.new else { fatalError(.invalid) }
-        await withActivityOperation(
-            title: "Tracking \(file.new ?? file.old!)",
-            successMessage: "Tracked \(file.new ?? file.old!)"
-        ) {
+        await withActivityOperation(title: "Tracking \(file.new ?? file.old!)") {
             if flag {
                 repositoryInfo.repository.stage(path: path).mustSucceed(repositoryInfo.repository.gitDir)
             } else {
@@ -859,10 +834,7 @@ fileprivate extension StatusViewModel {
 
     func commit(amend: Bool) async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await withActivityOperation(
-            title: amend ? "Amending changes.." : "Committing changes..",
-            successMessage: amend ? "Amended changes" : "Committed changes"
-        ) { [weak self] in
+        await withActivityOperation(title: amend ? "Amending changes.." : "Committing changes..") { [weak self] in
             guard let self else { return }
             try GitCLI.execute(repositoryInfo.repository, ["restore", "--staged", "."])
             var filesToWriteBack: [String: String] = [:]
@@ -962,10 +934,7 @@ fileprivate extension StatusViewModel {
     func ignore(file: OldNewFile) async {
         guard let repositoryInfo else { fatalError(.invalid) }
         guard let path = file.new else { fatalError(.illegal) }
-        await withActivityOperation(
-            title: "Ignoring \(path)",
-            successMessage: "\(path) is ignored"
-        ) {
+        await withActivityOperation(title: "Ignoring \(path)") {
             try repositoryInfo.repository.ignore(path)
         }
         await refreshStatus()
@@ -973,10 +942,7 @@ fileprivate extension StatusViewModel {
 
     func discard(file: OldNewFile) async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await withActivityOperation(
-            title: "Discarding changes for \(file.new ?? file.old!)..",
-            successMessage: "Changes discarded for \(file.new ?? file.old!)"
-        ) {
+        await withActivityOperation(title: "Discarding changes for \(file.new ?? file.old!)..") {
             let oldFile = file.workDirOld
             let newFile = file.workDirNew
             var fileURLs = [URL]()
@@ -1021,10 +987,7 @@ fileprivate extension StatusViewModel {
 
     func discardAll() async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await withActivityOperation(
-            title: "Discarding all changes..",
-            successMessage: "All changes are discarded"
-        ) {
+        await withActivityOperation(title: "Discarding all changes..") {
             try GitCLI.execute(repositoryInfo.repository, ["add", "."])
             try GitCLI.execute(repositoryInfo.repository, ["reset", "--hard"])
         }
@@ -1037,10 +1000,7 @@ fileprivate extension StatusViewModel {
 
     func continueMerge() async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await withActivityOperation(
-            title: "Continuing merge..",
-            successMessage: "Merge done"
-        ) { [weak self] in
+        await withActivityOperation(title: "Continuing merge..") { [weak self] in
             guard let self else { return }
             let files = conflictedFiles.map(\.new!)
             try GitCLI.execute(repositoryInfo.repository, ["add"] + files)
@@ -1057,10 +1017,7 @@ fileprivate extension StatusViewModel {
 
     func abortMerge() async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await withActivityOperation(
-            title: "Aborting merge..",
-            successMessage: "Merge aborted"
-        ) {
+        await withActivityOperation(title: "Aborting merge..") {
             try GitCLI.execute(repositoryInfo.repository, ["merge", "--abort"])
         }
         Task { @MainActor [weak self] in
@@ -1074,10 +1031,7 @@ fileprivate extension StatusViewModel {
 
     func continueRebase() async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await withActivityOperation(
-            title: "Continuing rebase..",
-            successMessage: "Rebase done"
-        ) { [weak self] in
+        await withActivityOperation(title: "Continuing rebase..") { [weak self] in
             guard let self else { return }
             let files = conflictedFiles.map(\.new!)
             do {
@@ -1098,10 +1052,7 @@ fileprivate extension StatusViewModel {
 
     func abortRebase() async {
         guard let repositoryInfo else { fatalError(.invalid) }
-        await withActivityOperation(
-            title: "Aborting rebase..",
-            successMessage: "Rebase aborted"
-        ) { [weak self] in
+        await withActivityOperation(title: "Aborting rebase..") { [weak self] in
             guard let self else { return }
             do {
                 try GitCLI.execute(repositoryInfo.repository, ["rebase", "--abort"])

@@ -97,8 +97,7 @@ import Observation
             
             await withActivityOperation(
                 title: isRemote ? "Creating remote branch \(branchName) to track \(baseBranchName)"
-                    : "Creating local branch \(branchName) based on \(baseBranchName)",
-                successMessage: "Created branch \(branchName)"
+                    : "Creating local branch \(branchName) based on \(baseBranchName)"
             ) { [weak self] in
                 guard let self else { return }
                 if shouldCheckout {
@@ -123,8 +122,7 @@ import Observation
 
             await withActivityOperation(
                 title: isRemote ? "Checking out to remote branch \(branchName)"
-                : "Checking out to local branch \(branchName)",
-                successMessage: "Checked out to \(branchName)"
+                : "Checking out to local branch \(branchName)"
             ) { [weak self] in
                 guard let self else { return }
                 if isRemote {
@@ -154,8 +152,7 @@ import Observation
 
             await withActivityOperation(
                 title: isRemote ? "Deleting remote branch \(branchName)"
-                : "Deleting local branch \(branchName)",
-                successMessage: "Deleted branch \(branchName)"
+                : "Deleting local branch \(branchName)"
             ) { [weak self] in
                 guard let self else { return }
                  if isRemote {
@@ -171,10 +168,7 @@ import Observation
 
     func createTagTapped(name: String, message: String?, remote: String, push: Bool) {
         Task {
-            await withActivityOperation(
-                title: "Creating tag \(name) on remote \(remote)",
-                successMessage: "Created tag \(name)"
-            ) { [weak self] in
+            await withActivityOperation(title: "Creating tag \(name) on remote \(remote)") { [weak self] in
                 guard let self else { return }
                 var args = ["tag"]
                 if let message {
@@ -209,10 +203,7 @@ import Observation
                 }
                 return
             }
-            await withActivityOperation(
-                title: "Merging branch \(target) into \(destination)",
-                successMessage: "Merged branch \(target) into \(destination)"
-            ) { [weak self] in
+            await withActivityOperation(title: "Merging branch \(target) into \(destination)") { [weak self] in
                 guard let self else { return }
                 do {
                     try GitCLI.execute(repository, ["merge", target])
@@ -246,10 +237,7 @@ import Observation
                 return
             }
 
-            await withActivityOperation(
-                title: "Rebasing branch \(target) into \(destination)",
-                successMessage: "Rebasing branch \(target) into \(destination)"
-            ) { [weak self] in
+            await withActivityOperation(title: "Rebasing branch \(target) into \(destination)") { [weak self] in
                 guard let self else { return }
                 do {
                     try GitCLI.execute(repository, ["rebase", target])

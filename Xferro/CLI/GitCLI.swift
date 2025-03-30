@@ -8,24 +8,40 @@
 import Foundation
 
 enum GitCLI {
-    static func gitProcess(_ repository: Repository?, _ args: [String]) -> Process {
+    static func gitProcess(_ repository: Repository?, _ args: [String]) throws -> Process {
+        let gitExecPathProcess = Process()
+        gitExecPathProcess.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        gitExecPathProcess.arguments = ["--exec-path"]
+        let pipe = Pipe()
+        gitExecPathProcess.standardOutput = pipe
+        try gitExecPathProcess.run()
+        gitExecPathProcess.waitUntilExit()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
-
-        var environment = [String: String]()
-        environment["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin"
-        environment["HOME"] = NSHomeDirectory()
-        environment["GIT_CONFIG_NOSYSTEM"] = "1"
-        environment["GIT_TERMINAL_PROMPT"] = "0"
-        environment["GIT_REDIRECT_STDERR"] = "2"
-        environment["GIT_EXEC_PATH"] = "/usr/libexec/git-core"
-        // Disable all external commands/helpers
-        environment["GIT_EXTERNAL_DIFF"] = "true"
-        environment["GIT_PAGER"] = "cat"
-        if let sshAuthSock = ProcessInfo.processInfo.environment["SSH_AUTH_SOCK"] {
-            environment["SSH_AUTH_SOCK"] = sshAuthSock
+        
+        if let gitExecPath = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
+            // Now use this path
+            var environment = ProcessInfo.processInfo.environment
+            environment["PATH"] = "\(gitExecPath):/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+            // Rest of your environment setup
+            environment["HOME"] = NSHomeDirectory()
+            environment["GIT_CONFIG_NOSYSTEM"] = "1"
+            environment["GIT_TERMINAL_PROMPT"] = "0"
+            environment["GIT_REDIRECT_STDERR"] = "2"
+            environment["GIT_EXEC_PATH"] = "/usr/libexec/git-core"
+            // Disable all external commands/helpers
+            environment["GIT_EXTERNAL_DIFF"] = "true"
+            environment["GIT_PAGER"] = "cat"
+            
+            if let sshAuthSock = ProcessInfo.processInfo.environment["SSH_AUTH_SOCK"] {
+                environment["SSH_AUTH_SOCK"] = sshAuthSock
+            }
+            
+            process.environment = environment
         }
-        process.environment = environment
+        
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
 
         var fullArgs = [
             "-c", "core.autocrlf=false",
@@ -45,7 +61,7 @@ enum GitCLI {
 
     @discardableResult
     static func execute(_ repository: Repository?, _ args: [String]) throws -> String {
-        let process = gitProcess(repository, args)
+        let process = try gitProcess(repository, args)
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
@@ -75,7 +91,7 @@ enum GitCLI {
         progressHandler: @escaping (String) -> Void,
         completion: @escaping (Bool, String?) -> Void
     ) throws {
-        let process = GitCLI.gitProcess(nil, ["clone", "--progress", sourcePath, destinationPath])
+        let process = try GitCLI.gitProcess(nil, ["clone", sourcePath, destinationPath, "--progress"])
         
         let errorPipe = Pipe()
         let outputPipe = Pipe()
@@ -91,7 +107,7 @@ enum GitCLI {
                 outputData.append(data)
                 if let output = String(data: data, encoding: .utf8) {
                     DispatchQueue.main.async {
-                        progressHandler("output pipe: \(output)")
+                        progressHandler(output)
                     }
                 }
             }
@@ -103,26 +119,22 @@ enum GitCLI {
                 errorData.append(data)
                 if let error = String(data: data, encoding: .utf8) {
                     DispatchQueue.main.async {
-                        // Git sends progress information to stderr, so we need to report it
-                        progressHandler("progress pipe: \(error)")
+                        progressHandler(error)
                     }
                 }
             }
         }
         
         process.terminationHandler = { proc in
-            // Clean up handlers
             outputPipe.fileHandleForReading.readabilityHandler = nil
             errorPipe.fileHandleForReading.readabilityHandler = nil
             
-            // Collect any remaining data
             let remainingOutput = outputPipe.fileHandleForReading.readDataToEndOfFile()
             outputData.append(remainingOutput)
             
             let remainingError = errorPipe.fileHandleForReading.readDataToEndOfFile()
             errorData.append(remainingError)
             
-            // Report any final output
             if let finalOutput = String(data: remainingOutput, encoding: .utf8), !finalOutput.isEmpty {
                 DispatchQueue.main.async {
                     progressHandler(finalOutput)
@@ -135,19 +147,15 @@ enum GitCLI {
                 }
             }
             
-            // Convert output to strings
             let outputString = String(data: outputData, encoding: .utf8) ?? ""
             let errorString = String(data: errorData, encoding: .utf8) ?? ""
             
-            // Combine messages
             let combinedMessage = [outputString, errorString]
                 .filter { !$0.isEmpty }
                 .joined(separator: "\n")
             
-            // Check if clone was successful
             let success = proc.terminationStatus == 0
             
-            // Complete with results
             DispatchQueue.main.async {
                 completion(success, combinedMessage.isEmpty ? nil : combinedMessage)
             }
@@ -171,12 +179,12 @@ enum GitCLI {
             fullArgs.append("-R")
         }
 
-        let process = gitProcess(repository, fullArgs + args)
+        do {
+        let process = try gitProcess(repository, fullArgs + args)
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
 
-        do {
             try process.run()
             process.waitUntilExit()
 
@@ -201,18 +209,18 @@ enum GitCLI {
             }
         } catch {
             print("Failed to run diff: \(error)")
-            return .failure(.actualError(code: Int(process.terminationStatus), localizedDescription: "Git diff failed \(error.localizedDescription)"))
+            return .failure(.actualError(code: -1, localizedDescription: "Git diff failed \(error.localizedDescription)"))
         }
     }
 
     static func showHead(_ repository: Repository, _ filePath: String) -> Result<String, ShowHeadError> {
-        let process = gitProcess(repository, ["show", "HEAD:\(filePath)"])
+        do {
+            let process = try gitProcess(repository, ["show", "HEAD:\(filePath)"])
 
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
 
-        do {
             try process.run()
             process.waitUntilExit()
 
@@ -232,7 +240,7 @@ enum GitCLI {
             }
         } catch {
             print("Failed to run git: \(error)")
-            return .failure(.actualError(code: Int(process.terminationStatus), localizedDescription: "Git show head failed \(error.localizedDescription)"))
+            return .failure(.actualError(code: -1, localizedDescription: "Git show head failed \(error.localizedDescription)"))
         }
     }
 

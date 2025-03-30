@@ -279,22 +279,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             isRemote in
             dismissCloneView()
             let destinationPath = destinationPath + "/" + destinationFolderName
-            print("Clone repository to \(destinationPath) from \(sourcePath), isREMOTE: \(isRemote)")
             Task {
-                await withActivityOperation(
-                    title: "Cloning \(sourcePath).. to \(destinationPath)",
-                    successMessage: "Cloned \(sourcePath) to \(destinationPath)"
-                ) {
+                await withActivityOperation() {
                     do {
+                        ProgressManager.shared.startActivity(name: "Cloning \(sourcePath).. to \(destinationPath)")
                         try GitCLI.clone(
                             sourcePath: sourcePath,
                             destinationPath: destinationPath,
                             progressHandler: { progressText in
-                                print("\(progressText)")
+                                ProgressManager.shared.updateMessage(message: progressText)
                             },
                             completion: { success, message in
-                                Task { @MainActor in
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    ProgressManager.shared.stopActivity()
                                     if success {
+                                        NotificationCenter.default.post(
+                                            name: .localRepositoryAdded,
+                                            object: nil,
+                                            userInfo: [.repositoryURL: URL(fileURLWithPath: destinationPath)]
+                                        )
                                         print("Cloned successfully")
                                     } else {
                                         print("Error cloning")

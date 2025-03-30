@@ -41,6 +41,11 @@ struct CloneRepositoryView: View {
                                 invalidMessage = "Please enter a URL"
                                 return
                             }
+                            if remoteSource.lowercased().starts(with: "https://") || remoteSource.lowercased().starts(with: "http://") {
+                                invalidMessage = "Please use SSH URLs instead (git@github.com:user/repo.git)."
+                                return
+                            }
+                                
                         } else {
                             if localSource.isEmptyOrWhitespace {
                                 invalidMessage = "Please select a local repository"

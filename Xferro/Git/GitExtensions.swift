@@ -8,7 +8,6 @@
 import Foundation
 
 extension git_index_entry {
-    /// The stage value is stored in certain bits of the `flags` field.
     var stage: UInt16 {
         get {
             (flags & UInt16(GIT_INDEX_ENTRY_STAGEMASK)) >> GIT_INDEX_ENTRY_STAGESHIFT

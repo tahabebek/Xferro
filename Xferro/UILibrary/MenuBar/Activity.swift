@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import Observation
 
-final class Activity: Hashable {
+@Observable final class Activity: Hashable {
     static func == (lhs: Activity, rhs: Activity) -> Bool {
         lhs.name == rhs.name
     }
@@ -16,7 +17,7 @@ final class Activity: Hashable {
         hasher.combine(name)
     }
     
-    let name: String
+    var name: String
     var progress: Double // 0.0 to 1.0
 
     init(name: String, progress: Double = 0.0) {

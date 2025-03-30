@@ -63,10 +63,10 @@ struct SwiftSpaceApp: App {
             .toolbar {
                 ToolbarItem(placement: .automatic) {
                     HStack(spacing: 6) {
-                        if ProgressManager.shared.isActive {
+                        if let activity = ProgressManager.shared.activity {
                             ProgressView()
                                 .controlSize(.small)
-                            Text(ProgressManager.shared.currentActivityName)
+                            Text(activity.name)
                                 .font(.paragraph3)
                         }
                         Images.settingsButtonImage
