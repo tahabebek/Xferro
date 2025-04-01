@@ -56,12 +56,10 @@ struct StatusActionView: View {
                     onAddCommit: {
                         onCommitTapped()
                         isTextFieldFocused = false
-                        commitSummary = ""
                     },
                     onAddWipCommit: {
                         onWipCommitTapped($0)
                         isTextFieldFocused = false
-                        commitSummary = ""
                     },
                     onAmend: onAmend,
                     onApplyStash: onApplyStash,

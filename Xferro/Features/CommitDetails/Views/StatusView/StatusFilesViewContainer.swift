@@ -45,6 +45,7 @@ struct StatusFilesViewContainer: View {
     var body: some View {
         VStack {
             changes
+                .padding(.bottom, 8)
             action
                 .padding()
                 .background(Color(hexValue: 0x15151A))

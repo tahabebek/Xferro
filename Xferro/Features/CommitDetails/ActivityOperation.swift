@@ -10,7 +10,9 @@ import Foundation
 func withActivityOperation(title: String? = nil, _ operation: @escaping () async throws -> Void) async {
     Task {
         if let title {
-            ProgressManager.shared.startActivity(name: title)
+            Task { @MainActor in
+                ProgressManager.shared.startActivity(name: title)
+            }
         }
         do {
             try await operation()
