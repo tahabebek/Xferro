@@ -12,6 +12,8 @@ struct StatusView: View {
     let remotes: [Remote]
     let stashes: [SelectableStash]
 
+    let onAddWipCommit: (String) -> Void
+    
     var body: some View {
         Group {
             if viewModel.selectableStatus != nil {
@@ -81,7 +83,6 @@ struct StatusView: View {
                 .opacity(viewModel.selectableStatus == nil ? 0 : 1)
             }
         }
-        .padding(.leading, 8)
     }
 
     @ViewBuilder var filesView: some View {
@@ -104,6 +105,7 @@ struct StatusView: View {
             remotes: remotes,
             stashes: stashes,
             onCommitTapped: viewModel.commitTapped,
+            onWipCommitTapped: onAddWipCommit,
             onTapExcludeAll: { viewModel.selectAllTapped(flag: false) },
             onTapIncludeAll: { viewModel.selectAllTapped(flag: true) },
             onTapTrack: { viewModel.trackTapped(flag: true, file: $0) },

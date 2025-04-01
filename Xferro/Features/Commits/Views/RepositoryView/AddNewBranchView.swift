@@ -55,14 +55,14 @@ struct AddNewBranchView: View {
             .padding(.bottom)
             HStack {
                 Spacer()
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Cancel",
                     isProminent: false,
                     onTap: {
                         dismiss()
                     }
                 )
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Create Branch",
                     onTap: {
                         if let preselectedLocalBranch {

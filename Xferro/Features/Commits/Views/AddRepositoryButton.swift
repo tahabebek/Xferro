@@ -15,19 +15,19 @@ struct AddRepositoryButton: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "New Repository",
                 onTap: {
                     onTapNewRepository()
                 }
             )
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Add Local Repository",
                 onTap: {
                     onTapAddLocalRepository()
                 }
             )
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Clone Repository",
                 onTap: {
                     onTapCloneRepository()

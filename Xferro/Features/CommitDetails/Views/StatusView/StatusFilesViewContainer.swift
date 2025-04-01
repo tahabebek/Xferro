@@ -18,6 +18,7 @@ struct StatusFilesViewContainer: View {
     let stashes: [SelectableStash]
 
     let onCommitTapped: () -> Void
+    let onWipCommitTapped: (String) -> Void
     let onTapExcludeAll: () -> Void
     let onTapIncludeAll: () -> Void
     let onTapTrack: (OldNewFile) -> Void
@@ -43,58 +44,67 @@ struct StatusFilesViewContainer: View {
 
     var body: some View {
         VStack {
-            StatusActionView(
-                commitSummary: $commitSummary,
-                canCommit: $canCommit,
-                hasChanges: $hasChanges,
-                remotes: remotes,
-                stashes: stashes,
-                onCommitTapped: {
-                    onCommitTapped()
-                    Task { @MainActor in
-                        currentFile = nil
-                    }
-                },
-                onAmend: onAmend,
-                onApplyStash: onApplyStash,
-                onStash: onStash,
-                onDiscardAll: onDiscardAll,
-                onPopStash: onPopStash,
-                onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                onAddRemoteTapped: onAddRemoteTapped,
-                onAmendAndForcePushWithLease: onAmendAndForcePushWithLease,
-                onAmendAndPush: onAmendAndPush,
-                onCommitAndForcePushWithLease: onCommitAndForcePushWithLease,
-                onCommitAndPush: onCommitAndPush
-            )
-            .padding()
-            .background(Color(hexValue: 0x15151A))
-            .cornerRadius(8)
-            if hasChanges {
-                StatusViewChangeView(
-                    currentFile: $currentFile,
-                    trackedFiles: $trackedFiles,
-                    untrackedFiles: $untrackedFiles,
-                    onTapExcludeAll: onTapExcludeAll,
-                    onTapIncludeAll: onTapIncludeAll,
-                    onTapTrack: onTapTrack,
-                    onTapUntrack: onTapUntrack,
-                    onTapTrackAll: onTapTrackAll,
-                    onTapIgnore: onTapIgnore,
-                    onTapDiscard: onTapDiscard
-                )
-            } else {
-                StatusViewNoChangeView(
-                    remotes: remotes,
-                    onTapPush: onTapPush,
-                    onTapForcePushWithLease: onTapForcePushWithLease,
-                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                    onAddRemoteTapped: onAddRemoteTapped
-                )
-            }
+            changes
+            action
+                .padding()
+                .background(Color(hexValue: 0x15151A))
+                .cornerRadius(8)
         }
         .animation(.default, value: hasChanges)
+    }
+    
+    @ViewBuilder var action: some View {
+        StatusActionView(
+            commitSummary: $commitSummary,
+            canCommit: $canCommit,
+            hasChanges: $hasChanges,
+            remotes: remotes,
+            stashes: stashes,
+            onCommitTapped: {
+                onCommitTapped()
+                Task { @MainActor in
+                    currentFile = nil
+                }
+            },
+            onWipCommitTapped: onWipCommitTapped,
+            onAmend: onAmend,
+            onApplyStash: onApplyStash,
+            onStash: onStash,
+            onDiscardAll: onDiscardAll,
+            onPopStash: onPopStash,
+            onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+            onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+            onAddRemoteTapped: onAddRemoteTapped,
+            onAmendAndForcePushWithLease: onAmendAndForcePushWithLease,
+            onAmendAndPush: onAmendAndPush,
+            onCommitAndForcePushWithLease: onCommitAndForcePushWithLease,
+            onCommitAndPush: onCommitAndPush
+        )
+    }
+    
+    @ViewBuilder var changes: some View {
+        if hasChanges {
+            StatusViewChangeView(
+                currentFile: $currentFile,
+                trackedFiles: $trackedFiles,
+                untrackedFiles: $untrackedFiles,
+                onTapExcludeAll: onTapExcludeAll,
+                onTapIncludeAll: onTapIncludeAll,
+                onTapTrack: onTapTrack,
+                onTapUntrack: onTapUntrack,
+                onTapTrackAll: onTapTrackAll,
+                onTapIgnore: onTapIgnore,
+                onTapDiscard: onTapDiscard
+            )
+        } else {
+            StatusViewNoChangeView(
+                remotes: remotes,
+                onTapPush: onTapPush,
+                onTapForcePushWithLease: onTapForcePushWithLease,
+                onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                onAddRemoteTapped: onAddRemoteTapped
+            )
+        }
     }
 }

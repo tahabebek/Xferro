@@ -20,7 +20,7 @@ struct HunkView: View {
                         .foregroundColor(Color(hexValue: 0xADBD42))
                         .font(.paragraph5)
                     Spacer()
-                    XFButton<Void>(
+                    XFButton<Void,Text>(
                         title: "Discard Hunk Below",
                         onTap: {
                             hunk.discard()

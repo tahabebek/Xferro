@@ -27,7 +27,7 @@ struct RepositoryMenuViewButtons: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            XFButton<Remote>(
+            XFButton<Remote,Text>(
                 title: "Fetch",
                 info: XFButtonInfo(info: InfoTexts.fetch),
                 options: $options,
@@ -56,7 +56,7 @@ struct RepositoryMenuViewButtons: View {
             .task {
                 selectedRemoteForFetch = remotes[onGetLastSelectedRemoteIndex("push")]
             }
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Fetch all remotes (origin, upstream, etc.)",
                 info: XFButtonInfo(info: InfoTexts.fetch),
                 onTap: {
@@ -65,7 +65,7 @@ struct RepositoryMenuViewButtons: View {
                 }
             )
             Divider()
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Pull \(head.name) branch with merge",
                 info: XFButtonInfo(info: InfoTexts.pull),
                 onTap: {
@@ -73,7 +73,7 @@ struct RepositoryMenuViewButtons: View {
                     onPullTapped(.merge)
                 }
             )
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Pull \(head.name) branch with rebase",
                 info: XFButtonInfo(info: InfoTexts.pull),
                 onTap: {
@@ -82,7 +82,7 @@ struct RepositoryMenuViewButtons: View {
                 }
             )
             Divider()
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Checkout to a branch",
                 info: XFButtonInfo(info: InfoTexts.branch),
                 onTap: {
@@ -90,7 +90,7 @@ struct RepositoryMenuViewButtons: View {
                     onCheckoutBranchTapped()
                 }
             )
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Create a new branch",
                 info: XFButtonInfo(info: InfoTexts.branch),
                 onTap: {
@@ -98,7 +98,7 @@ struct RepositoryMenuViewButtons: View {
                     onCreateBranchTapped()
                 }
             )
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Delete a branch",
                 info: XFButtonInfo(info: InfoTexts.branch),
                 onTap: {
@@ -107,7 +107,7 @@ struct RepositoryMenuViewButtons: View {
                 }
             )
             Divider()
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Create a new tag",
                 info: XFButtonInfo(info: InfoTexts.tag),
                 onTap: {

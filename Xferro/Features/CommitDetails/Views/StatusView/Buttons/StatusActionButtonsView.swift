@@ -10,6 +10,8 @@ import SwiftUI
 struct StatusActionButtonsView: View {
     enum BoxAction: String, CaseIterable, Identifiable, Equatable {
         var id: String { rawValue }
+        case addCommit = "Add Commit"
+        case addWipCommit = "Add Wip Commit"
         case amend = "Amend"
         case commitAndPush = "Commit and Push"
         case amendAndPush = "Amend and Push"
@@ -30,6 +32,9 @@ struct StatusActionButtonsView: View {
 
     let remotes: [Remote]
     let stashes: [SelectableStash]
+    
+    let onAddCommit: () -> Void
+    let onAddWipCommit: (String) -> Void
     let onAmend: () -> Void
     let onApplyStash: (SelectableStash) -> Void
     let onStash: () -> Void
@@ -46,6 +51,22 @@ struct StatusActionButtonsView: View {
     var body: some View {
         ForEach(boxActions) { boxAction in
             switch boxAction {
+            case .addCommit:
+                AddCommitButton(
+                    canCommit: $canCommit,
+                    hasChanges: $hasChanges,
+                    commitSummary: $commitSummary,
+                    title: boxAction.rawValue,
+                    onAddCommit: onAddCommit
+                )
+            case .addWipCommit:
+                AddWipCommitButton(
+                    canCommit: $canCommit,
+                    hasChanges: $hasChanges,
+                    commitSummary: $commitSummary,
+                    title: boxAction.rawValue,
+                    onAddWipCommit: onAddWipCommit
+                )
             case .amend:
                 AmendButton(
                     canCommit: $canCommit,

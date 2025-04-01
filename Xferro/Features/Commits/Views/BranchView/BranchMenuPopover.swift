@@ -31,7 +31,7 @@ struct BranchMenuPopover: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !isCurrent {
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Checkout to \(name)",
                     onTap: {
                         showingBranchOptions = false
@@ -40,7 +40,7 @@ struct BranchMenuPopover: View {
                 )
                 Divider()
             }
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Pull \(name) branch with merge",
                 info: XFButtonInfo(info: InfoTexts.pull),
                 onTap: {
@@ -48,7 +48,7 @@ struct BranchMenuPopover: View {
                     onPullTapped(.merge)
                 }
             )
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Pull \(name) branch with rebase",
                 info: XFButtonInfo(info: InfoTexts.pull),
                 onTap: {
@@ -83,7 +83,7 @@ struct BranchMenuPopover: View {
                 }
             )
             Divider()
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Create a new branch based on \(name)",
                 onTap: {
                     showingBranchOptions = false
@@ -93,7 +93,7 @@ struct BranchMenuPopover: View {
 
             if !isDetached, branchCount > 1 {
                 Divider()
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Merge a branch into \(name)",
                     info: XFButtonInfo(info: InfoTexts.merge),
                     onTap: {
@@ -101,22 +101,12 @@ struct BranchMenuPopover: View {
                         showingBranchOptions = false
                     }
                 )
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Rebase a branch into \(name)",
                     info: XFButtonInfo(info: InfoTexts.rebase),
                     onTap: {
                         showingBranchOptions = false
                         showingRebaseTargetBranchSheet = true
-                    }
-                )
-            }
-            if !isDetached {
-                Divider()
-                XFButton<Void>(
-                    title: "Delete \(name)",
-                    onTap: {
-                        showingBranchOptions = false
-                        onDeleteBranchTapped(name)
                     }
                 )
             }

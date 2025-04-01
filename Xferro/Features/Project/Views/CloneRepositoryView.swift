@@ -28,12 +28,12 @@ struct CloneRepositoryView: View {
                 .padding(.bottom)
             HStack {
                 Spacer()
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Cancel",
                     isProminent: false,
                     onTap: onCancel
                 )
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Clone",
                     onTap: {
                         if isRemote {
@@ -120,7 +120,7 @@ struct CloneRepositoryView: View {
                     Text("Destination Folder:")
                     Spacer()
                     TextField("Destination Folder", text: $destinationPath)
-                    XFButton<Void>(
+                    XFButton<Void,Text>(
                         title: "Choose...",
                         isProminent: false,
                         onTap: {
@@ -169,7 +169,7 @@ struct CloneRepositoryView: View {
                 Text("Source Folder:")
                 Spacer()
                 TextField("Source Folder", text: $localSource)
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Choose...",
                     isProminent: false,
                     onTap: {

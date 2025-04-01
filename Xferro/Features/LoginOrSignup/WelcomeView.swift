@@ -50,7 +50,7 @@ struct WelcomeView: View {
         .background(colorScheme == .dark ? Color(NSColor.windowBackgroundColor) : Color(NSColor.controlBackgroundColor))
         .overlay(alignment: .topTrailing) {
             if !viewModel.showProgress {
-                XFButton<Void>(title: "Skip", isProminent: false) {
+                XFButton<Void,Text>(title: "Skip", isProminent: false) {
                     viewModel.skipButtonTapped()
                 }
                 .padding()
@@ -59,7 +59,7 @@ struct WelcomeView: View {
         }
         .overlay(alignment: .topLeading) {
             if case .signup = viewModel.currentStep, !viewModel.showProgress {
-                XFButton<Void>(title: "Back", isProminent: false) {
+                XFButton<Void,Text>(title: "Back", isProminent: false) {
                     viewModel.backButtonTapped()
                 }
                 .padding()

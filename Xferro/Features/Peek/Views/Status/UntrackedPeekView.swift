@@ -29,7 +29,7 @@ struct UntrackedPeekView: View {
                         Spacer()
                     }
                     HStack {
-                        XFButton<Void>(
+                        XFButton<Void,Text>(
                             title: "Track",
                             isProminent: false,
                             isSmall: true,
@@ -38,7 +38,7 @@ struct UntrackedPeekView: View {
                             }
                         )
                         .padding()
-                        XFButton<Void>(
+                        XFButton<Void,Text>(
                             title: "Ignore",
                             isProminent: false,
                             isSmall: true,
@@ -47,7 +47,7 @@ struct UntrackedPeekView: View {
                             }
                         )
                         .padding()
-                        XFButton<Void>(
+                        XFButton<Void,Text>(
                             title: "Discard",
                             isSmall: true,
                             onTap: {

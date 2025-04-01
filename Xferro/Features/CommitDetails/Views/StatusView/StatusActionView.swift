@@ -18,6 +18,7 @@ struct StatusActionView: View {
     let remotes: [Remote]
     let stashes: [SelectableStash]
     let onCommitTapped: () -> Void
+    let onWipCommitTapped: (String) -> Void
     let onAmend: () -> Void
     let onApplyStash: (SelectableStash) -> Void
     let onStash: () -> Void
@@ -33,27 +34,16 @@ struct StatusActionView: View {
 
     var body: some View {
         VStack {
-            HStack {
-                Form {
-                    TextField(
-                        "Summary",
-                        text: $commitSummary,
-                        prompt: Text("Summary"),
-                        axis: .vertical
-                    )
-                    .font(.formField)
-                    .focused($isTextFieldFocused)
-                    .textFieldStyle(.roundedBorder)
-                }
-                XFButton<Void>(
-                    title: "Commit",
-                    info: XFButtonInfo(info: InfoTexts.commit),
-                    disabled: commitSummary.isEmptyOrWhitespace || canCommit || !hasChanges,
-                    onTap: {
-                        onCommitTapped()
-                        isTextFieldFocused = false
-                    }
+            Form {
+                TextField(
+                    "",
+                    text: $commitSummary,
+                    prompt: Text("Summary"),
+                    axis: .vertical
                 )
+                .font(.formField)
+                .focused($isTextFieldFocused)
+                .textFieldStyle(.roundedBorder)
             }
             .padding(.bottom, Dimensions.actionBoxBottomPadding)
             AnyLayout(FlowLayout(alignment:.init(horizontal: horizontalAlignment, vertical: verticalAlignment))) {
@@ -63,6 +53,16 @@ struct StatusActionView: View {
                     hasChanges: $hasChanges,
                     remotes: remotes,
                     stashes: stashes,
+                    onAddCommit: {
+                        onCommitTapped()
+                        isTextFieldFocused = false
+                        commitSummary = ""
+                    },
+                    onAddWipCommit: {
+                        onWipCommitTapped($0)
+                        isTextFieldFocused = false
+                        commitSummary = ""
+                    },
                     onAmend: onAmend,
                     onApplyStash: onApplyStash,
                     onStash: onStash,

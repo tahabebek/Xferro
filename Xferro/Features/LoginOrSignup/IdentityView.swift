@@ -59,7 +59,7 @@ struct IdentityView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
                 }
-                XFButton<Void>(title: "Finish") {
+                XFButton<Void,Text>(title: "Finish") {
                     viewModel.finishButtonTapped()
                 }
                 .frame(width: 300)

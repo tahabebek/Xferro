@@ -14,7 +14,7 @@ struct PopStashButton: View {
     let onPopStash: () -> Void
 
     var body: some View {
-        XFButton<Void>(
+        XFButton<Void,Text>(
             title: title,
             info: XFButtonInfo(info: InfoTexts.stash),
             disabled: stashes.isEmpty,

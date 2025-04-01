@@ -19,7 +19,7 @@ struct WipCommitActionButtonsView: View {
 
     var body: some View {
         ForEach(boxActions) { boxAction in
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: boxAction.rawValue,
                 isProminent: true,
                 onTap: { onTap(boxAction) })

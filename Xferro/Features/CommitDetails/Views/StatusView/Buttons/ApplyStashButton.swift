@@ -33,7 +33,7 @@ struct ApplyStashButton: View {
     }
 
     var body: some View {
-        XFButton<SelectableStash>(
+        XFButton<SelectableStash,Text>(
             title: title,
             info: XFButtonInfo(info: InfoTexts.applyStash),
             disabled: stashes.isEmpty,

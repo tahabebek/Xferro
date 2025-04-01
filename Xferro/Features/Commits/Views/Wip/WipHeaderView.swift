@@ -67,7 +67,7 @@ struct WipHeaderView: View {
     var buttons: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !autoCommitEnabled {
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Commit Wip",
                     info: XFButtonInfo(info: ""),
                     onTap: {
@@ -77,7 +77,7 @@ struct WipHeaderView: View {
                 )
             }
             if !autoPushEnabled {
-                XFButton<Remote>(
+                XFButton<Remote,Text>(
                     title: "Push",
                     options: $options,
                     selectedOptionIndex: Binding<Int>(
@@ -113,14 +113,14 @@ struct WipHeaderView: View {
             if !autoPushEnabled || !autoPushEnabled {
                 Divider()
             }
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Delete all wip commits of \(viewModel.repositoryInfo.repository.nameOfRepo)",
                 onTap: {
                     dismiss()
                     showButtons = false
                 }
             )
-            XFButton<Void>(
+            XFButton<Void,Text>(
                 title: "Delete wip commits of \(viewModel.item.selectableItem.wipDescription.uncapitalizingFirstLetter())",
                 onTap: {
                     dismiss()

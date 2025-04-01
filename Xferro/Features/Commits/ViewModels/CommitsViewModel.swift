@@ -160,6 +160,13 @@ import OrderedCollections
             fatalError()
         }
     }
+    
+    func repositoryInfoTapped(_ repositoryInfo: RepositoryInfo) {
+        userTapped(item: SelectableStatus(repositoryInfo: repositoryInfo), repositoryInfo: repositoryInfo)
+    }
+    
+    func branchInfoTapped(_ repositoryInfo: BranchInfo) {
+    }
 
     func isCurrentBranch(_ branch: Branch, head: Head) -> Bool {
         switch head {

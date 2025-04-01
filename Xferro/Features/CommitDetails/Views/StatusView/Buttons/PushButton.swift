@@ -73,7 +73,7 @@ struct PushButton: View {
     }
 
     var body: some View {
-        XFButton<Remote>(
+        XFButton<Remote,Text>(
             title: title,
             info: force ? XFButtonInfo(info: InfoTexts.forcePushWithLease) : XFButtonInfo(info: InfoTexts.push),
             disabled: ((commitSummary?.wrappedValue.isEmptyOrWhitespace ?? false) || !hasChanges) && !amend,

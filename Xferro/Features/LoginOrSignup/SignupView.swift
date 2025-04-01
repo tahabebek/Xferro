@@ -130,7 +130,7 @@ struct SignupView: View {
                     }
                     .font(.formField)
                     .frame(width: 300)
-                    XFButton<Void>(title: "Sign Up") {
+                    XFButton<Void,Text>(title: "Sign Up") {
                         triedSignup = true
                         if viewModel.isValidForm {
                             viewModel.signupButtonTapped()

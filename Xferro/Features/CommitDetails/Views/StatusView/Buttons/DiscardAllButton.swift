@@ -14,7 +14,7 @@ struct DiscardAllButton: View {
     let onDiscardAll: () -> Void
 
     var body: some View {
-        XFButton<Void>(
+        XFButton<Void,Text>(
             title: title,
             disabled: !hasChanges,
             onTap: {

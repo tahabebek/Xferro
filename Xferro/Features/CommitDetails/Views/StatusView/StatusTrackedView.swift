@@ -34,7 +34,7 @@ struct StatusTrackedView: View {
                     .font(.paragraph4)
                 Spacer()
                 if files.allSatisfy({ $0.checkState == CheckboxState.checked }) {
-                    XFButton<Void>(
+                    XFButton<Void,Text>(
                         title: "Unselect All",
                         isSmall: true,
                         onTap: {
@@ -42,7 +42,7 @@ struct StatusTrackedView: View {
                         }
                     )
                 } else if files.allSatisfy({ $0.checkState == CheckboxState.unchecked }) {
-                    XFButton<Void>(
+                    XFButton<Void,Text>(
                         title: "Select All",
                         isSmall: true,
                         onTap: {
@@ -50,14 +50,14 @@ struct StatusTrackedView: View {
                         }
                     )
                 } else {
-                    XFButton<Void>(
+                    XFButton<Void,Text>(
                         title: "Select All",
                         isSmall: true,
                         onTap: {
                             onTapIncludeAll()
                         }
                     )
-                    XFButton<Void>(
+                    XFButton<Void,Text>(
                         title: "Unselect All",
                         isSmall: true,
                         onTap: {

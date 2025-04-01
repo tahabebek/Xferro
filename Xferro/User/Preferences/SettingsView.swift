@@ -83,7 +83,7 @@ struct SettingsView: View {
                 .padding(.bottom)
                 HStack {
                     Spacer()
-                    XFButton<Void>(
+                    XFButton<Void,Text>(
                         title: "Cancel",
                         isProminent: false,
                         onTap: {
@@ -95,7 +95,7 @@ struct SettingsView: View {
                         }
                     )
 
-                    XFButton<Void>(
+                    XFButton<Void,Text>(
                         title: "Save",
                         onTap: {
                             onSave()

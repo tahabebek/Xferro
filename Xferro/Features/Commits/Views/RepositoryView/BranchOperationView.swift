@@ -97,14 +97,14 @@ struct BranchOperationView: View {
             }
             HStack {
                 Spacer()
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Cancel",
                     isProminent: false,
                     onTap: {
                         dismiss()
                     }
                 )
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: confirmButtonTitle,
                     onTap: {
                         switch operation {

@@ -13,7 +13,19 @@ import Observation
     let repository: Repository
     var head: Head
     var headOID: OID { head.oid }
-    var localBranchInfos: [BranchInfo] = []
+    var localBranchInfos: [BranchInfo] = [] {
+        didSet {
+            if let onIsCurrentBranch {
+                for localBranchInfo in localBranchInfos {
+                    if onIsCurrentBranch(localBranchInfo.branch, head){
+                        currentBranch = localBranchInfo
+                        break
+                    }
+                }
+            }
+        }
+    }
+    var currentBranch: BranchInfo?
     var remoteBranchInfos: [BranchInfo] = []
     var remotes: [Remote] = []
     var tags: [TagInfo] = []

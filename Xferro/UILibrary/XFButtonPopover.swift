@@ -12,13 +12,20 @@ import SwiftUI
 struct XFButtonPopover<T>: View {
     @Binding var showingOptions: Bool
     @Binding var options: [XFButtonOption<T>]
-    @Binding var addMoreIsHovered: Bool
+    @State var addMoreIsHovered: Bool = false
+    @State var addMoreIsHovered2: Bool = false
+    @State var addMoreIsHovered3: Bool = false
+    
     @Binding var selectedOptionIndex: Int
 
     let addMoreOptionsText: String?
+    let addMoreOptionsText2: String?
+    let addMoreOptionsText3: String?
     let onTapOption: (XFButtonOption<T>) -> Void
     let onTapAddMore: () -> Void
-
+    let onTapAddMore2: () -> Void
+    let onTapAddMore3: () -> Void
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Section {
@@ -54,6 +61,38 @@ struct XFButtonPopover<T>: View {
                         }
                         .onHover { flag in
                             addMoreIsHovered = flag
+                        }
+                }
+            }
+            if let addMoreOptionsText2 {
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.accentColor)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .opacity(addMoreIsHovered2 ? 0.7 : 0)
+                    Text(addMoreOptionsText2)
+                        .onTapGesture {
+                            showingOptions = false
+                            onTapAddMore2()
+                        }
+                        .onHover { flag in
+                            addMoreIsHovered2 = flag
+                        }
+                }
+            }
+            if let addMoreOptionsText3 {
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.accentColor)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .opacity(addMoreIsHovered3 ? 0.7 : 0)
+                    Text(addMoreOptionsText3)
+                        .onTapGesture {
+                            showingOptions = false
+                            onTapAddMore3()
+                        }
+                        .onHover { flag in
+                            addMoreIsHovered3 = flag
                         }
                 }
             }

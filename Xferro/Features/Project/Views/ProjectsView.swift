@@ -17,7 +17,7 @@ struct ProjectsView: View {
             HStack {
                 Spacer()
                 if viewModel.commitsViewModel.currentRepositoryInfos.count > 0 {
-                    ProjectView(commitsViewModel: viewModel.commitsViewModel, statusViewModel: statusViewModel)
+                    ProjectView(statusViewModel: statusViewModel, commitsViewModel: viewModel.commitsViewModel)
                 } else {
                     ZStack {
                         Color(hexValue: 0x15151A)

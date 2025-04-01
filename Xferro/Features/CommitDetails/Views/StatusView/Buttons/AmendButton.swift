@@ -15,7 +15,7 @@ struct AmendButton: View {
     let onAmend: () -> Void
 
     var body: some View {
-        XFButton<Void>(
+        XFButton<Void,Text>(
             title: title,
             info: XFButtonInfo(info: InfoTexts.amend),
             disabled: canCommit || !hasChanges,

@@ -28,7 +28,7 @@ struct StatusUntrackedView: View {
                             onTapIgnore: { onTapIgnore(file.wrappedValue) },
                             onTapDiscard: { onTapDiscard(file.wrappedValue) }
                         )
-                        XFButton<Void>(
+                        XFButton<Void,Text>(
                             title: "Track",
                             isProminent: false,
                             isSmall: true,
@@ -36,7 +36,7 @@ struct StatusUntrackedView: View {
                                 onTapTrack(file.wrappedValue)
                             }
                         )
-                        XFButton<Void>(
+                        XFButton<Void,Text>(
                             title: "Ignore",
                             isProminent: false,
                             isSmall: true,
@@ -44,7 +44,7 @@ struct StatusUntrackedView: View {
                                 onTapIgnore(file.wrappedValue)
                             }
                         )
-                        XFButton<Void>(
+                        XFButton<Void,Text>(
                             title: "Discard",
                             isProminent: false,
                             isSmall: true,
@@ -60,7 +60,7 @@ struct StatusUntrackedView: View {
                 Text("\(files.count) untracked \(files.count == 1 ? "item" : "items")")
                     .font(.paragraph4)
                 Spacer()
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Track All",
                     isSmall: true,
                     onTap: {

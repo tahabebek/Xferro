@@ -26,14 +26,14 @@ struct AddNewRemoteView: View {
                 .padding(.bottom)
             HStack {
                 Spacer()
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Cancel",
                     isProminent: false,
                     onTap: {
                         dismiss()
                     }
                 )
-                XFButton<Void>(
+                XFButton<Void,Text>(
                     title: "Add Remote",
                     onTap: {
                         if name.isEmptyOrWhitespace && fetchURL.isEmptyOrWhitespace {

@@ -14,7 +14,7 @@ struct StashButton: View {
     let onStash: () -> Void
 
     var body: some View {
-        XFButton<Void>(
+        XFButton<Void,Text>(
             title: title,
             info: XFButtonInfo(info: InfoTexts.stash),
             disabled: !hasChanges,

@@ -110,11 +110,11 @@ struct LoginView: View {
             .frame(width: 300)
 
             VStack(spacing: 16) {
-                XFButton<Void>(title: "Sign In") {
+                XFButton<Void,Text>(title: "Sign In") {
                     viewModel.loginButtonTapped()
                 }
                 
-                XFButton<Void>(title: "Forgot Password", isProminent: false) {
+                XFButton<Void,Text>(title: "Forgot Password", isProminent: false) {
                     viewModel.forgotPasswordButtonTapped()
                 }
             }
