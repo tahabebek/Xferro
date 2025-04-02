@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import StoreKit
 import SwiftUI
 import TipKit
 
@@ -29,8 +30,9 @@ struct SwiftSpaceApp: App {
     @State private var users: Users? = DataManager.load(Users.self, filename: DataManager.usersFileName)
     @State private var projectsViewModel: ProjectsViewModel? = ProjectsViewModel(user: DataManager.load(Users.self, filename: DataManager.usersFileName)?.currentUser)
     @State private var statusViewModel = StatusViewModel()
-
-    private let screenDimensions = NSScreen.main?.visibleFrame.size
+    @State var showPaywall: Bool = false
+    @State var frame: CGRect = .zero
+    private let screenDimensions = NSScreen.main?.visibleFrame
 
     var body: some Scene {
         WindowGroup {
@@ -58,7 +60,6 @@ struct SwiftSpaceApp: App {
                 }
             }
             .font(.heading0)
-            //            .frame(idealWidth: Dimensions.appWidth, idealHeight: Dimensions.appHeight)
             .background(Color.fabulaBack2)
             .toolbar {
                 ToolbarItem(placement: .automatic) {
@@ -86,18 +87,20 @@ struct SwiftSpaceApp: App {
                     }
                 }
             }
+            .frame(minWidth: 800, minHeight: 600)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(idealWidth: frame.width, idealHeight: frame.height)
             .task {
                 AppDelegate.users = users
-                do {
-                    try Tips.configure()
-                }
-                catch {
-                    // Handle TipKit errors
-                    print("Error initializing TipKit \(error.localizedDescription)")
-                }
             }
             .preferredColorScheme(.dark)
+            .onAppear {
+                frame = screenDimensions ?? .zero
+                showPaywall = true
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+            }
         }
     }
 }
