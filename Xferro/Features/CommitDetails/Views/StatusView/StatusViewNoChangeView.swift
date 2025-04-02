@@ -24,7 +24,6 @@ struct StatusViewNoChangeView: View {
                 Spacer()
             }
             .padding(.all)
-            .padding(.top, 8)
             HStack {
                 PushButton(
                     selectedRemoteForPush: $selectedRemoteForPush,
