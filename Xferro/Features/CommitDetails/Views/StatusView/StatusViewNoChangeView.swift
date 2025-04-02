@@ -18,12 +18,8 @@ struct StatusViewNoChangeView: View {
     
     var body: some View {
         VStack {
-            HStack {
-                Text("No changes.")
-                    .font(.paragraph1)
-                Spacer()
-            }
-            .padding(.leading)
+            Text("No changes.")
+                .font(.paragraph1)
             HStack {
                 PushButton(
                     selectedRemoteForPush: $selectedRemoteForPush,
