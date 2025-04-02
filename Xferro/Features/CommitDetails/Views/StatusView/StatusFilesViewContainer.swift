@@ -14,6 +14,7 @@ struct StatusFilesViewContainer: View {
     @Binding var commitSummary: String
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
+    
     let remotes: [Remote]
     let stashes: [SelectableStash]
 
