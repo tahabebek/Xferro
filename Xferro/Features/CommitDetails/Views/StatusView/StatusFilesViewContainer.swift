@@ -14,7 +14,8 @@ struct StatusFilesViewContainer: View {
     @Binding var commitSummary: String
     @Binding var canCommit: Bool
     @Binding var hasChanges: Bool
-    
+    @State var selection: StatusSegmentedPicker.Section = .currentChanges
+
     let remotes: [Remote]
     let stashes: [SelectableStash]
 
@@ -85,28 +86,44 @@ struct StatusFilesViewContainer: View {
     }
     
     @ViewBuilder var changes: some View {
-        if hasChanges {
-            StatusViewChangeView(
-                currentFile: $currentFile,
-                trackedFiles: $trackedFiles,
-                untrackedFiles: $untrackedFiles,
-                onTapExcludeAll: onTapExcludeAll,
-                onTapIncludeAll: onTapIncludeAll,
-                onTapTrack: onTapTrack,
-                onTapUntrack: onTapUntrack,
-                onTapTrackAll: onTapTrackAll,
-                onTapIgnore: onTapIgnore,
-                onTapDiscard: onTapDiscard
-            )
-        } else {
-            StatusViewNoChangeView(
-                remotes: remotes,
-                onTapPush: onTapPush,
-                onTapForcePushWithLease: onTapForcePushWithLease,
-                onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                onAddRemoteTapped: onAddRemoteTapped
-            )
+        ZStack {
+            Color(hexValue: 0x15151A)
+                .cornerRadius(8)
+            VStack {
+                segmentedControl
+                    .padding()
+                if hasChanges {
+                    StatusViewChangeView(
+                        currentFile: $currentFile,
+                        trackedFiles: $trackedFiles,
+                        untrackedFiles: $untrackedFiles,
+                        onTapExcludeAll: onTapExcludeAll,
+                        onTapIncludeAll: onTapIncludeAll,
+                        onTapTrack: onTapTrack,
+                        onTapUntrack: onTapUntrack,
+                        onTapTrackAll: onTapTrackAll,
+                        onTapIgnore: onTapIgnore,
+                        onTapDiscard: onTapDiscard
+                    )
+                    .padding(.horizontal)
+                } else {
+                    StatusViewNoChangeView(
+                        remotes: remotes,
+                        onTapPush: onTapPush,
+                        onTapForcePushWithLease: onTapForcePushWithLease,
+                        onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                        onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                        onAddRemoteTapped: onAddRemoteTapped
+                    )
+                }
+            }
         }
+    }
+        
+    @ViewBuilder var segmentedControl: some View {
+        StatusSegmentedPicker(selection: $selection)
+            .background(Color(hexValue: 0x0B0C10))
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .animation(.default, value: selection)
     }
 }

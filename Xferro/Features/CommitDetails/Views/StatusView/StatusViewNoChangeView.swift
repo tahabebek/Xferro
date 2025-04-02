@@ -17,40 +17,39 @@ struct StatusViewNoChangeView: View {
     let onAddRemoteTapped: () -> Void
     
     var body: some View {
-        ZStack {
-            Color(hexValue: 0x15151A)
-                .cornerRadius(8)
-            VStack {
+        VStack {
+            HStack {
                 Text("No changes.")
                     .font(.paragraph1)
-                    .padding(.all)
-                    .padding(.top, 8)
-                HStack {
-                    PushButton(
-                        selectedRemoteForPush: $selectedRemoteForPush,
-                        remotes: remotes,
-                        title: "Push",
-                        pushOnly: true,
-                        onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                        onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                        onAddRemoteTapped: onAddRemoteTapped,
-                        onPush: onTapPush
-                    )
-                    PushButton(
-                        selectedRemoteForPush: $selectedRemoteForPush,
-                        remotes: remotes,
-                        title: "Force Push with Lease",
-                        force: true,
-                        pushOnly: true,
-                        onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
-                        onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
-                        onAddRemoteTapped: onAddRemoteTapped,
-                        onForcePushWithLease: onTapForcePushWithLease
-                    )
-                }
-                .frame(height: 24)
                 Spacer()
             }
+            .padding(.all)
+            .padding(.top, 8)
+            HStack {
+                PushButton(
+                    selectedRemoteForPush: $selectedRemoteForPush,
+                    remotes: remotes,
+                    title: "Push",
+                    pushOnly: true,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: onAddRemoteTapped,
+                    onPush: onTapPush
+                )
+                PushButton(
+                    selectedRemoteForPush: $selectedRemoteForPush,
+                    remotes: remotes,
+                    title: "Force Push with Lease",
+                    force: true,
+                    pushOnly: true,
+                    onGetLastSelectedRemoteIndex: onGetLastSelectedRemoteIndex,
+                    onSetLastSelectedRemoteIndex: onSetLastSelectedRemoteIndex,
+                    onAddRemoteTapped: onAddRemoteTapped,
+                    onForcePushWithLease: onTapForcePushWithLease
+                )
+            }
+            .frame(height: 24)
+            Spacer()
         }
     }
 }
