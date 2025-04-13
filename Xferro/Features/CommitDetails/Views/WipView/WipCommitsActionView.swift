@@ -25,8 +25,6 @@ struct WipCommitsActionView: View {
                 )
             }
             .frame(maxWidth: .infinity)
-            .animation(.default, value: horizontalAlignment)
-            .animation(.default, value: verticalAlignment)
         }
     }
 }

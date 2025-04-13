@@ -74,8 +74,6 @@ struct StatusConflictedActionView: View {
                 }
             }
             .frame(width: Dimensions.commitDetailsViewMaxWidth)
-            .animation(.default, value: horizontalAlignment)
-            .animation(.default, value: verticalAlignment)
         }
     }
 }
