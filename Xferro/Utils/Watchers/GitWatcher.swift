@@ -205,10 +205,9 @@ final class GitWatcher {
 
         tagCache = newRefCache
     }
-    func checkLocalBranches()
-    {
+    func checkLocalBranches() {
         var newRefCache = [String: OID]()
-        repository.references(withPrefix: "refs/heads").mustSucceed(repository.gitDir).forEach { newRefCache[$0.longName] = $0.oid }
+        (try? repository.references(withPrefix: "refs/heads").get())?.forEach { newRefCache[$0.longName] = $0.oid }
         let newKeys = Set(newRefCache.keys)
         let oldKeys = Set(localBranchCache.keys)
         let addedRefs = newKeys.subtracting(oldKeys)
