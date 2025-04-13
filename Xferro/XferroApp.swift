@@ -63,12 +63,6 @@ struct SwiftSpaceApp: App {
             .toolbar {
                 ToolbarItem(placement: .automatic) {
                     HStack(spacing: 6) {
-                        if let activity = ProgressManager.shared.activity {
-                            ProgressView()
-                                .controlSize(.small)
-                            Text(activity.name)
-                                .font(.paragraph3)
-                        }
                         Images.settingsButtonImage
                             .font(.paragraph3)
                             .frame(width: 24, height: 24)
@@ -83,6 +77,16 @@ struct SwiftSpaceApp: App {
                             .onTapGesture {
                                 openURL(URL(string: "https://xferro.ai")!)
                             }
+                    }
+                }
+                ToolbarItem(placement: .principal) {
+                    if let activity = ProgressManager.shared.activity {
+                        HStack {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text(activity.name)
+                                .font(.paragraph3)
+                        }
                     }
                 }
             }
