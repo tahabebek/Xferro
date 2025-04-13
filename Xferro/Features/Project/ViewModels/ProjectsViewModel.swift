@@ -20,9 +20,16 @@ import Observation
         guard let user else { return nil }
         self.user = user
         var repositories: [Repository] = []
+        var deletedProjects: [Project] = []
         for project in user.projects {
-            let repository = try! Repository.at(project.url).get()
-            repositories.append(repository)
+            if let repository = try? Repository.at(project.url).get() {
+                repositories.append(repository)
+            } else {
+                deletedProjects.append(project)
+            }
+        }
+        deletedProjects.forEach { project in
+            user.removeProject(project.url)
         }
         let commitsViewModel = CommitsViewModel(repositories: repositories, user: user) { [weak self] url, commitsViewModel in
             guard let self else { return }

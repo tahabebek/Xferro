@@ -13,11 +13,11 @@ import OrderedCollections
     func hash(into hasher: inout Hasher) {
         hasher.combine(key)
     }
-
+    
     static func ==(lhs: OldNewFile, rhs: OldNewFile) -> Bool {
         lhs.key == rhs.key
     }
-
+    
     let id = UUID()
     let old: String?
     let new: String?
@@ -32,7 +32,7 @@ import OrderedCollections
     let key: String
     var diffInfo: (any DiffInformation)?
     var isUntracked: Bool = false
-
+    
     init(
         old: String?,
         new: String?,
@@ -50,7 +50,7 @@ import OrderedCollections
         self.repository = repository
         self.head = head
         self.diffInfo = diffInfo
-
+        
         self.statusFileName = switch status {
         case .unmodified:
             fatalError(.impossible)
@@ -75,7 +75,7 @@ import OrderedCollections
         case .ignored, .unreadable:
             fatalError(.unimplemented)
         }
-
+        
         self.statusColor = switch status {
         case .unmodified:
             fatalError(.impossible)
@@ -90,30 +90,30 @@ import OrderedCollections
         case .ignored, .unreadable:
             fatalError(.unimplemented)
         }
-
+        
         self.statusImageName = switch status {
-            case .unmodified:
-                fatalError(.impossible)
-            case .added:
-                "a.square"
-            case .modified:
-                "m.square"
-            case .copied:
-                "c.square"
-            case .untracked:
-                "questionmark.square"
-            case .deleted:
-                "d.square"
-            case .renamed, .typeChange:
-                "r.square"
-            case .conflicted:
-                "exclamationmark.square"
-            case .ignored, .unreadable:
-                fatalError(.unimplemented)
+        case .unmodified:
+            fatalError(.impossible)
+        case .added:
+            "a.square"
+        case .modified:
+            "m.square"
+        case .copied:
+            "c.square"
+        case .untracked:
+            "questionmark.square"
+        case .deleted:
+            "d.square"
+        case .renamed, .typeChange:
+            "r.square"
+        case .conflicted:
+            "exclamationmark.square"
+        case .ignored, .unreadable:
+            fatalError(.unimplemented)
         }
         self.key = key
     }
-
+    
     var checkState: CheckboxState {
         get {
             diffInfo?.checkState ?? .checked
@@ -132,7 +132,7 @@ import OrderedCollections
             }
         }
     }
-
+    
     func discardPart(_ part: DiffHunkPart) {
         guard case .additionOrDeletion = part.type, let hunks = diffInfo?.hunks else {
             fatalError(.invalid)
@@ -149,7 +149,7 @@ import OrderedCollections
             }
         }
     }
-
+    
     func discardLines(lines: [DiffLine], hunks: [DiffHunk]) async throws {
         switch status {
         case .added, .copied:
@@ -179,7 +179,7 @@ import OrderedCollections
                 guard case .success(let result) = headFileResult else {
                     fatalError(.impossible)
                 }
-
+                
                 try result.data(using: .utf8)?.write(to: repository.workDir +/ newFilePath)
                 return
             }
@@ -201,7 +201,7 @@ import OrderedCollections
                 guard case .success(let result) = headFileResult else {
                     fatalError(.impossible)
                 }
-
+                
                 try result.data(using: .utf8)?.write(to: repository.workDir +/ oldFilePath)
                 return
             }
@@ -217,7 +217,7 @@ import OrderedCollections
             fatalError(.invalid)
         }
     }
-
+    
     func discardLine(_ line: DiffLine) {
         guard line.isAdditionOrDeletion else {
             fatalError(.invalid)
@@ -235,9 +235,9 @@ import OrderedCollections
                     hunkline.isSelected = true
                 }
             }
-
+            
             let selectedLines = lines.filter(\.isSelected)
-
+            
             do {
                 switch status {
                 case .modified, .renamed, .typeChange, .conflicted:
@@ -296,17 +296,18 @@ import OrderedCollections
             }
         }
     }
-
+    
     private func actuallySetDiffInfo(path: String, modifiedDate: Date) async {
-        let newDiffInfo = await createDiffInfo()
-        await diffInfoCache.set(key: path, value: newDiffInfo)
-        await lastModifiedCache.set(key: path, value: modifiedDate)
-        await MainActor.run {
-            isUntracked = false
-            diffInfo = newDiffInfo
+        if let newDiffInfo = await createDiffInfo() {
+            await diffInfoCache.set(key: path, value: newDiffInfo)
+            await lastModifiedCache.set(key: path, value: modifiedDate)
+            await MainActor.run {
+                isUntracked = false
+                diffInfo = newDiffInfo
+            }
         }
     }
-
+    
     func setDiffInfoForStatus() async {
         switch status {
         case .unmodified, .ignored:
@@ -349,20 +350,22 @@ import OrderedCollections
                         diffInfo = cached
                     }
                 } else {
-                    let newDiffInfo = await createDiffInfo()
-                    await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
-                    await MainActor.run {
-                        isUntracked = false
-                        diffInfo = newDiffInfo
+                    if let newDiffInfo = await createDiffInfo() {
+                        await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
+                        await MainActor.run {
+                            isUntracked = false
+                            diffInfo = newDiffInfo
+                        }
                     }
                 }
             } else {
                 if diffInfo == nil {
-                    let newDiffInfo = await createDiffInfo()
-                    await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
-                    await MainActor.run {
-                        isUntracked = false
-                        diffInfo = newDiffInfo
+                    if let newDiffInfo = await createDiffInfo() {
+                        await diffInfoCache.set(key: workDirOld, value: newDiffInfo)
+                        await MainActor.run {
+                            isUntracked = false
+                            diffInfo = newDiffInfo
+                        }
                     }
                 }
             }
@@ -370,7 +373,7 @@ import OrderedCollections
             fatalError(.unimplemented)
         }
     }
-
+    
     func setDiffInfoComparedToOwner(commit: Commit, owner: any SelectableItem) async {
         let commitPointer = await withUnsafeContinuation { continuation in
             let pointer = repository.withGitObject(commit.oid, type: GIT_OBJECT_COMMIT) {
@@ -384,13 +387,13 @@ import OrderedCollections
             }.mustSucceed(repository.gitDir)
             continuation.resume(returning: pointer)
         }
-
+        
         let diffInfo = await self.createDiffInfo(commit: commitPointer, parent: ownerPointer)
         await MainActor.run {
             self.diffInfo = diffInfo
         }
     }
-
+    
     private func createDiffInfo(commit: OpaquePointer, parent: OpaquePointer) async -> any DiffInformation {
         let patchResult = repository.patchMakerFromOwnerToWip(
             oldNewFile: self,
@@ -427,8 +430,8 @@ import OrderedCollections
             )
         }
     }
-
-    private func createDiffInfo() async -> any DiffInformation {
+    
+    private func createDiffInfo() async -> (any DiffInformation)? {
         let patchResult = repository.patchMakerForAFileInTeWorkspaceComparedToHead(head: head, oldNewFile: self)
 
         switch patchResult {

@@ -300,9 +300,9 @@ extension Repository {
         }
 
         if case .blob(let oid) = toEntry.object {
-            return withGitObject(oid, type: GIT_OBJECT_BLOB) {
+            return try? withGitObject(oid, type: GIT_OBJECT_BLOB) {
                 Blob($0, lock: lock)
-            }.mustSucceed(gitDir)
+            }.get()
         }
         return nil
     }
