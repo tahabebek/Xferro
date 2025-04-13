@@ -27,7 +27,7 @@ struct SwiftSpaceApp: App {
     
     @State private var welcomeViewModel = WelcomeViewModel()
     @State private var users: Users? = DataManager.load(Users.self, filename: DataManager.usersFileName)
-    @State private var projectsViewModel: ProjectsViewModel? = ProjectsViewModel(user: DataManager.load(Users.self, filename: DataManager.usersFileName)?.currentUser)
+    @State private var projectsViewModel: ProjectsViewModel?
     @State private var statusViewModel = StatusViewModel()
 
     private let screenDimensions = NSScreen.main?.visibleFrame.size
@@ -89,6 +89,9 @@ struct SwiftSpaceApp: App {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .task {
                 AppDelegate.users = users
+                if projectsViewModel == nil {
+                    projectsViewModel = ProjectsViewModel(user: users?.currentUser!)
+                }
                 do {
                     try Tips.configure()
                 }
