@@ -216,17 +216,17 @@ enum GitCLI {
     static func showHead(_ repository: Repository, _ filePath: String) -> Result<String, ShowHeadError> {
         do {
             let process = try gitProcess(repository, ["show", "HEAD:\(filePath)"])
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-
+            
+            let pipe = Pipe()
+            process.standardOutput = pipe
+            process.standardError = pipe
+            
             try process.run()
             process.waitUntilExit()
-
+            
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             let output = String(data: data, encoding: .utf8) ?? ""
-
+            
             switch process.terminationStatus {
             case 0:
                 return .success(output)

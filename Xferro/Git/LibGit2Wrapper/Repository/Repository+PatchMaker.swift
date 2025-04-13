@@ -321,6 +321,53 @@ extension Repository {
         if Self.isTextExtension(name) {
             return true
         }
+        
+        var tempFilePath: String?
+        do {
+            var url = fileURL(path)
+            if !FileManager.fileExists(url.path) {
+                let headFileLines = try GitCLI.showHead(self, path).get().lines
+                tempFilePath = DataManager.appDirPath + "/" + UUID().uuidString
+                try headFileLines.joined(separator: "\n").write(toFile: tempFilePath!, atomically: true, encoding: .utf8)
+                url = URL(fileURLWithPath: tempFilePath!)
+            }
+            
+            
+            let fileHandle = try FileHandle(forReadingFrom: url)
+            defer { fileHandle.closeFile() }
+            
+            defer {
+                if tempFilePath != nil {
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
+            // Read only a small sample (first 1024 bytes is usually sufficient)
+            let sampleData = fileHandle.readData(ofLength: 1024)
+            
+            // Check for null bytes (common in binary files)
+            if sampleData.contains(0) {
+                return false
+            }
+            
+            // Try to decode as UTF-8 without converting the entire file
+            // We only need to know if the sample can be decoded, not the actual string content
+            if String(data: sampleData, encoding: .utf8) != nil {
+                return true
+            }
+            
+            // Optional: Check for other text encodings if UTF-8 fails
+            for encoding in [String.Encoding.ascii, .utf16, .isoLatin1, .isoLatin2] {
+                if String(data: sampleData, encoding: encoding) != nil {
+                    return true
+                }
+            }
+            
+        } catch {
+            if tempFilePath != nil {
+                try? FileManager.default.removeItem(at: URL(fileURLWithPath: tempFilePath!))
+            }
+            print("Error examining file: \(error)")
+        }
 
         switch context {
         case .commit(let commit):
@@ -345,8 +392,7 @@ extension Repository {
         return false
     }
 
-    static func isTextExtension(_ name: String) -> Bool
-    {
+    static func isTextExtension(_ name: String) -> Bool {
         let ext = (name as NSString).pathExtension
         guard !ext.isEmpty, let type = UTType(filenameExtension: ext) else {
             return false
@@ -355,8 +401,7 @@ extension Repository {
         return type.conforms(to: .text)
     }
 
-    func fileURL(_ file: String) -> URL
-    {
+    func fileURL(_ file: String) -> URL {
         return workDir.appendingPathComponent(file)
     }
 
