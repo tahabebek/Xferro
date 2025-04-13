@@ -77,6 +77,7 @@ struct StatusActionView: View {
                     onCommitAndPush: onCommitAndPush
                 )
             }
+            .frame(maxWidth: .infinity)
             .animation(.default, value: horizontalAlignment)
             .animation(.default, value: verticalAlignment)
         }

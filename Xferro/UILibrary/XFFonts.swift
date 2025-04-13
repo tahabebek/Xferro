@@ -24,8 +24,8 @@ extension CGFloat {
     static let paragraph6Size: CGFloat = 13
     static let small: CGFloat = 12
     static let tiniest: CGFloat = 10
-    static let diffViewFontSize: CGFloat = 16
-    static let diffViewLineHeight: CGFloat = 22
+    static let diffViewFontSize: CGFloat = 13
+    static let diffViewLineHeight: CGFloat = 16
 }
 
 extension Font {
