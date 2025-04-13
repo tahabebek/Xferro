@@ -30,7 +30,6 @@ struct StatusView: View {
                                 onContinueRebaseTapped: viewModel.continueRebaseTapped,
                                 onAbortRebaseTapped: viewModel.abortRebaseTapped
                             )
-                            .frame(width: Dimensions.commitDetailsViewMaxWidth)
                         } else {
                             filesView
                         }

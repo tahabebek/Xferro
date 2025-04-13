@@ -55,6 +55,7 @@ struct StatusActionView: View {
                     }
                 )
             }
+            .padding(.horizontal)
             .padding(.bottom, Dimensions.actionBoxBottomPadding)
             AnyLayout(FlowLayout(alignment:.init(horizontal: horizontalAlignment, vertical: verticalAlignment))) {
                 StatusActionButtonsView(
@@ -77,7 +78,7 @@ struct StatusActionView: View {
                     onCommitAndPush: onCommitAndPush
                 )
             }
-            .frame(maxWidth: .infinity)
+            .frame(width: Dimensions.commitDetailsViewMaxWidth)
             .animation(.default, value: horizontalAlignment)
             .animation(.default, value: verticalAlignment)
         }

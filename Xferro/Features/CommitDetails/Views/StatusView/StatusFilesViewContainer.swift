@@ -68,7 +68,7 @@ struct StatusFilesViewContainer: View {
                 onCommitAndForcePushWithLease: onCommitAndForcePushWithLease,
                 onCommitAndPush: onCommitAndPush
             )
-            .padding()
+            .padding(.vertical)
             .background(Color(hexValue: 0x15151A))
             .cornerRadius(8)
             if hasChanges {

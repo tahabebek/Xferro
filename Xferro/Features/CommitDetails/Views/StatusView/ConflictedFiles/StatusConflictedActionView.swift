@@ -73,6 +73,7 @@ struct StatusConflictedActionView: View {
                     fatalError(.unimplemented)
                 }
             }
+            .frame(width: Dimensions.commitDetailsViewMaxWidth)
             .animation(.default, value: horizontalAlignment)
             .animation(.default, value: verticalAlignment)
         }
